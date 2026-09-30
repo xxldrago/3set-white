@@ -65,6 +65,7 @@ Plans:
 - [ ] 02-04-PLAN.md — «Мои подписки» cache-first list (CAB-01)
 - [ ] 02-05-PLAN.md — Key detail: subscription link + QR + traffic + guides (CAB-04, TRIAL-03)
 - [ ] 02-06-PLAN.md — Device management + inline confirmations (CAB-03)
+
 **UI hint**: yes
 
 ### Phase 3: Payments

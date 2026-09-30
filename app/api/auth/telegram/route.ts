@@ -39,8 +39,6 @@ const initDataSchema = z.object({
   initData: z.string().min(1),
 });
 
-const bodySchema = z.union([widgetSchema, initDataSchema]);
-
 const unauthorized = () => Response.json({ error: "unauthorized" }, { status: 401 });
 
 export async function POST(req: Request): Promise<Response> {
@@ -50,11 +48,13 @@ export async function POST(req: Request): Promise<Response> {
   } catch {
     return Response.json({ error: "bad_request" }, { status: 400 });
   }
-  const parsed = bodySchema.safeParse(raw);
-  if (!parsed.success) return unauthorized();
 
-  if ("initData" in parsed.data) {
-    const fields = verifyInitData(parsed.data.initData, env.BOT_TOKEN);
+  // initData shape takes precedence; anything else must satisfy the Widget
+  // shape (validated separately so the loose Widget index signature cannot
+  // blur the branch — TS cannot narrow a z.union with a loose member).
+  const initParsed = initDataSchema.safeParse(raw);
+  if (initParsed.success) {
+    const fields = verifyInitData(initParsed.data.initData, env.BOT_TOKEN);
     if (!fields) {
       logger.warn({ via: "initdata", outcome: "rejected" });
       return unauthorized();
@@ -100,32 +100,38 @@ export async function POST(req: Request): Promise<Response> {
     }
   }
 
-  // Widget path: verify HMAC + freshness, then one-time hash consume.
-  if (!verifyWidget(parsed.data, env.BOT_TOKEN)) {
+  // Widget path: shape-check, then HMAC + freshness, then one-time consume.
+  const widgetParsed = widgetSchema.safeParse(raw);
+  if (!widgetParsed.success) {
     logger.warn({ via: "widget", outcome: "rejected" });
     return unauthorized();
   }
-  if (!(await consumeWidgetHash(parsed.data.hash))) {
+  const widget = widgetParsed.data;
+  if (!verifyWidget(widget, env.BOT_TOKEN)) {
+    logger.warn({ via: "widget", outcome: "rejected" });
+    return unauthorized();
+  }
+  if (!(await consumeWidgetHash(widget.hash))) {
     logger.warn({ via: "widget", outcome: "rejected" });
     return unauthorized();
   }
   try {
     await prisma.user.upsert({
-      where: { telegramId: BigInt(parsed.data.id) },
+      where: { telegramId: BigInt(widget.id) },
       update: {
-        firstName: parsed.data.first_name,
-        lastName: parsed.data.last_name,
-        username: parsed.data.username,
+        firstName: widget.first_name,
+        lastName: widget.last_name,
+        username: widget.username,
       },
       create: {
-        telegramId: BigInt(parsed.data.id),
-        firstName: parsed.data.first_name,
-        lastName: parsed.data.last_name,
-        username: parsed.data.username,
+        telegramId: BigInt(widget.id),
+        firstName: widget.first_name,
+        lastName: widget.last_name,
+        username: widget.username,
       },
     });
-    const token = await signSession(parsed.data.id, env.SESSION_SECRET);
-    logger.info({ via: "widget", telegramId: parsed.data.id, outcome: "issued" });
+    const token = await signSession(widget.id, env.SESSION_SECRET);
+    logger.info({ via: "widget", telegramId: widget.id, outcome: "issued" });
     return Response.json(
       { ok: true },
       {

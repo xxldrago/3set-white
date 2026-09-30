@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { t } from '@/lib/i18n';
 import './globals.css';
 
 const geistSans = Geist({
@@ -19,9 +20,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: '3set VPN',
-  description: 'VPN-подписки: покупка и управление ключами',
-  applicationName: '3set VPN',
+  title: t('app.name'),
+  description: t('app.tagline'),
+  applicationName: t('app.name'),
   appleWebApp: {
     capable: true,
     title: '3set VPN',

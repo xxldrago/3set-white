@@ -55,7 +55,16 @@ Plans:
   3. Пользователь видит список «Мои подписки» со статусом и сроком, открывает детали ключа с subscription-ссылкой, QR и расходом трафика
   4. Пользователь управляет устройствами ключа (список, удаление одного, сброс всех) и видит инструкции по подключению (v2rayNG / Streisand / Hiddify)
 
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+
+- [ ] 02-01-PLAN.md — ARTEMIDA live-probe gate: lock V1 contract (owner supplies API key)
+- [ ] 02-02-PLAN.md — ARTEMIDA client + live tariff price tracer (TRIAL-02)
+- [ ] 02-03-PLAN.md — Trial anti-abuse + schema migration (TRIAL-01)
+- [ ] 02-04-PLAN.md — «Мои подписки» cache-first list (CAB-01)
+- [ ] 02-05-PLAN.md — Key detail: subscription link + QR + traffic + guides (CAB-04, TRIAL-03)
+- [ ] 02-06-PLAN.md — Device management + inline confirmations (CAB-03)
 **UI hint**: yes
 
 ### Phase 3: Payments
@@ -115,7 +124,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Needs Review | 2026-09-30 |
-| 2. Keys & Trial | 0/TBD | Not started | - |
+| 2. Keys & Trial | 0/6 | Not started | - |
 | 3. Payments | 0/TBD | Not started | - |
 | 4. Support & Retention | 0/TBD | Not started | - |
 | 5. Admin & Deploy | 0/TBD | Not started | - |

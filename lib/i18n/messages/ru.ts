@@ -37,6 +37,12 @@ export const ru = {
     install: 'Установить приложение',
     dismiss: 'Не сейчас',
   },
+  bot: {
+    welcome: 'Добро пожаловать в 3set VPN! Выберите раздел ниже.',
+    menuKeys: 'Мои ключи',
+    menuGuides: 'Инструкции',
+    menuHelp: 'Помощь',
+  },
 } as const;
 
 export type Messages = typeof ru;

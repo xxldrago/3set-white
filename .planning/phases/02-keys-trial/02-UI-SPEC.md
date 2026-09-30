@@ -1,7 +1,8 @@
 ---
 phase: "2"
 slug: "keys-trial"
-status: draft
+status: approved
+reviewed_at: "2026-10-01"
 shadcn_initialized: false
 preset: none
 created: "2026-10-01"
@@ -230,12 +231,16 @@ No shadcn and no third-party registries are in scope for Phase 2. The registry v
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: PASS (FLAG: `trial.cta` single-word — non-blocking)
+- [x] Dimension 2 Visuals: PASS (FLAG: focal point for primary screen — non-blocking)
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-10-01 (2 non-blocking FLAGs — see recommendations)
+
+### Non-blocking Recommendations (from checker)
+1. `trial.cta` — consider a benefit-bearing label (e.g. «Попробовать бесплатно»); current single-word value is acceptable.
+2. Visuals — declare the focal point of «Мои подписки»: the active subscription card + its primary CTA is the anchor; the status badge is the scanning cue.

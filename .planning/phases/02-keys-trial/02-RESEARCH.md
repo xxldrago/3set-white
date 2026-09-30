@@ -598,25 +598,39 @@ The React layer maps `reason: "trial_used"` to `t('trial.usedHeading')`/`t('tria
 
 ## Open Questions
 
+> **Resolution status (annotated with the 02-01 revision):** Q1–Q3 are resolved by
+> plan-level controls; Q4 is deferred out of Phase 2. Each question carries an explicit
+> `Status:` line below.
+
 1. **What are the exact Paid V1 success-body shapes?**
    - What we know: transport (auth, envelope, headers) is verified; provider pricing vocabulary/values are observable via the public cabinet.
    - What's unclear: every success field name for pricing/trial/keys/sub-links/devices.
    - Recommendation: `checkpoint:human-verify` live probe with a supplied `ARTEMIDA_API_KEY` before any dependent UI; keep schemas tolerant so a mismatch fails locally in one file.
+   - **Status: RESOLVED (plan-level).** Converted into the mandatory 02-01 live probe plus
+     tolerant schemas in `lib/artemida.ts`; the literal field names are captured at 02-01
+     execution (blocked on the owner key) and committed as
+     `docs/artemida-v1-contract.{md,json}`.
 
 2. **Does the Paid API accept `devices=1`, and does it allow 7/30/90 only?**
    - What we know: cabinet min is 2 devices, periods `[7,30,60,90]`; requirements lock 1–10 devices and 7/30/90.
    - What's unclear: whether the Paid API mirrors or overrides cabinet constraints.
    - Recommendation: probe `/pricing?devices=1&days=7` and `devices=2&days=30`; if 1 is rejected, return a clamp decision to the owner (requirements vs provider).
+   - **Status: RESOLVED (plan-level).** The 02-01 probe runs both calls; a rejection
+     surfaces a clamp decision to the owner before any dependent UI is wired.
 
 3. **Which HTTP status does `/trial` return on a duplicate trial?**
    - What we know: D-24 requires a clean RU response, never a proxy of the provider error.
    - What's unclear: whether the provider enforces its own one-trial rule (409?) or expects us to (we do, via `trialUsed`).
    - Recommendation: the DB claim is authoritative; provider 409/4xx on trial is mapped to `already_used`, not surfaced.
+   - **Status: RESOLVED.** The DB claim (D-22) is authoritative; a provider 409/4xx on
+     `/trial` is mapped to `already_used` and never surfaced (plan 02-03).
 
 4. **How is the White Label domain reflected in `subscriptionUrl` (OPS-02)?**
    - What we know: PROJECT requires `my.3set.online`; the provider offers White Label config.
    - What's unclear: whether `subscriptionUrl` already returns the configured brand domain or a provider domain.
    - Recommendation: store and display whatever `subscriptionUrl` returns (D-28 spirit); confirm at the Phase 5 staging experiment, not here.
+   - **Status: DEFERRED.** Out of Phase 2 scope — confirmed at the Phase 5 (OPS-02)
+     staging experiment; Phase 2 stores/displays the returned `subscriptionUrl` as-is.
 
 ## Environment Availability
 

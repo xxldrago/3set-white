@@ -1,0 +1,41 @@
+# 3set-white local topology (D-06): web (Next bot-in-Next, standalone) + db
+# (Postgres 17). Nginx/HTTPS full prod shape arrives in Phase 5 — this file
+# is prod parity for services, not edge.
+#
+# Secrets come from `.env` (gitignored, see .env.example) — never baked in.
+# Local dev without Docker: run Postgres directly and point DATABASE_URL at
+# it (see 01-RESEARCH.md Environment Availability).
+
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://setwhite:setwhite@db:5432/setwhite
+      BOT_MODE: webhook
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: setwhite
+      POSTGRES_PASSWORD: setwhite
+      POSTGRES_DB: setwhite
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U setwhite -d setwhite"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  pgdata:

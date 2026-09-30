@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Standalone output for the Docker image (compose web service, D-06).
+  output: "standalone",
 };
 
 export default nextConfig;

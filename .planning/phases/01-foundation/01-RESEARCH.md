@@ -512,22 +512,25 @@ export default function InstallPrompt() {
 | A7 | `postgres:17-alpine` image tag exists and local Compose can pull it | Standard Stack | Low — verified at `docker compose pull` time; local Docker absent anyway (see Environment) |
 | A8 | tailwindcss 4.3 CSS-first config needs no `tailwind.config.js` | Standard Stack | Low — scaffold default handles it |
 
-## Open Questions
+## Open Questions (RESOLVED — dispositions below; do not block execution)
 
-1. **Classic Widget HMAC vs new Telegram OIDC login for web auth?**
+1. **Classic Widget HMAC vs new Telegram OIDC login for web auth? (RESOLVED: build classic now, OIDC as future migration)**
    - What we know: Main widget docs now describe OIDC (Client ID/Secret via BotFather mini-app, `Allowed URLs` registration, JWKS at `oauth.telegram.org/.well-known/jwks.json`); classic HMAC flow still documented at `/widgets/login-legacy` with unchanged algorithm [CITED both pages, fetched 2026-09-30].
    - What's unclear: Whether Telegram plans to retire the classic `data-onauth` callback; no deprecation notice found on the legacy page (negative claim — page read in full this session, no sunset date present).
    - Recommendation: Build classic HMAC now (matches D-09 `lib/auth.ts` shape, zero BotFather reconfiguration, testable on localhost). Planner adds a Phase 4/5 backlog note to re-evaluate OIDC. No user decision needed to start.
+   - Disposition: mitigated via ASSUMP-CAB-02-WIDGET in plan 01-03 (legacy path assumed functional, OIDC migration noted as fallback).
 
-2. **PWA icon source — is there a brand logo for 192/512/maskable icons?**
+2. **PWA icon source — is there a brand logo for 192/512/maskable icons? (RESOLVED: ship replaceable placeholders, owner supplies artwork)**
    - What we know: CAB-05 needs installable PWA with icon from the first skeleton (CONTEXT.md Specific Ideas).
    - What's unclear: No logo asset in repo (empty repo verified via `ls`).
    - Recommendation: Planner includes a task generating placeholder icons (e.g., simple SVG→PNG) + a `checkpoint:human-verify` for the owner to supply the real logo; placeholder must be trivially replaceable in `public/icons/`.
+   - Disposition: mitigated via ASSUMP-CAB-05-LOGO plus human-check in plan 01-04 dictionary task.
 
-3. **GitHub repo `3set-white` — who creates it (owner account vs org) and public vs private?**
+3. **GitHub repo `3set-white` — who creates it (owner account vs org) and public vs private? (RESOLVED: default private under owner account, flaggable later)**
    - What we know: `gh` CLI 2.98.0 present and functional; no git remote configured (verified this session).
    - What's unclear: Owner preference (visibility affects secret-handling posture: private recommended since early commits may precede audit hygiene).
    - Recommendation: Planner defaults to **private** repo under the owner's account via `gh repo create 3set-white --private --source=. --push`, flaggable to public later. Confirm at plan review, don't block scaffolding.
+   - Disposition: mitigated via ASSUMP-OPS-03 plus decision gate in plan 01-01 and prohibition on public default.
 
 ## Environment Availability
 

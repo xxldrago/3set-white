@@ -44,8 +44,8 @@ created: "2026-09-30"
 | 1-01-02 | 01 | 1 | CAB-02 | T-auth-02 | Tampered initData rejected | unit | `npx vitest run tests/unit/auth-initdata.test.ts` | ❌ W0 | ⬜ pending |
 | 1-01-03 | 01 | 1 | CAB-02 | T-auth-03 | Session roundtrip, wrong secret + alg:none rejected | unit | `npx vitest run tests/unit/session.test.ts` | ❌ W0 | ⬜ pending |
 | 1-01-04 | 01 | 1 | CAB-02 | — | No missing i18n keys vs ru.ts | unit | `npx vitest run tests/unit/i18n.test.ts` | ❌ W0 | ⬜ pending |
-| 1-02-01 | 02 | 1 | CAB-05 | — | Manifest valid + build passes | build/smoke | `npm run build && node scripts/check-manifest.mjs` | ❌ W0 | ⬜ pending |
-| 1-03-01 | 03 | 1 | DB | — | migrate + seed green | smoke | `npx prisma migrate dev && npm run db:seed` | ❌ W0 | ⬜ pending |
+| 1-02-01 | 02 | 2 | CAB-05 | — | Manifest valid + build passes | build/smoke | `npm run build && node scripts/check-manifest.mjs` | ❌ W0 | ⬜ pending |
+| 1-03-01 | 03 | 3 | DB | — | migrate + seed green | smoke | `npx prisma migrate dev && npm run db:seed` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 

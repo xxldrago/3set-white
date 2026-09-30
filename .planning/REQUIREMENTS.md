@@ -79,34 +79,34 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TRIAL-01 | TBD | Pending |
-| TRIAL-02 | TBD | Pending |
-| TRIAL-03 | TBD | Pending |
-| PAY-01 | TBD | Pending |
-| PAY-02 | TBD | Pending |
-| PAY-03 | TBD | Pending |
-| PAY-04 | TBD | Pending |
-| PAY-05 | TBD | Pending |
-| CAB-01 | TBD | Pending |
-| CAB-02 | TBD | Pending |
-| CAB-03 | TBD | Pending |
-| CAB-04 | TBD | Pending |
-| CAB-05 | TBD | Pending |
-| SUP-01 | TBD | Pending |
-| SUP-02 | TBD | Pending |
-| SUP-03 | TBD | Pending |
-| ADM-01 | TBD | Pending |
-| ADM-02 | TBD | Pending |
-| ADM-03 | TBD | Pending |
-| ADM-04 | TBD | Pending |
-| OPS-01 | TBD | Pending |
-| OPS-02 | TBD | Pending |
-| OPS-03 | TBD | Pending |
+| TRIAL-01 | Phase 2 | Pending |
+| TRIAL-02 | Phase 2 | Pending |
+| TRIAL-03 | Phase 2 | Pending |
+| PAY-01 | Phase 3 | Pending |
+| PAY-02 | Phase 3 | Pending |
+| PAY-03 | Phase 3 | Pending |
+| PAY-04 | Phase 3 | Pending |
+| PAY-05 | Phase 4 | Pending |
+| CAB-01 | Phase 2 | Pending |
+| CAB-02 | Phase 1 | Pending |
+| CAB-03 | Phase 2 | Pending |
+| CAB-04 | Phase 2 | Pending |
+| CAB-05 | Phase 1 | Pending |
+| SUP-01 | Phase 4 | Pending |
+| SUP-02 | Phase 4 | Pending |
+| SUP-03 | Phase 4 | Pending |
+| ADM-01 | Phase 5 | Pending |
+| ADM-02 | Phase 5 | Pending |
+| ADM-03 | Phase 5 | Pending |
+| ADM-04 | Phase 5 | Pending |
+| OPS-01 | Phase 5 | Pending |
+| OPS-02 | Phase 5 | Pending |
+| OPS-03 | Phase 1 | Pending |
 
 **Coverage:**
 - v1 requirements: 23 total
-- Mapped to phases: 0
-- Unmapped: 23 ⚠️
+- Mapped to phases: 23
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-09-30*

@@ -29,7 +29,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. Пользователь открывает PWA, входит через Telegram Login Widget и видит свой аккаунт; повторный вход не создаёт дубликат
   2. Пользователь пишет боту /start и получает приветствие с кнопками; бот знает его chat_id
   3. Пользователь может установить PWA на телефон (install prompt) и открыть её с иконки
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Scaffold, green test runner, GitHub repo pushed (OPS-03)
+- [ ] 01-02-PLAN.md — Postgres + Prisma schema, Compose, blocking migrate + seed (OPS-03)
+- [ ] 01-03-PLAN.md — Unified Telegram identity, /start skeleton, webhook intake (CAB-02)
+- [ ] 01-04-PLAN.md — Installable RU PWA shell, login + guides, i18n + icons (CAB-05)
 
 ### Phase 2: Keys & Trial
 **Goal**: Пользователь получает trial, выбирает тариф и видит свои подписки с рабочими конфигами

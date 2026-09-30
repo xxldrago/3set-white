@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# prisma 7 generated client (regenerable via `npx prisma generate`, never commit)
+/generated/

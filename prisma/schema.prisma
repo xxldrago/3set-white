@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+//
+// Prisma 7 surface: the datasource `url` lives in prisma7.config.ts
+// (datasource block carries the provider only). Database identity key is
+// users.telegram_id UNIQUE per locked decision D-12 (one-way).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Single identity row shared by bot and PWA cabinet (D-12).
+// PII minimum per plan prohibition: telegram id, chat id, names only.
+model User {
+  id         Int      @id @default(autoincrement())
+  telegramId BigInt   @unique @map("telegram_id")
+  chatId     BigInt?  @map("chat_id")
+  firstName  String?  @map("first_name")
+  lastName   String?  @map("last_name")
+  username   String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  keys       KeyCache[]
+
+  @@map("users")
+}
+
+// ARTEMIDA mirror only — ARTEMIDA owns the truth (D-07).
+model KeyCache {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  keyId     String   @map("key_id")
+  status    String
+  expiresAt DateTime? @map("expires_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, keyId])
+  @@map("keys_cache")
+}
+
+// One-time Login Widget payload guard (D-11). Rows older than 48h are
+// pruned by a later-phase cron; initData relies on the auth_date window.
+model ReplayCache {
+  hash   String   @id
+  usedAt DateTime @default(now()) @map("used_at")
+
+  @@map("replay_cache")
+}

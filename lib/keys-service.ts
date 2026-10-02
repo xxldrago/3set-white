@@ -148,6 +148,78 @@ export async function revalidateKeys(telegramId: bigint): Promise<void> {
 }
 
 /**
+ * Ownership-joined detail read: resolve the key row scoped by the owning user
+ * from the session telegram id (T-02-17 IDOR). A key the caller does not own
+ * is indistinguishable from a missing one — both return `null`.
+ */
+export async function getKeyForUser(
+  telegramId: bigint,
+  keyId: string,
+): Promise<RenderedKey | null> {
+  const row = await prisma.keyCache.findFirst({
+    where: { keyId, user: { telegramId } },
+  });
+  return row ? toRenderedKey(row) : null;
+}
+
+export interface SubscriptionForUser {
+  subscriptionUrl: string | null;
+  links: string[];
+  traffic: { usedBytes: number | null; limitBytes: number | null };
+}
+
+/**
+ * Fresh subscription-link + traffic read for one owned key (CAB-04 / D-30/D-31).
+ *
+ * Ownership is joined on `(userId, keyId)` before any provider call, so a
+ * non-owned key never triggers a provider request and can never leak another
+ * user's link (T-02-17). The sub-link fetch propagates an `ArtemidaError` so
+ * the caller can render `key.linkError`; the traffic read is display-only
+ * (D-31) and degrades to nulls rather than failing the link. The observed
+ * sub-link/traffic values are mirrored back into `keys_cache` so later
+ * cache-first reads stay fresh. Provider shapes for these endpoints are
+ * UNKNOWN (02-01 probe, 0-key account): the client normalizers are tolerant
+ * and a missing field surfaces as the RU `key.linkUnavailable` fallback —
+ * never a fabricated URL.
+ */
+export async function getSubscriptionForUser(
+  telegramId: bigint,
+  keyId: string,
+): Promise<SubscriptionForUser | null> {
+  const row = await prisma.keyCache.findFirst({
+    where: { keyId, user: { telegramId } },
+    select: { id: true },
+  });
+  if (!row) return null; // not owned / missing — same result (no oracle)
+
+  // Propagates ArtemidaError: the caller distinguishes a fetch failure
+  // (`key.linkError`) from a valid response with no URL (`key.linkUnavailable`).
+  const links = await artemida.getSubscriptionLinks(keyId);
+
+  let traffic: { usedBytes: number | null; limitBytes: number | null } = {
+    usedBytes: null,
+    limitBytes: null,
+  };
+  try {
+    traffic = await artemida.getTraffic(keyId);
+  } catch {
+    // Traffic is display-only (D-31): a failure must not block the link.
+  }
+
+  await prisma.keyCache.update({
+    where: { id: row.id },
+    data: {
+      subscriptionUrl: links.subscriptionUrl,
+      trafficUsedBytes: toBigIntOrNull(traffic.usedBytes),
+      trafficLimitBytes: toBigIntOrNull(traffic.limitBytes),
+      lastSyncedAt: new Date(),
+    },
+  });
+
+  return { subscriptionUrl: links.subscriptionUrl, links: links.links, traffic };
+}
+
+/**
  * Atomically claim the one-time trial for a telegram id. A SINGLE statement
  * (`updateMany`) makes the race safe (D-22): `count === 1` means we won the
  * claim, `count === 0` means the flag was already set (or the row is absent).

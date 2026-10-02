@@ -1,0 +1,362 @@
+{
+  "startedAt": "2026-10-02T00:47:08.880Z",
+  "baseUrl": "https://artemida.cc/v1",
+  "pricing": [
+    {
+      "request": "GET /pricing?days=7&devices=2",
+      "status": 200,
+      "requestId": "req_cf255a870950b25a",
+      "body": {
+        "ok": true,
+        "data": {
+          "segment": {
+            "id": "telegram",
+            "title": "Default price 120/220/300",
+            "currency": "RUB",
+            "base_devices": 2,
+            "prices_by_days": {
+              "7": 49,
+              "30": 120,
+              "60": 220,
+              "90": 300
+            }
+          },
+          "periods": [
+            7,
+            30,
+            60,
+            90
+          ],
+          "minDevices": 2,
+          "maxDevices": 9999,
+          "discountTiers": [],
+          "apiPricing": {
+            "baseDevices": 2,
+            "keyTiers": [
+              {
+                "from": 0,
+                "price": 120
+              },
+              {
+                "from": 100,
+                "price": 110
+              },
+              {
+                "from": 1000,
+                "price": 100
+              }
+            ],
+            "deviceTiers": [
+              {
+                "from": 0,
+                "price": 60
+              },
+              {
+                "from": 100,
+                "price": 55
+              },
+              {
+                "from": 1000,
+                "price": 50
+              }
+            ],
+            "periodFactors": {
+              "7": 0.4083333333333333,
+              "30": 1,
+              "60": 1.8333333333333333,
+              "90": 2.5
+            },
+            "volume": {
+              "keys": 0,
+              "devices": 0
+            },
+            "keyPrices": {
+              "7": 49,
+              "30": 120,
+              "60": 220,
+              "90": 300
+            },
+            "keyMonthPrice": 120,
+            "devicePricePerMonth": 60,
+            "personal": false,
+            "tierBasis": "active paid keys / devices on active paid keys, including the order being placed",
+            "upgradeRule": "tier device price per added device; minimum one full month, proportional above 30 remaining days"
+          },
+          "trial": {
+            "days": 1,
+            "devices": 2,
+            "amount": 2,
+            "currency": "RUB"
+          },
+          "quote": {
+            "devices": 2,
+            "days": 7,
+            "amount": 49,
+            "currency": "RUB"
+          }
+        },
+        "meta": {
+          "requestId": "req_cf255a870950b25a"
+        }
+      }
+    },
+    {
+      "request": "GET /pricing?days=30&devices=2",
+      "status": 200,
+      "requestId": "req_f7c506a6b1cb88c3",
+      "body": {
+        "ok": true,
+        "data": {
+          "segment": {
+            "id": "telegram",
+            "title": "Default price 120/220/300",
+            "currency": "RUB",
+            "base_devices": 2,
+            "prices_by_days": {
+              "7": 49,
+              "30": 120,
+              "60": 220,
+              "90": 300
+            }
+          },
+          "periods": [
+            7,
+            30,
+            60,
+            90
+          ],
+          "minDevices": 2,
+          "maxDevices": 9999,
+          "discountTiers": [],
+          "apiPricing": {
+            "baseDevices": 2,
+            "keyTiers": [
+              {
+                "from": 0,
+                "price": 120
+              },
+              {
+                "from": 100,
+                "price": 110
+              },
+              {
+                "from": 1000,
+                "price": 100
+              }
+            ],
+            "deviceTiers": [
+              {
+                "from": 0,
+                "price": 60
+              },
+              {
+                "from": 100,
+                "price": 55
+              },
+              {
+                "from": 1000,
+                "price": 50
+              }
+            ],
+            "periodFactors": {
+              "7": 0.4083333333333333,
+              "30": 1,
+              "60": 1.8333333333333333,
+              "90": 2.5
+            },
+            "volume": {
+              "keys": 0,
+              "devices": 0
+            },
+            "keyPrices": {
+              "7": 49,
+              "30": 120,
+              "60": 220,
+              "90": 300
+            },
+            "keyMonthPrice": 120,
+            "devicePricePerMonth": 60,
+            "personal": false,
+            "tierBasis": "active paid keys / devices on active paid keys, including the order being placed",
+            "upgradeRule": "tier device price per added device; minimum one full month, proportional above 30 remaining days"
+          },
+          "trial": {
+            "days": 1,
+            "devices": 2,
+            "amount": 2,
+            "currency": "RUB"
+          },
+          "quote": {
+            "devices": 2,
+            "days": 30,
+            "amount": 120,
+            "currency": "RUB"
+          }
+        },
+        "meta": {
+          "requestId": "req_f7c506a6b1cb88c3"
+        }
+      }
+    },
+    {
+      "request": "GET /pricing?days=90&devices=2",
+      "status": 200,
+      "requestId": "req_3222a58d527f691f",
+      "body": {
+        "ok": true,
+        "data": {
+          "segment": {
+            "id": "telegram",
+            "title": "Default price 120/220/300",
+            "currency": "RUB",
+            "base_devices": 2,
+            "prices_by_days": {
+              "7": 49,
+              "30": 120,
+              "60": 220,
+              "90": 300
+            }
+          },
+          "periods": [
+            7,
+            30,
+            60,
+            90
+          ],
+          "minDevices": 2,
+          "maxDevices": 9999,
+          "discountTiers": [],
+          "apiPricing": {
+            "baseDevices": 2,
+            "keyTiers": [
+              {
+                "from": 0,
+                "price": 120
+              },
+              {
+                "from": 100,
+                "price": 110
+              },
+              {
+                "from": 1000,
+                "price": 100
+              }
+            ],
+            "deviceTiers": [
+              {
+                "from": 0,
+                "price": 60
+              },
+              {
+                "from": 100,
+                "price": 55
+              },
+              {
+                "from": 1000,
+                "price": 50
+              }
+            ],
+            "periodFactors": {
+              "7": 0.4083333333333333,
+              "30": 1,
+              "60": 1.8333333333333333,
+              "90": 2.5
+            },
+            "volume": {
+              "keys": 0,
+              "devices": 0
+            },
+            "keyPrices": {
+              "7": 49,
+              "30": 120,
+              "60": 220,
+              "90": 300
+            },
+            "keyMonthPrice": 120,
+            "devicePricePerMonth": 60,
+            "personal": false,
+            "tierBasis": "active paid keys / devices on active paid keys, including the order being placed",
+            "upgradeRule": "tier device price per added device; minimum one full month, proportional above 30 remaining days"
+          },
+          "trial": {
+            "days": 1,
+            "devices": 2,
+            "amount": 2,
+            "currency": "RUB"
+          },
+          "quote": {
+            "devices": 2,
+            "days": 90,
+            "amount": 300,
+            "currency": "RUB"
+          }
+        },
+        "meta": {
+          "requestId": "req_3222a58d527f691f"
+        }
+      }
+    },
+    {
+      "request": "GET /pricing?days=7&devices=1",
+      "status": 400,
+      "requestId": "req_1ae9933db51d3293",
+      "body": {
+        "ok": false,
+        "error": {
+          "code": "invalid_pricing_params",
+          "message": "Параметры тарифа вне допустимого диапазона."
+        },
+        "meta": {
+          "requestId": "req_1ae9933db51d3293"
+        }
+      }
+    }
+  ],
+  "keys": {
+    "request": "GET /keys",
+    "status": 200,
+    "requestId": "req_14673907b52d907d",
+    "body": {
+      "ok": true,
+      "data": {
+        "items": [],
+        "count": 0,
+        "query": ""
+      },
+      "meta": {
+        "requestId": "req_14673907b52d907d"
+      }
+    }
+  },
+  "balance": {
+    "request": "GET /balance",
+    "status": 200,
+    "requestId": "req_79a7af7dc0768e22",
+    "body": {
+      "ok": true,
+      "data": {
+        "balance": 0,
+        "currency": "RUB",
+        "unlimited": false
+      },
+      "meta": {
+        "requestId": "req_79a7af7dc0768e22"
+      }
+    }
+  },
+  "keyDetail": {
+    "request": "GET /keys/{firstId}",
+    "status": null,
+    "unavailable": "UNKNOWN (no key available)"
+  },
+  "subscriptionLinks": {
+    "request": "GET /keys/{firstId}/subscription-links",
+    "status": null,
+    "unavailable": "UNKNOWN (no key available)"
+  },
+  "devices": {
+    "request": "GET /keys/{firstId}/devices",
+    "status": null,
+    "unavailable": "UNKNOWN (no key available)"
+  }
+}

@@ -131,9 +131,19 @@ export async function listKeys(telegramId: bigint): Promise<RenderedKey[]> {
 /**
  * Background refresh from ARTEMIDA `GET /keys` (D-29). Called from the BFF
  * route and the cabinet page via `after()`, and fire-and-forget from the bot.
- * Upserts each provider key by the unique `(userId, keyId)` pair and stamps
- * `lastSyncedAt`. Removals are reconciled conservatively: provider omissions
- * (pagination/revocation) must never delete a local cache row.
+ *
+ * OWNERSHIP FILTER (T-02-22, gap #5/#6): the service runs on a single
+ * service-wide `ARTEMIDA_API_KEY`, so `GET /keys` returns EVERY user's keys.
+ * Only entries whose normalized `customerRef` equals the caller's telegram id
+ * are mirrored into the caller's `keys_cache` — a key owned by another user, or
+ * one with a null/absent `customerRef`, is skipped. Absent ownership evidence
+ * is never treated as ownership. Filtering on the observed `customerRef` at the
+ * population step is authoritative regardless of the provider's unverified `q`
+ * semantics (ASSUMP-A6).
+ *
+ * Upserts each owned provider key by the unique `(userId, keyId)` pair and
+ * stamps `lastSyncedAt`. Removals are reconciled conservatively: provider
+ * omissions (pagination/revocation) must never delete a local cache row.
  */
 export async function revalidateKeys(telegramId: bigint): Promise<void> {
   const user = await prisma.user.findUnique({
@@ -142,7 +152,9 @@ export async function revalidateKeys(telegramId: bigint): Promise<void> {
   });
   if (!user) return; // no local identity row to attach the mirror to
   const list = await artemida.listKeys();
+  const ownerRef = String(telegramId);
   for (const key of list.items) {
+    if (key.customerRef !== ownerRef) continue; // not owned — never mirror
     await upsertCachedKey(user.id, key);
   }
 }

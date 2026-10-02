@@ -9,6 +9,7 @@ import { listKeys, revalidateKeys } from '../../lib/keys-service';
 import { prisma } from '../../lib/prisma';
 
 const TELEGRAM_ID = BigInt('200000040');
+const OTHER_TELEGRAM_ID = BigInt('200000041');
 const DAY = 86_400_000;
 
 function key(overrides: Partial<NormalizedKey> & { id: string }): NormalizedKey {
@@ -27,25 +28,32 @@ function key(overrides: Partial<NormalizedKey> & { id: string }): NormalizedKey 
   };
 }
 
-async function cleanup(): Promise<void> {
+async function cleanupUser(telegramId: bigint): Promise<void> {
   const user = await prisma.user.findUnique({
-    where: { telegramId: TELEGRAM_ID },
+    where: { telegramId },
     select: { id: true },
   });
   if (user) await prisma.keyCache.deleteMany({ where: { userId: user.id } });
-  await prisma.user.deleteMany({ where: { telegramId: TELEGRAM_ID } });
+  await prisma.user.deleteMany({ where: { telegramId } });
+}
+
+async function cleanup(): Promise<void> {
+  await cleanupUser(TELEGRAM_ID);
+  await cleanupUser(OTHER_TELEGRAM_ID);
 }
 
 describe('keys-service — cache-first subscription list (D-29)', () => {
   let userId: number;
+  let otherUserId: number;
 
   beforeAll(async () => {
     await cleanup();
-    const user = await prisma.user.create({
-      data: { telegramId: TELEGRAM_ID },
-      select: { id: true },
-    });
+    const [user, other] = await Promise.all([
+      prisma.user.create({ data: { telegramId: TELEGRAM_ID }, select: { id: true } }),
+      prisma.user.create({ data: { telegramId: OTHER_TELEGRAM_ID }, select: { id: true } }),
+    ]);
     userId = user.id;
+    otherUserId = other.id;
   });
 
   afterAll(async () => {
@@ -130,10 +138,21 @@ describe('keys-service — cache-first subscription list (D-29)', () => {
 
   it('revalidateKeys upserts by unique (userId, keyId) without duplicating', async () => {
     await prisma.keyCache.deleteMany({ where: { userId } });
+    const ownedRef = String(TELEGRAM_ID);
     const listKeysSpy = vi.spyOn(artemida, 'listKeys').mockResolvedValue({
       items: [
-        key({ id: 'k_sync_1', name: 'First', expiresAt: new Date(Date.now() + 5 * DAY).toISOString() }),
-        key({ id: 'k_sync_2', name: 'Second', expiresAt: new Date(Date.now() + 6 * DAY).toISOString() }),
+        key({
+          id: 'k_sync_1',
+          name: 'First',
+          expiresAt: new Date(Date.now() + 5 * DAY).toISOString(),
+          customerRef: ownedRef,
+        }),
+        key({
+          id: 'k_sync_2',
+          name: 'Second',
+          expiresAt: new Date(Date.now() + 6 * DAY).toISOString(),
+          customerRef: ownedRef,
+        }),
       ],
       count: 2,
       query: '',
@@ -148,6 +167,7 @@ describe('keys-service — cache-first subscription list (D-29)', () => {
           id: 'k_sync_1',
           name: 'First updated',
           expiresAt: new Date(Date.now() + 5 * DAY).toISOString(),
+          customerRef: ownedRef,
         }),
       ],
       count: 1,
@@ -163,5 +183,53 @@ describe('keys-service — cache-first subscription list (D-29)', () => {
     const first = rows.find((r) => r.keyId === 'k_sync_1');
     expect(first?.name).toBe('First updated');
     expect(first?.lastSyncedAt).toBeInstanceOf(Date);
+  });
+
+  it("ownership: revalidateKeys(A) never mirrors B's key into A's cache", async () => {
+    await prisma.keyCache.deleteMany({ where: { userId: { in: [userId, otherUserId] } } });
+    vi.spyOn(artemida, 'listKeys').mockResolvedValue({
+      items: [key({ id: 'KEY_B', customerRef: String(OTHER_TELEGRAM_ID) })],
+      count: 1,
+      query: '',
+    });
+
+    await revalidateKeys(TELEGRAM_ID);
+
+    const aRows = await prisma.keyCache.findMany({ where: { userId } });
+    expect(aRows).toHaveLength(0);
+  });
+
+  it('ownership: a mixed account-wide list populates each user only with their own keys', async () => {
+    await prisma.keyCache.deleteMany({ where: { userId: { in: [userId, otherUserId] } } });
+    vi.spyOn(artemida, 'listKeys').mockResolvedValue({
+      items: [
+        key({ id: 'KEY_A', customerRef: String(TELEGRAM_ID) }),
+        key({ id: 'KEY_B', customerRef: String(OTHER_TELEGRAM_ID) }),
+      ],
+      count: 2,
+      query: '',
+    });
+
+    await revalidateKeys(TELEGRAM_ID);
+    await revalidateKeys(OTHER_TELEGRAM_ID);
+
+    const aRows = await prisma.keyCache.findMany({ where: { userId } });
+    const bRows = await prisma.keyCache.findMany({ where: { userId: otherUserId } });
+    expect(aRows.map((r) => r.keyId)).toEqual(['KEY_A']);
+    expect(bRows.map((r) => r.keyId)).toEqual(['KEY_B']);
+  });
+
+  it('ownership: a key with null customerRef is never upserted (absence ≠ ownership)', async () => {
+    await prisma.keyCache.deleteMany({ where: { userId: { in: [userId, otherUserId] } } });
+    vi.spyOn(artemida, 'listKeys').mockResolvedValue({
+      items: [key({ id: 'KEY_UNKNOWN', customerRef: null })],
+      count: 1,
+      query: '',
+    });
+
+    await revalidateKeys(TELEGRAM_ID);
+
+    const aRows = await prisma.keyCache.findMany({ where: { userId } });
+    expect(aRows).toHaveLength(0);
   });
 });

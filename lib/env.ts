@@ -15,6 +15,13 @@ const envSchema = z.object({
   // ARTEMIDA Paid API V1 (D-20). Server-only — never expose via NEXT_PUBLIC_*.
   ARTEMIDA_API_KEY: z.string().min(1, "ARTEMIDA_API_KEY is required"),
   ARTEMIDA_BASE_URL: z.string().url().default("https://artemida.cc/v1"),
+  // Platega.io (D-36/D-37). Server-only merchant credentials. Two-mode
+  // separation is env-only: `.env.local` holds the test merchant pair, prod
+  // holds the live pair — nothing in code branches on mode.
+  PLATEGA_MERCHANT_ID: z.string().min(1, "PLATEGA_MERCHANT_ID is required"),
+  PLATEGA_SECRET: z.string().min(1, "PLATEGA_SECRET is required"),
+  PLATEGA_BASE_URL: z.string().url().default("https://app.platega.io"),
+  APP_BASE_URL: z.string().url().default("http://localhost:3000"),
   BOT_MODE: z.enum(["polling", "webhook"]).default("polling"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),

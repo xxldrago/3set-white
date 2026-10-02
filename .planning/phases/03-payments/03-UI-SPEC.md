@@ -1,7 +1,8 @@
 ---
 phase: "3"
 slug: "payments"
-status: draft
+status: approved
+reviewed_at: "2026-10-02"
 shadcn_initialized: false
 preset: none
 created: "2026-10-02"
@@ -244,8 +245,8 @@ text only**, never buttons or backgrounds; 14px/600, `rounded-full`, ~12% tint):
 
 | Meaning | Light | Dark | Applied to |
 |---------|-------|------|------------|
-| Paid / Provisioned (success) | `#16a34a` (green-600) | `#4ade80` (green-400) | `paid`, `provisioned` |
-| Pending / Provisioning (in progress) | `#d97706` (amber-600) | `#fbbf24` (amber-400) | `provisioning` |
+| Provisioned (success) | `#16a34a` (green-600) | `#4ade80` (green-400) | `provisioned` |
+| Paid / Provisioning (in progress) | `#d97706` (amber-600) | `#fbbf24` (amber-400) | `paid`, `provisioning` |
 | Pending / Canceled / Unknown (neutral) | `#71717a` (zinc-500) | `#a1a1aa` (zinc-400) | `pending`, `canceled`, `unknown` |
 | Failed / Refunded (failure) | `#dc2626` (red-600) | `#f87171` (red-400) | `failed`, `refunded` |
 
@@ -372,12 +373,17 @@ native `fetch`, `qrcode` for server-side PNG/SVG rendering) — no remote code, 
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: PASS (FLAG: `renew.cta` single-word — non-blocking)
+- [x] Dimension 2 Visuals: PASS (FLAG: focal point not declared — non-blocking)
+- [x] Dimension 3 Color: PASS (FLAG resolved: `paid`→amber, `provisioned`→green; palette table aligned with state table)
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-10-02 (3 non-blocking FLAGs — see recommendations)
+
+### Non-blocking Recommendations (from checker)
+1. `renew.cta` — consider «Продлить подписку»; «Продлить» acceptable.
+2. Visuals — declare the focal point: `/payments/[orderId]` anchors on the status chip + delivered QR/sub-link; `/payments` anchors on each row's status chip.
+3. Copywriting — register `status.unknown` in the reused-Phase-2 keys list (or define `pay.statusUnknown`).

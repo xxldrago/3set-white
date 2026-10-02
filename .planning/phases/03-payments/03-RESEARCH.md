@@ -603,29 +603,53 @@ await bot.telegram.sendPhoto(chatId, { source: png }, { caption: `${t('key.linkT
 
 ## Open Questions
 
+> **Resolution status (annotated with the 03-01 revision):** Q1–Q5 are resolved at
+> plan level; Q1–Q2 are converted into the mandatory 03-01 owner-gated probe, Q3–Q5 are
+> resolved by plan-level controls (03-02 env/user_setup, 03-03/03-05 reconcile + history).
+> Each question carries an explicit `Status:` line below, mirroring Phase 2.
+
 1. **ARTEMIDA paid-key create endpoint (BLOCKER for PAY-01).**
    - What we know: `lib/artemida.ts` implements `createTrial`, `renewKey`, `upgradeKey` but **no paid `createKey`**; `docs/artemida-v1-contract.md` observed only `GET /pricing|/keys|/balance` and never a create endpoint; `PROJECT.md` names `renew`/`upgrade` but not create.
    - What's unclear: exact method/path/body for a new paid key and its success shape (is it `POST /keys`? does it need `customerRef`? does it accept the same `{days,devices}` as renew?).
-   - Recommendation: make the **first Phase 3 task** an owner-gated live probe (extend `scripts/artemida-probe.mjs` or a `--create-key` guarded flag) that captures the create request/response verbatim into `docs/artemida-v1-contract.md`, then extend `lib/artemida.ts` with `createKey` + tolerant normalizer. Do not build `kind:'new'` fulfillment against an assumed shape.
+   - Recommendation: make the **first Phase 3 task** an owner-gated live probe (extend `scripts/artemida-probe.mjs` or a `--create-key` guarded flag) that captures the create request/response verbatim into `docs/artemida-v1-contract.md`,      then extend `lib/artemida.ts` with `createKey` + tolerant normalizer. Do not build `kind:'new'` fulfillment against an assumed shape.
+   - **Status: RESOLVED (plan-level).** Converted into the mandatory 03-01 owner-gated
+     probe (`--confirm-create-key`) plus `createKey`; the literal request/response shape is
+     captured at 03-01 execution and committed as `docs/artemida-v1-contract.{md,json}`.
+     PAY-01 `kind:'new'` fulfillment is built against the observed shape only.
 
 2. **Prorated upgrade quote source (PAY-03 correctness).**
    - What we know: `GET /pricing` returns a full-key `quote`; `apiPricing.upgradeRule` = "tier device price per added device; minimum one full month, proportional above 30 remaining days"; `devicePricePerMonth: 60`.
    - What's unclear: whether `/pricing` can quote an upgrade delta, or whether the delta must be computed locally (and confirmed at `POST /keys/{id}/upgrade`).
-   - Recommendation: probe a live upgrade (owner-approved) and record the charged amount; extend `/api/pricing` to accept `{kind:'upgrade', keyId, addDevices}` and return the amount the provider charges; if only computable locally, mirror `upgradeRule` exactly and add a test with the recorded fixture.
+   - Recommendation: probe a live upgrade (owner-approved) and record the charged amount; extend `/api/pricing` to accept `{kind:'upgrade', keyId, addDevices}` and      return the amount the provider charges; if only computable locally, mirror `upgradeRule` exactly and add a test with the recorded fixture.
+   - **Status: RESOLVED (plan-level).** The 03-01 probe records the live charged amount for
+     an upgrade; 03-01 Task 3 extends `/api/pricing` with an upgrade quote mode whose amount
+     equals that observed charge (or a local formula whose fixture matches it). 03-04 consumes
+     the quote for `kind:'upgrade'`. PAY-03 stays flagged until 03-01 lands.
 
 3. **Platega test/prod credentials & callback URL (D-36).**
    - What we know: `X-MerchantId`/`X-Secret` are issued by a manager and shown in the LK; callback URL is configured in the LK.
    - What's unclear: the owner's test merchant id/secret and the test callback host (callback forbids localhost/private IPs).
    - Recommendation: `.env.local` holds the test pair; prod env holds live. For callback testing locally, use a tunnel or rely entirely on unit tests with fake fetch; never point the LK at localhost.
+   - **Status: RESOLVED (plan-level).** 03-02 adds `PLATEGA_MERCHANT_ID`/`PLATEGA_SECRET`/
+     `APP_BASE_URL` to `lib/env.ts` with an env-only test/prod switch (D-36) and declares the
+     Platega user_setup (merchant creds + LK callback URL). Local callback behavior is covered
+     by fake-fetch unit tests; the live LK callback registration is a deploy (Phase 5) action.
 
 4. **In-flight / duplicate order creation.**
    - What we know: UI-SPEC requires a client in-flight lock; server currently has no order table.
    - What's unclear: whether a user should be allowed multiple concurrent pending orders.
    - Recommendation: keep v1 simple — allow, but reconcile expires old pending orders; optionally add a partial unique index later. Flag as a low-risk decision.
+   - **Status: RESOLVED (plan-level).** v1 allows concurrent pending orders; the 03-03 hourly
+     reconcile tick advances recoverable pending orders and the client in-flight lock
+     (03-06 PayCta) prevents double submission. A partial unique index is deferred, not needed
+     for v1 correctness.
 
 5. **`return`/`failedUrl` base URL & domain.**
    - What we know: local dev has no `my.3set.online`; Platega requires public HTTPS for the callback but `return`/`failedUrl` may be any URL.
    - Recommendation: add `APP_BASE_URL` to `lib/env.ts` (prod `https://my.3set.online`, dev `http://localhost:3000`).
+   - **Status: RESOLVED (plan-level).** 03-02 adds `APP_BASE_URL` (url, default
+     `http://localhost:3000`) to `lib/env.ts` as server-only and uses it to build the Platega
+     `return`/`failedUrl` `${APP_BASE_URL}/payments/{orderId}`.
 
 ## Environment Availability
 

@@ -187,9 +187,11 @@ export interface SubscriptionForUser {
  * non-owned key never triggers a provider request and can never leak another
  * user's link (T-02-17). The sub-link fetch propagates an `ArtemidaError` so
  * the caller can render `key.linkError`; the traffic read is display-only
- * (D-31) and degrades to nulls rather than failing the link. The observed
- * sub-link/traffic values are mirrored back into `keys_cache` so later
- * cache-first reads stay fresh. Provider shapes for these endpoints are
+ * (D-31) and degrades to nulls rather than failing the link. Traffic and the
+ * sub-link URL are mirrored back into `keys_cache` so later cache-first reads
+ * stay fresh — but the URL write is guarded on a non-null normalized value
+ * (T-02-23): a tolerant-normalizer null on a 2xx must never overwrite a
+ * previously good cached URL. Provider shapes for these endpoints are
  * UNKNOWN (02-01 probe, 0-key account): the client normalizers are tolerant
  * and a missing field surfaces as the RU `key.linkUnavailable` fallback —
  * never a fabricated URL.
@@ -221,7 +223,11 @@ export async function getSubscriptionForUser(
   await prisma.keyCache.update({
     where: { id: row.id },
     data: {
-      subscriptionUrl: links.subscriptionUrl,
+      // Gap #7 (T-02-23): the normalizer is tolerant and yields null on a 2xx
+      // shape mismatch. Write subscription_url ONLY when a real URL was
+      // recognized; omitting the field leaves a previously good cached value
+      // untouched. Traffic/lastSyncedAt still refresh on every successful read.
+      ...(links.subscriptionUrl !== null ? { subscriptionUrl: links.subscriptionUrl } : {}),
       trafficUsedBytes: toBigIntOrNull(traffic.usedBytes),
       trafficLimitBytes: toBigIntOrNull(traffic.limitBytes),
       lastSyncedAt: new Date(),

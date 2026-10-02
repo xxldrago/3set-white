@@ -5,7 +5,13 @@
 // integration style) with a spied `artemida.listKeys` so no network is hit.
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { artemida, type NormalizedKey } from '../../lib/artemida';
-import { listKeys, revalidateKeys } from '../../lib/keys-service';
+import {
+  getKeyForUser,
+  getSubscriptionForUser,
+  listDevices,
+  listKeys,
+  revalidateKeys,
+} from '../../lib/keys-service';
 import { prisma } from '../../lib/prisma';
 
 const TELEGRAM_ID = BigInt('200000040');
@@ -231,5 +237,69 @@ describe('keys-service — cache-first subscription list (D-29)', () => {
 
     const aRows = await prisma.keyCache.findMany({ where: { userId } });
     expect(aRows).toHaveLength(0);
+  });
+
+  it('preserves a good cached subscription_url when a 2xx normalizes to null (gap #7)', async () => {
+    await prisma.keyCache.deleteMany({ where: { userId } });
+    await prisma.keyCache.create({
+      data: {
+        userId,
+        keyId: 'k_sub_keep',
+        status: 'active',
+        subscriptionUrl: 'https://good.test/sub',
+      },
+    });
+    vi.spyOn(artemida, 'getSubscriptionLinks').mockResolvedValue({
+      subscriptionUrl: null,
+      links: [],
+    });
+    vi.spyOn(artemida, 'getTraffic').mockResolvedValue({ usedBytes: null, limitBytes: null });
+
+    const result = await getSubscriptionForUser(TELEGRAM_ID, 'k_sub_keep');
+
+    expect(result?.subscriptionUrl).toBeNull();
+    const row = await prisma.keyCache.findFirst({ where: { userId, keyId: 'k_sub_keep' } });
+    expect(row?.subscriptionUrl).toBe('https://good.test/sub');
+  });
+
+  it('refreshes the cached subscription_url when the provider returns a real URL', async () => {
+    await prisma.keyCache.deleteMany({ where: { userId } });
+    await prisma.keyCache.create({
+      data: {
+        userId,
+        keyId: 'k_sub_refresh',
+        status: 'active',
+        subscriptionUrl: 'https://old.test/sub',
+      },
+    });
+    vi.spyOn(artemida, 'getSubscriptionLinks').mockResolvedValue({
+      subscriptionUrl: 'https://new.test/sub',
+      links: ['vless://new'],
+    });
+    vi.spyOn(artemida, 'getTraffic').mockResolvedValue({ usedBytes: 10, limitBytes: 100 });
+
+    const result = await getSubscriptionForUser(TELEGRAM_ID, 'k_sub_refresh');
+
+    expect(result?.subscriptionUrl).toBe('https://new.test/sub');
+    const row = await prisma.keyCache.findFirst({ where: { userId, keyId: 'k_sub_refresh' } });
+    expect(row?.subscriptionUrl).toBe('https://new.test/sub');
+    expect(row?.trafficUsedBytes).toBe(BigInt(10));
+  });
+
+  it('ownership: a key owned only by B is not readable or mutable by A after revalidation', async () => {
+    await prisma.keyCache.deleteMany({ where: { userId: { in: [userId, otherUserId] } } });
+    vi.spyOn(artemida, 'listKeys').mockResolvedValue({
+      items: [key({ id: 'KEY_B', customerRef: String(OTHER_TELEGRAM_ID) })],
+      count: 1,
+      query: '',
+    });
+
+    await revalidateKeys(TELEGRAM_ID);
+
+    expect(await getKeyForUser(TELEGRAM_ID, 'KEY_B')).toBeNull();
+    expect(await getSubscriptionForUser(TELEGRAM_ID, 'KEY_B')).toBeNull();
+    expect(await listDevices(TELEGRAM_ID, 'KEY_B')).toBeNull();
+    const foreignRows = await prisma.keyCache.findMany({ where: { userId, keyId: 'KEY_B' } });
+    expect(foreignRows).toHaveLength(0);
   });
 });

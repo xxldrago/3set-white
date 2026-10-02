@@ -20,6 +20,31 @@ function build(responses: Response[]) {
   return { artemida, seq };
 }
 
+interface CapturedCall {
+  url: string;
+  method?: string;
+  headers: Record<string, string>;
+  body?: string;
+}
+
+/** Fake fetch that records method/url/headers/body for write-method assertions. */
+function capturing(responses: Response[]): { fetch: typeof globalThis.fetch; calls: CapturedCall[] } {
+  const calls: CapturedCall[] = [];
+  let index = 0;
+  const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    calls.push({
+      url: typeof input === 'string' ? input : input instanceof URL ? input.href : input.url,
+      method: init?.method,
+      headers: (init?.headers as Record<string, string>) ?? {},
+      body: typeof init?.body === 'string' ? init.body : undefined,
+    });
+    const res = responses[Math.min(index, responses.length - 1)];
+    index += 1;
+    return res.clone();
+  }) as typeof globalThis.fetch;
+  return { fetch: fetchImpl, calls };
+}
+
 describe('artemida client — transport + pricing (TRIAL-02)', () => {
   it('parses the object error envelope and maps 402 to payment_required', async () => {
     const { artemida } = build([
@@ -158,5 +183,179 @@ describe('artemida client — transport + pricing (TRIAL-02)', () => {
     expect(headers.Authorization).toBe(`Bearer ${process.env['ARTEMIDA_API_KEY']}`);
     // GET carries no Idempotency-Key (writes only).
     expect(headers['Idempotency-Key']).toBeUndefined();
+  });
+});
+
+describe('artemida client — full V1 surface (D-17)', () => {
+  it('createTrial posts customerRef and normalizes the returned key', async () => {
+    const cap = capturing([
+      jsonResponse({
+        body: success({ key: { id: 'key_1', status: 'active', isTrial: true, devices: [] } }),
+      }),
+    ]);
+    const artemida = createArtemidaClient({ fetch: cap.fetch, retry: FAST });
+
+    await expect(artemida.createTrial({ customerRef: '424242' })).resolves.toMatchObject({
+      id: 'key_1',
+      status: 'active',
+      isTrial: true,
+      devices: 0,
+    });
+    expect(cap.calls[0]?.method).toBe('POST');
+    expect(cap.calls[0]?.url).toContain('/trial');
+    expect(cap.calls[0]?.headers['Idempotency-Key']).toMatch(/[0-9a-f-]{36}/);
+    expect(JSON.parse(cap.calls[0]?.body ?? '{}')).toEqual({ customerRef: '424242' });
+  });
+
+  it('maps a createTrial conflict (409) and does not retry', async () => {
+    const seq = sequenceFetch([jsonResponse({ status: 409, body: objectError('conflict') })]);
+    const artemida = createArtemidaClient({ fetch: seq.fetch, retry: FAST });
+
+    await expect(artemida.createTrial({ customerRef: 'x' })).rejects.toMatchObject({
+      code: 'conflict',
+    });
+    expect(seq.calls()).toBe(1);
+  });
+
+  it('listKeys normalizes the observed empty shape', async () => {
+    const { artemida } = build([
+      jsonResponse({ body: success({ items: [], count: 0, query: '' }) }),
+    ]);
+    await expect(artemida.listKeys()).resolves.toEqual({ items: [], count: 0, query: '' });
+  });
+
+  it('listKeys sends limit/offset/includeRevoked/q and normalizes rows', async () => {
+    const cap = capturing([
+      jsonResponse({
+        body: success({
+          items: [
+            {
+              id: 'k1',
+              name: 'Main',
+              status: 'active',
+              isTrial: false,
+              expiresAt: '2030-01-01T00:00:00Z',
+              deviceLimit: 4,
+              devices: 2,
+              customerRef: '42',
+            },
+          ],
+          count: 1,
+          query: '42',
+        }),
+      }),
+    ]);
+    const artemida = createArtemidaClient({ fetch: cap.fetch, retry: FAST });
+
+    const list = await artemida.listKeys({ limit: 10, offset: 5, includeRevoked: true, q: '42' });
+
+    expect(list.items[0]).toMatchObject({
+      id: 'k1',
+      name: 'Main',
+      status: 'active',
+      deviceLimit: 4,
+      devices: 2,
+      customerRef: '42',
+    });
+    expect(cap.calls[0]?.url).toContain('limit=10');
+    expect(cap.calls[0]?.url).toContain('offset=5');
+    expect(cap.calls[0]?.url).toContain('includeRevoked=true');
+    expect(cap.calls[0]?.url).toContain('q=42');
+  });
+
+  it('getKey normalizes a nested data.key and maps a 404', async () => {
+    const ok = build([jsonResponse({ body: success({ key: { id: 'k2', status: 'active' } }) })]);
+    await expect(ok.artemida.getKey('k2')).resolves.toMatchObject({ id: 'k2', status: 'active' });
+
+    const missing = build([jsonResponse({ status: 404, body: stringError() })]);
+    await expect(missing.artemida.getKey('nope')).rejects.toMatchObject({ code: 'not_found' });
+  });
+
+  it('getSubscriptionLinks normalizes subscriptionUrl with a vless fallback', async () => {
+    const { artemida } = build([
+      jsonResponse({ body: success({ subscriptionUrl: 'https://sub/x', vless: ['vless://a'] }) }),
+    ]);
+    await expect(artemida.getSubscriptionLinks('k2')).resolves.toEqual({
+      subscriptionUrl: 'https://sub/x',
+      links: ['vless://a'],
+    });
+  });
+
+  it('getDevices normalizes token/name rows', async () => {
+    const { artemida } = build([
+      jsonResponse({ body: success({ items: [{ token: 't1', name: 'Phone' }, { id: 't2' }] }) }),
+    ]);
+    await expect(artemida.getDevices('k2')).resolves.toEqual([
+      { token: 't1', name: 'Phone' },
+      { token: 't2', name: null },
+    ]);
+  });
+
+  it('device/traffic/lifecycle writes are idempotent-keyed', async () => {
+    const cap = capturing([jsonResponse({ body: success({}) })]);
+    const artemida = createArtemidaClient({ fetch: cap.fetch, retry: FAST });
+
+    await artemida.deleteDevice('k2', 'tok en');
+    await artemida.clearDevices('k2');
+    await artemida.resetTraffic('k2');
+    await artemida.disableKey('k2');
+    await artemida.enableKey('k2');
+    await artemida.deleteKey('k2');
+    await artemida.deleteKey('k2', { permanent: true });
+
+    const [delDevice, clear, reset, disable, enable, del, delPerm] = cap.calls;
+    expect(delDevice?.method).toBe('DELETE');
+    expect(delDevice?.url).toContain('/keys/k2/devices/tok%20en');
+    expect(clear?.method).toBe('POST');
+    expect(clear?.url).toContain('/keys/k2/devices/clear');
+    expect(reset?.url).toContain('/keys/k2/traffic/reset');
+    expect(disable?.url).toContain('/keys/k2/disable');
+    expect(enable?.url).toContain('/keys/k2/enable');
+    expect(del?.method).toBe('DELETE');
+    expect(del?.url).toContain('/keys/k2');
+    expect(del?.url).not.toContain('permanent');
+    expect(delPerm?.url).toContain('/keys/k2/permanent');
+    for (const call of cap.calls) {
+      expect(call.headers['Idempotency-Key']).toBeTruthy();
+    }
+  });
+
+  it('getTraffic normalizes used/limit bytes (0 = unlimited)', async () => {
+    const { artemida } = build([
+      jsonResponse({ body: success({ usedBytes: 1024, limitBytes: 0 }) }),
+    ]);
+    await expect(artemida.getTraffic('k2')).resolves.toEqual({ usedBytes: 1024, limitBytes: 0 });
+  });
+
+  it('renewKey / upgradeKey post {days,devices} and normalize the key', async () => {
+    const cap = capturing([
+      jsonResponse({
+        body: success({ key: { id: 'k2', status: 'active', expiresAt: '2030-05-01T00:00:00Z' } }),
+      }),
+      jsonResponse({ body: success({ key: { id: 'k2', status: 'active', deviceLimit: 6 } }) }),
+    ]);
+    const artemida = createArtemidaClient({ fetch: cap.fetch, retry: FAST });
+
+    await expect(artemida.renewKey('k2', { days: 30, devices: 4 })).resolves.toMatchObject({
+      id: 'k2',
+      expiresAt: '2030-05-01T00:00:00Z',
+    });
+    await expect(artemida.upgradeKey('k2', { days: 90, devices: 6 })).resolves.toMatchObject({
+      deviceLimit: 6,
+    });
+    expect(cap.calls[0]?.url).toContain('/keys/k2/renew');
+    expect(JSON.parse(cap.calls[0]?.body ?? '{}')).toEqual({ days: 30, devices: 4 });
+    expect(cap.calls[1]?.url).toContain('/keys/k2/upgrade');
+    expect(JSON.parse(cap.calls[1]?.body ?? '{}')).toEqual({ days: 90, devices: 6 });
+    for (const call of cap.calls) {
+      expect(call.headers['Idempotency-Key']).toBeTruthy();
+    }
+  });
+
+  it('getBalance normalizes the observed balance shape', async () => {
+    const { artemida } = build([
+      jsonResponse({ body: success({ balance: 0, currency: 'RUB', unlimited: false }) }),
+    ]);
+    await expect(artemida.getBalance()).resolves.toEqual({ balance: 0, currency: 'RUB', unlimited: false });
   });
 });

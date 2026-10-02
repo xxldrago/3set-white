@@ -202,8 +202,183 @@ function normalizePricing(data: unknown, days: number, devices: number): Pricing
   };
 }
 
+// ---------------------------------------------------------------------------
+// Shared normalized models consumed by the later phase slices (D-17).
+// Key-scoped shapes were NOT observable in the 02-01 probe (0-key account), so
+// every schema below is tolerant/`.passthrough()` and extraction falls back
+// across the cabinet field vocabulary until a key exists to re-probe.
+// ---------------------------------------------------------------------------
+
+export interface NormalizedKey {
+  id: string;
+  name: string | null;
+  status: string;
+  isTrial: boolean;
+  expiresAt: string | null;
+  deviceLimit: number | null;
+  devices: number | null;
+  subscriptionUrl: string | null;
+  customerRef: string | null;
+  trafficUsedBytes: number | null;
+  trafficLimitBytes: number | null;
+}
+
+export interface KeyList {
+  items: NormalizedKey[];
+  count: number;
+  query: string;
+}
+
+export interface Device {
+  token: string;
+  name: string | null;
+}
+
+export interface SubscriptionLinks {
+  subscriptionUrl: string | null;
+  links: string[];
+}
+
+export interface Traffic {
+  usedBytes: number | null;
+  limitBytes: number | null;
+}
+
+export interface Balance {
+  balance: number;
+  currency: string;
+  unlimited: boolean;
+}
+
+function asString(value: unknown): string | null {
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+function asBool(value: unknown): boolean {
+  return value === true;
+}
+
+function asStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
+}
+
+function asArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+/** `devices` may be a count or an array of connected devices. */
+function asDeviceCount(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (Array.isArray(value)) return value.length;
+  return null;
+}
+
+function normalizeKey(raw: unknown, fallbackId?: string): NormalizedKey {
+  const d = asRecord(raw);
+  return {
+    id: asString(d.id) ?? asString(d.keyId) ?? asString(d.key_id) ?? fallbackId ?? "",
+    name: asString(d.name),
+    status: asString(d.status) ?? "unknown",
+    isTrial: asBool(d.isTrial) || asBool(d.is_trial),
+    expiresAt: asString(d.expiresAt) ?? asString(d.expireAt) ?? asString(d.expire_at),
+    deviceLimit: pickNumber(d.deviceLimit, d.device_limit),
+    devices: asDeviceCount(d.devices),
+    subscriptionUrl: asString(d.subscriptionUrl) ?? asString(d.subscription_url),
+    customerRef: asString(d.customerRef) ?? asString(d.customer_ref),
+    trafficUsedBytes: pickNumber(d.trafficUsedBytes, d.traffic_used_bytes),
+    trafficLimitBytes: pickNumber(d.trafficLimitBytes, d.traffic_limit_bytes),
+  };
+}
+
+/** Single-key responses may nest the key under `data.key` or return it directly. */
+function normalizeKeyResponse(data: unknown, fallbackId?: string): NormalizedKey {
+  const d = asRecord(data);
+  return normalizeKey(d.key !== undefined ? d.key : data, fallbackId);
+}
+
+function normalizeKeyList(data: unknown): KeyList {
+  const d = asRecord(data);
+  const rawItems = asArray(d.items).length
+    ? asArray(d.items)
+    : asArray(d.keys).length
+      ? asArray(d.keys)
+      : asArray(data);
+  const items = rawItems.map((item) => normalizeKey(item));
+  return {
+    items,
+    count: pickNumber(d.count, d.total) ?? items.length,
+    query: asString(d.query) ?? "",
+  };
+}
+
+function normalizeSubscriptionLinks(data: unknown): SubscriptionLinks {
+  const d = asRecord(data);
+  const links = asStringArray(d.links);
+  const vless = asStringArray(d.vless);
+  return {
+    subscriptionUrl:
+      asString(d.subscriptionUrl) ?? asString(d.subscription_url) ?? asString(d.url),
+    links: links.length ? links : vless,
+  };
+}
+
+function normalizeDevices(data: unknown): Device[] {
+  const d = asRecord(data);
+  const raw = asArray(d.items).length
+    ? asArray(d.items)
+    : asArray(d.devices).length
+      ? asArray(d.devices)
+      : asArray(data);
+  return raw.map((item) => {
+    const r = asRecord(item);
+    return {
+      token: asString(r.token) ?? asString(r.id) ?? "",
+      name: asString(r.name),
+    };
+  });
+}
+
+function normalizeTraffic(data: unknown): Traffic {
+  const d = asRecord(data);
+  return {
+    usedBytes: pickNumber(d.usedBytes, d.used, d.trafficUsedBytes, d.traffic_used_bytes),
+    limitBytes: pickNumber(d.limitBytes, d.limit, d.trafficLimitBytes, d.traffic_limit_bytes),
+  };
+}
+
+function normalizeBalance(data: unknown): Balance {
+  const d = asRecord(data);
+  return {
+    balance: pickNumber(d.balance, d.amount) ?? 0,
+    currency: asString(d.currency) ?? "RUB",
+    unlimited: asBool(d.unlimited),
+  };
+}
+
+/** Full ARTEMIDA V1 surface (D-17). Methods are authored here even where a
+ *  later phase owns the route/UI wiring (see COVERAGE.md). */
 export interface ArtemidaClient {
   getPricing(input: { days: number; devices: number }): Promise<Pricing>;
+  createTrial(input: { customerRef: string }): Promise<NormalizedKey>;
+  listKeys(input?: {
+    limit?: number;
+    offset?: number;
+    includeRevoked?: boolean;
+    q?: string;
+  }): Promise<KeyList>;
+  getKey(id: string): Promise<NormalizedKey>;
+  getSubscriptionLinks(id: string): Promise<SubscriptionLinks>;
+  getDevices(id: string): Promise<Device[]>;
+  deleteDevice(id: string, token: string): Promise<void>;
+  clearDevices(id: string): Promise<void>;
+  getTraffic(id: string): Promise<Traffic>;
+  resetTraffic(id: string): Promise<void>;
+  renewKey(id: string, input: { days: number; devices: number }): Promise<NormalizedKey>;
+  upgradeKey(id: string, input: { days: number; devices: number }): Promise<NormalizedKey>;
+  disableKey(id: string): Promise<void>;
+  enableKey(id: string): Promise<void>;
+  deleteKey(id: string, input?: { permanent?: boolean }): Promise<void>;
+  getBalance(): Promise<Balance>;
 }
 
 /**
@@ -281,12 +456,81 @@ export function createArtemidaClient(options: ArtemidaClientOptions = {}): Artem
     });
   }
 
+  const keyPath = (id: string) => `/keys/${encodeURIComponent(id)}`;
+
   return {
     getPricing: ({ days, devices }) =>
       request("GET", "/pricing", {
         query: { days, devices },
         normalize: (data) => normalizePricing(data, days, devices),
       }),
+
+    createTrial: ({ customerRef }) =>
+      request("POST", "/trial", {
+        body: { customerRef },
+        normalize: (data) => normalizeKeyResponse(data),
+      }),
+
+    listKeys: (input = {}) =>
+      request("GET", "/keys", {
+        query: {
+          limit: input.limit,
+          offset: input.offset,
+          includeRevoked: input.includeRevoked,
+          q: input.q,
+        },
+        normalize: normalizeKeyList,
+      }),
+
+    getKey: (id) =>
+      request("GET", keyPath(id), { normalize: (data) => normalizeKeyResponse(data, id) }),
+
+    getSubscriptionLinks: (id) =>
+      request("GET", `${keyPath(id)}/subscription-links`, {
+        normalize: normalizeSubscriptionLinks,
+      }),
+
+    getDevices: (id) =>
+      request("GET", `${keyPath(id)}/devices`, { normalize: normalizeDevices }),
+
+    deleteDevice: (id, token) =>
+      request("DELETE", `${keyPath(id)}/devices/${encodeURIComponent(token)}`, {
+        normalize: () => undefined,
+      }),
+
+    clearDevices: (id) =>
+      request("POST", `${keyPath(id)}/devices/clear`, { normalize: () => undefined }),
+
+    getTraffic: (id) =>
+      request("GET", `${keyPath(id)}/traffic`, { normalize: normalizeTraffic }),
+
+    resetTraffic: (id) =>
+      request("POST", `${keyPath(id)}/traffic/reset`, { normalize: () => undefined }),
+
+    renewKey: (id, { days, devices }) =>
+      request("POST", `${keyPath(id)}/renew`, {
+        body: { days, devices },
+        normalize: (data) => normalizeKeyResponse(data, id),
+      }),
+
+    upgradeKey: (id, { days, devices }) =>
+      request("POST", `${keyPath(id)}/upgrade`, {
+        body: { days, devices },
+        normalize: (data) => normalizeKeyResponse(data, id),
+      }),
+
+    disableKey: (id) =>
+      request("POST", `${keyPath(id)}/disable`, { normalize: () => undefined }),
+
+    enableKey: (id) =>
+      request("POST", `${keyPath(id)}/enable`, { normalize: () => undefined }),
+
+    deleteKey: (id, input = {}) =>
+      request("DELETE", `${keyPath(id)}${input.permanent ? "/permanent" : ""}`, {
+        normalize: () => undefined,
+      }),
+
+    getBalance: () => request("GET", "/balance", { normalize: normalizeBalance }),
   };
 }
 

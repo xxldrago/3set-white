@@ -8,7 +8,7 @@
 // - A provider failure rolls the claim back so the user can retry (D-23), but
 //   the rollback is guarded by `trialKeyId: null` so a recorded success is
 //   never reopened (Pitfall 5).
-import { ArtemidaError, artemida, type NormalizedKey } from "./artemida";
+import { ArtemidaError, artemida, type Device, type NormalizedKey } from "./artemida";
 import { t } from "./i18n";
 import { prisma } from "./prisma";
 
@@ -217,6 +217,57 @@ export async function getSubscriptionForUser(
   });
 
   return { subscriptionUrl: links.subscriptionUrl, links: links.links, traffic };
+}
+
+// ---------------------------------------------------------------------------
+// Device management (CAB-03 / D-32). Every operation resolves the owning key
+// row from the session telegram id BEFORE any provider call (T-02-21), so a
+// key the caller does not own can never mutate another user's devices: the
+// caller sees the same result as for a missing key (null / false → 404).
+//
+// The provider shape for `GET /keys/{id}/devices` was UNKNOWN in the 02-01
+// probe (0-key account). The client normalizer accepts both `token` and `id`
+// (ASSUMP-A5); here we additionally drop entries with no addressable token so
+// the UI never renders a delete control that would target an empty token —
+// absence degrades to the RU `devices.empty` fallback rather than a fabricated
+// row (02-01 KEY CONTRACT).
+// ---------------------------------------------------------------------------
+
+/** Owned `keys_cache` row id for (telegramId, keyId), or null when not owned. */
+async function ownedKeyRowId(telegramId: bigint, keyId: string): Promise<number | null> {
+  const row = await prisma.keyCache.findFirst({
+    where: { keyId, user: { telegramId } },
+    select: { id: true },
+  });
+  return row?.id ?? null;
+}
+
+/** Ownership-joined device list; null for a non-owned/missing key (no oracle). */
+export async function listDevices(
+  telegramId: bigint,
+  keyId: string,
+): Promise<Device[] | null> {
+  if ((await ownedKeyRowId(telegramId, keyId)) === null) return null;
+  const devices = await artemida.getDevices(keyId);
+  return devices.filter((device) => device.token.length > 0);
+}
+
+/** Delete one device on an owned key. Returns false (→ 404) when not owned. */
+export async function removeDevice(
+  telegramId: bigint,
+  keyId: string,
+  token: string,
+): Promise<boolean> {
+  if ((await ownedKeyRowId(telegramId, keyId)) === null) return false;
+  await artemida.deleteDevice(keyId, token);
+  return true;
+}
+
+/** Clear every device on an owned key. Returns false (→ 404) when not owned. */
+export async function clearDevices(telegramId: bigint, keyId: string): Promise<boolean> {
+  if ((await ownedKeyRowId(telegramId, keyId)) === null) return false;
+  await artemida.clearDevices(keyId);
+  return true;
 }
 
 /**

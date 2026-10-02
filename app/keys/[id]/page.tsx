@@ -9,18 +9,21 @@
 // `key.linkUnavailable`; a fetch failure renders `key.linkError` + retry.
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import ConfirmPanel from '@/components/ConfirmPanel';
 import CopyButton from '@/components/CopyButton';
 import InstallPrompt from '@/components/InstallPrompt';
 import QrSvg from '@/components/QrSvg';
-import { ArtemidaError } from '@/lib/artemida';
+import { ArtemidaError, type Device } from '@/lib/artemida';
 import { t } from '@/lib/i18n';
 import {
   formatKeyDate,
   getKeyForUser,
   getSubscriptionForUser,
+  listDevices,
   statusLabel,
   type SubscriptionForUser,
 } from '@/lib/keys-service';
+import { logger } from '@/lib/logger';
 import { renderSubscriptionQr } from '@/lib/qr';
 import { requireSession, SessionError } from '@/lib/session';
 
@@ -77,6 +80,26 @@ export default async function KeyDetailPage({
   } catch (err) {
     if (err instanceof ArtemidaError) {
       linkError = true;
+    } else {
+      throw err;
+    }
+  }
+
+  // Device list is best-effort: the provider shape for `GET /keys/{id}/devices`
+  // is UNKNOWN (02-01 0-key probe), so a fetch failure or an unaddressable
+  // payload degrades to the `devices.empty` RU fallback — never a fabricated
+  // device row (02-01 KEY CONTRACT).
+  let devices: Device[] = [];
+  try {
+    devices = (await listDevices(BigInt(telegramId), id)) ?? [];
+  } catch (err) {
+    if (err instanceof ArtemidaError) {
+      logger.warn({
+        route: 'keys-detail',
+        code: err.code,
+        requestId: err.requestId,
+        outcome: 'devices_unavailable',
+      });
     } else {
       throw err;
     }
@@ -146,6 +169,45 @@ export default async function KeyDetailPage({
           <p className="text-base tabular-nums text-zinc-700 dark:text-zinc-300">
             {trafficLine(traffic)}
           </p>
+        </section>
+
+        <section className={CARD}>
+          <h2 className="text-xl font-semibold text-black dark:text-zinc-50">
+            {t('key.devicesTitle')}
+          </h2>
+
+          {devices.length === 0 ? (
+            <p className="text-zinc-600 dark:text-zinc-400">{t('devices.empty')}</p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {devices.map((device) => {
+                const label = device.name ?? device.token;
+                return (
+                  <li key={device.token} className="flex items-center justify-between gap-3">
+                    <span
+                      className="min-w-0 flex-1 truncate text-base text-zinc-700 dark:text-zinc-300"
+                      title={label}
+                    >
+                      {label}
+                    </span>
+                    <ConfirmPanel
+                      kind="delete"
+                      method="DELETE"
+                      url={`/api/keys/${encodeURIComponent(id)}/devices/${encodeURIComponent(device.token)}`}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {devices.length > 0 && (
+            <ConfirmPanel
+              kind="clear"
+              method="POST"
+              url={`/api/keys/${encodeURIComponent(id)}/devices/clear`}
+            />
+          )}
         </section>
 
         <nav className="flex flex-col gap-2 sm:flex-row">

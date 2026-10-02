@@ -9,11 +9,143 @@
 //   the rollback is guarded by `trialKeyId: null` so a recorded success is
 //   never reopened (Pitfall 5).
 import { ArtemidaError, artemida, type NormalizedKey } from "./artemida";
+import { t } from "./i18n";
 import { prisma } from "./prisma";
 
 export type StartTrialResult =
   | { kind: "created"; key: NormalizedKey }
   | { kind: "already_used" };
+
+// ---------------------------------------------------------------------------
+// Cache-first subscription read (D-29) + correctness (Pitfall 6 / T-02-14).
+//
+// The card's status is derived from `expiresAt` against `now`, NEVER from the
+// stored `status` string: a stale cache must not claim more validity than the
+// expiry supports. `status.unknown` covers absent status/expiry.
+// ---------------------------------------------------------------------------
+
+export type StatusKind = "active" | "expiring" | "expired" | "pending" | "unknown";
+
+export type RenderedKey = NormalizedKey & { statusKind: StatusKind };
+
+type KeyCacheRow = Awaited<ReturnType<typeof prisma.keyCache.findMany>>[number];
+
+const DAY_MS = 86_400_000;
+// A key with ≤3 days of validity is "expiring" (UI-SPEC status.expiring).
+const EXPIRING_WINDOW_MS = 3 * DAY_MS;
+
+// UI-SPEC populated state order: active → expiring → expired → pending.
+const STATUS_ORDER: Record<StatusKind, number> = {
+  active: 0,
+  expiring: 1,
+  expired: 2,
+  pending: 3,
+  unknown: 4,
+};
+
+/**
+ * Derive the display status from expiry vs `now` (Pitfall 6). The stored
+ * `status` string is only consulted when there is no expiry at all, and then
+ * only to recognise the non-time lifecycle states `pending`/`expired`.
+ */
+export function deriveStatusKind(status: string, expiresAt: Date | null): StatusKind {
+  if (expiresAt) {
+    const remaining = expiresAt.getTime() - Date.now();
+    if (remaining <= 0) return "expired";
+    if (remaining <= EXPIRING_WINDOW_MS) return "expiring";
+    return "active";
+  }
+  if (status === "pending") return "pending";
+  if (status === "expired") return "expired";
+  return "unknown";
+}
+
+/**
+ * Localised badge label for a status kind. The five literal `t("status.…")`
+ * calls below are the single registration point for the scanner — never build
+ * the key by interpolation. Shared by the cabinet card and the bot summary.
+ */
+export function statusLabel(kind: StatusKind, expiresAt: string | null): string {
+  switch (kind) {
+    case "active":
+      return t("status.active");
+    case "expiring": {
+      const days = expiresAt
+        ? Math.max(1, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / DAY_MS))
+        : 0;
+      return t("status.expiring", { days });
+    }
+    case "expired":
+      return t("status.expired");
+    case "pending":
+      return t("status.pending");
+    default:
+      return t("status.unknown");
+  }
+}
+
+/** `DD.MM.YYYY` (ru-RU) for a card / bot expiry line. */
+export function formatKeyDate(expiresAt: string): string {
+  const date = new Date(expiresAt);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
+
+function toRenderedKey(row: KeyCacheRow): RenderedKey {
+  return {
+    id: row.keyId,
+    name: row.name,
+    status: row.status,
+    isTrial: row.isTrial,
+    expiresAt: row.expiresAt ? row.expiresAt.toISOString() : null,
+    deviceLimit: row.deviceLimit,
+    devices: row.devices,
+    subscriptionUrl: row.subscriptionUrl,
+    customerRef: row.customerRef,
+    trafficUsedBytes: row.trafficUsedBytes === null ? null : Number(row.trafficUsedBytes),
+    trafficLimitBytes: row.trafficLimitBytes === null ? null : Number(row.trafficLimitBytes),
+    statusKind: deriveStatusKind(row.status, row.expiresAt),
+  };
+}
+
+/**
+ * Read the user's keys from `keys_cache` (instant, D-29), scoped by the owning
+ * user row resolved from the session telegram id (T-02-13 IDOR). Rows are
+ * ordered active → expiring → expired → pending and rendered with a derived
+ * status.
+ */
+export async function listKeys(telegramId: bigint): Promise<RenderedKey[]> {
+  const rows = await prisma.keyCache.findMany({
+    where: { user: { telegramId } },
+    orderBy: { updatedAt: "desc" },
+  });
+  return rows
+    .map(toRenderedKey)
+    .sort((a, b) => STATUS_ORDER[a.statusKind] - STATUS_ORDER[b.statusKind]);
+}
+
+/**
+ * Background refresh from ARTEMIDA `GET /keys` (D-29). Called from the BFF
+ * route and the cabinet page via `after()`, and fire-and-forget from the bot.
+ * Upserts each provider key by the unique `(userId, keyId)` pair and stamps
+ * `lastSyncedAt`. Removals are reconciled conservatively: provider omissions
+ * (pagination/revocation) must never delete a local cache row.
+ */
+export async function revalidateKeys(telegramId: bigint): Promise<void> {
+  const user = await prisma.user.findUnique({
+    where: { telegramId },
+    select: { id: true },
+  });
+  if (!user) return; // no local identity row to attach the mirror to
+  const list = await artemida.listKeys();
+  for (const key of list.items) {
+    await upsertCachedKey(user.id, key);
+  }
+}
 
 /**
  * Atomically claim the one-time trial for a telegram id. A SINGLE statement

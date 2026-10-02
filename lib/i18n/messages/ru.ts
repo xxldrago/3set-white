@@ -8,8 +8,6 @@ export const ru = {
     tagline: 'VPN-подписки: покупка и управление ключами',
   },
   home: {
-    keysTitle: 'Мои ключи',
-    keysText: 'Кабинет-скелет: список ключей появится в следующих фазах.',
     loginTitle: 'Вход в кабинет',
     loginText: 'Войдите через Telegram, чтобы управлять подпиской.',
     loginCta: 'Войти через Telegram',
@@ -48,6 +46,22 @@ export const ru = {
     price: '{price} ₽',
     error: 'Не удалось загрузить цены. Попробуйте ещё раз.',
   },
+  subs: {
+    title: 'Мои подписки',
+    countOne: '{n} подписка',
+    countFew: '{n} подписки',
+    countMany: '{n} подписок',
+    emptyHeading: 'У вас пока нет подписок',
+    emptyBody:
+      'Получите trial-ключ на 1 день или выберите тариф — подключение займёт пару минут.',
+  },
+  status: {
+    active: 'Активен',
+    expiring: 'Истекает {days} дн.',
+    expired: 'Истёк',
+    pending: 'Ожидает оплаты',
+    unknown: 'Неизвестно',
+  },
   trial: {
     cta: 'Попробовать',
     ctaLoading: 'Получаем ключ…',
@@ -55,12 +69,18 @@ export const ru = {
     usedHeading: 'Вы уже использовали trial',
     usedBody: 'Бесплатный период доступен один раз на аккаунт.',
     subtitle: '1 день · 2 устройства',
+    badge: 'TRIAL',
   },
   key: {
     buyCta: 'Купить подписку',
+    expires: 'Действует до {date}',
+    devicesCount: '{n} из {max}',
   },
   common: {
     retry: 'Повторить',
+    errorLoad: 'Не удалось загрузить данные. Проверьте соединение и попробуйте снова.',
+    errorUnavailable: 'Сервис временно недоступен. Мы уже чиним — попробуйте через минуту.',
+    errorRateLimit: 'Слишком много запросов. Повторите через {seconds} сек.',
   },
   bot: {
     welcome: 'Добро пожаловать в 3set VPN! Выберите раздел ниже.',

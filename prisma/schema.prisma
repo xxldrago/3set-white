@@ -33,7 +33,86 @@ model User {
   trialUsed  Boolean @default(false) @map("trial_used")
   trialKeyId String? @map("trial_key_id")
 
+  // Phase 3 money path (D-39): every purchase/renew/upgrade is an order row.
+  orders     Order[]
+
   @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// Phase 3 money path (D-38/D-39). One Order per purchase intent; the state
+// machine is pending → paid → provisioning → provisioned / failed, with the
+// terminal refunded/canceled outcomes. `plategaTxId` is UNIQUE so a Platega
+// transaction can never bind to two orders (tx-id dedupe). Provisioning is
+// asynchronous via the Outbox (D-38) — the callback only flips pending→paid
+// and enqueues, it never issues a key.
+// ---------------------------------------------------------------------------
+
+enum OrderKind {
+  new
+  renew
+  upgrade
+}
+
+enum OrderStatus {
+  pending
+  paid
+  provisioning
+  provisioned
+  failed
+  canceled
+  refunded
+}
+
+enum OutboxStatus {
+  pending
+  processing
+  done
+  failed
+}
+
+model Order {
+  id               String      @id @default(cuid())
+  userId           Int         @map("user_id")
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind             OrderKind
+  keyId            String?     @map("key_id")
+  days             Int?
+  devices          Int
+  amount           Int // whole RUB from ARTEMIDA GET /pricing (server-quoted)
+  currency         String      @default("RUB")
+  status           OrderStatus @default(pending)
+  plategaTxId      String?     @unique @map("platega_tx_id")
+  paymentUrl       String?     @map("payment_url")
+  paidAt           DateTime?   @map("paid_at")
+  provisionedKeyId String?     @map("provisioned_key_id")
+  errorCode        String?     @map("error_code")
+  attempts         Int         @default(0)
+  nextAttemptAt    DateTime?   @map("next_attempt_at")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+  outbox           Outbox[]
+
+  @@index([userId, createdAt])
+  @@index([status, nextAttemptAt])
+  @@map("orders")
+}
+
+model Outbox {
+  id            String       @id @default(cuid())
+  orderId       String       @map("order_id")
+  order         Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  type          String
+  status        OutboxStatus @default(pending)
+  attempts      Int          @default(0)
+  lastError     String?      @map("last_error")
+  nextAttemptAt DateTime     @default(now()) @map("next_attempt_at")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  processedAt   DateTime?    @map("processed_at")
+
+  @@unique([orderId, type])
+  @@index([status, nextAttemptAt])
+  @@map("outbox")
 }
 
 // ARTEMIDA mirror only — ARTEMIDA owns the truth (D-07/D-29).

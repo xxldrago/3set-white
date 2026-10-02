@@ -156,3 +156,17 @@ None outstanding. The key is already in `.env.local`. Human confirmation remaini
 
 *Phase: 02-keys-trial*
 *Completed: 2026-10-02*
+
+## Self-Check: PASSED
+
+- FOUND: scripts/artemida-probe.mjs
+- FOUND: docs/artemida-v1-contract.json
+- FOUND: docs/artemida-v1-contract.md
+- FOUND: .planning/phases/02-keys-trial/02-01-SUMMARY.md
+- FOUND: commit 0866f43 (Task 1 probe)
+- FOUND: commit 89330b9 (halted summary)
+- FOUND: commit c273a4f (Task 3 contract artifacts)
+- FOUND: commit 6b9e9e7 (finalized SUMMARY + WINDOWS ledger)
+- DRY-RUN: `node scripts/artemida-probe.mjs --dry-run` exits 0
+- SECRET: no `ARTEMIDA_API_KEY` value in probe, json, md, or SUMMARY
+- VERIFY: plan Task 3 automated verify exits 0

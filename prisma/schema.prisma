@@ -26,18 +26,34 @@ model User {
   createdAt  DateTime @default(now()) @map("created_at")
   keys       KeyCache[]
 
+  // Phase 2 trial anti-abuse (D-21): one trial per telegram-id. `trialUsed`
+  // is claimed by a single atomic UPDATE ... WHERE trial_used=false (D-22);
+  // `trialKeyId` doubles as the in-flight/success sentinel that guards the
+  // D-23 rollback from clobbering a recorded success (Pitfall 5).
+  trialUsed  Boolean @default(false) @map("trial_used")
+  trialKeyId String? @map("trial_key_id")
+
   @@map("users")
 }
 
-// ARTEMIDA mirror only — ARTEMIDA owns the truth (D-07).
+// ARTEMIDA mirror only — ARTEMIDA owns the truth (D-07/D-29).
 model KeyCache {
-  id        Int      @id @default(autoincrement())
-  userId    Int      @map("user_id")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  keyId     String   @map("key_id")
-  status    String
-  expiresAt DateTime? @map("expires_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id                Int       @id @default(autoincrement())
+  userId            Int       @map("user_id")
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  keyId             String    @map("key_id")
+  name              String?
+  status            String
+  isTrial           Boolean   @default(false) @map("is_trial")
+  expiresAt         DateTime? @map("expires_at")
+  deviceLimit       Int?      @map("device_limit")
+  devices           Int?
+  trafficUsedBytes  BigInt?   @map("traffic_used_bytes")
+  trafficLimitBytes BigInt?   @map("traffic_limit_bytes")
+  subscriptionUrl   String?   @map("subscription_url")
+  customerRef       String?   @map("customer_ref")
+  lastSyncedAt      DateTime? @map("last_synced_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
   @@unique([userId, keyId])
   @@map("keys_cache")

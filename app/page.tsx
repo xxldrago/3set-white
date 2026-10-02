@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import InstallPrompt from '@/components/InstallPrompt';
 import TariffPicker from '@/components/TariffPicker';
+import TrialButton from '@/components/TrialButton';
 import { t } from '@/lib/i18n';
 
 // Session-aware shell skeleton. Session verification itself is owned by
@@ -38,7 +39,10 @@ export default async function Home() {
                 </Link>
               </nav>
             </section>
-            <TariffPicker />
+            <TrialButton />
+            <div id="tariff">
+              <TariffPicker />
+            </div>
           </>
         ) : (
           <section className="flex flex-col gap-4 rounded-2xl border border-black/10 p-6 dark:border-white/15">

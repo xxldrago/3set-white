@@ -183,7 +183,10 @@ export default async function KeyDetailPage({
               {devices.map((device) => {
                 const label = device.name ?? device.token;
                 return (
-                  <li key={device.token} className="flex items-center justify-between gap-3">
+                  <li
+                    key={device.token}
+                    className="flex flex-wrap items-center justify-between gap-3"
+                  >
                     <span
                       className="min-w-0 flex-1 truncate text-base text-zinc-700 dark:text-zinc-300"
                       title={label}
@@ -193,6 +196,7 @@ export default async function KeyDetailPage({
                     <ConfirmPanel
                       kind="delete"
                       method="DELETE"
+                      deviceName={label}
                       url={`/api/keys/${encodeURIComponent(id)}/devices/${encodeURIComponent(device.token)}`}
                     />
                   </li>
@@ -205,6 +209,7 @@ export default async function KeyDetailPage({
             <ConfirmPanel
               kind="clear"
               method="POST"
+              deviceCount={devices.length}
               url={`/api/keys/${encodeURIComponent(id)}/devices/clear`}
             />
           )}

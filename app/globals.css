@@ -22,5 +22,6 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* No body font override: the loaded Geist face wins via the --font-sans
+     token (UI-SPEC "Font rationale"). */
 }

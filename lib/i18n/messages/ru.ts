@@ -90,6 +90,9 @@ export const ru = {
     menuTrial: 'Попробовать',
     menuTariffs: 'Тарифы',
     trialIssued: 'Ваш trial-ключ:',
+    keysTitle: 'Мои подписки',
+    keysEmpty: 'У вас пока нет подписок. Получите trial или выберите тариф.',
+    keysError: 'Не удалось загрузить подписки. Попробуйте позже.',
   },
 } as const;
 

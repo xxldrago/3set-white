@@ -8,8 +8,8 @@
 import { Telegraf } from "telegraf";
 import { artemida } from "./artemida";
 import { env } from "./env";
-import { t } from "./i18n";
-import { startTrial } from "./keys-service";
+import { t, tp } from "./i18n";
+import { formatKeyDate, listKeys, revalidateKeys, startTrial, statusLabel } from "./keys-service";
 import { logger } from "./logger";
 import { prisma } from "./prisma";
 
@@ -149,6 +149,53 @@ bot.action(/^tariff:devices:(\d+):(\d+)$/, async (ctx) => {
     );
   } catch {
     await ctx.reply(t("pricing.error"));
+  }
+});
+
+// «Мои ключи» — the SAME listKeys/revalidateKeys read path the cabinet uses
+// (cache-first, D-29). Reply from the local mirror, then refresh from ARTEMIDA
+// in the background; every string resolves through t() (D-16), never raw
+// provider data. The key-detail / subscription-link message is added in 02-05.
+bot.hears(t("bot.menuKeys"), async (ctx) => {
+  const from = ctx.from;
+  if (!from) return;
+  const telegramId = BigInt(from.id);
+  try {
+    const cached = await listKeys(telegramId);
+    // Background refresh: best-effort, never blocks or fails the reply.
+    void revalidateKeys(telegramId).catch(() => {
+      logger.warn({
+        updateId: ctx.update.update_id,
+        telegramId: from.id,
+        outcome: "keys-revalidate-failed",
+      });
+    });
+
+    if (cached.length === 0) {
+      await ctx.reply(t("bot.keysEmpty"));
+      return;
+    }
+
+    const header =
+      cached.length >= 2
+        ? `${t("bot.keysTitle")} · ${tp("subs.count", cached.length)}`
+        : t("bot.keysTitle");
+    const lines = cached.slice(0, 10).map((key) => {
+      const expiry = key.expiresAt ? formatKeyDate(key.expiresAt) : "—";
+      const devices =
+        key.devices !== null && key.deviceLimit !== null
+          ? t("key.devicesCount", { n: key.devices, max: key.deviceLimit })
+          : "—";
+      return `${key.name ?? key.id}\n${statusLabel(key.statusKind, key.expiresAt)} · ${t("key.expires", {
+        date: expiry,
+      })}\n${devices}`;
+    });
+    // Cap the message well under Telegram's 4096-char limit.
+    await ctx.reply([header, ...lines].join("\n\n").slice(0, 4000));
+    logger.info({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "keys-listed" });
+  } catch {
+    await ctx.reply(t("bot.keysError"));
+    logger.warn({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "keys-failed" });
   }
 });
 

@@ -38,8 +38,9 @@ created: "2026-10-01"
 
 ## Per-Task Verification Map
 
-> Aligned to the six actual plans (02-01 … 02-06). Wave = the plan's frontmatter `wave`;
-> there is no plan 07 (i18n extension is a Wave-0 step inside plan 02-02).
+> Aligned to the seven actual plans (02-01 … 02-07). Wave = the plan's frontmatter `wave`;
+> plan 02-07 is the Wave-1 gap-closure plan (ownership-filtered `revalidateKeys` + null-safe
+> subscription write) added after verification found gaps #5/#6/#7.
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
@@ -57,6 +58,8 @@ created: "2026-10-01"
 | 2-05-02 | 05 | 5 | CAB-04, TRIAL-03 | T-02-18 | Bot sends sub-link + guides pointer; URL never logged | unit + build | `npx vitest run tests/unit && npm run build` | ✅ extend | ⬜ pending |
 | 2-06-01 | 06 | 6 | CAB-03 | T-02-21 / T-02-23 | Device routes session + ownership gated; `token`/`id` validated | unit | `npx vitest run tests/unit/devices-route.test.ts tests/unit/i18n.test.ts` | ❌ W0 | ⬜ pending |
 | 2-06-02 | 06 | 6 | CAB-03 | T-02-22 | Destructive inline confirm; no native confirm; long device names truncate + `title` | unit + build | `npx vitest run tests/unit && npm run build` | ✅ extend | ⬜ pending |
+| 2-07-01 | 07 | 1 | CAB-01, CAB-03 | T-02-22 | Account-wide `GET /keys` filtered to `customerRef === String(telegramId)` before upsert; null-ref keys skipped; two-user isolation | unit | `DATABASE_URL="${DATABASE_URL:-postgresql://alekseimikhalkin@127.0.0.1:5432/setwhite}" npx vitest run tests/unit/keys-service.test.ts -t "ownership"` | ✅ extend | ⬜ pending |
+| 2-07-02 | 07 | 1 | CAB-03, CAB-04 | T-02-23 | Null-safe `subscription_url` write preserves a good cached URL on a 2xx shape mismatch; foreign key not readable/mutable | unit | `DATABASE_URL="${DATABASE_URL:-postgresql://alekseimikhalkin@127.0.0.1:5432/setwhite}" npx vitest run tests/unit/keys-service.test.ts` | ✅ extend | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 

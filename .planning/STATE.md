@@ -1,12 +1,12 @@
 ---
 gsd_state_version: 1.0
-current_phase: 02
-current_phase_name: Keys & Trial
-status: executing
-stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-10-02T02:52:32.216Z"
-last_activity: 2026-10-02
-last_activity_desc: Phase 02 execution started
+current_phase: 03
+current_phase_name: Payments
+status: planned
+stopped_at: Phase 3 plans created (7 plans, owner-gated probe first)
+last_updated: "2026-10-03T00:00:00.000Z"
+last_activity: 2026-10-03
+last_activity_desc: Phase 03 planning complete
 state_head: d24b1a9dc6d048899ab001371ea940565ecb54d5
 progress:
   total_phases: 5
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-30)
 
 **Core value:** Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
-**Current focus:** Phase 02 — Keys & Trial
+**Current focus:** Phase 03 — Payments (planned, ready to execute)
 
 ## Current Position
 
-Phase: 02 (Keys & Trial) — EXECUTING
-Plan: 1 of 6
-Status: Executing Phase 02
-Last activity: 2026-10-02 — Phase 02 execution started
+Phase: 03 (Payments) — PLANNED
+Plan: 7 of 7 planned
+Status: Ready to execute (03-01 is the owner-gated ARTEMIDA probe gate)
+Last activity: 2026-10-03 — Phase 03 planning complete
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -65,15 +65,12 @@ Recent decisions affecting current work:
 - [Roadmap]: 5 фаз по dependency-порядку из research/SUMMARY.md; PAY-05 (напоминания) в Phase 4, не в Phase 3 — это cron/notify, а не money pipeline
 - [Roadmap]: Bot-in-Next via webhook (один процесс), согласно ARCHITECTURE.md
 
-### Pending Todos
-
-None yet.
-
 ### Blockers/Concerns
 
-- ARTEMIDA Paid API V1 полный контракт не верифицирован — live probe в планировании Phase 2
-- Platega edge cases (CHARGEBACKED, recurrent vs oneshot) — перепроверить docs в планировании Phase 3
-- White Label cert timing + конфликт cabinet/sub-links на одном домене — staging-эксперимент в Phase 5
+- **03-01 is a hard gate:** ARTEMIDA paid-key create shape + prorated upgrade charge must be probed live (RESEARCH Open Q1/Q2) before `kind:'new'`/`upgrade` fulfillment can be built — plan 03-01 is owner-gated `checkpoint:human-verify`
+- Platega test merchant creds + callback URL needed for live payment verification (`.env.local`, D-36); callback forbids localhost
+- A6: `instrumentation.ts` firing in the standalone Docker image — 03-03 adds a secret-gated `/api/cron/reconcile` fallback
+- Platega CHARGEBACKED may arrive as a callback status (schema enum disagrees) — 03-02 accepts it and maps → `refunded`
 
 ## Deferred Items
 

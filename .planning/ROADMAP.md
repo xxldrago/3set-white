@@ -82,7 +82,18 @@ Plans:
   3. Пользователь докупает устройства к ключу через тот же платёжный pipeline
   4. Пользователь видит историю своих платежей (сумма, статус, дата)
 
-**Plans**: TBD
+**Plans**: 7 plans
+
+Plans:
+
+- [ ] 03-01-PLAN.md — ARTEMIDA probe gate: lock paid-key create + upgrade charge; createKey + idempotencyKey (PAY-01, PAY-03)
+- [ ] 03-02-PLAN.md — Money-path tracer: Order/Outbox migration, Platega client, order create + verified callback (PAY-01)
+- [ ] 03-03-PLAN.md — Outbox worker + instrumentation + hourly reconcile (PAY-01)
+- [ ] 03-04-PLAN.md — Renew/upgrade pipeline + upgrade quote + trial block (PAY-02, PAY-03)
+- [ ] 03-05-PLAN.md — Order status + payment history read service/routes (PAY-04)
+- [ ] 03-06-PLAN.md — Cabinet payment surfaces: pay CTA, status panel, history, renew/upgrade UI (PAY-01..04)
+- [ ] 03-07-PLAN.md — Bot payment entry + QR delivery + history menu (PAY-01, PAY-04)
+
 **UI hint**: yes
 
 ### Phase 4: Support & Retention
@@ -127,6 +138,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Needs Review | 2026-09-30 |
 | 2. Keys & Trial | 7/7 | Needs Review | 2026-10-02 |
-| 3. Payments | 0/TBD | Not started | - |
+| 3. Payments | 0/7 | Planned | - |
 | 4. Support & Retention | 0/TBD | Not started | - |
 | 5. Admin & Deploy | 0/TBD | Not started | - |

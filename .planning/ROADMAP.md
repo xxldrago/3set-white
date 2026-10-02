@@ -55,7 +55,7 @@ Plans:
   3. Пользователь видит список «Мои подписки» со статусом и сроком, открывает детали ключа с subscription-ссылкой, QR и расходом трафика
   4. Пользователь управляет устройствами ключа (список, удаление одного, сброс всех) и видит инструкции по подключению (v2rayNG / Streisand / Hiddify)
 
-**Plans**: 6/6 plans executed + 1 gap-closure plan
+**Plans**: 7/7 plans executed + 1 gap-closure plan
 
 Plans:
 
@@ -65,7 +65,7 @@ Plans:
 - [x] 02-04-PLAN.md — «Мои подписки» cache-first list (CAB-01)
 - [x] 02-05-PLAN.md — Key detail: subscription link + QR + traffic + guides (CAB-04, TRIAL-03)
 - [x] 02-06-PLAN.md — Device management + inline confirmations (CAB-03)
-- [ ] 02-07-PLAN.md — Gap closure: ownership-filtered revalidateKeys + null-safe sub-link write (CAB-01/03/04)
+- [x] 02-07-PLAN.md — Gap closure: ownership-filtered revalidateKeys + null-safe sub-link write (CAB-01/03/04)
 
 **UI hint**: yes
 
@@ -126,7 +126,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Needs Review | 2026-09-30 |
-| 2. Keys & Trial | 6/6 | In Progress|  |
+| 2. Keys & Trial | 7/7 | Needs Review | 2026-10-02 |
 | 3. Payments | 0/TBD | Not started | - |
 | 4. Support & Retention | 0/TBD | Not started | - |
 | 5. Admin & Deploy | 0/TBD | Not started | - |

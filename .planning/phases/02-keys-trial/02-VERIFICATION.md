@@ -1,96 +1,102 @@
 ---
 phase: 02-keys-trial
-verified: 2026-10-02T01:56:05Z
-status: gaps_found
-score: 5/9 must-haves verified
+verified: 2026-10-02T12:22:00Z
+status: human_needed
+score: 7/9 must-haves verified
 behavior_unverified: 2
 overrides_applied: 0
-gaps:
-  - truth: "Пользователь видит список «Мои подписки» — только свои подписки (CAB-01, roadmap SC3)"
-    status: failed
-    reason: "revalidateKeys() calls artemida.listKeys() with NO customerRef/q filter and upserts EVERY provider key under the calling user's local userId. The ARTEMIDA account is service-wide (a single ARTEMIDA_API_KEY for all users), and GET /keys returns the whole account's keys, so any user's background revalidation mirrors every other user's keys into their own keys_cache. Empirically reproduced: after revalidateKeys(user A), listKeys(A) returned user B's key and A could read B's subscriptionUrl. The cache is the data source for the cabinet list, the key-detail ownership joins, and the device routes, so this is a cross-user data leak that defeats T-02-13/T-02-17/T-02-21 at the population step."
-    artifacts:
-      - path: "lib/keys-service.ts"
-        issue: "revalidateKeys (lines ~138-148) iterates list.items and calls upsertCachedKey(user.id, key) for every key, with no customerRef / ownership filter"
-      - path: "lib/artemida.ts"
-        issue: "listKeys (lines ~474-483) issues GET /keys with no q/customerRef param when called with no args"
-    missing:
-      - "Filter revalidation to the caller's keys: only upsert entries where key.customerRef === String(telegramId) (and/or call artemida.listKeys({ q: String(telegramId) })), or restrict upserts to keyIds already owned by that userId"
-      - "Add a regression test with two users proving revalidateKeys(A) never inserts B's keys into A's cache"
-  - truth: "Пользователь управляет устройствами ключа — только своего ключа (CAB-03)"
-    status: failed
-    reason: "Same root cause as the CAB-01 gap. listDevices/removeDevice/clearDevices join ownership against keys_cache, but revalidateKeys populates keys_cache with other users' keys, so a mirrored foreign key passes the ownership join and the user can list/delete/clear another user's devices (and read their sub-link via getSubscriptionForUser). The route-level IDOR tests pass only because they never populate the cache through the leaking path."
-    artifacts:
-      - path: "lib/keys-service.ts"
-        issue: "ownedKeyRowId/getSubscriptionForUser join on keys_cache rows that revalidateKeys can create for the wrong user"
-    missing:
-      - "Populate/refresh keys_cache only with keys owned by the caller (see CAB-01 gap); add a two-user regression test asserting a foreign key is not mutable"
-  - truth: "Ключ-деталь не перезаписывает рабочую закэшированную subscriptionUrl значением null при несовпадении формы ответа (CAB-04)"
-    status: partial
-    reason: "getSubscriptionForUser writes links.subscriptionUrl into keys_cache after any 2xx sub-link response. A shape mismatch does not throw (the normalizer is tolerant and returns null), so a 200 with an unrecognized body overwrites a previously good cached URL with null. The 02-05 SUMMARY's claim that 'a shape mismatch never wipes a good cached URL' is inaccurate — only an HTTP failure is caught, not a normalizer yielding null."
-    artifacts:
-      - path: "lib/keys-service.ts"
-        issue: "getSubscriptionForUser (lines ~209-217) unconditionally updates subscription_url/traffic after a successful fetch"
-    missing:
-      - "Only write subscription_url when links.subscriptionUrl is non-null (preserve the previous value otherwise)"
+re_verification:
+  previous_status: gaps_found
+  previous_score: 5/9
+  gaps_closed:
+    - "revalidateKeys upserts ONLY provider keys whose customerRef === String(telegramId) (prior gap #5 / CAB-01 / SC3)"
+    - "Ownership joins (getKeyForUser/getSubscriptionForUser/listDevices/removeDevice/clearDevices) can no longer be defeated by foreign cache rows (prior gap #6 / CAB-03)"
+    - "getSubscriptionForUser no longer overwrites a good cached subscription_url with null on a tolerant-normalizer 2xx (prior gap #7 / CAB-04)"
+  gaps_remaining: []
+  regressions: []
+gaps: []
+deferred: []
 behavior_unverified_items:
   - truth: "Пользователь получает trial в один тап из бота и видит инструкции по подключению (TRIAL-01/TRIAL-03, bot half)"
     test: "Tap «Попробовать» / «Инструкции» in a real Telegram chat against the running bot"
     expected: "Trial key issued for that chat; a repeat tap shows the used-state copy; «Инструкции» shows v2rayNG/Streisand/Hiddify sections"
     why_human: "Telegraf handlers are not unit-tested (importing lib/bot.ts launches polling); the handler wiring exists but no test exercises the update flow"
   - truth: "Live ARTEMIDA key-scoped success shapes (GET /keys/{id}, /subscription-links, /devices) match the tolerant normalizers"
-    test: "Re-run scripts/artemida-probe.mjs with a key-holding account once the owner has one"
-    expected: "Recorded shapes (no UNKNOWN) and sub-link/QR/traffic/device UI populate from real data"
+    test: "Re-run scripts/artemida-probe.mjs with a key-holding account once the owner has one; confirm whether GET /keys reports customerRef as a string"
+    expected: "Recorded shapes (no UNKNOWN) and sub-link/QR/traffic/device UI populate from real data; customerRef is a string so the ownership filter matches"
     why_human: "02-01 probe account held 0 keys; these shapes remain UNKNOWN and are an accepted owner-pending caveat"
-deferred: []
+coincidental_reliance_items: []
+human_verification:
+  - test: "In a real Telegram chat, tap «Попробовать», then tap it again; tap «Инструкции»."
+    expected: "First tap issues a trial key; second tap shows the used-state copy; «Инструкции» lists v2rayNG/Streisand/Hiddify."
+    why_human: "Telegraf handlers cannot be unit-imported without launching polling."
+  - test: "Re-run scripts/artemida-probe.mjs from a key-holding account; verify the normalized customerRef type."
+    expected: "GET /keys/{id}, /subscription-links, /devices return recognized shapes; sub-link/QR/traffic/device UI populates; customerRef is a string (numeric => fail-closed empty cache, see caveat)."
+    why_human: "The 02-01 probe account held 0 keys; key-scoped shapes are owner-pending."
+  - test: "Visual/interaction pass over TariffPicker (live price, disabled-until-ready, error+retry), TrialButton used/error, SubscriptionCard badges, ConfirmPanel second-tap/Escape/focus trap; confirm the device floor is 2 (accepted owner decision) not 1."
+    expected: "All dynamic states render per UI-SPEC; device selector minimum is 2 per provider minDevices."
+    why_human: "Layout/interaction contracts and the provider-driven device clamp (2–10 vs roadmap's stated 1–10) are not covered by automated UI tests and are an accepted owner decision."
 ---
 
 # Phase 2: Keys & Trial Verification Report
 
 **Phase Goal:** Пользователь получает trial, выбирает тариф и видит свои подписки с рабочими конфигами
-**Verified:** 2026-10-02T01:56:05Z
-**Status:** gaps_found
-**Re-verification:** No — initial verification
+**Verified:** 2026-10-02T12:22:00Z
+**Status:** human_needed
+**Re-verification:** Yes — after gap-closure plan 02-07
 
 ## Goal Achievement
 
 ### Observable Truths
 
-| # | Truth | Status | Evidence |
-| --- | --- | --- | --- |
-| 1 | Cabinet one-tap trial is issued and persisted (TRIAL-01) | ✓ VERIFIED | `app/api/trial/route.ts` → `startTrial` → `claimTrial`/`createTrial`; `components/TrialButton.tsx` posts it. `tests/unit/trial-claim.test.ts` (concurrent claim) + `trial-rollback.test.ts` (4) pass |
-| 2 | Bot one-tap trial works (TRIAL-01) | ⚠️ PRESENT_BEHAVIOR_UNVERIFIED | `lib/bot.ts:111` handler calls the shared `startTrial`; no test exercises the Telegraf update flow — see Human Verification |
-| 3 | Second trial is blocked server-side (TRIAL-01) | ✓ VERIFIED | Atomic `updateMany({where:{telegramId, trialUsed:false}})` (`lib/keys-service.ts:278`); concurrent test yields exactly one `created` + one `already_used` and the loser never calls the provider |
-| 4 | Tariff 7/30/90 × devices (2–10) shows the exact live price (TRIAL-02) | ✓ VERIFIED | `app/api/pricing/route.ts` zod-clamps days to {7,30,90} and devices to 2..10 and returns `pricing.price`; `tests/unit/pricing-route.test.ts` (6) + `artemida-client.test.ts` (23) pass. Device floor clamped to 2 (provider minDevices=2, owner decision 2026-10-02 — accepted caveat) |
-| 5 | «Мои подписки» shows the user's OWN subscriptions with status/expiry (CAB-01, SC3) | ✗ FAILED | `revalidateKeys` mirrors ALL account keys under the caller's `userId` (no customerRef filter). Empirically reproduced cross-user leak — see Gaps |
-| 6 | Key detail renders subscription link + local QR + traffic for an owned key (CAB-04) | ✓ VERIFIED | `app/keys/[id]/page.tsx`; `lib/qr.ts` + `QrSvg`; `tests/unit/qr.test.ts` (4) pass; routes wired. Live provider shape owner-pending (caveat) |
-| 7 | Device list / delete-one / reset-all route mechanics (CAB-03) | ✓ VERIFIED | 3 session-gated routes + `ConfirmPanel`; `tests/unit/devices-route.test.ts` (12) pass |
-| 8 | Connection guides (v2rayNG/Streisand/Hiddify) in cabinet and bot (TRIAL-03) | ⚠️ PRESENT_BEHAVIOR_UNVERIFIED | `app/guides/page.tsx` renders all three (static page builds); bot `menuGuides` handler wired but untested — see Human Verification |
-| 9 | Per-user ownership isolation across list/detail/device routes (IDOR) | ✗ FAILED | Same root cause as #5: `keys_cache` is populated cross-user, defeating the ownership joins in `getKeyForUser`/`getSubscriptionForUser`/`listDevices`/`removeDevice`/`clearDevices` |
+| #   | Truth   | Status     | Evidence       |
+| --- | ------- | ---------- | -------------- |
+| 1   | Cabinet one-tap trial is issued and persisted (TRIAL-01) | ✓ VERIFIED | `app/api/trial/route.ts` → `startTrial` → `claimTrial`/`createTrial`; `components/TrialButton.tsx` posts it. `tests/unit/trial-claim.test.ts` (concurrent claim) + `trial-rollback.test.ts` (4) pass |
+| 2   | Bot one-tap trial works (TRIAL-01) | ⚠️ PRESENT_BEHAVIOR_UNVERIFIED | `lib/bot.ts:111` handler calls the shared `startTrial`; no test exercises the Telegraf update flow — see Human Verification |
+| 3   | Second trial is blocked server-side (TRIAL-01) | ✓ VERIFIED | Atomic `updateMany({where:{telegramId, trialUsed:false}})` (`lib/keys-service.ts:297`); concurrent test yields exactly one `created` + one `already_used` and the loser never calls the provider |
+| 4   | Tariff 7/30/90 × devices (2–10) shows the exact live price (TRIAL-02) | ✓ VERIFIED | `app/api/pricing/route.ts` zod-clamps days to {7,30,90} and devices to 2..10 and returns `pricing.price`; `tests/unit/pricing-route.test.ts` (6) + `artemida-client.test.ts` (23) pass. Device floor clamped to 2 (provider minDevices=2, owner decision 2026-10-02 — accepted caveat) |
+| 5   | «Мои подписки» shows the user's OWN subscriptions with status/expiry (CAB-01, SC3) | ✓ VERIFIED | **Gap #5 CLOSED.** `revalidateKeys` (lines 148–160) skips every key whose normalized `customerRef !== String(telegramId)` before `upsertCachedKey`; null-ref keys are skipped. `keys-service.test.ts` ownership vectors (A's cache stays empty when only B's key is returned; mixed list populates each user only with their own; null-ref never upserted) pass |
+| 6   | Key detail renders subscription link + local QR + traffic for an owned key (CAB-04) | ✓ VERIFIED | `app/keys/[id]/page.tsx`; `lib/qr.ts` + `QrSvg`; `tests/unit/qr.test.ts` (4) pass; routes wired. Live provider shape owner-pending (caveat) |
+| 7   | Device list / delete-one / reset-all route mechanics (CAB-03) | ✓ VERIFIED | 3 session-gated routes + `ConfirmPanel`; `tests/unit/devices-route.test.ts` (12) pass |
+| 8   | Connection guides (v2rayNG/Streisand/Hiddify) in cabinet and bot (TRIAL-03) | ⚠️ PRESENT_BEHAVIOR_UNVERIFIED | `app/guides/page.tsx` renders all three (static page builds); bot `menuGuides` handler wired but untested — see Human Verification |
+| 9   | Per-user ownership isolation across list/detail/device routes (IDOR) | ✓ VERIFIED | **Gap #6 CLOSED.** The population step (truth #5) no longer creates foreign-owned `keys_cache` rows; all four ownership joins remain `user: { telegramId }` (`listKeys` L123, `getKeyForUser` L172, `getSubscriptionForUser` L204, `ownedKeyRowId` L257 used by `listDevices`/`removeDevice`/`clearDevices`). The two-user vector asserts `getKeyForUser(A,'KEY_B')`, `getSubscriptionForUser(A,'KEY_B')`, and `listDevices(A,'KEY_B')` all return null and no foreign row exists |
 
-**Score:** 5/9 truths verified (2 present, behavior-unverified)
+**Score:** 7/9 truths verified (2 present, behavior-unverified)
+
+### Gap-Closure Detail (plan 02-07)
+
+| Prior Gap | Fix in source | Regression test | Status |
+| --- | --- | --- | --- |
+| #5 CAB-01/SC3 cross-user key mirror | `lib/keys-service.ts:155-158` — `const ownerRef = String(telegramId); ... if (key.customerRef !== ownerRef) continue;` | `ownership: revalidateKeys(A) never mirrors B's key into A's cache`; `ownership: a mixed account-wide list populates each user only with their own keys`; `ownership: a key with null customerRef is never upserted` | ✓ CLOSED |
+| #6 CAB-03 defeated ownership joins | Root-caused upstream by the same filter; joins unchanged and now unreachable from a foreign row | `ownership: a key owned only by B is not readable or mutable by A after revalidation` (`getKeyForUser`/`getSubscriptionForUser`/`listDevices` null, 0 foreign rows) | ✓ CLOSED |
+| #7 CAB-04 null overwrite | `lib/keys-service.ts:223-235` — `...(links.subscriptionUrl !== null ? { subscriptionUrl: links.subscriptionUrl } : {})`; traffic/`lastSyncedAt` still refresh | `preserves a good cached subscription_url when a 2xx normalizes to null (gap #7)`; `refreshes the cached subscription_url when the provider returns a real URL` | ✓ CLOSED |
+
+**Prohibitions (ADR-550):** both 02-07 test-tier prohibitions are now backed by wired regression tests, so they resolve VERIFIED rather than flagged:
+- MUST NOT mirror another user's key/subscriptionUrl into the caller's cache — enforced by the three ownership vectors (filter present at the only population path).
+- MUST NOT overwrite a good cached `subscription_url` with null — enforced by the null-preservation vector (spread guard present).
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 | --- | --- | --- | --- |
-| `scripts/artemida-probe.mjs` | Dry-runnable live probe | ✓ VERIFIED | `--dry-run` exits 0 (20 lines); secret hygiene maintained |
+| `scripts/artemida-probe.mjs` | Dry-runnable live probe | ✓ VERIFIED | `--dry-run` exits 0; secret hygiene maintained |
 | `docs/artemida-v1-contract.md` / `.json` | Locked observed contract | ✓ VERIFIED | Observed pricing/keys/balance; key-scoped shapes explicitly `UNKNOWN` (accepted caveat) |
-| `lib/artemida.ts` | Full V1 client (D-17) | ✓ VERIFIED | Transport, retry, typed errors, idempotency; no debt markers |
+| `lib/artemida.ts` | Full V1 client (D-17) | ✓ VERIFIED | Transport, retry, typed errors, idempotency; no debt markers; unchanged by 02-07 as intended |
 | `app/api/pricing/route.ts` | Session-gated live price | ✓ VERIFIED | Clamps + exact provider amount |
 | `app/api/trial/route.ts` | Session-gated one-tap trial | ✓ VERIFIED | Clean `trial_used` 409 |
-| `lib/keys-service.ts` | Single read/write path | ⚠️ PARTIAL | Contains the cross-user `revalidateKeys` defect |
+| `lib/keys-service.ts` | Single read/write path | ✓ VERIFIED | Ownership-filtered `revalidateKeys` + null-safe `subscription_url` write (fixed) |
 | `components/TariffPicker.tsx` | Live tariff picker | ✓ VERIFIED | Calls BFF only; in-flight abort |
 | `components/TrialButton.tsx` | One-tap CTA | ✓ VERIFIED | In-flight lock + used/error states |
 | `components/SubscriptionCard.tsx` | Key card with status badge | ✓ VERIFIED | Derived status + amber TRIAL chip |
-| `app/page.tsx` | «Мои подписки» section | ⚠️ PARTIAL | Renders correctly, but its data source is polluted by the leak |
-| `app/api/keys/route.ts` | Cache-first list BFF | ⚠️ PARTIAL | Same polluted data source |
+| `app/page.tsx` | «Мои подписки» section | ✓ VERIFIED | Renders per-user rows from the now-filtered cache |
+| `app/api/keys/route.ts` | Cache-first list BFF | ✓ VERIFIED | Same path as cabinet list, now ownership-scoped |
 | `app/keys/[id]/page.tsx` | Key detail (link/QR/traffic/devices) | ✓ VERIFIED | Ownership-joined read; tolerant fallbacks |
 | `app/api/keys/[id]/route.ts` | Key detail BFF | ✓ VERIFIED | zod id, 404 non-owned |
-| `app/api/keys/[id]/subscription/route.ts` | Sub-link + traffic BFF | ✓ VERIFIED | URL never logged |
+| `app/api/keys/[id]/subscription/route.ts` | Sub-link + traffic BFF | ✓ VERIFIED | URL never logged; null-safe cache write |
 | `app/api/keys/[id]/devices/route.ts` (+ `[token]`, `clear`) | Device BFF routes | ✓ VERIFIED | Session gate + zod + ownership join |
 | `components/ConfirmPanel.tsx` | Inline destructive confirm (D-32) | ✓ VERIFIED | Second-tap only; Escape/Cancel no-op; no native dialog |
 | `lib/qr.ts` + `components/QrSvg.tsx` | Local SVG QR | ✓ VERIFIED | No `toSvg`, no `<image>`/external href |
+| `tests/unit/keys-service.test.ts` | Two-user ownership + null-preservation regression suite | ✓ VERIFIED | 10 tests pass against real Postgres with spied provider |
 | `prisma/migrations/20261002010428_keys_trial` | Schema migration | ✓ VERIFIED | Adds `trial_used`/`trial_key_id` + expanded `keys_cache` |
 
 ### Key Link Verification
@@ -101,18 +107,18 @@ deferred: []
 | `/api/trial` | `startTrial` | direct import | ✓ WIRED | Atomic claim path |
 | `TariffPicker` | `/api/pricing` | `fetch GET` | ✓ WIRED | Debounced, abortable |
 | `/api/pricing` | `artemida.getPricing` | direct import | ✓ WIRED | Exact provider amount |
-| `app/page.tsx` | `listKeys`/`revalidateKeys` | direct import + `after()` | ⚠️ PARTIAL | Refresh path cross-pollinates users |
-| `/api/keys` | `listKeys`/`revalidateKeys` | direct import + `after()` | ⚠️ PARTIAL | Same defect |
-| `app/keys/[id]` | `getKeyForUser`/`getSubscriptionForUser`/`listDevices` | direct import | ⚠️ PARTIAL | Ownership join trusts a polluted cache |
+| `app/page.tsx` | `listKeys`/`revalidateKeys` | direct import + `after()` | ✓ WIRED | Refresh path now filters to `customerRef === String(telegramId)` |
+| `/api/keys` | `listKeys`/`revalidateKeys` | direct import + `after()` | ✓ WIRED | Same ownership-filtered path |
+| `app/keys/[id]` | `getKeyForUser`/`getSubscriptionForUser`/`listDevices` | direct import | ✓ WIRED | Ownership join `user: { telegramId }`; foreign row can no longer exist |
 | bot handlers | `startTrial`/`listKeys`/`getSubscriptionForUser`/`getPricing` | direct import | ✓ WIRED (untested) | Shared path, no duplicate fetch |
-| `getSubscriptionForUser` | `artemida.getSubscriptionLinks`/`getTraffic` | direct import | ✓ WIRED | Traffic degrades to nulls |
+| `getSubscriptionForUser` | `artemida.getSubscriptionLinks`/`getTraffic` | direct import | ✓ WIRED | Traffic degrades to nulls; URL write guarded |
 
 ### Data-Flow Trace (Level 4)
 
 | Artifact | Data Variable | Source | Produces Real Data | Status |
 | --- | --- | --- | --- | --- |
-| `app/page.tsx` / `/api/keys` | `RenderedKey[]` | `prisma.keyCache` rows populated by `revalidateKeys` ← ARTEMIDA `GET /keys` | Yes (real query) | ⚠️ STATIC-ISH / POLLUTED — source is account-wide, not user-scoped |
-| `app/keys/[id]` | `subscriptionUrl`, `traffic`, `devices` | `getSubscriptionLinks`/`getTraffic`/`getDevices` via ownership join | Yes | ⚠️ Ownership join is defeated by the populated cache |
+| `app/page.tsx` / `/api/keys` | `RenderedKey[]` | `prisma.keyCache` rows populated by `revalidateKeys` ← ARTEMIDA `GET /keys`, filtered to the caller's `customerRef` | Yes (real query) | ✓ FLOWING |
+| `app/keys/[id]` | `subscriptionUrl`, `traffic`, `devices` | `getSubscriptionLinks`/`getTraffic`/`getDevices` via ownership join | Yes | ✓ FLOWING (foreign keys no longer enter the cache) |
 | `TariffPicker` | `price` | `/api/pricing` ← ARTEMIDA `GET /pricing` | Yes | ✓ FLOWING |
 
 ### Behavioral Spot-Checks
@@ -120,40 +126,39 @@ deferred: []
 | Behavior | Command | Result | Status |
 | --- | --- | --- | --- |
 | Typecheck | `npx tsc --noEmit` | exit 0 | ✓ PASS |
-| Unit suite (DB-backed) | `DATABASE_URL=... npx vitest run tests/unit` | 11 files / 71 tests passed | ✓ PASS |
-| Production build | `npx next build` (throwaway env) | Compiled successfully; all Phase-2 routes dynamic (ƒ), `/guides` static | ✓ PASS |
-| Probe dry-run | `node scripts/artemida-probe.mjs --dry-run` | exit 0 | ✓ PASS |
-| **Cross-user isolation** | throwaway script: `revalidateKeys(A)` with provider returning B's key, then `listKeys(A)` | A's cache went `[]` → `["KEY_OWNED_BY_USER_B"]`; A read B's `subscriptionUrl` | ✗ **FAIL** |
+| Two-user ownership regression file | `DATABASE_URL=... npx vitest run tests/unit/keys-service.test.ts` | 1 file / **10 tests passed** | ✓ PASS |
+| Full unit suite (DB-backed) | `DATABASE_URL=... npx vitest run tests/unit` | **11 files / 77 tests passed** | ✓ PASS |
+| Cross-user leak reproduction (prior FAIL) | `revalidateKeys(A)` with provider returning B's key, then `listKeys(A)` | A's cache stays `[]` (test-asserted) — leak no longer reproduces | ✓ PASS |
+
+> Note: the verify request stated "79/79"; the actual green count is **11 files / 77 tests** (same as the 02-07 SUMMARY). Both the file count and every assertion pass; the discrepancy is only in the stated total, not in coverage.
 
 ### Probe Execution
 
 | Probe | Command | Result | Status |
 | --- | --- | --- | --- |
 | `scripts/artemida-probe.mjs` | `node scripts/artemida-probe.mjs --dry-run` | exit 0 | PASS (dry-run) |
-| live ARTEMIDA capture | `node --env-file=.env.local scripts/artemida-probe.mjs --json` | not re-run — would consume/live-hit provider | SKIP (owner-pending) |
+| live ARTEMIDA capture | `node --env-file=.env.local scripts/artemida-probe.mjs --json` | not re-run — would live-hit provider | SKIP (owner-pending) |
 
 ### Requirements Coverage
 
 | Requirement | Source Plan | Description | Status | Evidence |
 | --- | --- | --- | --- | --- |
 | TRIAL-01 | 02-03 | One-tap trial from bot + cabinet; repeat blocked server-side | ✓ SATISFIED (cabinet) / bot human | Atomic claim + route; concurrent + rollback tests |
-| TRIAL-02 | 02-02, 02-03 | 7/30/90 × 2–10 with live price | ✓ SATISFIED | Pricing route + client tests; device floor clamped to 2 per provider |
+| TRIAL-02 | 02-02, 02-03 | 7/30/90 × 2–10 with live price | ✓ SATISFIED | Pricing route + client tests; device floor clamped to 2 per provider (accepted caveat) |
 | TRIAL-03 | 02-05, 01-04 | Guides (v2rayNG/Streisand/Hiddify) in bot + cabinet | ✓ SATISFIED (cabinet) / bot human | `app/guides/page.tsx`; bot handler wired |
-| CAB-01 | 02-04 | «Мои подписки» with status/expiry in bot + PWA | ✗ BLOCKED | Cross-user mirror in `revalidateKeys` |
-| CAB-03 | 02-06 | Device list/delete-one/reset-all | ✗ BLOCKED (isolation) | Route mechanics verified; foreign keys become mutable via the polluted cache |
-| CAB-04 | 02-05 | Configs + `subscriptionUrl`, traffic | ✗ BLOCKED (isolation) | Detail/QR mechanics verified; foreign sub-link readable via the polluted cache |
+| CAB-01 | 02-04, 02-07 | «Мои подписки» with status/expiry in bot + PWA | ✓ SATISFIED | Ownership-filtered population + two-user regression suite |
+| CAB-03 | 02-06, 02-07 | Device list/delete-one/reset-all | ✓ SATISFIED | Route mechanics verified; foreign keys can no longer be created/mutated |
+| CAB-04 | 02-05, 02-07 | Configs + `subscriptionUrl`, traffic | ✓ SATISFIED | Detail/QR mechanics verified; null-safe cache write + ownership join |
 
 No orphaned requirements: all IDs mapped to Phase 2 in REQUIREMENTS.md (TRIAL-01/02/03, CAB-01/03/04) appear in at least one plan's `requirements`.
 
 ### Anti-Patterns Found
 
 | File | Line | Pattern | Severity | Impact |
-| --- | --- | --- | --- | --- |
-| `lib/keys-service.ts` | ~144-147 | `artemida.listKeys()` without customerRef/`q` filter, then upsert every item under the caller's `userId` | 🛑 Blocker | Cross-user key/sub-link/device leak (IDOR) |
-| `lib/artemida.ts` | ~474-483 | `listKeys` sends no `q` when called with no args | 🛑 Blocker | Enables the above |
-| `lib/keys-service.ts` | ~209-217 | Unconditional `subscription_url` overwrite on any 2xx (normalizer may return null) | ⚠️ Warning | Can wipe a good cached URL on a provider shape mismatch |
+| ---- | ---- | ------- | -------- | ------ |
+| — | — | None | — | The prior `revalidateKeys` cross-user upsert and unconditional `subscription_url` overwrite are gone; no `TBD`/`FIXME`/`XXX`/`TODO`/`HACK` markers in the phase-modified source (`lib/keys-service.ts`, `tests/unit/keys-service.test.ts`) |
 
-No `TBD`/`FIXME`/`XXX`/`TODO`/`HACK` markers in phase-modified source. `ConfirmPanel` uses no `window.confirm`/`alert`/`<dialog>` (only a comment mentions it). QR uses no `toSvg`, `<image>`, or external href.
+`ConfirmPanel` uses no `window.confirm`/`alert`/`<dialog>` (only a comment mentions it). QR uses no `toSvg`, `<image>`, or external href.
 
 ### Human Verification Required
 
@@ -162,26 +167,29 @@ No `TBD`/`FIXME`/`XXX`/`TODO`/`HACK` markers in phase-modified source. `ConfirmP
    **Expected:** First tap issues a trial key; second tap shows the used-state copy; «Инструкции» lists v2rayNG/Streisand/Hiddify.
    **Why human:** Telegraf handlers cannot be unit-imported without launching polling.
 
-2. **Live ARTEMIDA key-scoped shapes**
-   **Test:** Re-run the probe from a key-holding account.
-   **Expected:** `GET /keys/{id}`, `/subscription-links`, `/devices` return observable, recognized shapes; sub-link/QR/traffic/device UI populates.
-   **Why human:** 02-01 probe account held 0 keys (accepted owner-pending caveat).
+2. **Live ARTEMIDA key-scoped shapes (owner-pending)**
+   **Test:** Re-run the probe from a key-holding account; confirm `customerRef` is reported as a string.
+   **Expected:** `GET /keys/{id}`, `/subscription-links`, `/devices` return recognized shapes; sub-link/QR/traffic/device UI populates.
+   **Why human:** The 02-01 probe account held 0 keys (accepted owner-pending caveat). Residual risk: if the live provider returns `customerRef` as a number, `normalizeKey` yields null and every key is skipped — fail-closed (no leak, but no population). A number→string coercion would be the follow-up.
 
-3. **Visual/interaction states**
-   **Test:** Device/browser pass over TariffPicker (live price, disabled-until-ready, error+retry), TrialButton used/error, SubscriptionCard badges, ConfirmPanel second-tap/Escape/focus trap.
-   **Why human:** Layout/interaction contracts are not covered by automated UI tests.
+3. **Visual/interaction states + device clamp**
+   **Test:** Device/browser pass over TariffPicker (live price, disabled-until-ready, error+retry), TrialButton used/error, SubscriptionCard badges, ConfirmPanel second-tap/Escape/focus trap; confirm the device selector minimum is 2.
+   **Expected:** All dynamic states render per UI-SPEC; device floor is 2 (accepted owner decision, provider minDevices=2) even though the roadmap text says 1–10.
+   **Why human:** Layout/interaction contracts and the provider-driven device clamp are not covered by automated UI tests.
 
 ### Gaps Summary
 
-The phase delivers a technically solid vertical slice — trial issuance, live pricing, the subscription list/detail (link/QR/traffic), device management, and guides are all present, wired, typecheck clean, build clean, and covered by 71 passing unit tests. However, one root-cause defect blocks the phase goal as stated ("...видит **свои** подписки"):
+All three prior gaps are genuinely closed in the codebase, not merely claimed:
 
-**`revalidateKeys()` mirrors the entire shared ARTEMIDA account into whichever user triggers a refresh.** Because the service runs on a single `ARTEMIDA_API_KEY` and `GET /keys` is account-wide (the `q`/customerRef filter the client already supports is deliberately unused — COVERAGE.md opts it out), every cabinet open, `/api/keys` hit, and bot «Мои ключи» upserts *all* provider keys under the calling user's `userId`. The cache is the source for the list, the key-detail ownership joins, and the device routes, so User A can see User B's subscriptions, read B's subscription URL, and delete B's devices. This was reproduced directly: after `revalidateKeys(A)` with the provider returning B's key, `listKeys(A)` returned B's key and its sub-link.
+1. **Gap #5 (CAB-01/SC3)** — `revalidateKeys` now iterates the account-wide `GET /keys` result and `continue`s on any key whose normalized `customerRef !== String(telegramId)` (absent/null refs included). This is the only path that populates `keys_cache` from the provider (the other `upsertCachedKey` caller is `startTrial`, whose key is the caller's own). The prior empirically-reproduced cross-user mirror no longer occurs.
+2. **Gap #6 (CAB-03)** — the four ownership joins (`listKeys`, `getKeyForUser`, `getSubscriptionForUser`, `ownedKeyRowId` → `listDevices`/`removeDevice`/`clearDevices`) all scope by `user: { telegramId }`; with the population source filtered, a foreign key can no longer exist to defeat them. The two-user vector asserts the detail/sub-link/device reads return null for the non-owner.
+3. **Gap #7 (CAB-04)** — the `subscription_url` write is spread only when `links.subscriptionUrl !== null`, so a tolerant-normalizer null on a 2xx preserves the previously good cached URL; a real URL still refreshes.
 
-The fix is localized to `lib/keys-service.ts#revalidateKeys` (and optionally passing `q: String(telegramId)` in `lib/artemida.ts#listKeys`): only upsert keys whose `customerRef` equals the caller's telegram id (or only refresh already-owned `(userId, keyId)` rows). A two-user regression test should assert a foreign key never appears in the caller's cache.
+Verified against source (`lib/keys-service.ts`), the two-user regression suite (`tests/unit/keys-service.test.ts`, 10/10 pass), the full unit suite (11 files / 77 tests green), and a clean `tsc --noEmit`. Commits `3df2abf` and `414d844` exist and match the 02-07 SUMMARY.
 
-Secondary warning: `getSubscriptionForUser` can overwrite a good cached `subscription_url` with `null` on a provider shape mismatch (the tolerant normalizer returns null on a 2xx rather than throwing).
+No gaps remain. The status is `human_needed` only because Phase 2 carries its accepted, owner-pending human checks (bot flow, live key-scoped provider shapes, visual/interaction states, device clamp 2–10) — none of which is a code defect.
 
 ---
 
-_Verified: 2026-10-02T01:56:05Z_
+_Verified: 2026-10-02T12:22:00Z_
 _Verifier: the agent (gsd-verifier)_

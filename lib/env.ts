@@ -12,6 +12,9 @@ const envSchema = z.object({
     .string()
     .min(32, "SESSION_SECRET must be >= 32 chars (generate: openssl rand -hex 32)"),
   WEBHOOK_SECRET: z.string().min(16, "WEBHOOK_SECRET must be >= 16 chars"),
+  // ARTEMIDA Paid API V1 (D-20). Server-only — never expose via NEXT_PUBLIC_*.
+  ARTEMIDA_API_KEY: z.string().min(1, "ARTEMIDA_API_KEY is required"),
+  ARTEMIDA_BASE_URL: z.string().url().default("https://artemida.cc/v1"),
   BOT_MODE: z.enum(["polling", "webhook"]).default("polling"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),

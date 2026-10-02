@@ -37,6 +37,20 @@ export const ru = {
     install: 'Установить приложение',
     dismiss: 'Не сейчас',
   },
+  pricing: {
+    title: 'Выберите тариф',
+    daysLabel: 'Срок',
+    days7: '7 дней',
+    days30: '30 дней',
+    days90: '90 дней',
+    devicesLabel: 'Устройства',
+    priceLabel: 'Стоимость',
+    price: '{price} ₽',
+    error: 'Не удалось загрузить цены. Попробуйте ещё раз.',
+  },
+  common: {
+    retry: 'Повторить',
+  },
   bot: {
     welcome: 'Добро пожаловать в 3set VPN! Выберите раздел ниже.',
     menuKeys: 'Мои ключи',

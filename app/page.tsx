@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import InstallPrompt from '@/components/InstallPrompt';
+import TariffPicker from '@/components/TariffPicker';
 import { t } from '@/lib/i18n';
 
 // Session-aware shell skeleton. Session verification itself is owned by
@@ -24,18 +25,21 @@ export default async function Home() {
         </header>
 
         {loggedIn ? (
-          <section className="flex flex-col gap-4 rounded-2xl border border-black/10 p-6 dark:border-white/15">
-            <h2 className="text-xl font-medium">{t('home.keysTitle')}</h2>
-            <p className="text-zinc-600 dark:text-zinc-400">{t('home.keysText')}</p>
-            <nav className="flex flex-col gap-2 sm:flex-row">
-              <Link
-                href="/guides"
-                className="flex h-12 items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
-              >
-                {t('home.guidesCta')}
-              </Link>
-            </nav>
-          </section>
+          <>
+            <section className="flex flex-col gap-4 rounded-2xl border border-black/10 p-6 dark:border-white/15">
+              <h2 className="text-xl font-medium">{t('home.keysTitle')}</h2>
+              <p className="text-zinc-600 dark:text-zinc-400">{t('home.keysText')}</p>
+              <nav className="flex flex-col gap-2 sm:flex-row">
+                <Link
+                  href="/guides"
+                  className="flex h-12 items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
+                >
+                  {t('home.guidesCta')}
+                </Link>
+              </nav>
+            </section>
+            <TariffPicker />
+          </>
         ) : (
           <section className="flex flex-col gap-4 rounded-2xl border border-black/10 p-6 dark:border-white/15">
             <h2 className="text-xl font-medium">{t('home.loginTitle')}</h2>

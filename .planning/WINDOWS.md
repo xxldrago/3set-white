@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 8
+open_count: 9
 waived_count: 0
 fixed_count: 0
-total_count: 8
-last_updated: 2026-10-02T01:41:34.059Z
+total_count: 9
+last_updated: 2026-10-02T22:11:07.866Z
 ---
 
 # Broken Windows Ledger
@@ -23,6 +23,7 @@ last_updated: 2026-10-02T01:41:34.059Z
 | 6 | 02 | unrun-verify | tests/integration/auth-flow.test.ts |  | Full 'npx vitest run' parallel suite: auth-flow replay test flaked (200 vs 401) due to cross-file replay_cache cleanup; passes in isolation; pre-existing test isolation fragility, unrelated to 02-04 | open |  | 2026-10-02T01:32:49.958Z |  |
 | 7 | 02 | deviation | lib/keys-service.ts |  | statusLabel() lives in lib/keys-service.ts as the single shared switch (five literal t('status.…') calls) used by both SubscriptionCard and the bot, instead of the switch living inside components/SubscriptionCard.tsx as the plan text specified | open |  | 2026-10-02T01:32:54.083Z |  |
 | 8 | 02 | deviation | components/CopyButton.tsx |  | Key-detail copy control required a new client island components/CopyButton.tsx (not in 02-05 files_modified): the page is an async RSC and clipboard access is browser-only, so no listed file could host it without violating the RSC/'use client' contract | open |  | 2026-10-02T01:41:34.059Z |  |
+| 9 | 03 | unrun-verify | scripts/artemida-probe.mjs |  | 03-01 Task 1 live paid create/upgrade probe not run: ARTEMIDA account balance 0 RUB — create/upgrade shapes remain UNKNOWN pending owner funding + approval | open |  | 2026-10-02T22:11:07.866Z |  |
 
 ````json
 [
@@ -120,6 +121,18 @@ last_updated: 2026-10-02T01:41:34.059Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-10-02T01:41:34.059Z",
+    "resolved_at": null
+  },
+  {
+    "id": 9,
+    "kind": "unrun-verify",
+    "phase": "03",
+    "file": "scripts/artemida-probe.mjs",
+    "line": null,
+    "description": "03-01 Task 1 live paid create/upgrade probe not run: ARTEMIDA account balance 0 RUB — create/upgrade shapes remain UNKNOWN pending owner funding + approval",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-10-02T22:11:07.866Z",
     "resolved_at": null
   }
 ]

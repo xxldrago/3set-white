@@ -6,8 +6,10 @@
 // only — never tokens, JWTs, or full updates. User-visible strings resolve
 // through i18n keys (D-16), never hardcoded copy.
 import { Telegraf } from "telegraf";
+import { artemida } from "./artemida";
 import { env } from "./env";
 import { t } from "./i18n";
+import { startTrial } from "./keys-service";
 import { logger } from "./logger";
 import { prisma } from "./prisma";
 
@@ -49,12 +51,105 @@ bot.start(async (ctx) => {
   await ctx.reply(t("bot.welcome"), {
     reply_markup: {
       keyboard: [
+        [{ text: t("bot.menuTrial") }, { text: t("bot.menuTariffs") }],
         [{ text: t("bot.menuKeys") }],
         [{ text: t("bot.menuGuides") }, { text: t("bot.menuHelp") }],
       ],
       resize_keyboard: true,
     },
   });
+});
+
+// ---------------------------------------------------------------------------
+// Phase 2 — trial + tariff entry (D-25 / TRIAL-01).
+//
+// The bot calls the SAME lib/keys-service.startTrial the cabinet BFF uses and
+// the SAME lib/artemida.getPricing path /api/pricing uses — no duplicated
+// Prisma or fetch logic. Raw provider text is never sent (D-19/D-24): failures
+// reply with an i18n message only.
+// ---------------------------------------------------------------------------
+const MIN_DEVICES = 2; // provider minDevices=2 (contract lock 02-01)
+const MAX_DEVICES = 10;
+const priceFormatter = new Intl.NumberFormat("ru-RU");
+
+function daysLabel(days: number): string {
+  if (days === 7) return t("pricing.days7");
+  if (days === 30) return t("pricing.days30");
+  return t("pricing.days90");
+}
+
+function tariffDaysKeyboard() {
+  return {
+    inline_keyboard: [
+      [
+        { text: t("pricing.days7"), callback_data: "tariff:days:7" },
+        { text: t("pricing.days30"), callback_data: "tariff:days:30" },
+        { text: t("pricing.days90"), callback_data: "tariff:days:90" },
+      ],
+    ],
+  };
+}
+
+function tariffDevicesKeyboard(days: number) {
+  const buttons: Array<{ text: string; callback_data: string }> = [];
+  for (let d = MIN_DEVICES; d <= MAX_DEVICES; d += 1) {
+    buttons.push({ text: String(d), callback_data: `tariff:devices:${days}:${d}` });
+  }
+  const rows: Array<Array<{ text: string; callback_data: string }>> = [];
+  for (let i = 0; i < buttons.length; i += 3) rows.push(buttons.slice(i, i + 3));
+  return { inline_keyboard: rows };
+}
+
+// One-tap trial from the bot (identical server-enforced path as the cabinet).
+bot.hears(t("bot.menuTrial"), async (ctx) => {
+  const from = ctx.from;
+  if (!from) return;
+  try {
+    const result = await startTrial(BigInt(from.id));
+    if (result.kind === "already_used") {
+      await ctx.reply(`${t("trial.usedHeading")}\n${t("trial.usedBody")}`);
+      logger.info({
+        updateId: ctx.update.update_id,
+        telegramId: from.id,
+        outcome: "trial-already-used",
+      });
+      return;
+    }
+    // The sub-link message is finalized in plan 02-05; here send the key id
+    // plus the fixed trial offer meta (1 day / 2 devices).
+    await ctx.reply(`${t("bot.trialIssued")}\n${t("trial.subtitle")}\n${result.key.id}`);
+    logger.info({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "trial-created" });
+  } catch {
+    await ctx.reply(t("trial.error"));
+    logger.warn({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "trial-failed" });
+  }
+});
+
+// D-25 tariff keyboard: days → devices → live price from the shared path.
+bot.hears(t("bot.menuTariffs"), async (ctx) => {
+  await ctx.reply(t("pricing.title"), { reply_markup: tariffDaysKeyboard() });
+});
+
+bot.action(/^tariff:days:(\d+)$/, async (ctx) => {
+  const days = Number(ctx.match?.[1]);
+  await ctx.answerCbQuery();
+  await ctx.reply(t("pricing.devicesLabel"), { reply_markup: tariffDevicesKeyboard(days) });
+});
+
+bot.action(/^tariff:devices:(\d+):(\d+)$/, async (ctx) => {
+  const days = Number(ctx.match?.[1]);
+  const devices = Number(ctx.match?.[2]);
+  await ctx.answerCbQuery();
+  try {
+    const pricing = await artemida.getPricing({ days, devices });
+    await ctx.reply(
+      `${daysLabel(days)} · ${devices}\n${t("pricing.price", {
+        price: priceFormatter.format(pricing.price),
+      })}`,
+    );
+  } catch {
+    await ctx.reply(t("pricing.error"));
+  }
 });
 
 // Polling guard: dev only, test token (selected above), never during

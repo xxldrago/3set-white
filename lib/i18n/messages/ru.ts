@@ -54,6 +54,7 @@ export const ru = {
     error: 'Не удалось получить trial. Попробуйте ещё раз.',
     usedHeading: 'Вы уже использовали trial',
     usedBody: 'Бесплатный период доступен один раз на аккаунт.',
+    subtitle: '1 день · 2 устройства',
   },
   key: {
     buyCta: 'Купить подписку',
@@ -66,6 +67,9 @@ export const ru = {
     menuKeys: 'Мои ключи',
     menuGuides: 'Инструкции',
     menuHelp: 'Помощь',
+    menuTrial: 'Попробовать',
+    menuTariffs: 'Тарифы',
+    trialIssued: 'Ваш trial-ключ:',
   },
 } as const;
 

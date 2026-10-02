@@ -9,7 +9,14 @@ import { Telegraf } from "telegraf";
 import { artemida } from "./artemida";
 import { env } from "./env";
 import { t, tp } from "./i18n";
-import { formatKeyDate, listKeys, revalidateKeys, startTrial, statusLabel } from "./keys-service";
+import {
+  formatKeyDate,
+  getSubscriptionForUser,
+  listKeys,
+  revalidateKeys,
+  startTrial,
+  statusLabel,
+} from "./keys-service";
 import { logger } from "./logger";
 import { prisma } from "./prisma";
 
@@ -176,11 +183,12 @@ bot.hears(t("bot.menuKeys"), async (ctx) => {
       return;
     }
 
+    const shown = cached.slice(0, 10);
     const header =
       cached.length >= 2
         ? `${t("bot.keysTitle")} · ${tp("subs.count", cached.length)}`
         : t("bot.keysTitle");
-    const lines = cached.slice(0, 10).map((key) => {
+    const lines = shown.map((key) => {
       const expiry = key.expiresAt ? formatKeyDate(key.expiresAt) : "—";
       const devices =
         key.devices !== null && key.deviceLimit !== null
@@ -190,13 +198,75 @@ bot.hears(t("bot.menuKeys"), async (ctx) => {
         date: expiry,
       })}\n${devices}`;
     });
+    // One inline control per key opens its subscription link (02-05 / CAB-04).
+    // Index-based callback_data keeps the payload short (Telegram 64-byte cap).
+    const keyboard = shown.map((key, index) => [
+      { text: `${key.name ?? key.id} · ${t("key.linkTitle")}`, callback_data: `key:link:${index}` },
+    ]);
     // Cap the message well under Telegram's 4096-char limit.
-    await ctx.reply([header, ...lines].join("\n\n").slice(0, 4000));
+    await ctx.reply([header, ...lines].join("\n\n").slice(0, 4000), {
+      reply_markup: { inline_keyboard: keyboard },
+    });
     logger.info({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "keys-listed" });
   } catch {
     await ctx.reply(t("bot.keysError"));
     logger.warn({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "keys-failed" });
   }
+});
+
+// 02-05 (CAB-04): resolve a key's subscription link through the SAME
+// getSubscriptionForUser service the cabinet uses, then reply with the URL plus
+// a «Как подключиться» pointer. The subscription URL is credential-bearing
+// (T-02-18): it is sent to the owning chat only and never written to a log.
+bot.action(/^key:link:(\d+)$/, async (ctx) => {
+  const from = ctx.from;
+  await ctx.answerCbQuery();
+  if (!from) return;
+  const telegramId = BigInt(from.id);
+  try {
+    const keys = await listKeys(telegramId);
+    const key = keys[Number(ctx.match?.[1])];
+    if (!key) {
+      await ctx.reply(t("key.linkUnavailable"));
+      return;
+    }
+    const subscription = await getSubscriptionForUser(telegramId, key.id);
+    if (!subscription?.subscriptionUrl) {
+      await ctx.reply(t("key.linkUnavailable"));
+      logger.info({
+        updateId: ctx.update.update_id,
+        telegramId: from.id,
+        outcome: "key-link-unavailable",
+      });
+      return;
+    }
+    await ctx.reply(
+      `${t("key.linkTitle")}\n${subscription.subscriptionUrl}\n\n${t("key.guidesCta")} — ${t("bot.menuGuides")}`,
+    );
+    logger.info({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "key-link-sent" });
+  } catch {
+    await ctx.reply(t("key.linkError"));
+    logger.warn({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "key-link-failed" });
+  }
+});
+
+// TRIAL-03 bot half: the «Инструкции» button resolves the SAME guide sections
+// as app/guides/page.tsx — one copy, referenced by key, never duplicated.
+bot.hears(t("bot.menuGuides"), async (ctx) => {
+  await ctx.reply(
+    [
+      t("guides.title"),
+      "",
+      t("guides.v2rayTitle"),
+      t("guides.v2rayText"),
+      "",
+      t("guides.streisandTitle"),
+      t("guides.streisandText"),
+      "",
+      t("guides.hiddifyTitle"),
+      t("guides.hiddifyText"),
+    ].join("\n"),
+  );
 });
 
 // Polling guard: dev only, test token (selected above), never during

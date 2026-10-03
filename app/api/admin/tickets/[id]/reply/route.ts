@@ -1,14 +1,16 @@
 // POST /api/admin/tickets/[id]/reply — admin-gated support reply (D-51/D-57).
 //
-// Phase 4 admin auth is the server-only `ADMIN_TELEGRAM_IDS` allow-list behind
-// `requireAdminSession()`: a valid non-admin session gets 404 (not 403) so the
-// route cannot be enumerated (T-04-15). The reply is written through the shared
-// service and delivered by ENQUEUEING a durable notification — this handler
-// never calls Telegram inline, so a Bot API blip cannot lose the reply (D-57).
+// Phase 5 RBAC (D-67) replaces the Phase 4 `ADMIN_TELEGRAM_IDS` allow-list with
+// the role-aware `requireRole('administrator','support')`: a valid session
+// without a ticket-viewing role gets 404 (not 403) so the route cannot be
+// enumerated (T-04-15/T-05-18). The reply is written through the shared service
+// and delivered by ENQUEUEING a durable notification — this handler never calls
+// Telegram inline, so a Bot API blip cannot lose the reply (D-57).
 import { z } from "zod";
+import { requireRole } from "../../../../../../lib/admin-auth";
 import { logger } from "../../../../../../lib/logger";
 import { NOTIFY_TICKET_REPLY, enqueueNotification } from "../../../../../../lib/outbox";
-import { AdminError, requireAdminSession, SessionError } from "../../../../../../lib/session";
+import { AdminError, SessionError } from "../../../../../../lib/session";
 import { addSupportMessage } from "../../../../../../lib/tickets-service";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +23,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
   try {
-    await requireAdminSession();
+    await requireRole("administrator", "support");
   } catch (err) {
     if (err instanceof SessionError) {
       return Response.json({ error: "unauthorized" }, { status: 401 });

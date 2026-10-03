@@ -16,6 +16,9 @@ import sharp from 'sharp';
 const OWNER = BigInt('200000090');
 const OTHER = BigInt('200000091');
 const ADMIN = BigInt('200000092');
+const SUPPORT = BigInt('200000093');
+const MANAGER = BigInt('200000094');
+const STAFF_IDS = [ADMIN, SUPPORT, MANAGER];
 
 const uploadDir = vi.hoisted(() => {
   const dir = `/tmp/tickets-route-test-${process.pid}`;
@@ -172,11 +175,23 @@ beforeAll(async () => {
   await prisma.user.create({ data: { telegramId: OWNER }, select: { id: true } });
   await prisma.user.create({ data: { telegramId: OTHER }, select: { id: true } });
   await prisma.user.create({ data: { telegramId: ADMIN }, select: { id: true } });
+  // Phase 5 roles (D-66): administrator + support reach the ticket surfaces;
+  // a manager does not (UI-SPEC §1). ADMIN also bootstraps via the env
+  // allow-list, but seeding explicitly keeps the matrix deterministic.
+  await prisma.adminUser.deleteMany({ where: { telegramId: { in: STAFF_IDS } } });
+  await prisma.adminUser.createMany({
+    data: [
+      { telegramId: ADMIN, role: 'administrator' },
+      { telegramId: SUPPORT, role: 'support' },
+      { telegramId: MANAGER, role: 'manager' },
+    ],
+  });
 });
 
 afterAll(async () => {
   await clearTickets();
   await prisma.user.deleteMany({ where: { telegramId: { in: [OWNER, OTHER, ADMIN] } } });
+  await prisma.adminUser.deleteMany({ where: { telegramId: { in: STAFF_IDS } } });
   vi.restoreAllMocks();
   await rm(uploadDir, { recursive: true, force: true });
 });
@@ -408,6 +423,28 @@ describe('GET /api/tickets/[id]/attachments/[attachmentId] (D-56)', () => {
     expect(res.headers.get('x-content-type-options')).toBe('nosniff');
   });
 
+  it('serves a support member a ticket they do not own (200)', async () => {
+    await authorize(SUPPORT);
+    const { ticketId, attachmentId } = await seedAttachment();
+
+    const res = await serveAttachment(fileRequest(), attachmentContext(ticketId, attachmentId));
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('x-content-type-options')).toBe('nosniff');
+  });
+
+  it('404s a manager for a ticket they do not own without reading the file', async () => {
+    await authorize(MANAGER);
+    const { ticketId, attachmentId } = await seedAttachment();
+    const read = vi.spyOn(attachmentsModule, 'readAttachment');
+
+    const res = await serveAttachment(fileRequest(), attachmentContext(ticketId, attachmentId));
+
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: 'not_found' });
+    expect(read).not.toHaveBeenCalled();
+  });
+
   it('rejects malformed ids with 400', async () => {
     await authorize(OWNER);
     const { ticketId, attachmentId } = await seedAttachment();
@@ -485,6 +522,25 @@ describe('admin ticket routes (D-51/D-57)', () => {
     expect((await prisma.ticket.findUniqueOrThrow({ where: { id } })).status).toBe('closed');
 
     expect((await adminClose(jsonRequest({}), idContext('missing-ticket'))).status).toBe(404);
+  });
+
+  it('lets a support member reply and close, but 404s a manager (Phase 5 roles)', async () => {
+    await authorize(SUPPORT);
+    const supportId = await seedTicket('open');
+    expect((await adminReply(jsonRequest({ body: 'Поддержка на связи' }), idContext(supportId))).status).toBe(
+      200,
+    );
+    expect((await adminClose(jsonRequest({}), idContext(supportId))).status).toBe(200);
+
+    await authorize(MANAGER);
+    const managerId = await seedTicket('open');
+    expect((await adminReply(jsonRequest({ body: 'нет' }), idContext(managerId))).status).toBe(404);
+    expect((await adminClose(jsonRequest({}), idContext(managerId))).status).toBe(404);
+    // The manager's denied requests left the ticket untouched.
+    expect((await prisma.ticket.findUniqueOrThrow({ where: { id: managerId } })).status).toBe(
+      'open',
+    );
+    expect(await messageCount(managerId)).toBe(1);
   });
 });
 

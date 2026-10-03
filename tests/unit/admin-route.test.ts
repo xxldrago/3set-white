@@ -22,6 +22,8 @@ vi.mock("next/headers", () => ({
 }));
 
 import AdminOverviewPage from "../../app/admin/page";
+import AdminUserProfilePage from "../../app/admin/users/[id]/page";
+import { POST as adminRoleChange } from "../../app/api/admin/roles/route";
 import { getAdminRole, requireRole, type AdminRole } from "../../lib/admin-auth";
 import { signSession } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
@@ -32,7 +34,11 @@ const ADMIN = 910000201;
 const SUPPORT = 910000202;
 const MANAGER = 910000203;
 const STRANGER = 910000204;
-const IDS = [BOOTSTRAP, ADMIN, SUPPORT, MANAGER, STRANGER].map((id) => BigInt(id));
+const ROLE_TARGET = 910000205;
+const PROFILE_STAFF = 910000206;
+const IDS = [BOOTSTRAP, ADMIN, SUPPORT, MANAGER, STRANGER, ROLE_TARGET, PROFILE_STAFF].map((id) =>
+  BigInt(id),
+);
 
 const SECRET =
   process.env["SESSION_SECRET"] ?? "unit-test-session-secret-at-least-32-characters";
@@ -66,6 +72,7 @@ async function authorize(telegramId: number): Promise<void> {
 
 async function cleanup(): Promise<void> {
   await prisma.adminUser.deleteMany({ where: { telegramId: { in: IDS } } });
+  await prisma.user.deleteMany({ where: { telegramId: { in: IDS } } });
 }
 
 beforeAll(async () => {
@@ -75,7 +82,12 @@ beforeAll(async () => {
       { telegramId: BigInt(ADMIN), role: "administrator" },
       { telegramId: BigInt(SUPPORT), role: "support" },
       { telegramId: BigInt(MANAGER), role: "manager" },
+      { telegramId: BigInt(ROLE_TARGET), role: "support" },
+      { telegramId: BigInt(PROFILE_STAFF), role: "support" },
     ],
+  });
+  await prisma.user.create({
+    data: { telegramId: BigInt(PROFILE_STAFF), firstName: "Staff", lastName: "Member" },
   });
 });
 
@@ -87,6 +99,11 @@ beforeEach(async () => {
   session.token = undefined;
   // Keep the bootstrap row absent by default; bootstrap tests create it.
   await prisma.adminUser.deleteMany({ where: { telegramId: BigInt(BOOTSTRAP) } });
+  // Reset the role-change target to a known state before each test.
+  await prisma.adminUser.updateMany({
+    where: { telegramId: BigInt(ROLE_TARGET) },
+    data: { role: "support" },
+  });
 });
 
 afterEach(() => {
@@ -169,5 +186,139 @@ describe("bootstrap is create-only across repeated calls", () => {
     });
     await expect(getAdminRole(BOOTSTRAP)).resolves.toBe("support");
     await expect(statusFor("administrator")).resolves.toBe(404);
+  });
+});
+
+function roleChangeRequest(payload: unknown): Request {
+  return new Request("http://localhost/api/admin/roles", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+type AnyElement = { props?: Record<string, unknown> };
+
+/** Walk a rendered React element tree (function components pre-invoked). */
+function walkElements(node: unknown, visit: (element: AnyElement) => void): void {
+  if (node === null || node === undefined || typeof node !== "object") return;
+  if (Array.isArray(node)) {
+    for (const child of node) walkElements(child, visit);
+    return;
+  }
+  const element = node as AnyElement;
+  if (!element.props) return;
+  visit(element);
+  walkElements(element.props.children, visit);
+}
+
+/** True when the tree contains a RoleChangeControl element (target telegramId). */
+function hasRoleControl(node: unknown): boolean {
+  let found = false;
+  walkElements(node, (element) => {
+    if (element.props?.telegramId !== undefined && element.props?.currentRole !== undefined) {
+      found = true;
+    }
+  });
+  return found;
+}
+
+describe("POST /api/admin/roles — gate + conditional write (D-66 / T-05-15)", () => {
+  it("returns 401 for a signed-out caller", async () => {
+    const res = await adminRoleChange(
+      roleChangeRequest({ telegramId: ROLE_TARGET, role: "manager" }),
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 404 for a support or manager caller (administrator only)", async () => {
+    await authorize(SUPPORT);
+    expect(
+      (await adminRoleChange(roleChangeRequest({ telegramId: ROLE_TARGET, role: "manager" })))
+        .status,
+    ).toBe(404);
+
+    await authorize(MANAGER);
+    expect(
+      (await adminRoleChange(roleChangeRequest({ telegramId: ROLE_TARGET, role: "manager" })))
+        .status,
+    ).toBe(404);
+  });
+
+  it("changes another staff member's role through a conditional write", async () => {
+    await authorize(ADMIN);
+    const res = await adminRoleChange(
+      roleChangeRequest({ telegramId: ROLE_TARGET, role: "manager" }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, role: "manager" });
+    const row = await prisma.adminUser.findUnique({
+      where: { telegramId: BigInt(ROLE_TARGET) },
+    });
+    expect(row?.role).toBe("manager");
+  });
+
+  it("404s an unknown target and writes nothing", async () => {
+    await authorize(ADMIN);
+    const res = await adminRoleChange(
+      roleChangeRequest({ telegramId: 919999999, role: "manager" }),
+    );
+    expect(res.status).toBe(404);
+  });
+
+  it("rejects a self-change (400) and leaves the caller's role unchanged", async () => {
+    await authorize(ADMIN);
+    const res = await adminRoleChange(
+      roleChangeRequest({ telegramId: ADMIN, role: "support" }),
+    );
+
+    expect(res.status).toBe(400);
+    const row = await prisma.adminUser.findUnique({ where: { telegramId: BigInt(ADMIN) } });
+    expect(row?.role).toBe("administrator");
+  });
+
+  it("rejects a malformed payload with 400", async () => {
+    await authorize(ADMIN);
+    expect((await adminRoleChange(roleChangeRequest({ telegramId: ROLE_TARGET }))).status).toBe(
+      400,
+    );
+    expect(
+      (await adminRoleChange(roleChangeRequest({ telegramId: ROLE_TARGET, role: "owner" })))
+        .status,
+    ).toBe(400);
+  });
+});
+
+describe("/admin/users/[id] — role action visibility (UI-SPEC §4)", () => {
+  it("renders the role-change control for an administrator viewing staff", async () => {
+    await authorize(ADMIN);
+    const header = await prisma.user.findUniqueOrThrow({
+      where: { telegramId: BigInt(PROFILE_STAFF) },
+      select: { id: true },
+    });
+    const tree = await AdminUserProfilePage({
+      params: Promise.resolve({ id: String(header.id) }),
+    });
+    expect(hasRoleControl(tree)).toBe(true);
+  });
+
+  it("omits the control for support and manager callers", async () => {
+    const header = await prisma.user.findUniqueOrThrow({
+      where: { telegramId: BigInt(PROFILE_STAFF) },
+      select: { id: true },
+    });
+
+    await authorize(SUPPORT);
+    const supportTree = await AdminUserProfilePage({
+      params: Promise.resolve({ id: String(header.id) }),
+    });
+    expect(hasRoleControl(supportTree)).toBe(false);
+
+    await authorize(MANAGER);
+    const managerTree = await AdminUserProfilePage({
+      params: Promise.resolve({ id: String(header.id) }),
+    });
+    expect(hasRoleControl(managerTree)).toBe(false);
   });
 });

@@ -1,11 +1,13 @@
 // POST /api/admin/tickets/[id]/close — admin-gated ticket close (D-51).
 //
-// Same allow-list gate as the reply route: a valid non-admin session gets 404.
+// Same role gate as the reply route (D-67): `requireRole('administrator',
+// 'support')`; a valid session without a ticket-viewing role gets 404.
 // `closeTicket` is the conditional single-writer transition; a missing ticket
 // returns false → 404 (no oracle).
 import { z } from "zod";
+import { requireRole } from "../../../../../../lib/admin-auth";
 import { logger } from "../../../../../../lib/logger";
-import { AdminError, requireAdminSession, SessionError } from "../../../../../../lib/session";
+import { AdminError, SessionError } from "../../../../../../lib/session";
 import { closeTicket } from "../../../../../../lib/tickets-service";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +19,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
   try {
-    await requireAdminSession();
+    await requireRole("administrator", "support");
   } catch (err) {
     if (err instanceof SessionError) {
       return Response.json({ error: "unauthorized" }, { status: 401 });

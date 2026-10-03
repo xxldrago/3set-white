@@ -22,13 +22,21 @@ function unreadDisplay(count: number): string {
   return count > 99 ? '99+' : String(count);
 }
 
-export default function TicketList({ rows }: { rows: TicketListRow[] }) {
+export default function TicketList({
+  rows,
+  hrefBase = '/support',
+}: {
+  rows: TicketListRow[];
+  /** Link target prefix. The cabinet uses `/support`; the admin queue passes
+      `/admin/tickets` so a row never points at an owner-scoped route. */
+  hrefBase?: string;
+}) {
   return (
     <div className="flex flex-col gap-4">
       {rows.map((row) => (
         <article key={row.id} className={CARD}>
           <Link
-            href={`/support/${encodeURIComponent(row.id)}`}
+            href={`${hrefBase}/${encodeURIComponent(row.id)}`}
             className="flex flex-col gap-3"
           >
             <div className="flex items-start justify-between gap-3">

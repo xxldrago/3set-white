@@ -245,6 +245,68 @@ export async function loadAdminTickets(userId: number): Promise<TicketListRow[]>
   }));
 }
 
+/** One staff row for the role manager — the ONLY fields it exposes. */
+export interface AdminRosterRow {
+  /** Serialized as a string: BigInt is not JSON-safe and the UI renders text. */
+  telegramId: string;
+  displayName: string | null;
+  role: AdminRole;
+}
+
+/**
+ * The `admin_users` roster (D-66). Authorization is the resolved administrator
+ * role (the caller resolved `requireRole('administrator')` first) — this read is
+ * not owner-filtered. Display names are joined from our own `User` row when one
+ * exists (a staff telegram id without a customer row renders `—`), never a
+ * Telegram profile fetch.
+ */
+export async function loadAdminRoster(): Promise<AdminRosterRow[]> {
+  const staff = await prisma.adminUser.findMany({ orderBy: { telegramId: "asc" } });
+  if (staff.length === 0) return [];
+
+  const users = await prisma.user.findMany({
+    where: { telegramId: { in: staff.map((row) => row.telegramId) } },
+    select: USER_SELECT,
+  });
+  const nameByTelegramId = new Map(
+    users.map((user) => [String(user.telegramId), displayNameOf(user)]),
+  );
+
+  return staff.map((row) => ({
+    telegramId: String(row.telegramId),
+    displayName: nameByTelegramId.get(String(row.telegramId)) ?? null,
+    role: row.role,
+  }));
+}
+
+/**
+ * Every ticket in the single queue, newest activity first (ADM-01 / UI-SPEC
+ * §7). Not owner-filtered — the admin/support role is the authorization; the
+ * per-row shape is exactly the cabinet `TicketListRow` (no caller telegram id
+ * is read here).
+ */
+export async function loadAllTickets(): Promise<TicketListRow[]> {
+  const rows = await prisma.ticket.findMany({
+    orderBy: { lastMessageAt: "desc" },
+    include: {
+      messages: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { body: true },
+      },
+    },
+  });
+
+  return rows.map((row) => ({
+    id: row.id,
+    subject: row.subject,
+    status: row.status,
+    unreadForUser: row.unreadForUser,
+    lastMessageAt: row.lastMessageAt,
+    preview: row.messages[0]?.body ?? null,
+  }));
+}
+
 /** Run one section read, converting a failure into an `ok:false` marker. */
 async function settle<T>(load: () => Promise<T[]>): Promise<ProfileSection<T>> {
   try {

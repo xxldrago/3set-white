@@ -141,30 +141,40 @@ export async function listTicketsForUser(telegramId: bigint): Promise<TicketList
   }));
 }
 
-/**
- * Ownership-joined thread read (T-04-01). The join
- * `where { id, user: { telegramId } }` means a ticket the caller does not own
- * returns `null` exactly like a missing one — no ownership oracle.
- */
-export async function getTicketForUser(
-  telegramId: bigint,
-  ticketId: string,
-): Promise<TicketThread | null> {
-  const row = await prisma.ticket.findFirst({
-    where: { id: ticketId, user: { telegramId } },
+/** Shared thread include for the owner-joined and admin route reads. */
+const THREAD_INCLUDE = {
+  messages: {
+    orderBy: { createdAt: "asc" as const },
     include: {
-      messages: {
-        orderBy: { createdAt: "asc" },
-        include: {
-          attachments: {
-            select: { id: true, mime: true, width: true, height: true, sizeBytes: true },
-          },
-        },
+      attachments: {
+        select: { id: true, mime: true, width: true, height: true, sizeBytes: true },
       },
     },
-  });
-  if (!row) return null;
+  },
+} as const;
 
+type ThreadRow = {
+  id: string;
+  subject: string;
+  status: TicketStatus;
+  unreadForUser: number;
+  messages: Array<{
+    id: string;
+    author: TicketAuthor;
+    body: string | null;
+    createdAt: Date;
+    attachments: Array<{
+      id: string;
+      mime: string;
+      width: number | null;
+      height: number | null;
+      sizeBytes: number;
+    }>;
+  }>;
+};
+
+/** Map a loaded ticket row to the provider-free `TicketThread` shape. */
+function toThread(row: ThreadRow): TicketThread {
   return {
     id: row.id,
     subject: row.subject,
@@ -184,6 +194,37 @@ export async function getTicketForUser(
       })),
     })),
   };
+}
+
+/**
+ * Ownership-joined thread read (T-04-01). The join
+ * `where { id, user: { telegramId } }` means a ticket the caller does not own
+ * returns `null` exactly like a missing one — no ownership oracle.
+ */
+export async function getTicketForUser(
+  telegramId: bigint,
+  ticketId: string,
+): Promise<TicketThread | null> {
+  const row = await prisma.ticket.findFirst({
+    where: { id: ticketId, user: { telegramId } },
+    include: THREAD_INCLUDE,
+  });
+  return row ? toThread(row) : null;
+}
+
+/**
+ * Role-authorized thread read for the admin queue (ADM-01 / UI-SPEC §7): the
+ * caller's staff role is the authorization (resolved server-side by
+ * `requireRole` in the page), NOT ownership. This deliberately has no telegram
+ * id parameter — an admin/support caller may read ANY ticket. It must only ever
+ * be reachable from a role-gated page.
+ */
+export async function getTicketById(ticketId: string): Promise<TicketThread | null> {
+  const row = await prisma.ticket.findUnique({
+    where: { id: ticketId },
+    include: THREAD_INCLUDE,
+  });
+  return row ? toThread(row) : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -364,21 +405,22 @@ export async function hasOpenTicket(telegramId: bigint): Promise<boolean> {
 /**
  * Resolve one attachment for the gated serve route (D-56 / T-04-17). The
  * `attachmentId` is joined to the message and ticket so the pair must match;
- * ownership is enforced on the ticket unless the caller is an admin
- * (`isAdminUser` is computed by the route from the server-only allow-list).
- * A non-owned (or missing) attachment returns `null` exactly like a missing
- * one — no ownership oracle. Only the storage path + MIME are exposed.
+ * ownership is enforced on the ticket unless the caller is staff
+ * (`isStaff` = role ∈ {administrator, support}, resolved server-side by the
+ * route from `lib/admin-auth` — a manager is NOT staff, research Open Q4). A
+ * non-owned (or missing) attachment returns `null` exactly like a missing one —
+ * no ownership oracle. Only the storage path + MIME are exposed.
  */
 export async function getOwnedAttachment(
   telegramId: bigint,
   ticketId: string,
   attachmentId: string,
-  isAdminUser = false,
+  isStaff = false,
 ): Promise<{ path: string; mime: string } | null> {
   const attachment = await prisma.attachment.findFirst({
     where: {
       id: attachmentId,
-      message: isAdminUser
+      message: isStaff
         ? { ticketId }
         : { ticketId, ticket: { user: { telegramId } } },
     },

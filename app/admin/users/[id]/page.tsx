@@ -11,6 +11,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import AdminKeyRow from '@/components/admin/AdminKeyRow';
+import RoleChangeControl from '@/components/admin/RoleChangeControl';
 import UserProfileCard from '@/components/admin/UserProfileCard';
 import PaymentStatusChip from '@/components/PaymentStatusChip';
 import TicketStatusChip from '@/components/TicketStatusChip';
@@ -205,8 +206,9 @@ export default async function AdminUserProfilePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  let caller: { telegramId: number; role: string };
   try {
-    await requireRole('administrator', 'support', 'manager');
+    caller = await requireRole('administrator', 'support', 'manager');
   } catch (err) {
     if (err instanceof SessionError) redirect('/login');
     if (err instanceof AdminError) notFound();
@@ -220,9 +222,23 @@ export default async function AdminUserProfilePage({
   const header = await loadAdminHeader(userId);
   if (!header) notFound();
 
+  // UI-SPEC §4 role action: rendered for an administrator ONLY, and only for a
+  // staff target (there is no role row to change otherwise). It is absent from
+  // the DOM for support/manager — the server decides, not CSS.
+  const showRoleAction = caller.role === 'administrator' && header.staffRole !== null;
+
   return (
     <section className="flex flex-col gap-6">
-      <UserProfileCard header={header} />
+      <UserProfileCard header={header}>
+        {showRoleAction && header.staffRole && (
+          <RoleChangeControl
+            telegramId={header.telegramId}
+            currentRole={header.staffRole}
+            name={header.displayName ?? header.telegramId}
+            self={header.telegramId === String(caller.telegramId)}
+          />
+        )}
+      </UserProfileCard>
 
       {/* Independent boundaries: one failing read cannot blank the others. */}
       <Suspense fallback={<SkeletonRows />}>

@@ -36,6 +36,14 @@ model User {
   // Phase 3 money path (D-39): every purchase/renew/upgrade is an order row.
   orders     Order[]
 
+  // Phase 4 support (D-49/D-58). `tickets` is the thread relation;
+  // `awaitingSupport`/`supportPromptAt` are the bot intake state (a persisted
+  // flag survives webhook/restart, unlike an in-memory Telegraf session). The
+  // flag is claimed atomically by `clearSupportPrompt` (claim-before-create).
+  tickets         Ticket[]
+  awaitingSupport Boolean   @default(false) @map("awaiting_support")
+  supportPromptAt DateTime? @map("support_prompt_at")
+
   @@map("users")
 }
 
@@ -145,4 +153,92 @@ model ReplayCache {
   usedAt DateTime @default(now()) @map("used_at")
 
   @@map("replay_cache")
+}
+
+// ---------------------------------------------------------------------------
+// Phase 4 support & retention (D-49..D-63). Ticket = thread dialog: one
+// `Ticket` carries a subject + status and 1→N `TicketMessage` rows; an image
+// attaches to a message (`Attachment`). Bot and cabinet both write through the
+// single `lib/tickets-service.ts` path, so the "единая очередь" (SUP-01) is a
+// property of the write path, not a sync job. `Notification` is a sibling
+// delivery queue (RESEARCH Open Q2 LOCKED): it reuses the Outbox claim
+// discipline but is NOT order-scoped, so the money-path `Outbox` stays intact.
+// ---------------------------------------------------------------------------
+
+enum TicketStatus {
+  open
+  answered
+  closed
+}
+
+enum TicketAuthor {
+  user
+  support
+}
+
+model Ticket {
+  id            String          @id @default(cuid())
+  userId        Int             @map("user_id")
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject       String
+  status        TicketStatus    @default(open)
+  unreadForUser Int             @default(0) @map("unread_for_user")
+  lastMessageAt DateTime        @default(now()) @map("last_message_at")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  messages      TicketMessage[]
+
+  @@index([userId, lastMessageAt])
+  @@index([status, lastMessageAt])
+  @@map("tickets")
+}
+
+model TicketMessage {
+  id          String       @id @default(cuid())
+  ticketId    String       @map("ticket_id")
+  ticket      Ticket       @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author      TicketAuthor
+  // Nullable: an image-only message is valid (UI-SPEC §2).
+  body        String?
+  createdAt   DateTime     @default(now()) @map("created_at")
+  attachments Attachment[]
+
+  @@index([ticketId, createdAt])
+  @@map("ticket_messages")
+}
+
+model Attachment {
+  id        String        @id @default(cuid())
+  messageId String        @map("message_id")
+  message   TicketMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  // Relative to UPLOAD_DIR only — never absolute (D-53/D-56).
+  path      String
+  mime      String
+  sizeBytes Int           @map("size_bytes")
+  width     Int?
+  height    Int?
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@index([messageId])
+  @@map("ticket_attachments")
+}
+
+model Notification {
+  id              String       @id @default(cuid())
+  // notify-ticket-reply | remind-expiry
+  type            String
+  dedupeKey       String       @unique @map("dedupe_key")
+  userId          Int?         @map("user_id")
+  ticketId        String?      @map("ticket_id")
+  ticketMessageId String?      @map("ticket_message_id")
+  keyId           String?      @map("key_id")
+  status          OutboxStatus @default(pending)
+  attempts        Int          @default(0)
+  lastError       String?      @map("last_error")
+  nextAttemptAt   DateTime     @default(now()) @map("next_attempt_at")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  processedAt     DateTime?    @map("processed_at")
+
+  @@index([status, nextAttemptAt])
+  @@map("notifications")
 }

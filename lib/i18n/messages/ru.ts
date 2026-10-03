@@ -181,6 +181,8 @@ export const ru = {
     attachRemove: 'Убрать вложение',
     attachTooLarge: 'Файл больше 5 МБ. Выберите изображение меньше.',
     attachBadType: 'Можно прикрепить только изображение (JPG, PNG или WebP).',
+    attachmentAlt: 'Вложение',
+    attachmentError: 'Не удалось загрузить вложение',
     sendError: 'Не удалось отправить. Попробуйте ещё раз.',
     reopenNote: 'Ответ откроет обращение заново.',
     toSupport: 'Поддержка',

@@ -14,12 +14,13 @@ import type {
   TicketThreadMessage,
 } from '@/lib/tickets-service';
 import { t } from '@/lib/i18n';
+import AttachmentImage from './AttachmentImage';
 import { formatPaymentDate } from './PaymentHistoryList';
 
 const BUBBLE =
   'flex flex-col gap-1 rounded-2xl border border-black/10 p-4 dark:border-white/15';
 
-function MessageBubble({ message }: { message: TicketThreadMessage }) {
+function MessageBubble({ ticketId, message }: { ticketId: string; message: TicketThreadMessage }) {
   const isSupport = message.author === 'support';
   return (
     <div className={`flex max-w-[85%] flex-col gap-1 ${isSupport ? 'self-start' : 'self-end'}`}>
@@ -34,6 +35,19 @@ function MessageBubble({ message }: { message: TicketThreadMessage }) {
             {message.body}
           </p>
         )}
+        {message.attachments.length > 0 && (
+          <div className="flex flex-col gap-2 pt-1">
+            {message.attachments.map((attachment) => (
+              <AttachmentImage
+                key={attachment.id}
+                ticketId={ticketId}
+                attachmentId={attachment.id}
+                width={attachment.width}
+                height={attachment.height}
+              />
+            ))}
+          </div>
+        )}
       </div>
       <time className="text-sm tabular-nums text-zinc-600 dark:text-zinc-400">
         {formatPaymentDate(message.createdAt)}
@@ -46,7 +60,7 @@ export default function TicketThread({ thread }: { thread: TicketThreadData }) {
   return (
     <div className="flex flex-col gap-3">
       {thread.messages.map((message) => (
-        <MessageBubble key={message.id} message={message} />
+        <MessageBubble key={message.id} ticketId={thread.id} message={message} />
       ))}
     </div>
   );

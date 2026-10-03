@@ -8,6 +8,7 @@
 // reopen note above the composer (D-59).
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import MarkReadOnOpen from '@/components/MarkReadOnOpen';
 import TicketStatusChip from '@/components/TicketStatusChip';
 import TicketThread from '@/components/TicketThread';
 import { t } from '@/lib/i18n';
@@ -72,6 +73,8 @@ export default async function TicketDetailPage({
             {t('ticket.listTitle')}
           </Link>
         </nav>
+
+        <MarkReadOnOpen ticketId={id} />
       </main>
     </div>
   );

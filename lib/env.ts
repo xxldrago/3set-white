@@ -26,6 +26,12 @@ const envSchema = z.object({
   // (POST /api/cron/reconcile). Optional: when unset the route refuses (503) —
   // the instrumentation.ts worker remains the primary path (A6 fallback).
   CRON_SECRET: z.string().min(16, "CRON_SECRET must be >= 16 chars").optional(),
+  // Local upload volume for ticket attachments (D-53). Server-only — never a
+  // NEXT_PUBLIC_* var. Default mirrors the compose mount at /data/uploads.
+  UPLOAD_DIR: z.string().min(1).default("/data/uploads"),
+  // Comma-separated Telegram ids allowed to reply/close tickets in Phase 4
+  // (D-51). Optional: empty/unset means no admins. Server-only.
+  ADMIN_TELEGRAM_IDS: z.string().optional(),
   BOT_MODE: z.enum(["polling", "webhook"]).default("polling"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),

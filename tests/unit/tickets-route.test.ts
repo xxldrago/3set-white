@@ -36,8 +36,10 @@ vi.mock('next/headers', () => ({
 }));
 
 import { POST as createTicket } from '../../app/api/tickets/route';
+import { GET as serveAttachment } from '../../app/api/tickets/[id]/attachments/[attachmentId]/route';
 import { POST as replyTicket } from '../../app/api/tickets/[id]/messages/route';
 import { POST as readTicket } from '../../app/api/tickets/[id]/read/route';
+import * as attachmentsModule from '../../lib/attachments';
 import { MAX_ATTACHMENT_BYTES } from '../../lib/attachments';
 import { signSession } from '../../lib/auth';
 import { prisma } from '../../lib/prisma';
@@ -107,6 +109,33 @@ async function seedTicket(
 
 async function messageCount(ticketId: string): Promise<number> {
   return prisma.ticketMessage.count({ where: { ticketId } });
+}
+
+/** Seed an owner ticket with a real stored WebP attachment on one message. */
+async function seedAttachment(): Promise<{ ticketId: string; attachmentId: string }> {
+  const ticketId = await seedTicket('open');
+  const normalized = await attachmentsModule.normalizeImage(await jpegBytes());
+  const rel = await attachmentsModule.saveAttachment(ticketId, normalized);
+  const message = await prisma.ticketMessage.create({
+    data: { ticketId, author: 'user', body: 'pic' },
+    select: { id: true },
+  });
+  const attachment = await prisma.attachment.create({
+    data: {
+      messageId: message.id,
+      path: rel,
+      mime: normalized.mime,
+      sizeBytes: normalized.sizeBytes,
+      width: normalized.width,
+      height: normalized.height,
+    },
+    select: { id: true },
+  });
+  return { ticketId, attachmentId: attachment.id };
+}
+
+function attachmentContext(id: string, attachmentId: string) {
+  return { params: Promise.resolve({ id, attachmentId }) };
 }
 
 async function ownerTicketCount(): Promise<number> {
@@ -320,4 +349,70 @@ describe('POST /api/tickets/[id]/messages + /read (SUP-01/D-58/D-59)', () => {
     expect((await prisma.ticket.findUniqueOrThrow({ where: { id } })).unreadForUser).toBe(3);
   });
 });
+
+describe('GET /api/tickets/[id]/attachments/[attachmentId] (D-56)', () => {
+  const fileRequest = () => new Request('http://localhost/api/tickets');
+
+  it('returns 401 without a session and never reads the file', async () => {
+    const { ticketId, attachmentId } = await seedAttachment();
+    const read = vi.spyOn(attachmentsModule, 'readAttachment');
+
+    const res = await serveAttachment(fileRequest(), attachmentContext(ticketId, attachmentId));
+
+    expect(res.status).toBe(401);
+    expect(read).not.toHaveBeenCalled();
+  });
+
+  it('404s a non-owner without reading the file (no oracle)', async () => {
+    await authorize(OTHER);
+    const { ticketId, attachmentId } = await seedAttachment();
+    const read = vi.spyOn(attachmentsModule, 'readAttachment');
+
+    const res = await serveAttachment(fileRequest(), attachmentContext(ticketId, attachmentId));
+
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: 'not_found' });
+    expect(read).not.toHaveBeenCalled();
+  });
+
+  it('serves the owner 200 with nosniff + private cache and no stored path', async () => {
+    await authorize(OWNER);
+    const { ticketId, attachmentId } = await seedAttachment();
+
+    const res = await serveAttachment(fileRequest(), attachmentContext(ticketId, attachmentId));
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(res.headers.get('cache-control')).toContain('private');
+    expect(res.headers.get('content-disposition')).toBe('inline');
+    expect(res.headers.get('content-type')).toBe('image/webp');
+    const bytes = Buffer.from(await res.arrayBuffer());
+    expect(bytes.byteLength).toBeGreaterThan(0);
+    // The stored relative path must never appear in any response header.
+    expect([...res.headers.values()].join(' ')).not.toContain('/tmp/');
+  });
+
+  it('serves an allow-listed admin a ticket they do not own (200)', async () => {
+    await authorize(ADMIN);
+    const { ticketId, attachmentId } = await seedAttachment();
+
+    const res = await serveAttachment(fileRequest(), attachmentContext(ticketId, attachmentId));
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('x-content-type-options')).toBe('nosniff');
+  });
+
+  it('rejects malformed ids with 400', async () => {
+    await authorize(OWNER);
+    const { ticketId, attachmentId } = await seedAttachment();
+
+    expect((await serveAttachment(fileRequest(), attachmentContext('', attachmentId))).status).toBe(
+      400,
+    );
+    expect((await serveAttachment(fileRequest(), attachmentContext(ticketId, ''))).status).toBe(
+      400,
+    );
+  });
+});
+
 

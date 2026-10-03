@@ -360,3 +360,29 @@ export async function hasOpenTicket(telegramId: bigint): Promise<boolean> {
   });
   return count > 0;
 }
+
+/**
+ * Resolve one attachment for the gated serve route (D-56 / T-04-17). The
+ * `attachmentId` is joined to the message and ticket so the pair must match;
+ * ownership is enforced on the ticket unless the caller is an admin
+ * (`isAdminUser` is computed by the route from the server-only allow-list).
+ * A non-owned (or missing) attachment returns `null` exactly like a missing
+ * one — no ownership oracle. Only the storage path + MIME are exposed.
+ */
+export async function getOwnedAttachment(
+  telegramId: bigint,
+  ticketId: string,
+  attachmentId: string,
+  isAdminUser = false,
+): Promise<{ path: string; mime: string } | null> {
+  const attachment = await prisma.attachment.findFirst({
+    where: {
+      id: attachmentId,
+      message: isAdminUser
+        ? { ticketId }
+        : { ticketId, ticket: { user: { telegramId } } },
+    },
+    select: { path: true, mime: true },
+  });
+  return attachment ?? null;
+}

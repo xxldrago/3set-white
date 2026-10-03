@@ -10,6 +10,7 @@ import type { Order, Outbox } from "../generated/prisma/client";
 import { artemida } from "./artemida";
 import { logger } from "./logger";
 import { env } from "./env";
+import { getKeyForUser, type RenderedKey } from "./keys-service";
 import { enqueueFulfillJob } from "./outbox";
 import { PlategaError, platega } from "./platega";
 import { prisma } from "./prisma";
@@ -24,11 +25,39 @@ export type OrderStatus =
   | "canceled"
   | "refunded";
 
+/** App-locked device bounds (provider min is 2; the cabinet ceiling is 10). */
+export const MIN_DEVICES = 2;
+export const MAX_DEVICES = 10;
+
+/**
+ * The single clean trial-family code shared by BOTH layers that can reject a
+ * renew/upgrade on a trial key (D-44):
+ * - the BFF pre-check (`POST /api/orders`) returns HTTP 409 `{error:'trial'}`;
+ * - the worker maps a provider `conflict` to this same `errorCode` (`failed`).
+ * Neither path ever surfaces a raw provider 409/code — the UI resolves this to
+ * the existing `trial.usedBody` family (UI-SPEC §5). Keep both in sync here.
+ */
+export const TRIAL_ERROR_CODE = "trial";
+
+/** Provider-conflict detector for the shared trial-family mapping. */
+export function isTrialConflict(code: string): boolean {
+  return code === "conflict";
+}
+
 export interface CreateOrderInput {
   telegramId: number;
   kind: OrderKind;
-  days: number;
+  /** Purchased days: required for `new`/`renew`, `null` for `upgrade`. */
+  days: number | null;
+  /**
+   * Device count by kind:
+   * - `new`: the device count being purchased;
+   * - `renew`: the key's current device limit (term-only change, D-45);
+   * - `upgrade`: the key's current device limit (quote basis only).
+   */
   devices: number;
+  /** Upgrade only: devices to add — the observed provider wire field. */
+  addDevices?: number;
   keyId?: string | null;
   userName?: string | null;
 }
@@ -56,8 +85,31 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     throw new Error("orders:unknown_user");
   }
 
-  const quote = await artemida.getPricing({ days: input.days, devices: input.devices });
-  const amount = Math.round(quote.price);
+  // One money pipeline, kind-aware quote only (D-42/D-43). `new`/`renew` use the
+  // provider `GET /pricing` quote; `upgrade` derives the prorated device delta
+  // locally (the provider exposes no quote endpoint, 03-01 observed).
+  let amount: number;
+  let currency: string;
+  if (input.kind === "upgrade") {
+    const quote = await artemida.getUpgradeQuote({
+      days: input.days ?? 30,
+      devices: input.devices,
+      addDevices: input.addDevices ?? 1,
+    });
+    amount = Math.round(quote.amount);
+    currency = quote.currency;
+  } else {
+    const quote = await artemida.getPricing({
+      days: input.days ?? 30,
+      devices: input.devices,
+    });
+    amount = Math.round(quote.price);
+    currency = quote.currency;
+  }
+
+  // `devices` stores the intent the worker replays: for `upgrade` it is the
+  // addDevices delta (the observed wire field), for `new`/`renew` the count.
+  const storedDevices = input.kind === "upgrade" ? (input.addDevices ?? 1) : input.devices;
 
   const order = await prisma.order.create({
     data: {
@@ -65,9 +117,9 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       kind: input.kind,
       keyId: input.keyId ?? null,
       days: input.days,
-      devices: input.devices,
+      devices: storedDevices,
       amount,
-      currency: quote.currency,
+      currency,
       status: "pending",
     },
   });
@@ -75,7 +127,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   try {
     const tx = await platega.createTransaction({
       amount,
-      currency: quote.currency,
+      currency,
       description: `Order ${order.id}`,
       returnUrl: `${env.APP_BASE_URL}/payments/${order.id}`,
       failedUrl: `${env.APP_BASE_URL}/payments/${order.id}`,
@@ -99,6 +151,34 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     }
     throw err;
   }
+}
+
+/** Current device limit for a cached key, clamped into the app's 2..10 range. */
+export function keyDeviceLimit(key: Pick<RenderedKey, "deviceLimit" | "devices">): number {
+  const raw = key.deviceLimit ?? key.devices ?? MIN_DEVICES;
+  return Math.max(MIN_DEVICES, Math.min(MAX_DEVICES, raw));
+}
+
+export type OwnedKeyPrecheck =
+  | { ok: true; key: RenderedKey }
+  | { ok: false; reason: "not_found" | typeof TRIAL_ERROR_CODE };
+
+/**
+ * Server-side pre-check for a renew/upgrade target (T-03-idor / T-03-trial-bypass).
+ * Resolves the key through the ownership-joined `getKeyForUser` BEFORE any
+ * provider call:
+ * - not owned / missing → `not_found` (caller returns 404; no oracle, D-44);
+ * - owned but trial → `trial` (caller returns the clean 409 trial signal).
+ * The client-supplied `keyId` is never trusted for ownership.
+ */
+export async function precheckOwnedKey(
+  telegramId: number,
+  keyId: string,
+): Promise<OwnedKeyPrecheck> {
+  const key = await getKeyForUser(BigInt(telegramId), keyId);
+  if (!key) return { ok: false, reason: "not_found" };
+  if (key.isTrial) return { ok: false, reason: TRIAL_ERROR_CODE };
+  return { ok: true, key };
 }
 
 /**

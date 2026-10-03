@@ -1,7 +1,8 @@
 ---
 phase: "4"
 slug: "support-retention"
-status: draft
+status: approved
+reviewed_at: "2026-10-03"
 shadcn_initialized: false
 preset: none
 created: "2026-10-03"
@@ -254,6 +255,11 @@ Reuses the Phase 2/3 scale verbatim. **Exactly four sizes and exactly two weight
 
 Declared weights: **400 (regular)** and **600 (semibold)** — exactly two.
 
+**Focal point (visual anchor per screen):**
+- `/support` (ticket list): the row's subject + `TicketStatusChip` is the scanning anchor; the unread badge is the attention cue.
+- `/support/[id]` (thread): the newest unread support bubble is the anchor; the composer is the persistent footer.
+- `/support/new` (composer): the submit CTA («Отправить сообщение») is the anchor after a valid message is entered.
+
 Rules:
 - Map to Tailwind: `text-sm` (14), `text-base` (16), `text-xl` (20), `text-3xl` (30).
 - Message bodies are 16/400/1.5 (`whitespace-pre-wrap`); timestamps/metadata are 14/400; the ticket
@@ -311,7 +317,7 @@ ever renders a raw provider/API error, HTTP code, storage path, or English strin
 | Element | i18n key | Copy |
 |---------|----------|------|
 | **Primary CTA (this phase)** | `ticket.cta` | Создать обращение |
-| Submit reply/create | `ticket.submit` | Отправить |
+| Submit reply/create | `ticket.submit` | Отправить сообщение |
 | Submit in-flight | `ticket.submitLoading` | Отправляем… |
 | List page heading | `ticket.listTitle` | Обращения |
 | List empty heading | `ticket.emptyHeading` | Обращений пока нет |
@@ -327,7 +333,7 @@ ever renders a raw provider/API error, HTTP code, storage path, or English strin
 | Message label / placeholder | `ticket.messageLabel` / `ticket.messagePlaceholder` | Сообщение / Опишите проблему подробнее… |
 | Attach picker CTA | `ticket.attachCta` | Прикрепить изображение |
 | Attach selected | `ticket.attachSelected` | Выбрано: {name} |
-| Attach remove | `ticket.attachRemove` | Убрать |
+| Attach remove | `ticket.attachRemove` | Убрать вложение |
 | Attachment alt text | `ticket.attachmentAlt` | Вложение |
 | Attachment load failure | `ticket.attachmentError` | Не удалось загрузить вложение |
 | Attachment too large | `ticket.attachTooLarge` | Файл больше 5 МБ. Выберите изображение меньше. |

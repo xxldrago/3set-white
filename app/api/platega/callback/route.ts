@@ -16,7 +16,7 @@
 import { z } from "zod";
 import { logger } from "../../../../lib/logger";
 import {
-  enqueueFulfillOrder,
+  applyConfirmedPayment,
   resolveOrderByTxOrPayload,
   transitionOrder,
 } from "../../../../lib/orders-service";
@@ -96,12 +96,10 @@ export async function POST(req: Request): Promise<Response> {
       return ack();
     }
 
-    // 6. Atomic pending→paid claim; exactly one duplicate-delivery winner (D-39).
-    const claimed = await transitionOrder(order.id, "pending", "paid", {
-      paidAt: new Date(),
-    });
+    // 6. Atomic pending→paid claim + one fulfill enqueue — the SAME shared
+    // helper the hourly reconcile uses, so the two paths cannot diverge (D-39).
+    const claimed = await applyConfirmedPayment(order.id);
     if (claimed) {
-      await enqueueFulfillOrder(order.id);
       logger.info({ route: "platega_callback", outcome: "paid", orderId: order.id });
     }
   } catch (err) {

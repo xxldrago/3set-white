@@ -845,25 +845,25 @@ async function claim<T extends { id: string }>(
 
 ## Open Questions
 
-1. **How are support replies authenticated in Phase 4 (D-51)?**
+1. **How are support replies authenticated in Phase 4 (D-51)?** — **(RESOLVED — LOCKED: `ADMIN_TELEGRAM_IDS` env allow-list behind `requireAdminSession()`; Phase 5 replaces it with the ADM-01 role model. Implemented in plan 04-04.)**
    - What we know: replies are "admin/API only" this phase; Phase 5 builds the role model (ADM-01).
    - What's unclear: no role/`isAdmin` field exists today.
    - Recommendation: an `ADMIN_TELEGRAM_IDS` env allow-list (comma-separated) + `requireAdminSession()` returning the admin telegram id (non-admin → 404/403), to be replaced by the Phase 5 role model. Confirm.
 
-2. **Which queue shape for non-order deliveries?**
+2. **Which queue shape for non-order deliveries?** — **(RESOLVED — LOCKED: sibling `Notification` table with helpers in `lib/outbox.ts`, drained by `lib/worker.ts`. Implemented in plans 04-01/04-03.)**
    - What we know: `Outbox` is order-scoped (`[VERIFIED: prisma/schema.prisma:101-116]`).
    - What's unclear: extend `Outbox` (nullable `orderId` + `dedupeKey`) vs sibling `Notification`.
    - Recommendation: sibling `Notification` (additive, cannot regress the money path), helpers in `lib/outbox.ts`, drained by `lib/worker.ts`. Confirm.
 
-3. **Bot user replies to an existing ticket.**
+3. **Bot user replies to an existing ticket.** — **(RESOLVED — OUT OF SCOPE for Phase 4: bot is create-only; reply/reopen is a cabinet action (D-59). Locked in plan 04-07.)**
    - What we know: UI-SPEC §6 bot flow only *creates* a ticket; §2 cabinet handles reply/reopen (D-59).
    - What's unclear: whether a bot user can append to an open ticket.
    - Recommendation: out of scope for Phase 4 — bot = create only; replies/reopen via cabinet. Confirm with the UI-SPEC.
 
-4. **Reminder dedupe timezone and whether one combined message per user (multiple expiring keys) is acceptable.**
+4. **Reminder dedupe timezone and whether one combined message per user (multiple expiring keys) is acceptable.** — **(RESOLVED — LOCKED: one message per key, per-day dedupe in a single fixed timezone (UTC, A6). Implemented in plan 04-08.)**
    - Recommendation: one message per key (UI-SPEC §5), per-day dedupe in a single fixed timezone.
 
-5. **`outputFileTracingIncludes` for sharp.**
+5. **`outputFileTracingIncludes` for sharp.** — **(RESOLVED — LOCKED: add the narrow include as insurance; verified by the container build check. Implemented in plan 04-02 Task 3.)**
    - What we know: the runner copies full `node_modules`, so sharp binaries are present.
    - Recommendation: add the narrow include as insurance; verify with a container build that `sharp` loads.
 

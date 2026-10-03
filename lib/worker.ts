@@ -23,6 +23,8 @@ import { ArtemidaError, artemida, type NormalizedKey } from "./artemida";
 import { logger } from "./logger";
 import {
   FULFILL_JOB,
+  NOTIFY_FAILED,
+  NOTIFY_PROVISIONED,
   claimNextJob,
   enqueueNotifyFailed,
   enqueueNotifyProvisioned,
@@ -30,6 +32,7 @@ import {
   markJobFailed,
   rescheduleJob,
 } from "./outbox";
+import { dispatchNotification, type TelegramSender } from "./bot-payments";
 import {
   TRIAL_ERROR_CODE,
   applyConfirmedPayment,
@@ -203,11 +206,17 @@ async function failOrder(orderId: string, code: string): Promise<void> {
  * One drain pass. Claims and processes up to `DRAIN_BATCH` due jobs. A claimed
  * job is marked done on success/terminal, rescheduled on retry, and marked
  * failed on an unexpected throw — never left in `processing`.
+ *
+ * An optional `telegram` sender lets the pass also consume the delivery rows
+ * (`notify-provisioned` / `notify-failed`, produced at fulfillment in 03-03):
+ * each is claimed atomically and dispatched to the owning chat exactly once.
+ * Without a sender the notify rows are left pending for a later pass — they are
+ * never dropped or double-sent (the claim mirrors the fulfill path).
  */
-export async function drainOutbox(): Promise<void> {
+export async function drainOutbox(opts: { telegram?: TelegramSender } = {}): Promise<void> {
   for (let i = 0; i < DRAIN_BATCH; i += 1) {
     const job = await claimNextJob(FULFILL_JOB);
-    if (!job) return;
+    if (!job) break;
     try {
       const result = await processFulfillOrder(job.orderId);
       if (result.outcome === "retry") {
@@ -219,6 +228,36 @@ export async function drainOutbox(): Promise<void> {
       // The process must survive any single job failure.
       logger.error({ route: "worker", outcome: "drain_job_error", jobId: job.id });
       await markJobFailed(job.id, "unexpected");
+    }
+  }
+
+  if (!opts.telegram) return;
+  await drainNotifications(opts.telegram);
+}
+
+/**
+ * Consume the delivery rows one at a time, dispatching each to its owning chat.
+ * A successful (or nothing-to-send) dispatch marks the row done; a Telegram send
+ * failure reschedules with the same backoff taxonomy as the fulfill path, so a
+ * transient outage never loses the delivery. Idempotent by the single-winner
+ * `claimNextJob` (a second tick can never pick the same row).
+ */
+async function drainNotifications(telegram: TelegramSender): Promise<void> {
+  for (const type of [NOTIFY_PROVISIONED, NOTIFY_FAILED]) {
+    for (let i = 0; i < DRAIN_BATCH; i += 1) {
+      const job = await claimNextJob(type);
+      if (!job) break;
+      try {
+        const result = await dispatchNotification(job.orderId, type, telegram);
+        if (result.outcome === "retryable_error") {
+          await rescheduleJob(job.id, new Date(Date.now() + backoffMs(job.attempts + 1)), "telegram");
+        } else {
+          await markJobDone(job.id);
+        }
+      } catch {
+        logger.error({ route: "worker", outcome: "notify_job_error", jobId: job.id });
+        await markJobFailed(job.id, "unexpected");
+      }
     }
   }
 }
@@ -280,6 +319,16 @@ export function startReconcileTick(): NodeJS.Timeout {
   return unref(setInterval(guard("reconcile", () => reconcileOnce()), RECONCILE_INTERVAL_MS));
 }
 
+/**
+ * The production drain sender: the shared `lib/bot.ts` Telegraf singleton's
+ * `telegram` surface. Imported lazily so the module (and Telegraf) is only
+ * pulled in when a drain actually runs — `next build` never instantiates it.
+ */
+async function botSender(): Promise<TelegramSender> {
+  const { bot } = await import("./bot");
+  return bot.telegram as unknown as TelegramSender;
+}
+
 export interface WorkerHandle {
   started: boolean;
   /** Run one drain pass on demand (tests / manual reconcile route). */
@@ -303,13 +352,16 @@ export function startWorker(): WorkerHandle {
   if (g.__setwhiteWorker) return g.__setwhiteWorker;
 
   const drainTimer = unref(
-    setInterval(guard("drain", () => drainOutbox()), DRAIN_INTERVAL_MS),
+    setInterval(
+      guard("drain", async () => drainOutbox({ telegram: await botSender() })),
+      DRAIN_INTERVAL_MS,
+    ),
   );
   const reconcileTimer = startReconcileTick();
 
   const handle: WorkerHandle = {
     started: true,
-    drain: drainOutbox,
+    drain: async () => drainOutbox({ telegram: await botSender() }),
     reconcile: reconcileOnce,
     stop: () => {
       clearInterval(drainTimer);

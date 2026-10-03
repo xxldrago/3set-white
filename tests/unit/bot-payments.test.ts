@@ -234,4 +234,51 @@ describe("dispatchNotification — worker notify-row consumer (PAY-01, D-38)", (
     });
     expect(row_?.status).toBe("done");
   });
+
+  it("leaves a notify row pending when no telegram sender is supplied (never dropped)", async () => {
+    const order = await prisma.order.create({
+      data: {
+        userId,
+        kind: "new",
+        days: 30,
+        devices: 2,
+        amount: 100,
+        currency: "RUB",
+        status: "failed",
+      },
+    });
+    await enqueueOrderJob(order.id, NOTIFY_FAILED);
+
+    // A sender-less drain must not consume delivery rows.
+    await drainOutbox();
+
+    const row_ = await prisma.outbox.findFirst({
+      where: { orderId: order.id, type: NOTIFY_FAILED },
+    });
+    expect(row_?.status).toBe("pending");
+  });
+
+  it("reschedules (not drops) a notify row when the Telegram send throws", async () => {
+    const order = await prisma.order.create({
+      data: {
+        userId,
+        kind: "new",
+        days: 30,
+        devices: 2,
+        amount: 100,
+        currency: "RUB",
+        status: "failed",
+      },
+    });
+    await enqueueOrderJob(order.id, NOTIFY_FAILED);
+
+    const sendMessage = vi.fn().mockRejectedValue(new Error("telegram_down"));
+    await drainOutbox({ telegram: { sendPhoto: vi.fn(), sendMessage } as never });
+
+    const row_ = await prisma.outbox.findFirst({
+      where: { orderId: order.id, type: NOTIFY_FAILED },
+    });
+    expect(row_?.status).toBe("pending");
+    expect(row_?.attempts).toBe(1);
+  });
 });

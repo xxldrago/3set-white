@@ -39,6 +39,8 @@ import { POST as createTicket } from '../../app/api/tickets/route';
 import { GET as serveAttachment } from '../../app/api/tickets/[id]/attachments/[attachmentId]/route';
 import { POST as replyTicket } from '../../app/api/tickets/[id]/messages/route';
 import { POST as readTicket } from '../../app/api/tickets/[id]/read/route';
+import { POST as adminReply } from '../../app/api/admin/tickets/[id]/reply/route';
+import { POST as adminClose } from '../../app/api/admin/tickets/[id]/close/route';
 import * as attachmentsModule from '../../lib/attachments';
 import { MAX_ATTACHMENT_BYTES } from '../../lib/attachments';
 import { signSession } from '../../lib/auth';
@@ -109,6 +111,10 @@ async function seedTicket(
 
 async function messageCount(ticketId: string): Promise<number> {
   return prisma.ticketMessage.count({ where: { ticketId } });
+}
+
+async function ticketNotificationCount(ticketId: string): Promise<number> {
+  return prisma.notification.count({ where: { ticketId } });
 }
 
 /** Seed an owner ticket with a real stored WebP attachment on one message. */
@@ -414,5 +420,73 @@ describe('GET /api/tickets/[id]/attachments/[attachmentId] (D-56)', () => {
     );
   });
 });
+
+describe('admin ticket routes (D-51/D-57)', () => {
+  it('returns 401 without a session', async () => {
+    const id = await seedTicket('open');
+    expect((await adminReply(jsonRequest({ body: 'x' }), idContext(id))).status).toBe(401);
+    expect((await adminClose(jsonRequest({}), idContext(id))).status).toBe(401);
+  });
+
+  it('404s a valid non-admin session and mutates nothing', async () => {
+    await authorize(OWNER);
+    const id = await seedTicket('open');
+
+    const replyRes = await adminReply(jsonRequest({ body: 'ответ' }), idContext(id));
+    expect(replyRes.status).toBe(404);
+    expect(await messageCount(id)).toBe(1);
+    expect(await ticketNotificationCount(id)).toBe(0);
+
+    const closeRes = await adminClose(jsonRequest({}), idContext(id));
+    expect(closeRes.status).toBe(404);
+    expect((await prisma.ticket.findUniqueOrThrow({ where: { id } })).status).toBe('open');
+  });
+
+  it('admin reply creates one support message, bumps unread, and enqueues (no inline send)', async () => {
+    await authorize(ADMIN);
+    const id = await seedTicket('open');
+
+    const res = await adminReply(jsonRequest({ body: 'Мы вам ответили' }), idContext(id));
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+    const ticket = await prisma.ticket.findUniqueOrThrow({ where: { id } });
+    expect(ticket.status).toBe('answered');
+    expect(ticket.unreadForUser).toBe(1);
+    expect(await messageCount(id)).toBe(2);
+
+    const notifications = await prisma.notification.findMany({ where: { ticketId: id } });
+    expect(notifications).toHaveLength(1);
+    expect(notifications[0]!.type).toBe('notify-ticket-reply');
+    expect(notifications[0]!.dedupeKey.startsWith(`ticket:${id}:`)).toBe(true);
+    // D-57: the handler must never send Telegram inline.
+    expect(botMock.telegram.sendMessage).not.toHaveBeenCalled();
+  });
+
+  it('a second distinct admin reply enqueues a second distinct notification', async () => {
+    await authorize(ADMIN);
+    const id = await seedTicket('open');
+
+    expect((await adminReply(jsonRequest({ body: 'Первый' }), idContext(id))).status).toBe(200);
+    expect((await adminReply(jsonRequest({ body: 'Второй' }), idContext(id))).status).toBe(200);
+
+    const notifications = await prisma.notification.findMany({ where: { ticketId: id } });
+    expect(notifications).toHaveLength(2);
+    expect(new Set(notifications.map((n) => n.dedupeKey)).size).toBe(2);
+    expect((await prisma.ticket.findUniqueOrThrow({ where: { id } })).unreadForUser).toBe(2);
+  });
+
+  it('admin close marks the ticket closed; missing ticket 404s', async () => {
+    await authorize(ADMIN);
+    const id = await seedTicket('open');
+
+    const res = await adminClose(jsonRequest({}), idContext(id));
+    expect(res.status).toBe(200);
+    expect((await prisma.ticket.findUniqueOrThrow({ where: { id } })).status).toBe('closed');
+
+    expect((await adminClose(jsonRequest({}), idContext('missing-ticket'))).status).toBe(404);
+  });
+});
+
 
 

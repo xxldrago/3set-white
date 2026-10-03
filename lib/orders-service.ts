@@ -234,6 +234,53 @@ export async function loadOrderForUser(
 }
 
 /**
+ * Raw, provider-free view of an order for the cabinet + bot payment history
+ * (D-48). Amounts/dates are the stored values verbatim — formatting is the UI's
+ * job (UI-SPEC §6). `keyId` is nullable so a row whose key reference is absent
+ * renders amount+status+date and simply omits the key link (partial rule).
+ */
+export interface OrderHistoryRow {
+  id: string;
+  amount: number;
+  currency: string;
+  status: OrderStatus;
+  kind: OrderKind;
+  keyId: string | null;
+  createdAt: Date;
+}
+
+/**
+ * Pure mapper: emits ONLY our own fields. Provider identifiers
+ * (`plategaTxId`, `paymentUrl`) are deliberately dropped here so no history row
+ * or status response can ever leak one (T-03-provider-leak).
+ */
+export function toHistoryRow(order: Order): OrderHistoryRow {
+  return {
+    id: order.id,
+    amount: order.amount,
+    currency: order.currency,
+    status: order.status as OrderStatus,
+    kind: order.kind as OrderKind,
+    keyId: order.keyId ?? null,
+    createdAt: order.createdAt,
+  };
+}
+
+/**
+ * Ownership-joined payment history (D-46/D-47/D-48, PAY-04). Reads ONLY the
+ * caller's orders from our own DB, newest first — never a live Platega query
+ * (D-46, T-03-hist-idor). Shared by the cabinet list and the bot menu reply so
+ * the two surfaces stay at parity.
+ */
+export async function listOrdersForUser(telegramId: bigint): Promise<OrderHistoryRow[]> {
+  const orders = await prisma.order.findMany({
+    where: { user: { telegramId } },
+    orderBy: { createdAt: "desc" },
+  });
+  return orders.map(toHistoryRow);
+}
+
+/**
  * Enqueue exactly one fulfillment job per order (D-38). Delegates to
  * `lib/outbox.ts` so the callback and the reconcile job cannot diverge on the
  * job type / idempotency key. The UNIQUE `(orderId, type)` constraint plus

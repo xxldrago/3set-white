@@ -211,6 +211,62 @@ function normalizePricing(data: unknown, days: number, devices: number): Pricing
   };
 }
 
+/** Locally derived prorated upgrade delta (PAY-03). */
+export interface UpgradeQuote {
+  /** Total charge for the added devices, in whole RUB. */
+  amount: number;
+  currency: string;
+  addDevices: number;
+  /** Selected tier's device-month price (observed apiPricing basis). */
+  devicePricePerMonth: number;
+}
+
+/**
+ * The provider exposes no upgrade-quote endpoint (RESEARCH Open Q2). The
+ * `402 insufficient_balance` body reports the charge, but provider text is
+ * never surfaced (D-19), so the delta is derived locally from the observed
+ * pricing document instead of being scraped from an error string.
+ *
+ * Mirrors the observed `apiPricing`:
+ * - `deviceTiers[]` / `devicePricePerMonth` — tier price per added device,
+ *   selected on `volume.devices + addDevices` ("…including the order being placed").
+ * - `upgradeRule` = "tier device price per added device; minimum one full month,
+ *   proportional above 30 remaining days" → `factor = max(1, remainingDays/30)`.
+ * - Fixture (2026-10-03): +1 device on a 30-day key → 60 RUB.
+ */
+export function deriveUpgradeQuote(
+  data: unknown,
+  addDevices: number,
+  remainingDays: number,
+): UpgradeQuote {
+  if (!Number.isInteger(addDevices) || addDevices < 1) {
+    throw new ArtemidaError("unknown", 200);
+  }
+  const d = asRecord(data);
+  const api = asRecord(d.apiPricing);
+  const tiers = asArray(api.deviceTiers)
+    .map((tier) => asRecord(tier))
+    .map((tier) => ({ from: pickNumber(tier.from) ?? 0, price: pickNumber(tier.price) ?? 0 }))
+    .filter((tier) => tier.price > 0)
+    .sort((a, b) => a.from - b.from);
+  const volume = asRecord(api.volume);
+  const totalDevices = (pickNumber(volume.devices) ?? 0) + addDevices;
+  let devicePrice = pickNumber(api.devicePricePerMonth) ?? 0;
+  for (const tier of tiers) {
+    if (totalDevices >= tier.from) devicePrice = tier.price;
+  }
+  if (devicePrice <= 0) throw new ArtemidaError("unknown", 200);
+  const months = Math.max(1, remainingDays / 30);
+  const quote = asRecord(d.quote);
+  const segment = asRecord(d.segment);
+  return {
+    amount: Math.round(devicePrice * addDevices * months),
+    currency: asString(quote.currency) ?? asString(segment.currency) ?? "RUB",
+    addDevices,
+    devicePricePerMonth: devicePrice,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Shared normalized models consumed by the later phase slices (D-17).
 // Key-scoped shapes were NOT observable in the 02-01 probe (0-key account), so
@@ -370,6 +426,14 @@ function normalizeBalance(data: unknown): Balance {
  *  later phase owns the route/UI wiring (see COVERAGE.md). */
 export interface ArtemidaClient {
   getPricing(input: { days: number; devices: number }): Promise<Pricing>;
+  /** Locally derived prorated upgrade delta (PAY-03; no provider quote endpoint). */
+  getUpgradeQuote(input: {
+    days: number;
+    devices: number;
+    addDevices: number;
+    /** Defaults to one full month (30) — the observed minimum charge window. */
+    remainingDays?: number;
+  }): Promise<UpgradeQuote>;
   createTrial(input: { customerRef: string }): Promise<NormalizedKey>;
   /** Paid key create — observed 2026-10-03: `POST /keys` with
    *  `{customerRef, days, devices}` (all required integers) → `201`. */
@@ -488,6 +552,12 @@ export function createArtemidaClient(options: ArtemidaClientOptions = {}): Artem
       request("GET", "/pricing", {
         query: { days, devices },
         normalize: (data) => normalizePricing(data, days, devices),
+      }),
+
+    getUpgradeQuote: ({ days, devices, addDevices, remainingDays }) =>
+      request("GET", "/pricing", {
+        query: { days, devices },
+        normalize: (data) => deriveUpgradeQuote(data, addDevices, remainingDays ?? 30),
       }),
 
     createTrial: ({ customerRef }) =>

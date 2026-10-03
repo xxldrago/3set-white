@@ -3,8 +3,10 @@
 // leaves the server (T-02-04).
 //
 // Query input is validated (days ∈ {7,30,90}, devices ∈ 2..10 — provider
-// minDevices=2, contract lock 02-01). Provider failures map to their status;
-// the provider message is never returned, only `code`.
+// minDevices=2, contract lock 02-01). `kind:'upgrade'` returns the locally
+// derived prorated device delta (D-43; observed 2026-10-03, no provider quote
+// endpoint). Provider failures map to their status; the provider message is
+// never returned, only `code`.
 import { z } from "zod";
 import { ArtemidaError, artemida } from "../../../lib/artemida";
 import { logger } from "../../../lib/logger";
@@ -13,14 +15,31 @@ import { requireSession, SessionError } from "../../../lib/session";
 export const dynamic = "force-dynamic";
 
 const ALLOWED_DAYS = [7, 30, 90] as const;
+const MAX_DEVICES = 10;
 
-const pricingQuery = z.object({
-  days: z.coerce
-    .number()
-    .int()
-    .refine((v) => (ALLOWED_DAYS as readonly number[]).includes(v)),
-  devices: z.coerce.number().int().min(2).max(10),
-});
+const pricingQuery = z
+  .object({
+    days: z.coerce
+      .number()
+      .int()
+      .refine((v) => (ALLOWED_DAYS as readonly number[]).includes(v)),
+    devices: z.coerce.number().int().min(2).max(MAX_DEVICES),
+    kind: z.enum(["new", "renew", "upgrade"]).default("new"),
+    addDevices: z.coerce.number().int().min(1).max(MAX_DEVICES - 2).optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.kind !== "upgrade") return;
+    if (value.addDevices === undefined) {
+      ctx.addIssue({ code: "custom", message: "addDevices is required for kind=upgrade" });
+      return;
+    }
+    if (value.devices + value.addDevices > MAX_DEVICES) {
+      ctx.addIssue({
+        code: "custom",
+        message: `devices + addDevices must be <= ${MAX_DEVICES}`,
+      });
+    }
+  });
 
 const unauthorized = () => Response.json({ error: "unauthorized" }, { status: 401 });
 
@@ -37,13 +56,29 @@ export async function GET(req: Request): Promise<Response> {
   const parsed = pricingQuery.safeParse({
     days: url.searchParams.get("days"),
     devices: url.searchParams.get("devices"),
+    kind: url.searchParams.get("kind") ?? undefined,
+    addDevices: url.searchParams.get("addDevices") ?? undefined,
   });
   if (!parsed.success) {
     return Response.json({ error: "bad_request" }, { status: 400 });
   }
 
   try {
-    const pricing = await artemida.getPricing(parsed.data);
+    if (parsed.data.kind === "upgrade" && parsed.data.addDevices !== undefined) {
+      // D-43/D-28: the provider exposes no upgrade-quote endpoint; derive the
+      // prorated delta from the observed pricing document, never a fabricated
+      // number (mirrors apiPricing.upgradeRule; +1 device/30d → 60 RUB).
+      const quote = await artemida.getUpgradeQuote({
+        days: parsed.data.days,
+        devices: parsed.data.devices,
+        addDevices: parsed.data.addDevices,
+      });
+      return Response.json({ price: quote.amount });
+    }
+    const pricing = await artemida.getPricing({
+      days: parsed.data.days,
+      devices: parsed.data.devices,
+    });
     // D-28: return the exact provider amount, never a locally computed value.
     return Response.json({ price: pricing.price });
   } catch (err) {

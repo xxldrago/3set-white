@@ -8,6 +8,7 @@
 // profile reads keys/payments/tickets and every sub-section degrades
 // independently. Runs against the real local Postgres with a private id range.
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
 
 const session = vi.hoisted(() => ({ token: undefined as string | undefined }));
 
@@ -20,8 +21,10 @@ vi.mock("next/headers", () => ({
 
 import AdminUsersPage from "../../app/admin/users/page";
 import { GET as searchGET } from "../../app/api/admin/users/search/route";
+import UserSearchResults from "../../components/admin/UserSearchResults";
 import { ADMIN_SEARCH_LIMIT, adminSearchUsers, loadAdminProfile } from "../../lib/admin-service";
 import { signSession } from "../../lib/auth";
+import { t } from "../../lib/i18n";
 import { prisma } from "../../lib/prisma";
 
 const SECRET =
@@ -105,6 +108,37 @@ async function callPage(
     const digest = (err as { digest?: unknown }).digest;
     return { digest: typeof digest === "string" ? digest : "unknown" };
   }
+}
+
+type AnyElement = { props?: Record<string, unknown> };
+
+/** Walk a rendered React element tree (function components pre-invoked). */
+function walkElements(node: unknown, visit: (element: AnyElement) => void): void {
+  if (node === null || node === undefined || typeof node !== "object") return;
+  if (Array.isArray(node)) {
+    for (const child of node) walkElements(child, visit);
+    return;
+  }
+  const element = node as AnyElement;
+  if (!element.props) return;
+  visit(element);
+  walkElements(element.props.children, visit);
+}
+
+/** Collect every literal string in a rendered element tree. */
+function collectStrings(node: unknown, out: string[] = []): string[] {
+  if (typeof node === "string" || typeof node === "number") {
+    out.push(String(node));
+    return out;
+  }
+  if (node === null || node === undefined || typeof node !== "object") return out;
+  if (Array.isArray(node)) {
+    for (const child of node) collectStrings(child, out);
+    return out;
+  }
+  const element = node as AnyElement;
+  if (element.props) collectStrings(element.props.children, out);
+  return out;
 }
 
 beforeAll(async () => {
@@ -333,5 +367,109 @@ describe("admin users pages — guard re-check", () => {
     await authorize(Number(STRANGER));
     const result = await callPage(() => AdminUsersPage());
     expect(result).toEqual({ digest: "NEXT_HTTP_ERROR_FALLBACK;404" });
+  });
+});
+
+describe("adminSearchUsers — edge states (no results, exact-50 boundary)", () => {
+  it("returns an empty, untruncated result when nothing matches", async () => {
+    const result = await adminSearchUsers("NOSUCHTOKEN05");
+    expect(result).toEqual({ rows: [], count: 0, truncated: false });
+  });
+
+  it("does NOT flag truncation at exactly the 50-row boundary", async () => {
+    const result = await adminSearchUsers(FIFTY_TOKEN);
+    expect(result.count).toBe(ADMIN_SEARCH_LIMIT);
+    expect(result.rows).toHaveLength(ADMIN_SEARCH_LIMIT);
+    expect(result.truncated).toBe(false);
+  });
+});
+
+describe("UserSearchResults — rendering contract (structural)", () => {
+  it("renders the truncation notice only when truncated", () => {
+    const row = { userId: 1, telegramId: "1", displayName: "A" };
+
+    const truncatedTree = UserSearchResults({ rows: [row], count: 1, truncated: true });
+    expect(collectStrings(truncatedTree)).toContain(t("admin.searchMore"));
+
+    const plainTree = UserSearchResults({ rows: [row], count: 1, truncated: false });
+    expect(collectStrings(plainTree)).not.toContain(t("admin.searchMore"));
+  });
+
+  it("truncates a long display name with a title and renders the id tabular-nums", () => {
+    const longName = "О".repeat(120);
+    const tree = UserSearchResults({
+      rows: [{ userId: 7, telegramId: "930000101", displayName: longName }],
+      count: 1,
+      truncated: false,
+    });
+
+    const elements: AnyElement[] = [];
+    walkElements(tree, (element) => elements.push(element));
+
+    const named = elements.find((element) => element.props?.title === longName);
+    expect(named).toBeDefined();
+    expect(String(named?.props?.className)).toContain("truncate");
+
+    const idLine = elements.find((element) =>
+      String(element.props?.className).includes("tabular-nums"),
+    );
+    expect(idLine).toBeDefined();
+    expect(collectStrings(idLine)).toContain(
+      t("admin.profileTelegramId", { id: "930000101" }),
+    );
+  });
+
+  it("wraps the ≥2 count header through the plural helper", () => {
+    const rows = [
+      { userId: 1, telegramId: "1", displayName: "A" },
+      { userId: 2, telegramId: "2", displayName: "B" },
+    ];
+    const tree = UserSearchResults({ rows, count: 2, truncated: false });
+    expect(collectStrings(tree)).toContain(t("admin.searchCountFew", { n: 2 }));
+  });
+});
+
+describe("UserSearchForm — client-island source contract (structural)", () => {
+  const SOURCE = readFileSync(
+    new URL("../../components/admin/UserSearchForm.tsx", import.meta.url),
+    "utf8",
+  );
+
+  it("retains the query text (never clears the field on a state change)", () => {
+    expect(SOURCE).toContain("value={query}");
+    expect(SOURCE).not.toContain("setQuery('')");
+    expect(SOURCE).not.toContain('setQuery("")');
+  });
+
+  it("disables submit while the trimmed value is blank or in flight", () => {
+    expect(SOURCE).toContain("disabled={trimmed.length === 0 || inFlight}");
+  });
+
+  it("aborts a stale request and cleans up on unmount", () => {
+    expect(SOURCE).toContain("abortRef.current?.abort()");
+    expect(SOURCE).toContain("controller.signal.aborted");
+    expect(SOURCE).toMatch(/useEffect\(\(\) => \(\) => abortRef\.current\?\.abort\(\)/);
+  });
+});
+
+describe("admin users — support/manager role coverage", () => {
+  it("renders /admin/users for support and manager (users section)", async () => {
+    await authorize(SUPPORT);
+    await expect(callPage(() => AdminUsersPage())).resolves.toEqual({ ok: true });
+
+    await authorize(MANAGER);
+    await expect(callPage(() => AdminUsersPage())).resolves.toEqual({ ok: true });
+  });
+
+  it("never leaks PII through the search route payload", async () => {
+    await authorize(ADMIN);
+    const res = await search(PII_TOKEN);
+    expect(res.status).toBe(200);
+
+    const serialized = JSON.stringify(await res.json());
+    expect(serialized).not.toContain(String(PII_CHAT_ID));
+    expect(serialized).not.toContain(PII_SUB_URL);
+    expect(serialized).not.toContain("chatId");
+    expect(serialized).not.toContain("subscriptionUrl");
   });
 });

@@ -324,8 +324,13 @@ function parseExpiry(value: string | null): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
-/** Upsert a normalized provider key into the cache-first read mirror (D-29). */
-async function upsertCachedKey(userId: number, key: NormalizedKey): Promise<void> {
+/**
+ * Upsert a normalized provider key into the cache-first read mirror (D-29).
+ * Exported so the fulfillment worker can persist a freshly created paid key
+ * through the SAME cache path as `revalidateKeys`/`startTrial` — one mapping,
+ * no duplicated field normalization.
+ */
+export async function upsertCachedKey(userId: number, key: NormalizedKey): Promise<void> {
   const data = {
     name: key.name,
     status: key.status,

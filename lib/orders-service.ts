@@ -10,6 +10,7 @@ import type { Order, Outbox } from "../generated/prisma/client";
 import { artemida } from "./artemida";
 import { logger } from "./logger";
 import { env } from "./env";
+import { enqueueFulfillJob } from "./outbox";
 import { PlategaError, platega } from "./platega";
 import { prisma } from "./prisma";
 
@@ -153,14 +154,104 @@ export async function loadOrderForUser(
 }
 
 /**
- * Enqueue exactly one fulfillment job per order (D-38). The UNIQUE
- * `(orderId, type)` constraint plus `upsert` makes a duplicate CONFIRMED
- * delivery a no-op — never two outbox rows.
+ * Enqueue exactly one fulfillment job per order (D-38). Delegates to
+ * `lib/outbox.ts` so the callback and the reconcile job cannot diverge on the
+ * job type / idempotency key. The UNIQUE `(orderId, type)` constraint plus
+ * `upsert` makes a duplicate CONFIRMED delivery a no-op — never two outbox rows.
  */
 export async function enqueueFulfillOrder(orderId: string): Promise<Outbox> {
-  return prisma.outbox.upsert({
-    where: { orderId_type: { orderId, type: "fulfill-order" } },
-    update: {},
-    create: { orderId, type: "fulfill-order" },
+  return enqueueFulfillJob(orderId);
+}
+
+/**
+ * Shared confirmed-payment transition (D-34/D-35/D-38/D-39). The callback and
+ * the hourly reconcile MUST both go through this so a lost callback recovers to
+ * exactly the same state as a live one: atomic `pending→paid` claim plus exactly
+ * one fulfillment enqueue. Neither path ever provisions a key inline.
+ *
+ * Returns `true` only for the single caller that won the `pending→paid` claim.
+ */
+export async function applyConfirmedPayment(orderId: string): Promise<boolean> {
+  const claimed = await transitionOrder(orderId, "pending", "paid", {
+    paidAt: new Date(),
+  });
+  if (!claimed) return false;
+  await enqueueFulfillOrder(orderId);
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// Worker-facing provisioning transitions (D-38/D-41). Kept in the orders
+// service so the state machine has exactly one home.
+// ---------------------------------------------------------------------------
+
+/** Atomic `paid→provisioning` claim; the worker owns fulfillment from here. */
+export async function transitionToProvisioning(orderId: string): Promise<boolean> {
+  return transitionOrder(orderId, "paid", "provisioning");
+}
+
+/** Terminal success: `provisioning→provisioned`, recording the provider key id. */
+export async function markProvisioned(orderId: string, keyId: string): Promise<boolean> {
+  return transitionOrder(orderId, "provisioning", "provisioned", {
+    provisionedKeyId: keyId,
+    errorCode: null,
+    nextAttemptAt: null,
+  });
+}
+
+/**
+ * Retryable-failure bookkeeping: the order stays `provisioning` (never lost),
+ * `attempts` is recorded and `nextAttemptAt` schedules the later attempt.
+ * `code` is a typed `ArtemidaCode`, never provider text (D-19).
+ */
+export async function markProvisionError(
+  orderId: string,
+  code: string,
+  attempts: number,
+  nextAttemptAt: Date,
+): Promise<void> {
+  await prisma.order.updateMany({
+    where: { id: orderId, status: "provisioning" },
+    data: { attempts, nextAttemptAt, errorCode: code },
+  });
+}
+
+/**
+ * Terminal failure: claim `provisioning→failed` (falling back to `paid→failed`
+ * for a failure before the first claim). Returns `true` for the one caller that
+ * moved the order, so exactly one `notify-failed` row is enqueued.
+ */
+export async function markProvisionFailed(orderId: string, code: string): Promise<boolean> {
+  const moved =
+    (await transitionOrder(orderId, "provisioning", "failed", {
+      errorCode: code,
+      nextAttemptAt: null,
+    })) ||
+    (await transitionOrder(orderId, "paid", "failed", {
+      errorCode: code,
+      nextAttemptAt: null,
+    }));
+  return moved;
+}
+
+/**
+ * Pending orders old enough to be worth a Platega status re-query. A null
+ * `plategaTxId` is excluded (nothing to query) — the lost-create path is
+ * recovered by the callback's payload fallback, not by reconcile.
+ */
+export async function listReconcilableOrders(
+  olderThanMs: number,
+  now: Date | number = Date.now(),
+): Promise<Order[]> {
+  const nowMs = typeof now === "number" ? now : now.getTime();
+  const cutoff = new Date(nowMs - olderThanMs);
+  return prisma.order.findMany({
+    where: {
+      status: "pending",
+      plategaTxId: { not: null },
+      createdAt: { lt: cutoff },
+    },
+    orderBy: { createdAt: "asc" },
+    take: 50,
   });
 }

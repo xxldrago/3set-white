@@ -1,7 +1,8 @@
 ---
 phase: "5"
 slug: "admin-deploy"
-status: draft
+status: approved
+reviewed_at: "2026-10-03"
 shadcn_initialized: false
 preset: none
 created: "2026-10-04"
@@ -171,7 +172,7 @@ Role matrix (D-64/D-65 — standard matrix; server-side, not advisory):
 - Session + role gated (administrator / support / manager). Heading `admin.searchLabel`
   («Поиск пользователя»).
 - **Form:** one `<input>` (`h-12`) labelled `admin.searchLabel`, placeholder `admin.searchPlaceholder`
-  («Telegram ID или ключ»); submit is a primary button `admin.searchCta` («Найти»). Accepts an exact
+  («Telegram ID или ключ»); submit is a primary button `admin.searchCta` («Найти пользователя»). Accepts an exact
   numeric telegram-id **or** a key/customer reference (`q`; the server may also match `customerRef`).
   Value is trimmed; submit is disabled while blank or in flight (`admin.searchCtaLoading` «Ищем…»).
 - **States:**
@@ -391,7 +392,7 @@ string (D-19/D-24).
 
 | Element | i18n key | Copy |
 |---------|----------|------|
-| **Primary CTA (this phase)** | `admin.searchCta` | Найти |
+| **Primary CTA (this phase)** | `admin.searchCta` | Найти пользователя |
 | Search CTA in-flight | `admin.searchCtaLoading` | Ищем… |
 | Admin panel heading | `admin.title` | Админ-панель |
 | Current-role line | `admin.currentRole` | Ваша роль: {role} |
@@ -409,7 +410,7 @@ string (D-19/D-24).
 | Search idle | `admin.searchIdle` | Введите Telegram ID или ключ, чтобы найти пользователя. |
 | Search no results | `admin.searchNoResults` | Пользователи не найдены. Проверьте ID или ключ. |
 | Search error | `admin.searchError` | Не удалось выполнить поиск. Попробуйте ещё раз. |
-| Search count (plural) | `admin.searchCountOne/Few/Many` | {n} результат / {n} результата / {n} результатов |
+| Search count (plural, ≥2 only) | `admin.searchCountFew/Many` | {n} результата / {n} результатов |
 | Search truncated | `admin.searchMore` | Показаны первые 50 результатов. Уточните запрос. |
 | Profile heading | `admin.profileTitle` | Профиль пользователя |
 | Profile telegram id | `admin.profileTelegramId` | Telegram ID: {id} |

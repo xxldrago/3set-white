@@ -5,8 +5,10 @@
 // PII/secrets discipline (T-03-05): logs carry update ids and outcomes
 // only — never tokens, JWTs, or full updates. User-visible strings resolve
 // through i18n keys (D-16), never hardcoded copy.
+import { randomUUID } from "node:crypto";
 import { Telegraf } from "telegraf";
 import { artemida } from "./artemida";
+import { normalizeImage, saveAttachment } from "./attachments";
 import { env } from "./env";
 import { t, tp } from "./i18n";
 import {
@@ -26,6 +28,13 @@ import {
 import { buildHistoryReply, buildPayButton } from "./bot-payments";
 import { logger } from "./logger";
 import { prisma } from "./prisma";
+import {
+  beginSupportPrompt,
+  clearSupportPrompt,
+  createTicket,
+  isSupportPromptFresh,
+  type AttachmentDescriptor,
+} from "./tickets-service";
 
 export const WEBHOOK_SECRET = env.WEBHOOK_SECRET;
 
@@ -69,6 +78,7 @@ bot.start(async (ctx) => {
         [{ text: t("bot.menuKeys") }],
         [{ text: t("bot.menuPayments") }],
         [{ text: t("bot.menuGuides") }, { text: t("bot.menuHelp") }],
+        [{ text: t("bot.menuSupport") }],
       ],
       resize_keyboard: true,
     },
@@ -433,6 +443,119 @@ bot.hears(t("bot.menuGuides"), async (ctx) => {
       t("guides.hiddifyText"),
     ].join("\n"),
   );
+});
+
+// ---------------------------------------------------------------------------
+// Phase 4 — support intake (SUP-01/SUP-02, D-51/Q3 create-only).
+//
+// «Поддержка» arms a persisted `awaitingSupport` flag (30-min TTL); the NEXT
+// text/photo is offered to the SAME `lib/tickets-service.createTicket` the
+// cabinet uses, so both channels share one queue and one attachment contract.
+// A photo is downloaded through the Bot API (`getFileLink` → `fetch`) and
+// normalized by the shared `lib/attachments.normalizeImage`. Failures reply
+// keyed copy only — never a provider/API error or the file link (D-19/D-24).
+// ---------------------------------------------------------------------------
+bot.hears(t("bot.menuSupport"), async (ctx) => {
+  const from = ctx.from;
+  if (!from) return;
+  try {
+    await beginSupportPrompt(BigInt(from.id));
+    await ctx.reply(t("bot.supportPrompt"));
+    logger.info({
+      updateId: ctx.update.update_id,
+      telegramId: from.id,
+      outcome: "support-armed",
+    });
+  } catch {
+    await ctx.reply(t("bot.ticketError"));
+    logger.warn({
+      updateId: ctx.update.update_id,
+      telegramId: from.id,
+      outcome: "support-arm-failed",
+    });
+  }
+});
+
+// Registered AFTER every `hears` menu branch (Telegraf matches middleware in
+// registration order) so a menu tap is consumed by its own handler; only an
+// unmatched text or any photo reaches here. The flag + TTL gate keeps ordinary
+// chatter and photos falling through untouched.
+bot.on(["text", "photo"], async (ctx) => {
+  const from = ctx.from;
+  const message = ctx.message;
+  if (!from || !message) return;
+  const telegramId = BigInt(from.id);
+
+  // Gate: read the persisted state, then fall through (no reply, no consume)
+  // unless armed AND still fresh. `clearSupportPrompt` re-checks freshness
+  // atomically, so a stale row can never be claimed.
+  const user = await prisma.user.findUnique({
+    where: { telegramId },
+    select: { awaitingSupport: true, supportPromptAt: true },
+  });
+  if (!user?.awaitingSupport || !isSupportPromptFresh(user.supportPromptAt)) return;
+
+  // Claim-before-create: the single-winner claim (04-01) runs BEFORE any
+  // download/create. A retried/concurrent duplicate reads `false` and creates
+  // nothing — exactly one ticket per armed prompt. The flag is NOT re-armed on
+  // failure (a fresh «Поддержка» tap re-arms), the deliberate create-only
+  // tradeoff (D-51/Q3).
+  const claimed = await clearSupportPrompt(telegramId);
+  if (!claimed) return;
+
+  try {
+    const photos = "photo" in message ? message.photo : undefined;
+    let attachment: AttachmentDescriptor | null = null;
+    if (photos && photos.length > 0) {
+      const largest = photos[photos.length - 1];
+      const link = await ctx.telegram.getFileLink(largest.file_id);
+      const res = await fetch(link);
+      if (!res.ok) throw new Error("telegram_file_fetch_failed");
+      const bytes = Buffer.from(await res.arrayBuffer());
+      const normalized = await normalizeImage(bytes);
+      // The ticket id is created by the service, so store under a PII-free
+      // per-photo scope and pass only the descriptor (relative path) in.
+      const storedPath = await saveAttachment(`bot-${randomUUID()}`, normalized);
+      attachment = {
+        path: storedPath,
+        mime: normalized.mime,
+        sizeBytes: normalized.sizeBytes,
+        width: normalized.width,
+        height: normalized.height,
+      };
+    }
+
+    const raw = "text" in message ? message.text : message.caption;
+    const value = (raw ?? "").trim();
+    // Subject ≤120 / body ≤4000; a caption-less photo falls back to a keyed
+    // subject rather than echoing provider text.
+    const subject = (value || t("bot.menuSupport")).slice(0, 120);
+    const body = value.slice(0, 4000);
+
+    const result = await createTicket({ telegramId, subject, body, attachment });
+    if (result.kind === "created") {
+      await ctx.reply(t("bot.ticketCreated"));
+      logger.info({
+        updateId: ctx.update.update_id,
+        telegramId: from.id,
+        outcome: "support-created",
+      });
+    } else {
+      await ctx.reply(t("bot.ticketError"));
+      logger.warn({
+        updateId: ctx.update.update_id,
+        telegramId: from.id,
+        outcome: "support-no-user",
+      });
+    }
+  } catch {
+    await ctx.reply(t("bot.ticketError"));
+    logger.warn({
+      updateId: ctx.update.update_id,
+      telegramId: from.id,
+      outcome: "support-failed",
+    });
+  }
 });
 
 // Polling guard: dev only, test token (selected above), never during

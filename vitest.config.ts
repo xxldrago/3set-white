@@ -1,6 +1,15 @@
 import { defineConfig } from 'vitest/config';
+import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
+  // Mirror the tsconfig `@/*` path alias so page/component modules (which use
+  // it by convention) are importable from unit tests. Alias matches '@/' only,
+  // not scoped packages like '@prisma/adapter-pg'.
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('.', import.meta.url)),
+    },
+  },
   test: {
     include: ['tests/**/*.test.ts'],
     environment: 'node',
@@ -27,6 +36,10 @@ export default defineConfig({
       PLATEGA_BASE_URL: 'https://app.platega.test',
       APP_BASE_URL: 'http://localhost:3000',
       CRON_SECRET: 'unit-test-cron-secret-000000000000',
+      // Phase 5 RBAC bootstrap allow-list. Tests that need a specific bootstrap
+      // id override it in `vi.hoisted` (e.g. tickets-route.test.ts) before this
+      // module loads.
+      ADMIN_TELEGRAM_IDS: '910000101',
       NODE_ENV: 'test',
       LOG_LEVEL: 'error',
     },

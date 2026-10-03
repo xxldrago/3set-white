@@ -242,3 +242,26 @@ model Notification {
   @@index([status, nextAttemptAt])
   @@map("notifications")
 }
+
+// ---------------------------------------------------------------------------
+// Phase 5 admin RBAC (D-64/D-65). Roles live in a dedicated `admin_users` table
+// (never env) keyed by telegram id; `ADMIN_TELEGRAM_IDS` is a bootstrap-only
+// seed — create-only, so env membership can never re-elevate a role an
+// administrator downgraded in the UI (D-67 / T-05-02).
+// ---------------------------------------------------------------------------
+
+enum AdminRole {
+  administrator
+  support
+  manager
+}
+
+model AdminUser {
+  id         Int       @id @default(autoincrement())
+  telegramId BigInt    @unique @map("telegram_id")
+  role       AdminRole
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@map("admin_users")
+}

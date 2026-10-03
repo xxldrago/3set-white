@@ -28,11 +28,11 @@ import {
 import { buildHistoryReply, buildPayButton } from "./bot-payments";
 import { logger } from "./logger";
 import { prisma } from "./prisma";
+import { buildSupportTicketContent, isSupportIntakeArmed } from "./support-intake";
 import {
   beginSupportPrompt,
   clearSupportPrompt,
   createTicket,
-  isSupportPromptFresh,
   type AttachmentDescriptor,
 } from "./tickets-service";
 
@@ -493,7 +493,7 @@ bot.on(["text", "photo"], async (ctx) => {
     where: { telegramId },
     select: { awaitingSupport: true, supportPromptAt: true },
   });
-  if (!user?.awaitingSupport || !isSupportPromptFresh(user.supportPromptAt)) return;
+  if (!isSupportIntakeArmed(user)) return;
 
   // Claim-before-create: the single-winner claim (04-01) runs BEFORE any
   // download/create. A retried/concurrent duplicate reads `false` and creates
@@ -525,12 +525,12 @@ bot.on(["text", "photo"], async (ctx) => {
       };
     }
 
-    const raw = "text" in message ? message.text : message.caption;
-    const value = (raw ?? "").trim();
     // Subject ≤120 / body ≤4000; a caption-less photo falls back to a keyed
     // subject rather than echoing provider text.
-    const subject = (value || t("bot.menuSupport")).slice(0, 120);
-    const body = value.slice(0, 4000);
+    const { subject, body } = buildSupportTicketContent(
+      "text" in message ? { text: message.text } : { caption: message.caption },
+      t("bot.menuSupport"),
+    );
 
     const result = await createTicket({ telegramId, subject, body, attachment });
     if (result.kind === "created") {

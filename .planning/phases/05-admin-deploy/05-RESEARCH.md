@@ -519,14 +519,20 @@ volumes: { pgdata: {}, uploads: {}, certs: {}, certbot_www: {} }
 
 ## Open Questions
 
-1. **Exact stats semantics (A1)** — What counts as "revenue": captured payments (`paid|provisioning|provisioned`), provisioned only, or net of refunds? Is "users" all-time or new-in-period?
+> **All resolved in the plan set (iteration 1).** Pointers below map each question to the plan/task that locks it.
+
+1. **(RESOLVED → A1, LOCKED in 05-07 Task 1 / wave 5)** **Exact stats semantics (A1)** — What counts as "revenue": captured payments (`paid|provisioning|provisioned`), provisioned only, or net of refunds? Is "users" all-time or new-in-period?
    - What we know: UI-SPEC defines labels (`admin.statsRevenue/statsUsers/statsOrders`) and a 7/30/90 period.
    - What's unclear: the SQL definition.
-   - Recommendation: default to A1, add a plan checkpoint or make it a small open decision; the read is a single aggregation so it is cheap to change.
-2. **Threshold value and critical boundary (A2)** — Environment default for `ARTEMIDA_LOW_BALANCE_RUB` and whether `critical` is `≤0` or `≤ threshold/2`.
-3. **Does the owner want a Telegram push for low balance (A6)?** — `ADMIN_TELEGRAM_IDS` is available; a `sendMessage` to admins is straightforward but adds a delivery path.
-4. **Was the owner's observation "Phase 4 admin gate replaced by roles" intended for the attachment-serve `isAdminUser` path too?** — The gated serve currently accepts an `isAdminUser` boolean (`[VERIFIED: lib/tickets-service.ts:372-387]`); it should become "role ∈ {administrator, support}" (manager cannot view tickets per the matrix).
-5. **Where does the admin route live — `/admin/**` under the existing `app/` tree?** — Confirmed by UI-SPEC (`/admin`, `/admin/users`, …); no route group required.
+   - Resolution: locked to A1 — revenue = `SUM(amount)` of orders with `paidAt` in period and status ∈ {paid, provisioning, provisioned}; orders = same count; users = all-time count. Implemented + tested in 05-07 Task 1 (the read is one cheap aggregation, so reversible).
+2. **(RESOLVED → A2, LOCKED in 05-07 Task 2 / wave 5)** **Threshold value and critical boundary (A2)** — Environment default for `ARTEMIDA_LOW_BALANCE_RUB` and whether `critical` is `≤0` or `≤ threshold/2`.
+   - Resolution: default 500 ₽; `critical` = balance ≤ 0; `low` = 0 < balance ≤ threshold; `unknown` = read threw. `lib/env.ts` gains `ARTEMIDA_LOW_BALANCE_RUB` in 05-05 Task 1; the classifier + boundary tests land in 05-07 Task 2.
+3. **(RESOLVED → A6, owner-gated in 05-07 Task 2 `checkpoint:decision` / wave 5)** **Does the owner want a Telegram push for low balance (A6)?** — `ADMIN_TELEGRAM_IDS` is available; a `sendMessage` to admins is straightforward but adds a delivery path.
+   - Resolution: banner + WARN log is the default; the Telegram-DM option is presented as an explicit owner `checkpoint:decision` in 05-07 Task 2 before the worker tick ships.
+4. **(RESOLVED → LOCKED in 05-04 Task 1 / wave 3)** **Was the owner's observation "Phase 4 admin gate replaced by roles" intended for the attachment-serve `isAdminUser` path too?** — The gated serve currently accepts an `isAdminUser` boolean (`[VERIFIED: lib/tickets-service.ts:372-387]`); it should become "role ∈ {administrator, support}" (manager cannot view tickets per the matrix).
+   - Resolution: yes — 05-04 Task 1 replaces the `isAdminUser` boolean with a role-set check (`administrator|support`), manager non-owner → 404.
+5. **(RESOLVED → LOCKED in 05-04 Task 1 / wave 3)** **Where does the admin route live — `/admin/**` under the existing `app/` tree?** — Confirmed by UI-SPEC (`/admin`, `/admin/users`, …); no route group required.
+   - Resolution: admin pages live at `/admin/**` under the existing `app/` tree; no route group. Implemented across 05-01/02/03/04/07.
 
 ## Environment Availability
 

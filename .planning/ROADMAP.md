@@ -170,7 +170,7 @@ Plans:
   4. Subscription-ссылки отдаются через White Label домен my.3set.online
   5. Все изменения кода закоммичены и запушены в GitHub 3set-white, деплой воспроизводится на сервере
 
-**Plans**: 6 plans
+**Plans**: 7 plans
 **UI hint**: yes
 
 Plans:
@@ -188,11 +188,15 @@ Plans:
 - [ ] 05-04-PLAN.md — Role-aware admin gate migration + ticket queue reuse + roles management (ADM-01)
 - [ ] 05-05-PLAN.md — White Label sub-link verify/fallback + shallow health + prod env wiring (OPS-02)
 
-**Wave 4** *(blocked on Waves 2–3)*
+**Wave 4** *(blocked on Wave 1)*
 
-- [ ] 05-03-PLAN.md — Stats dashboard + balance alert + broadcast queue (dedupe/terminal-403/backoff) (ADM-03, ADM-04)
+- [ ] 05-03-PLAN.md — Broadcast queue: enqueue → deduped Notifications → batched worker delivery (terminal-403/backoff) (ADM-03)
 
-**Wave 5** *(blocked on Waves 3–4; owner-gated on one-way D-75)*
+**Wave 5** *(blocked on Waves 1, 4)*
+
+- [ ] 05-07-PLAN.md — Stats dashboard + cached ARTEMIDA read + balance alert (ADM-03, ADM-04)
+
+**Wave 6** *(blocked on Waves 1, 4, 5; owner-gated on one-way D-75)*
 
 - [ ] 05-06-PLAN.md — Deploy: Dockerfile blockers, Compose/Nginx/Certbot, backup/rollback scripts, runbook (OPS-01)
 

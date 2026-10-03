@@ -9,6 +9,8 @@
 // independently. Runs against the real local Postgres with a private id range.
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const session = vi.hoisted(() => ({ token: undefined as string | undefined }));
 
@@ -20,7 +22,10 @@ vi.mock("next/headers", () => ({
 }));
 
 import AdminUsersPage from "../../app/admin/users/page";
+import AdminUserProfilePage from "../../app/admin/users/[id]/page";
+import { GET as profileGET } from "../../app/api/admin/users/[id]/route";
 import { GET as searchGET } from "../../app/api/admin/users/search/route";
+import AdminKeyRow from "../../components/admin/AdminKeyRow";
 import UserSearchResults from "../../components/admin/UserSearchResults";
 import { ADMIN_SEARCH_LIMIT, adminSearchUsers, loadAdminProfile } from "../../lib/admin-service";
 import { signSession } from "../../lib/auth";
@@ -97,6 +102,12 @@ function search(q: string): Promise<Response> {
   );
 }
 
+function profile(id: number | string): Promise<Response> {
+  return profileGET(new Request(`http://localhost/api/admin/users/${id}`), {
+    params: Promise.resolve({ id: String(id) }),
+  });
+}
+
 /** Invoke an async RSC page as Next would and capture its redirect/404 digest. */
 async function callPage(
   page: () => Promise<unknown>,
@@ -139,6 +150,10 @@ function collectStrings(node: unknown, out: string[] = []): string[] {
   const element = node as AnyElement;
   if (element.props) collectStrings(element.props.children, out);
   return out;
+}
+
+function callProfilePage(id: string): Promise<{ ok: true } | { digest: string }> {
+  return callPage(() => AdminUserProfilePage({ params: Promise.resolve({ id }) }));
 }
 
 beforeAll(async () => {
@@ -471,5 +486,133 @@ describe("admin users — support/manager role coverage", () => {
     expect(serialized).not.toContain(PII_SUB_URL);
     expect(serialized).not.toContain("chatId");
     expect(serialized).not.toContain("subscriptionUrl");
+  });
+});
+
+const PROFILE_PAGE_SOURCE = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), "..", "..", "app", "admin", "users", "[id]", "page.tsx"),
+  "utf8",
+);
+const ADMIN_KEY_ROW_SOURCE = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), "..", "..", "components", "admin", "AdminKeyRow.tsx"),
+  "utf8",
+);
+
+describe("admin profile — per-section degradation (UI-SPEC §4)", () => {
+  it("treats an EMPTY payments section as ok:true/empty, not as an error", async () => {
+    const profileData = await loadAdminProfile(piiUserId);
+    expect(profileData?.payments.ok).toBe(true);
+    if (profileData?.payments.ok) expect(profileData.payments.rows).toHaveLength(0);
+    // The empty state is the keyed empty copy, distinct from the error copy.
+    expect(PROFILE_PAGE_SOURCE).toContain("t('admin.profileNoPayments')");
+  });
+
+  it("maps a failed section to profilePartial + retry and keeps three independent boundaries", () => {
+    expect(PROFILE_PAGE_SOURCE).toContain("t('admin.profilePartial')");
+    expect(PROFILE_PAGE_SOURCE).toContain("t('common.retry')");
+    // Each section resolves behind its own Suspense boundary.
+    expect(PROFILE_PAGE_SOURCE.match(/<Suspense/g)?.length).toBe(3);
+  });
+
+  it("degrades only Keys when the keys read throws; header/payments/tickets survive", async () => {
+    const spy = vi
+      .spyOn(prisma.keyCache, "findMany")
+      .mockRejectedValueOnce(new Error("artemida_unavailable"));
+    const profileData = await loadAdminProfile(profileUserId);
+    spy.mockRestore();
+
+    expect(profileData?.header.telegramId).toBe(String(PROFILE_USER));
+    expect(profileData?.keys.ok).toBe(false);
+    expect(profileData?.payments.ok).toBe(true);
+    expect(profileData?.tickets.ok).toBe(true);
+  });
+});
+
+describe("AdminKeyRow — read-only (A4/T-05-07)", () => {
+  it("renders name, status chip, expiry, and device count", () => {
+    const tree = AdminKeyRow({
+      item: {
+        id: "key-read-1",
+        name: "Мой ключ",
+        isTrial: false,
+        statusKind: "active",
+        expiresAt: "2026-12-31T00:00:00.000Z",
+        devices: 2,
+        deviceLimit: 5,
+      },
+    });
+    const strings = collectStrings(tree);
+    expect(strings).toContain("Мой ключ");
+    expect(strings).toContain(t("status.active"));
+    expect(strings).toContain(t("key.expires", { date: "31.12.2026" }));
+    expect(strings).toContain(t("key.devicesCount", { n: 2, max: 5 }));
+  });
+
+  it("exposes NO mutation control and imports no renew/upgrade panel", () => {
+    const elements: AnyElement[] = [];
+    walkElements(
+      AdminKeyRow({
+        item: {
+          id: "key-read-2",
+          name: "K",
+          isTrial: false,
+          statusKind: "active",
+          expiresAt: null,
+          devices: null,
+          deviceLimit: null,
+        },
+      }),
+      (element) => elements.push(element),
+    );
+    for (const element of elements) {
+      expect(element.props?.onClick).toBeUndefined();
+      expect(element.props?.href).toBeUndefined();
+    }
+    expect(ADMIN_KEY_ROW_SOURCE).not.toMatch(/import[^;]*RenewPanel/);
+    expect(ADMIN_KEY_ROW_SOURCE).not.toMatch(/import[^;]*UpgradePanel/);
+    expect(ADMIN_KEY_ROW_SOURCE).not.toContain("<button");
+  });
+});
+
+describe("admin profile — id semantics + route gate (A4/T-05-06)", () => {
+  it("404s an unknown internal id and proves the param is User.id (not telegram id)", async () => {
+    await authorize(ADMIN);
+
+    expect(await callProfilePage("999999999")).toEqual({
+      digest: "NEXT_HTTP_ERROR_FALLBACK;404",
+    });
+    // The telegram id must NOT resolve — the route param is the internal User.id.
+    expect(await callProfilePage(String(PROFILE_USER))).toEqual({
+      digest: "NEXT_HTTP_ERROR_FALLBACK;404",
+    });
+    // The internal id resolves.
+    await expect(callProfilePage(String(profileUserId))).resolves.toEqual({ ok: true });
+  });
+
+  it("maps the profile BFF route to 401 / 404 / 200", async () => {
+    const signedOut = await profile(profileUserId);
+    expect(signedOut.status).toBe(401);
+
+    await authorize(Number(STRANGER));
+    expect((await profile(profileUserId)).status).toBe(404);
+
+    for (const id of [ADMIN, SUPPORT, MANAGER]) {
+      await authorize(id);
+      expect((await profile(profileUserId)).status).toBe(200);
+    }
+  });
+
+  it("returns 404 for an unknown profile id and 400 for a malformed id", async () => {
+    await authorize(ADMIN);
+    expect((await profile("999999999")).status).toBe(404);
+    expect((await profile("not-a-number")).status).toBe(400);
+  });
+
+  it("never leaks a subscription URL through the profile payload", async () => {
+    await authorize(ADMIN);
+    const res = await profile(profileUserId);
+    const serialized = JSON.stringify(await res.json());
+    expect(serialized).not.toContain("subscriptionUrl");
+    expect(serialized).not.toContain("chatId");
   });
 });

@@ -127,9 +127,18 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** Optional per-write controls. A caller-supplied `idempotencyKey` lets a
+ *  retried fulfillment reuse one provider-side idempotency token
+ *  (D-18/Pitfall 2, e.g. `order:{orderId}:new`) instead of minting a fresh
+ *  UUID per attempt. */
+export interface ArtemidaWriteOptions {
+  idempotencyKey?: string;
+}
+
 interface RequestOptions<T> {
   query?: Record<string, string | number | boolean | undefined>;
   body?: unknown;
+  idempotencyKey?: string;
   normalize: (data: unknown) => T;
 }
 
@@ -279,7 +288,9 @@ function normalizeKey(raw: unknown, fallbackId?: string): NormalizedKey {
     id: asString(d.id) ?? asString(d.keyId) ?? asString(d.key_id) ?? fallbackId ?? "",
     name: asString(d.name),
     status: asString(d.status) ?? "unknown",
-    isTrial: asBool(d.isTrial) || asBool(d.is_trial),
+    // Observed 2026-10-03 create/upgrade probe: the key boolean is `trial`
+    // (not `isTrial`). Keep the camel/snake variants for tolerance.
+    isTrial: asBool(d.isTrial) || asBool(d.is_trial) || asBool(d.trial),
     expiresAt: asString(d.expiresAt) ?? asString(d.expireAt) ?? asString(d.expire_at),
     deviceLimit: pickNumber(d.deviceLimit, d.device_limit),
     devices: asDeviceCount(d.devices),
@@ -360,6 +371,12 @@ function normalizeBalance(data: unknown): Balance {
 export interface ArtemidaClient {
   getPricing(input: { days: number; devices: number }): Promise<Pricing>;
   createTrial(input: { customerRef: string }): Promise<NormalizedKey>;
+  /** Paid key create — observed 2026-10-03: `POST /keys` with
+   *  `{customerRef, days, devices}` (all required integers) → `201`. */
+  createKey(
+    input: { customerRef: string; days: number; devices: number },
+    opts?: ArtemidaWriteOptions,
+  ): Promise<NormalizedKey>;
   listKeys(input?: {
     limit?: number;
     offset?: number;
@@ -373,8 +390,16 @@ export interface ArtemidaClient {
   clearDevices(id: string): Promise<void>;
   getTraffic(id: string): Promise<Traffic>;
   resetTraffic(id: string): Promise<void>;
-  renewKey(id: string, input: { days: number; devices: number }): Promise<NormalizedKey>;
-  upgradeKey(id: string, input: { days: number; devices: number }): Promise<NormalizedKey>;
+  renewKey(
+    id: string,
+    input: { days: number; devices: number },
+    opts?: ArtemidaWriteOptions,
+  ): Promise<NormalizedKey>;
+  upgradeKey(
+    id: string,
+    input: { days: number; devices: number },
+    opts?: ArtemidaWriteOptions,
+  ): Promise<NormalizedKey>;
   disableKey(id: string): Promise<void>;
   enableKey(id: string): Promise<void>;
   deleteKey(id: string, input?: { permanent?: boolean }): Promise<void>;
@@ -407,7 +432,7 @@ export function createArtemidaClient(options: ArtemidaClientOptions = {}): Artem
       Accept: "application/json",
     };
     if (method === "POST" || method === "DELETE") {
-      headers["Idempotency-Key"] = randomUUID();
+      headers["Idempotency-Key"] = opts.idempotencyKey ?? randomUUID();
     }
     if (opts.body !== undefined) headers["Content-Type"] = "application/json";
 
@@ -471,6 +496,13 @@ export function createArtemidaClient(options: ArtemidaClientOptions = {}): Artem
         normalize: (data) => normalizeKeyResponse(data),
       }),
 
+    createKey: ({ customerRef, days, devices }, opts) =>
+      request("POST", "/keys", {
+        body: { customerRef, days, devices },
+        idempotencyKey: opts?.idempotencyKey,
+        normalize: (data) => normalizeKeyResponse(data),
+      }),
+
     listKeys: (input = {}) =>
       request("GET", "/keys", {
         query: {
@@ -507,15 +539,17 @@ export function createArtemidaClient(options: ArtemidaClientOptions = {}): Artem
     resetTraffic: (id) =>
       request("POST", `${keyPath(id)}/traffic/reset`, { normalize: () => undefined }),
 
-    renewKey: (id, { days, devices }) =>
+    renewKey: (id, { days, devices }, opts) =>
       request("POST", `${keyPath(id)}/renew`, {
         body: { days, devices },
+        idempotencyKey: opts?.idempotencyKey,
         normalize: (data) => normalizeKeyResponse(data, id),
       }),
 
-    upgradeKey: (id, { days, devices }) =>
+    upgradeKey: (id, { days, devices }, opts) =>
       request("POST", `${keyPath(id)}/upgrade`, {
         body: { days, devices },
+        idempotencyKey: opts?.idempotencyKey,
         normalize: (data) => normalizeKeyResponse(data, id),
       }),
 

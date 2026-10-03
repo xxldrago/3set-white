@@ -17,6 +17,13 @@ import {
   startTrial,
   statusLabel,
 } from "./keys-service";
+import {
+  createOrder,
+  keyDeviceLimit,
+  listOrdersForUser,
+  precheckOwnedKey,
+} from "./orders-service";
+import { buildHistoryReply, buildPayButton } from "./bot-payments";
 import { logger } from "./logger";
 import { prisma } from "./prisma";
 
@@ -60,6 +67,7 @@ bot.start(async (ctx) => {
       keyboard: [
         [{ text: t("bot.menuTrial") }, { text: t("bot.menuTariffs") }],
         [{ text: t("bot.menuKeys") }],
+        [{ text: t("bot.menuPayments") }],
         [{ text: t("bot.menuGuides") }, { text: t("bot.menuHelp") }],
       ],
       resize_keyboard: true,
@@ -153,13 +161,159 @@ bot.action(/^tariff:devices:(\d+):(\d+)$/, async (ctx) => {
       `${daysLabel(days)} · ${devices}\n${t("pricing.price", {
         price: priceFormatter.format(pricing.price),
       })}`,
+      // The purchase itself is a second tap (D-33): the price is quoted first,
+      // then the user buys — the server re-quotes on creation.
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: t("pay.cta"), callback_data: `tariff:buy:${days}:${devices}` }],
+          ],
+        },
+      },
     );
   } catch {
     await ctx.reply(t("pricing.error"));
   }
 });
 
-// «Мои ключи» — the SAME listKeys/revalidateKeys read path the cabinet uses
+// ---------------------------------------------------------------------------
+// Phase 3 — bot payment parity (D-47, PAY-01/PAY-04, UI-SPEC §6/§7).
+//
+// The bot calls the SAME `orders-service.createOrder` the cabinet BFF uses —
+// no duplicated Prisma or fetch logic. After creation it replies `bot.payCreated`
+// with an inline URL button (`pay.cta`, url = Platega hosted page); the raw
+// provider URL is never shown as text. Failures map to `bot.payError` only
+// (never raw provider text, D-19/D-24).
+// ---------------------------------------------------------------------------
+
+/**
+ * Create an order through the shared service and reply the keyed "invoice
+ * created" message with the Platega URL button. Returns the created order id,
+ * or null on a provider failure (the caller has already replied `bot.payError`).
+ */
+async function createBotOrderAndReply(
+  ctx: {
+    from?: { id: number };
+    chat?: { id: number };
+    reply: (text: string, extra?: Record<string, unknown>) => Promise<unknown>;
+  },
+  input: {
+    kind: "new" | "renew" | "upgrade";
+    days: number | null;
+    devices: number;
+    addDevices?: number;
+    keyId?: string | null;
+  },
+): Promise<string | null> {
+  const from = ctx.from;
+  if (!from) return null;
+  try {
+    const result = await createOrder({
+      telegramId: from.id,
+      kind: input.kind,
+      days: input.days,
+      devices: input.devices,
+      ...(input.addDevices === undefined ? {} : { addDevices: input.addDevices }),
+      keyId: input.keyId ?? null,
+      userName: from.id ? String(from.id) : null,
+    });
+    if (result.kind === "provider_error") {
+      await ctx.reply(t("bot.payError"));
+      return null;
+    }
+    await ctx.reply(t("bot.payCreated"), {
+      reply_markup: { inline_keyboard: [[buildPayButton(result.url)]] },
+    });
+    return result.order.id;
+  } catch {
+    await ctx.reply(t("bot.payError"));
+    return null;
+  }
+}
+
+// «Купить» — creates a `kind:'new'` order (days+devices from the tariff picker).
+bot.action(/^tariff:buy:(\d+):(\d+)$/, async (ctx) => {
+  const from = ctx.from;
+  await ctx.answerCbQuery();
+  if (!from) return;
+  const days = Number(ctx.match?.[1]);
+  const devices = Number(ctx.match?.[2]);
+  await createBotOrderAndReply(ctx, { kind: "new", days, devices });
+  logger.info({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "pay-created" });
+});
+
+// «История платежей» — reads the SAME `listOrdersForUser` the cabinet uses
+// (D-47 parity), replies keyed, capped rows (UI-SPEC §6).
+bot.hears(t("bot.menuPayments"), async (ctx) => {
+  const from = ctx.from;
+  if (!from) return;
+  try {
+    const rows = await listOrdersForUser(BigInt(from.id));
+    await ctx.reply(buildHistoryReply(rows));
+    logger.info({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "pay-history" });
+  } catch {
+    await ctx.reply(t("common.errorLoad"));
+    logger.warn({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "pay-history-failed" });
+  }
+});
+
+// Renew/upgrade entry from a non-trial key (D-44): trial keys get only the
+// existing `key.buyCta` deep-link — renew/upgrade are never offered (DOM-absent
+// in the cabinet, absent from the bot keyboard here). Callback carries the key
+// list index (short payload); the key is re-resolved through the ownership join.
+const KEY_DAYS = 30; // renew term default (the cabinet renew panel offers 7/30/90)
+
+bot.action(/^key:renew:(\d+)$/, async (ctx) => {
+  const from = ctx.from;
+  await ctx.answerCbQuery();
+  if (!from) return;
+  const index = Number(ctx.match?.[1]);
+  const keys = await listKeys(BigInt(from.id));
+  const key = keys[index];
+  if (!key) {
+    await ctx.reply(t("key.linkUnavailable"));
+    return;
+  }
+  // Server-side ownership + trial pre-check before any provider call (D-44).
+  const precheck = await precheckOwnedKey(from.id, key.id);
+  if (!precheck.ok) {
+    await ctx.reply(precheck.reason === "trial" ? t("key.buyCta") : t("key.linkUnavailable"));
+    return;
+  }
+  await createBotOrderAndReply(ctx, {
+    kind: "renew",
+    days: KEY_DAYS,
+    devices: keyDeviceLimit(precheck.key),
+    keyId: precheck.key.id,
+  });
+});
+
+bot.action(/^key:upgrade:(\d+)$/, async (ctx) => {
+  const from = ctx.from;
+  await ctx.answerCbQuery();
+  if (!from) return;
+  const index = Number(ctx.match?.[1]);
+  const keys = await listKeys(BigInt(from.id));
+  const key = keys[index];
+  if (!key) {
+    await ctx.reply(t("key.linkUnavailable"));
+    return;
+  }
+  const precheck = await precheckOwnedKey(from.id, key.id);
+  if (!precheck.ok) {
+    await ctx.reply(precheck.reason === "trial" ? t("key.buyCta") : t("key.linkUnavailable"));
+    return;
+  }
+  await createBotOrderAndReply(ctx, {
+    kind: "upgrade",
+    days: null,
+    devices: keyDeviceLimit(precheck.key),
+    addDevices: 1,
+    keyId: precheck.key.id,
+  });
+});
+
+
 // (cache-first, D-29). Reply from the local mirror, then refresh from ARTEMIDA
 // in the background; every string resolves through t() (D-16), never raw
 // provider data. The key-detail / subscription-link message is added in 02-05.
@@ -240,8 +394,20 @@ bot.action(/^key:link:(\d+)$/, async (ctx) => {
       });
       return;
     }
+    // Non-trial keys also get renew/upgrade entry points on the link message;
+    // trial keys keep only the buy deep-link (D-44 — no renew/upgrade at all).
+    const limit = keyDeviceLimit(key);
+    const actionRows = key.isTrial
+      ? []
+      : [
+          [{ text: t("renew.cta"), callback_data: `key:renew:${Number(ctx.match?.[1])}` }],
+          ...(limit < 10
+            ? [[{ text: t("upgrade.cta"), callback_data: `key:upgrade:${Number(ctx.match?.[1])}` }]]
+            : []),
+        ];
     await ctx.reply(
       `${t("key.linkTitle")}\n${subscription.subscriptionUrl}\n\n${t("key.guidesCta")} — ${t("bot.menuGuides")}`,
+      actionRows.length > 0 ? { reply_markup: { inline_keyboard: actionRows } } : undefined,
     );
     logger.info({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "key-link-sent" });
   } catch {

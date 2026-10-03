@@ -166,6 +166,13 @@ describe("dispatchNotification — worker notify-row consumer (PAY-01, D-38)", (
     });
     await enqueueOrderJob(order.id, NOTIFY_PROVISIONED);
 
+    // The sub-link is resolved through the SAME provider read the cabinet uses.
+    vi.spyOn(artemida, "getSubscriptionLinks").mockResolvedValue({
+      subscriptionUrl: "https://sub.test/link/key_ok",
+      links: ["https://sub.test/link/key_ok"],
+    });
+    vi.spyOn(artemida, "getTraffic").mockResolvedValue({ usedBytes: null, limitBytes: null });
+
     const sendPhoto = vi.fn().mockResolvedValue({ message_id: 1 });
     const sendMessage = vi.fn().mockResolvedValue({ message_id: 2 });
     const telegram = { sendPhoto, sendMessage };
@@ -181,7 +188,8 @@ describe("dispatchNotification — worker notify-row consumer (PAY-01, D-38)", (
     ];
     expect(String(photoChatId)).toBe(String(OWNER));
     expect(Buffer.isBuffer(photoArg.source)).toBe(true);
-    expect(photoExtra.caption).toContain("https://sub.test/link/key_ok");
+    // Caption is the keyed QR caption; the sub-link travels in the text message.
+    expect(photoExtra.caption).toContain("Наведите камеру");
 
     // The sub-link text is pushed to the owning chat, never logged.
     expect(sendMessage).toHaveBeenCalledTimes(1);

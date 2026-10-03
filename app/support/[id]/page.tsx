@@ -9,6 +9,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import MarkReadOnOpen from '@/components/MarkReadOnOpen';
+import TicketComposer from '@/components/TicketComposer';
 import TicketStatusChip from '@/components/TicketStatusChip';
 import TicketThread from '@/components/TicketThread';
 import { t } from '@/lib/i18n';
@@ -67,6 +68,10 @@ export default async function TicketDetailPage({
         {thread.status === 'closed' && (
           <p className="text-sm text-zinc-600 dark:text-zinc-400">{t('ticket.reopenNote')}</p>
         )}
+
+        <section className={CARD}>
+          <TicketComposer ticketId={id} />
+        </section>
 
         <nav className="flex flex-col gap-2 sm:flex-row">
           <Link href="/support" className={SECONDARY}>

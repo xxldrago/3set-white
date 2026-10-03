@@ -245,6 +245,18 @@ describe("buildReminderPush — signal selection (D-62/D-63 / T-04-36)", () => {
     // The reminder copy must never leak the raw key id.
     expect(push.text).not.toContain(CUID_KEY);
   });
+
+  it("round-trips a key id through the bot's key:renew callback (A7 migration)", () => {
+    // The bot action regex is /^key:renew:(.+)$/ — the captured value must be
+    // the exact key id (a cuid, not a numeric list index) so a reminder opened
+    // asynchronously still targets the correct key.
+    const keyId = "clx9k2j4b0000abcd1234efgh";
+    const push = buildReminderPush({ keyId, isTrial: false, expiresAt: expires });
+    const callback = push.keyboard.inline_keyboard[0]?.[0]?.callback_data ?? "";
+
+    expect(/^key:renew:(.+)$/.exec(callback)?.[1]).toBe(keyId);
+    expect(callback).not.toMatch(/^key:renew:\d+$/);
+  });
 });
 
 describe("dispatchReminder — owning-chat targeting (PAY-05 / T-04-35)", () => {

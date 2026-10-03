@@ -155,6 +155,15 @@ bot.hears(t("bot.menuTariffs"), async (ctx) => {
   await ctx.reply(t("pricing.title"), { reply_markup: tariffDaysKeyboard() });
 });
 
+// The trial expiry reminder's buy CTA lands here (D-63): reply the days keyboard
+// so a trial user starts the NORMAL Phase 3 purchase flow — no money logic is
+// duplicated. The callback carries no key id (the reminder is per-key but the
+// purchase is a fresh `new` order through the tariff picker).
+bot.action("tariff:start", async (ctx) => {
+  await ctx.answerCbQuery();
+  await ctx.reply(t("pricing.title"), { reply_markup: tariffDaysKeyboard() });
+});
+
 bot.action(/^tariff:days:(\d+)$/, async (ctx) => {
   const days = Number(ctx.match?.[1]);
   await ctx.answerCbQuery();
@@ -269,23 +278,26 @@ bot.hears(t("bot.menuPayments"), async (ctx) => {
 
 // Renew/upgrade entry from a non-trial key (D-44): trial keys get only the
 // existing `key.buyCta` deep-link — renew/upgrade are never offered (DOM-absent
-// in the cabinet, absent from the bot keyboard here). Callback carries the key
-// list index (short payload); the key is re-resolved through the ownership join.
+// in the cabinet, absent from the bot keyboard here).
+//
+// A7: the callback carries the KEY ID (`key:renew:{keyId}`), not a list index,
+// because an expiry reminder is delivered asynchronously and the list may have
+// shifted by the time the button is tapped. The id is re-resolved through the
+// ownership + trial pre-check server-side, so a forged/foreign id can never
+// reach a provider call (T-04-34).
 const KEY_DAYS = 30; // renew term default (the cabinet renew panel offers 7/30/90)
 
-bot.action(/^key:renew:(\d+)$/, async (ctx) => {
+bot.action(/^key:renew:(.+)$/, async (ctx) => {
   const from = ctx.from;
   await ctx.answerCbQuery();
   if (!from) return;
-  const index = Number(ctx.match?.[1]);
-  const keys = await listKeys(BigInt(from.id));
-  const key = keys[index];
-  if (!key) {
+  const keyId = ctx.match?.[1];
+  if (!keyId) {
     await ctx.reply(t("key.linkUnavailable"));
     return;
   }
   // Server-side ownership + trial pre-check before any provider call (D-44).
-  const precheck = await precheckOwnedKey(from.id, key.id);
+  const precheck = await precheckOwnedKey(from.id, keyId);
   if (!precheck.ok) {
     await ctx.reply(precheck.reason === "trial" ? t("key.buyCta") : t("key.linkUnavailable"));
     return;
@@ -298,18 +310,16 @@ bot.action(/^key:renew:(\d+)$/, async (ctx) => {
   });
 });
 
-bot.action(/^key:upgrade:(\d+)$/, async (ctx) => {
+bot.action(/^key:upgrade:(.+)$/, async (ctx) => {
   const from = ctx.from;
   await ctx.answerCbQuery();
   if (!from) return;
-  const index = Number(ctx.match?.[1]);
-  const keys = await listKeys(BigInt(from.id));
-  const key = keys[index];
-  if (!key) {
+  const keyId = ctx.match?.[1];
+  if (!keyId) {
     await ctx.reply(t("key.linkUnavailable"));
     return;
   }
-  const precheck = await precheckOwnedKey(from.id, key.id);
+  const precheck = await precheckOwnedKey(from.id, keyId);
   if (!precheck.ok) {
     await ctx.reply(precheck.reason === "trial" ? t("key.buyCta") : t("key.linkUnavailable"));
     return;
@@ -406,13 +416,15 @@ bot.action(/^key:link:(\d+)$/, async (ctx) => {
     }
     // Non-trial keys also get renew/upgrade entry points on the link message;
     // trial keys keep only the buy deep-link (D-44 — no renew/upgrade at all).
+    // A7: renew/upgrade callbacks carry the key id (never a list index) so a
+    // button opened later still targets the right key.
     const limit = keyDeviceLimit(key);
     const actionRows = key.isTrial
       ? []
       : [
-          [{ text: t("renew.cta"), callback_data: `key:renew:${Number(ctx.match?.[1])}` }],
+          [{ text: t("renew.cta"), callback_data: `key:renew:${key.id}` }],
           ...(limit < 10
-            ? [[{ text: t("upgrade.cta"), callback_data: `key:upgrade:${Number(ctx.match?.[1])}` }]]
+            ? [[{ text: t("upgrade.cta"), callback_data: `key:upgrade:${key.id}` }]]
             : []),
         ];
     await ctx.reply(

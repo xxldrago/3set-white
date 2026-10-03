@@ -172,7 +172,7 @@ if (DRY_RUN) {
   out('');
   out(`upgrade POST (only with ${UPGRADE_FLAG} <keyId> <addDevices>, consumes real balance):`);
   out('  GET  /keys/{keyId}   # tolerant read of the current device count + plan days');
-  out('  POST /keys/{keyId}/upgrade   body {"days":<unchanged>,"devices":<current+addDevices>} + header Idempotency-Key=<uuid>');
+  out('  POST /keys/{keyId}/upgrade   body {"addDevices":<n>} + header Idempotency-Key=<uuid>');
   out('  GET  /balance before/after the upgrade to derive the exact charged amount');
   process.exit(0);
 }
@@ -393,7 +393,9 @@ async function main() {
     const currentDevices = extractDeviceCount(detailKey?.raw);
     const planDays = extractPlanDays(detailKey?.raw);
     const days = planDays ?? 30;
-    const upgradeBody = { days, devices: (currentDevices ?? 0) + UPGRADE_ADD_DEVICES };
+    // Observed 2026-10-03: POST /keys/{id}/upgrade rejects {days,devices} with
+    // 400 unsupported_fields; it accepts {addDevices} only (prorated charge).
+    const upgradeBody = { addDevices: UPGRADE_ADD_DEVICES };
 
     const balanceBefore = await request('GET', '/balance');
     out(`   balance before upgrade: ${balanceAmount(balanceBefore.body) ?? 'unknown'}`);

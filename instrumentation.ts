@@ -1,7 +1,8 @@
 // Next.js instrumentation hook (D-40, RESEARCH Pattern 3).
 //
 // `register()` is called once when a server instance is initiated. It starts
-// the outbox fulfillment worker + hourly reconcile tick. Two guards:
+// the outbox fulfillment worker + hourly reconcile tick + daily expiry-reminder
+// tick (all owned by `startWorker`). Two guards:
 //   - NEXT_RUNTIME === 'nodejs' — never run the worker on the edge runtime.
 //   - NEXT_PHASE !== 'phase-production-build' — never start it during `next build`
 //     (mirrors lib/bot.ts:274).

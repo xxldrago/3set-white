@@ -17,6 +17,9 @@
 // - `startReconcileTick()` runs hourly: re-query pending orders against Platega
 //   and recover a lost CONFIRMED callback through the SAME transition as the
 //   callback (never provisioning inline).
+// - `startReminderTick()` runs once on boot then daily: scan `keys_cache` for
+//   keys expiring within 3 days and enqueue one per-day `remind-expiry` row per
+//   key (D-60/D-61). Idempotent by the UNIQUE per-day dedupe key.
 //
 // The loop is guarded everywhere: a rejected promise can never crash the server.
 import { ArtemidaError, artemida, type NormalizedKey } from "./artemida";
@@ -43,7 +46,8 @@ import {
   type NotifyDispatchResult,
   type TelegramSender,
 } from "./bot-payments";
-import { dispatchTicketNotification } from "./ticket-notify";
+import { dispatchReminder, dispatchTicketNotification } from "./ticket-notify";
+import { enqueueReminderScan } from "./reminders-service";
 import {
   TRIAL_ERROR_CODE,
   applyConfirmedPayment,
@@ -60,6 +64,8 @@ import { prisma } from "./prisma";
 
 const DRAIN_INTERVAL_MS = 5_000;
 const RECONCILE_INTERVAL_MS = 60 * 60 * 1_000;
+/** Expiry-reminder scan cadence: once a day (D-60). The dedupe key is per-day. */
+const REMINDER_INTERVAL_MS = 24 * 60 * 60 * 1_000;
 /** Max fulfillment attempts before a retryable order is declared failed. */
 export const MAX_FULFILL_ATTEMPTS = 5;
 const BACKOFF_BASE_MS = 5_000;
@@ -313,36 +319,14 @@ async function drainNotificationType(
 }
 
 /**
- * Load the expiry-reminder dispatcher added by plan 04-08. The module is
- * imported lazily (and behind a non-literal specifier so this plan compiles
- * before 04-08 lands): when it is absent, REMIND_EXPIRY rows are simply never
- * claimed and stay `pending` — a dispatcher-less row is never marked done.
- */
-async function loadReminderDispatcher(): Promise<NotificationDispatcher | null> {
-  const spec = "./reminders-service";
-  try {
-    const mod = (await import(spec)) as {
-      dispatchExpiryReminder?: NotificationDispatcher;
-    };
-    return typeof mod.dispatchExpiryReminder === "function"
-      ? mod.dispatchExpiryReminder
-      : null;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Consume the sibling `Notification` delivery rows (SUP-03, D-57). Ticket-reply
- * rows always have a dispatcher; reminder rows only once plan 04-08 wires one —
- * until then they are left `pending` rather than dropped. A sender-less drain
- * never reaches here (the caller returns before this), so nothing is consumed
- * without a Telegram surface to deliver to.
+ * Consume the sibling `Notification` delivery rows (SUP-03, D-57; PAY-05 for
+ * reminders). Ticket-reply and expiry-reminder rows each have a dispatcher; a
+ * sender-less drain never reaches here (the caller returns before this), so
+ * nothing is consumed without a Telegram surface to deliver to.
  */
 async function drainDeliveryNotifications(telegram: TelegramSender): Promise<void> {
   await drainNotificationType(NOTIFY_TICKET_REPLY, dispatchTicketNotification, telegram);
-  const reminder = await loadReminderDispatcher();
-  if (reminder) await drainNotificationType(REMIND_EXPIRY, reminder, telegram);
+  await drainNotificationType(REMIND_EXPIRY, dispatchReminder, telegram);
 }
 
 export type ReconcileOutcome = { scanned: number; recovered: number };
@@ -403,6 +387,27 @@ export function startReconcileTick(): NodeJS.Timeout {
 }
 
 /**
+ * One expiry-reminder scan pass (D-60): enqueue one `remind-expiry` row per
+ * expiring key for today. Idempotent per key per day (`remind:{keyId}:{date}`
+ * UNIQUE), so a boot run plus the interval never double-sends.
+ */
+export async function runReminderScan(): Promise<{ scanned: number; enqueued: number }> {
+  return enqueueReminderScan();
+}
+
+/**
+ * Daily reminder interval (started by `startWorker`). Runs once on boot so a
+ * server that restarts between daily ticks never misses a day (D-60/D-61), then
+ * every 24h. The interval is unref'd so tests/CLI are not held open.
+ */
+export function startReminderTick(): NodeJS.Timeout {
+  void runReminderScan().catch(() =>
+    logger.error({ route: "worker", outcome: "reminder_scan_failed" }),
+  );
+  return unref(setInterval(guard("reminders", runReminderScan), REMINDER_INTERVAL_MS));
+}
+
+/**
  * The production drain sender: the shared `lib/bot.ts` Telegraf singleton's
  * `telegram` surface. Imported lazily so the module (and Telegraf) is only
  * pulled in when a drain actually runs — `next build` never instantiates it.
@@ -441,6 +446,7 @@ export function startWorker(): WorkerHandle {
     ),
   );
   const reconcileTimer = startReconcileTick();
+  const reminderTimer = startReminderTick();
 
   const handle: WorkerHandle = {
     started: true,
@@ -449,6 +455,7 @@ export function startWorker(): WorkerHandle {
     stop: () => {
       clearInterval(drainTimer);
       clearInterval(reconcileTimer);
+      clearInterval(reminderTimer);
       delete g.__setwhiteWorker;
     },
   };

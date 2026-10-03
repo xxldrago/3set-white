@@ -19,6 +19,7 @@ vi.mock("next/headers", () => ({
 
 import { POST } from "../../app/api/orders/route";
 import { signSession } from "../../lib/auth";
+import { TRIAL_ERROR_CODE, isTrialConflict } from "../../lib/orders-service";
 import { prisma } from "../../lib/prisma";
 import { jsonResponse, success } from "../helpers/fake-fetch";
 
@@ -245,6 +246,24 @@ describe("POST /api/orders — upgrade (PAY-03, D-42..D-45)", () => {
     expect(res.status).toBe(409);
     expect(await res.json()).toEqual({ error: "trial" });
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("trial-family parity: BFF pre-check and worker conflict share one code (D-44)", () => {
+  it("the BFF trial rejection and the worker's provider-conflict mapping are identical", async () => {
+    await authorize(Number(OWNER));
+    installFetch();
+
+    const res = await post({ kind: "renew", keyId: TRIAL_KEY, days: 30 });
+    const body = (await res.json()) as { error: string };
+
+    // BFF misuses no code other than the shared trial-family signal.
+    expect(res.status).toBe(409);
+    expect(body.error).toBe(TRIAL_ERROR_CODE);
+    // The worker's provider `conflict` maps to that same signal — neither layer
+    // ever surfaces a raw provider 409/code.
+    expect(isTrialConflict("conflict")).toBe(true);
+    expect(TRIAL_ERROR_CODE).not.toBe("conflict");
   });
 });
 

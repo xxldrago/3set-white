@@ -125,8 +125,36 @@ Plans:
   3. Ответ поддержки приходит и в бот, и в кабинет
   4. Пользователь получает push-напоминание в Telegram за 3 дня до истечения с кнопкой продления
 
-**Plans**: TBD
+**Plans**: 8 plans
 **UI hint**: yes
+
+Plans:
+
+**Wave 1**
+
+- [ ] 04-01-PLAN.md — Support data spine: Ticket/TicketMessage/Attachment/Notification schema + blocking migration + shared tickets-service (SUP-01, SUP-03)
+- [ ] 04-02-PLAN.md — Attachment pipeline: sharp magic-byte validate/downscale + local volume + env/compose (SUP-02)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 04-03-PLAN.md — Support reply fan-out: Notification queue + worker drain + ticket-notify builders (SUP-03)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 04-04-PLAN.md — Ticket BFF + admin routes: create/reply/read/gated serve/admin reply+close (SUP-01, SUP-02, SUP-03)
+- [ ] 04-07-PLAN.md — Bot support intake: menu + text/photo create via shared service (SUP-01, SUP-02, SUP-03)
+
+**Wave 4** *(blocked on Wave 3)*
+
+- [ ] 04-05-PLAN.md — Cabinet support list + create + home unread entry (SUP-01, SUP-02)
+
+**Wave 5** *(blocked on Wave 4)*
+
+- [ ] 04-06-PLAN.md — Cabinet ticket thread + composer + mark-read + gated attachments (SUP-01, SUP-02, SUP-03)
+
+**Wave 6** *(blocked on Wave 5)*
+
+- [ ] 04-08-PLAN.md — Expiry reminders: daily tick + /api/cron/remind fallback + key-id callback migration (PAY-05)
 
 ### Phase 5: Admin & Deploy
 
@@ -155,5 +183,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Foundation | 4/4 | Needs Review | 2026-09-30 |
 | 2. Keys & Trial | 7/7 | Needs Review | 2026-10-02 |
 | 3. Payments | 7/7 | Needs Review | 2026-10-03 |
-| 4. Support & Retention | 0/TBD | Not started | - |
+| 4. Support & Retention | 0/8 | Not started | - |
 | 5. Admin & Deploy | 0/TBD | Not started | - |

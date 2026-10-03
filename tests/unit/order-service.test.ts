@@ -11,6 +11,7 @@ import {
   TRIAL_ERROR_CODE,
   applyConfirmedPayment,
   listReconcilableOrders,
+  loadOrderForUser,
   transitionOrder,
 } from "../../lib/orders-service";
 import { platega, type TransactionStatus } from "../../lib/platega";
@@ -304,6 +305,17 @@ describe("worker renew/upgrade fulfillment (PAY-02/PAY-03, D-42..D-45)", () => {
     expect(
       await prisma.outbox.count({ where: { orderId: order.id, type: "notify-failed" } }),
     ).toBe(1);
+  });
+});
+
+describe("loadOrderForUser — ownership join (T-03-hist-idor)", () => {
+  it("returns the caller's own order but null for a missing id", async () => {
+    const order = await makeOrder();
+
+    const owned = await loadOrderForUser(OWNER, order.id);
+    expect(owned?.id).toBe(order.id);
+
+    expect(await loadOrderForUser(OWNER, "order_absent_for_owner")).toBeNull();
   });
 });
 

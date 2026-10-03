@@ -4,7 +4,7 @@
 // 500 in prod. Never log the parsed values — they include secrets.
 import { z } from "zod";
 
-const envSchema = z.object({
+export const envSchema = z.object({
   BOT_TOKEN: z.string().min(1, "BOT_TOKEN is required (prod bot via BotFather)"),
   BOT_TEST_TOKEN: z.string().min(1, "BOT_TEST_TOKEN is required (separate dev bot via BotFather)"),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required (postgres connection string)"),

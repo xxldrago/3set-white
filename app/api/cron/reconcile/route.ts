@@ -7,9 +7,6 @@
 // not guaranteed in every standalone image; an external scheduler can hit this
 // route hourly. It runs the SAME `reconcileOnce` pass and never provisions a key.
 import { timingSafeEqual } from "node:crypto";
-import { env } from "../../../../lib/env";
-import { logger } from "../../../../lib/logger";
-import { reconcileOnce } from "../../../../lib/worker";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +24,10 @@ function safeEq(received: string | null, expected: string): boolean {
 }
 
 export async function POST(req: Request): Promise<Response> {
+  // Lazy imports: keep lib/env + lib/worker out of the build-time module graph
+  // so `next build` never evaluates runtime secrets (mirrors instrumentation.ts).
+  const { env } = await import("../../../../lib/env");
+  const { logger } = await import("../../../../lib/logger");
   const expected = env.CRON_SECRET;
   // Unset secret → the route is closed rather than open (T-03-cronopen).
   if (!expected) {
@@ -38,6 +39,7 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  const { reconcileOnce } = await import("../../../../lib/worker");
   const result = await reconcileOnce();
   logger.info({ route: "cron_reconcile", outcome: "ok", ...result });
   return Response.json({ ok: true, ...result });

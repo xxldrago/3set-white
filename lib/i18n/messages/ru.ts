@@ -182,6 +182,7 @@ export const ru = {
     attachTooLarge: 'Файл больше 5 МБ. Выберите изображение меньше.',
     attachBadType: 'Можно прикрепить только изображение (JPG, PNG или WebP).',
     sendError: 'Не удалось отправить. Попробуйте ещё раз.',
+    toSupport: 'Поддержка',
   },
   common: {
     retry: 'Повторить',

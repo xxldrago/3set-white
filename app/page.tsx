@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { after } from 'next/server';
 import InstallPrompt from '@/components/InstallPrompt';
 import SubscriptionCard from '@/components/SubscriptionCard';
+import SupportEntry from '@/components/SupportEntry';
 import TariffPicker from '@/components/TariffPicker';
 import TrialButton from '@/components/TrialButton';
 import { ArtemidaError } from '@/lib/artemida';
@@ -10,6 +11,7 @@ import { t, tp } from '@/lib/i18n';
 import { listKeys, revalidateKeys, type RenderedKey } from '@/lib/keys-service';
 import { logger } from '@/lib/logger';
 import { requireSession, SessionError } from '@/lib/session';
+import { listTicketsForUser } from '@/lib/tickets-service';
 
 // Personalised, cache-backed page — never statically rendered.
 export const dynamic = 'force-dynamic';
@@ -117,6 +119,19 @@ export default async function Home() {
     if (!(err instanceof SessionError)) throw err;
   }
 
+  // Unread parity (SUP-03): sum the caller's per-ticket unread counters through
+  // the session-scoped service. A read failure degrades to no badge — the home
+  // page never breaks because support is unavailable.
+  let unreadCount = 0;
+  if (telegramId !== null) {
+    try {
+      const tickets = await listTicketsForUser(BigInt(telegramId));
+      unreadCount = tickets.reduce((sum, ticket) => sum + ticket.unreadForUser, 0);
+    } catch {
+      logger.warn({ route: 'home', outcome: 'support_unread_failed' });
+    }
+  }
+
   return (
     <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
       <main className="flex flex-1 w-full max-w-3xl flex-col gap-8 px-6 py-12 sm:px-16">
@@ -140,6 +155,7 @@ export default async function Home() {
               <Link href="/payments" className={SECONDARY}>
                 {t('pay.toHistory')}
               </Link>
+              <SupportEntry unreadCount={unreadCount} />
             </nav>
           </>
         ) : (

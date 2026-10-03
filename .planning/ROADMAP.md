@@ -170,8 +170,31 @@ Plans:
   4. Subscription-ссылки отдаются через White Label домен my.3set.online
   5. Все изменения кода закоммичены и запушены в GitHub 3set-white, деплой воспроизводится на сервере
 
-**Plans**: TBD
+**Plans**: 6 plans
 **UI hint**: yes
+
+Plans:
+
+**Wave 1** *(RBAC spine — tracer; owner-gated on one-way D-64)*
+
+- [ ] 05-01-PLAN.md — RBAC spine: `AdminUser` migration, `admin-auth` guard + create-only bootstrap, gated `/admin` shell (ADM-01)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 05-02-PLAN.md — User search + read-only profile (keys/payments/tickets, per-section degrade) (ADM-02)
+
+**Wave 3** *(blocked on Wave 1)*
+
+- [ ] 05-04-PLAN.md — Role-aware admin gate migration + ticket queue reuse + roles management (ADM-01)
+- [ ] 05-05-PLAN.md — White Label sub-link verify/fallback + shallow health + prod env wiring (OPS-02)
+
+**Wave 4** *(blocked on Waves 2–3)*
+
+- [ ] 05-03-PLAN.md — Stats dashboard + balance alert + broadcast queue (dedupe/terminal-403/backoff) (ADM-03, ADM-04)
+
+**Wave 5** *(blocked on Waves 3–4; owner-gated on one-way D-75)*
+
+- [ ] 05-06-PLAN.md — Deploy: Dockerfile blockers, Compose/Nginx/Certbot, backup/rollback scripts, runbook (OPS-01)
 
 ## Progress
 

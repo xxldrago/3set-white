@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 9
+open_count: 10
 waived_count: 0
 fixed_count: 0
-total_count: 9
-last_updated: 2026-10-02T22:11:07.866Z
+total_count: 10
+last_updated: 2026-10-03T11:48:47.550Z
 ---
 
 # Broken Windows Ledger
@@ -24,6 +24,7 @@ last_updated: 2026-10-02T22:11:07.866Z
 | 7 | 02 | deviation | lib/keys-service.ts |  | statusLabel() lives in lib/keys-service.ts as the single shared switch (five literal t('status.…') calls) used by both SubscriptionCard and the bot, instead of the switch living inside components/SubscriptionCard.tsx as the plan text specified | open |  | 2026-10-02T01:32:54.083Z |  |
 | 8 | 02 | deviation | components/CopyButton.tsx |  | Key-detail copy control required a new client island components/CopyButton.tsx (not in 02-05 files_modified): the page is an async RSC and clipboard access is browser-only, so no listed file could host it without violating the RSC/'use client' contract | open |  | 2026-10-02T01:41:34.059Z |  |
 | 9 | 03 | unrun-verify | scripts/artemida-probe.mjs |  | 03-01 Task 1 live paid create/upgrade probe not run: ARTEMIDA account balance 0 RUB — create/upgrade shapes remain UNKNOWN pending owner funding + approval | open |  | 2026-10-02T22:11:07.866Z |  |
+| 10 | 4 | stub | lib/worker.ts | 365 | REMIND_EXPIRY dispatcher not wired until 04-08; rows stay pending | open |  | 2026-10-03T11:48:47.550Z |  |
 
 ````json
 [
@@ -133,6 +134,18 @@ last_updated: 2026-10-02T22:11:07.866Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-10-02T22:11:07.866Z",
+    "resolved_at": null
+  },
+  {
+    "id": 10,
+    "kind": "stub",
+    "phase": "4",
+    "file": "lib/worker.ts",
+    "line": 365,
+    "description": "REMIND_EXPIRY dispatcher not wired until 04-08; rows stay pending",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-10-03T11:48:47.550Z",
     "resolved_at": null
   }
 ]

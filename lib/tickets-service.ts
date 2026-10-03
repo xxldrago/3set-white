@@ -231,3 +231,132 @@ export async function clearSupportPrompt(
   });
   return count === 1;
 }
+
+// ---------------------------------------------------------------------------
+// Lifecycle writers (D-50/D-58/D-59). The single-writer discipline from
+// `transitionOrder` applies: a conditional `updateMany` makes a transition
+// single-winner, and `unreadForUser` is touched ONLY in `addSupportMessage`
+// (increment exactly once) and `markTicketRead` (clear) — never on enqueue or
+// dispatch (Pitfall 6).
+// ---------------------------------------------------------------------------
+
+/**
+ * Support reply on an existing ticket (admin/API path, D-51). In ONE
+ * transaction: append the `support` message, move the ticket to `answered`,
+ * bump `unreadForUser` EXACTLY once, and stamp `lastMessageAt`. Returns the
+ * created message id (the caller enqueues the fan-out in plan 04-04) or `null`
+ * when the ticket does not exist.
+ */
+export async function addSupportMessage(
+  ticketId: string,
+  body: string,
+): Promise<{ id: string } | null> {
+  const exists = await prisma.ticket.findUnique({
+    where: { id: ticketId },
+    select: { id: true },
+  });
+  if (!exists) return null;
+
+  const message = await prisma.$transaction(async (tx) => {
+    const created = await tx.ticketMessage.create({
+      data: { ticketId, author: "support", body },
+      select: { id: true },
+    });
+    await tx.ticket.updateMany({
+      where: { id: ticketId },
+      data: {
+        status: "answered",
+        unreadForUser: { increment: 1 },
+        lastMessageAt: new Date(),
+      },
+    });
+    return created;
+  });
+
+  return { id: message.id };
+}
+
+/**
+ * User reply in a thread (D-59). Ownership join first: a non-owned ticket is
+ * indistinguishable from missing → `null`. In ONE transaction: append the
+ * `user` message (optional attachment), set `status: "open"` — a reply to an
+ * answered/closed ticket REOPENS IT IN PLACE, never a new ticket — and stamp
+ * `lastMessageAt`. Does NOT bump `unreadForUser`.
+ */
+export async function appendUserMessage(
+  telegramId: bigint,
+  ticketId: string,
+  body: string,
+  attachment?: AttachmentDescriptor | null,
+): Promise<{ messageId: string } | null> {
+  const owned = await prisma.ticket.findFirst({
+    where: { id: ticketId, user: { telegramId } },
+    select: { id: true },
+  });
+  if (!owned) return null;
+
+  const messageId = await prisma.$transaction(async (tx) => {
+    const message = await tx.ticketMessage.create({
+      data: {
+        ticketId,
+        author: "user",
+        body,
+        ...(attachment ? { attachments: { create: { ...attachment } } } : {}),
+      },
+      select: { id: true },
+    });
+    await tx.ticket.updateMany({
+      where: { id: ticketId },
+      data: { status: "open", lastMessageAt: new Date() },
+    });
+    return message.id;
+  });
+
+  return { messageId };
+}
+
+/**
+ * Ownership-joined mark-read (D-58): clear `unreadForUser` for the owner
+ * only. `count === 1` is the winner; a non-owned ticket returns `false` (no
+ * oracle).
+ */
+export async function markTicketRead(telegramId: bigint, ticketId: string): Promise<boolean> {
+  const { count } = await prisma.ticket.updateMany({
+    where: { id: ticketId, user: { telegramId } },
+    data: { unreadForUser: 0 },
+  });
+  return count === 1;
+}
+
+/**
+ * Conditional single-writer transition. When `from` is given the update is a
+ * compare-and-set (`count === 1` wins); this is the shared primitive behind
+ * `closeTicket` and mirrors `transitionOrder` (T-04-02).
+ */
+export async function transitionTicket(
+  ticketId: string,
+  to: TicketStatus,
+  from?: TicketStatus,
+): Promise<boolean> {
+  const { count } = await prisma.ticket.updateMany({
+    where: from ? { id: ticketId, status: from } : { id: ticketId },
+    data: { status: to },
+  });
+  return count === 1;
+}
+
+/** Admin close (D-51). Returns `false` when the ticket does not exist. */
+export async function closeTicket(ticketId: string): Promise<boolean> {
+  return transitionTicket(ticketId, "closed");
+}
+
+/**
+ * Owner-joined check for the home nav unread entry (plan 04-05): does the
+ * caller have a ticket currently in `open` status?
+ */
+export async function hasOpenTicket(telegramId: bigint): Promise<boolean> {
+  const count = await prisma.ticket.count({
+    where: { user: { telegramId }, status: "open" },
+  });
+  return count > 0;
+}

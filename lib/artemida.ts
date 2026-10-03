@@ -459,9 +459,12 @@ export interface ArtemidaClient {
     input: { days: number; devices: number },
     opts?: ArtemidaWriteOptions,
   ): Promise<NormalizedKey>;
+  /** Add devices to an existing key. Observed 2026-10-03: the provider accepts
+   *  `{ addDevices }` ONLY (`{days,devices}` → `400 unsupported_fields`); the
+   *  prorated charge is computed provider-side. See contract finding #5. */
   upgradeKey(
     id: string,
-    input: { days: number; devices: number },
+    input: { addDevices: number },
     opts?: ArtemidaWriteOptions,
   ): Promise<NormalizedKey>;
   disableKey(id: string): Promise<void>;
@@ -616,9 +619,10 @@ export function createArtemidaClient(options: ArtemidaClientOptions = {}): Artem
         normalize: (data) => normalizeKeyResponse(data, id),
       }),
 
-    upgradeKey: (id, { days, devices }, opts) =>
+    upgradeKey: (id, { addDevices }, opts) =>
       request("POST", `${keyPath(id)}/upgrade`, {
-        body: { days, devices },
+        // Observed contract (contract finding #5): {addDevices} ONLY.
+        body: { addDevices },
         idempotencyKey: opts?.idempotencyKey,
         normalize: (data) => normalizeKeyResponse(data, id),
       }),

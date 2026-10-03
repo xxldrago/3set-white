@@ -19,7 +19,7 @@
 //   callback (never provisioning inline).
 //
 // The loop is guarded everywhere: a rejected promise can never crash the server.
-import { ArtemidaError, artemida } from "./artemida";
+import { ArtemidaError, artemida, type NormalizedKey } from "./artemida";
 import { logger } from "./logger";
 import {
   FULFILL_JOB,
@@ -31,7 +31,9 @@ import {
   rescheduleJob,
 } from "./outbox";
 import {
+  TRIAL_ERROR_CODE,
   applyConfirmedPayment,
+  isTrialConflict,
   listReconcilableOrders,
   markProvisionError,
   markProvisionFailed,
@@ -100,40 +102,72 @@ export async function processFulfillOrder(orderId: string): Promise<FulfillOutco
     }
   }
 
-  const customerRef = String(order.user.telegramId);
-
   try {
-    if (order.kind !== "new") {
-      // Wave 3 wires renew/upgrade (plan 03-04/03-07). No such order can be
-      // created by the BFF yet (`POST /api/orders` accepts only kind:'new').
-      throw new Error("worker:fulfill_kind_not_implemented");
-    }
-    const key = await artemida.createKey(
-      { customerRef, days: order.days ?? 30, devices: order.devices },
-      { idempotencyKey: `order:${order.id}:new` },
-    );
+    const key = await provisionByKind({
+      id: order.id,
+      kind: order.kind,
+      keyId: order.keyId,
+      days: order.days,
+      devices: order.devices,
+      customerRef: String(order.user.telegramId),
+    });
     await upsertCachedKey(order.userId, key);
     await markProvisioned(order.id, key.id);
     await enqueueNotifyProvisioned(order.id);
-    logger.info({ route: "worker", outcome: "provisioned", orderId: order.id });
+    logger.info({ route: "worker", outcome: "provisioned", orderId: order.id, kind: order.kind });
     return { outcome: "provisioned" };
   } catch (err) {
-    return handleFulfillError(order.id, order.kind, order.attempts, err);
+    return handleFulfillError(order.id, order.attempts, err);
+  }
+}
+
+/**
+ * Kind-aware fulfillment (D-42): one pipeline, only the provider call differs.
+ * Every write carries the deterministic `order:{id}:{kind}` Idempotency-Key so a
+ * retry reuses the same provider-side token (D-18/D-41, Pitfall 2).
+ */
+async function provisionByKind(order: {
+  id: string;
+  kind: string;
+  keyId: string | null;
+  days: number | null;
+  devices: number;
+  customerRef: string;
+}): Promise<NormalizedKey> {
+  const idempotencyKey = `order:${order.id}:${order.kind}`;
+  switch (order.kind) {
+    case "renew": {
+      if (!order.keyId || order.days === null) throw new Error("worker:renew_missing_params");
+      return artemida.renewKey(
+        order.keyId,
+        { days: order.days, devices: order.devices },
+        { idempotencyKey },
+      );
+    }
+    case "upgrade": {
+      if (!order.keyId) throw new Error("worker:upgrade_missing_key");
+      // `order.devices` carries the addDevices delta; the observed upgrade wire
+      // body is `{addDevices}` ONLY (contract finding #5).
+      return artemida.upgradeKey(order.keyId, { addDevices: order.devices }, { idempotencyKey });
+    }
+    default:
+      return artemida.createKey(
+        { customerRef: order.customerRef, days: order.days ?? 30, devices: order.devices },
+        { idempotencyKey },
+      );
   }
 }
 
 async function handleFulfillError(
   orderId: string,
-  kind: string,
   priorAttempts: number,
   err: unknown,
 ): Promise<FulfillOutcome> {
   if (!(err instanceof ArtemidaError)) {
-    // A programming/runtime error (or the Wave-3 not-implemented branch):
-    // terminal, so a paid order is never left in provisioning forever.
-    const code = kind === "new" ? "unknown" : "not_implemented";
-    await failOrder(orderId, code);
-    return { outcome: "failed", code };
+    // A programming/runtime error (e.g. a renew/upgrade order missing its
+    // keyId): terminal, so a paid order is never left in provisioning forever.
+    await failOrder(orderId, "unknown");
+    return { outcome: "failed", code: "unknown" };
   }
 
   if (isRetryable(err.code)) {
@@ -148,9 +182,13 @@ async function handleFulfillError(
     return { outcome: "retry", nextAttemptAt, code: err.code };
   }
 
-  // Terminal provider error (402 wallet-dry, unauthorized, conflict, unknown).
-  await failOrder(orderId, err.code);
-  return { outcome: "failed", code: err.code };
+  // Terminal provider error (402 wallet-dry, unauthorized, unknown). A provider
+  // `conflict` (e.g. renew/upgrade on a trial key) maps to the SAME clean
+  // trial-family code the BFF pre-check returns — never a raw provider 409,
+  // never retried (D-44/T-03-trial-bypass).
+  const code = isTrialConflict(err.code) ? TRIAL_ERROR_CODE : err.code;
+  await failOrder(orderId, code);
+  return { outcome: "failed", code };
 }
 
 /** Terminal failure + alert + exactly one `notify-failed` row (idempotent). */

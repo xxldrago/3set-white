@@ -327,7 +327,7 @@ describe('artemida client — full V1 surface (D-17)', () => {
     await expect(artemida.getTraffic('k2')).resolves.toEqual({ usedBytes: 1024, limitBytes: 0 });
   });
 
-  it('renewKey / upgradeKey post {days,devices} and normalize the key', async () => {
+  it('renewKey posts {days,devices}; upgradeKey posts {addDevices} (observed)', async () => {
     const cap = capturing([
       jsonResponse({
         body: success({ key: { id: 'k2', status: 'active', expiresAt: '2030-05-01T00:00:00Z' } }),
@@ -340,13 +340,14 @@ describe('artemida client — full V1 surface (D-17)', () => {
       id: 'k2',
       expiresAt: '2030-05-01T00:00:00Z',
     });
-    await expect(artemida.upgradeKey('k2', { days: 90, devices: 6 })).resolves.toMatchObject({
+    await expect(artemida.upgradeKey('k2', { addDevices: 2 })).resolves.toMatchObject({
       deviceLimit: 6,
     });
     expect(cap.calls[0]?.url).toContain('/keys/k2/renew');
     expect(JSON.parse(cap.calls[0]?.body ?? '{}')).toEqual({ days: 30, devices: 4 });
     expect(cap.calls[1]?.url).toContain('/keys/k2/upgrade');
-    expect(JSON.parse(cap.calls[1]?.body ?? '{}')).toEqual({ days: 90, devices: 6 });
+    // Observed 2026-10-03: the provider rejects {days,devices} with 400 unsupported_fields.
+    expect(JSON.parse(cap.calls[1]?.body ?? '{}')).toEqual({ addDevices: 2 });
     for (const call of cap.calls) {
       expect(call.headers['Idempotency-Key']).toBeTruthy();
     }
@@ -408,13 +409,10 @@ describe('artemida client — createKey + deterministic idempotency (03-01)', ()
     ]);
     const artemida = createArtemidaClient({ fetch: cap.fetch, retry: FAST });
 
-    await artemida.upgradeKey(
-      'k2',
-      { days: 30, devices: 4 },
-      { idempotencyKey: 'order:7:upgrade' },
-    );
+    await artemida.upgradeKey('k2', { addDevices: 2 }, { idempotencyKey: 'order:7:upgrade' });
 
     expect(cap.calls[0]?.headers['Idempotency-Key']).toBe('order:7:upgrade');
+    expect(JSON.parse(cap.calls[0]?.body ?? '{}')).toEqual({ addDevices: 2 });
   });
 
   it('renewKey without an explicit key still mints a non-empty Idempotency-Key', async () => {

@@ -5,16 +5,17 @@
 // plategaTxId is skipped without throwing. Runs against the real local Postgres
 // with a spied `platega.getTransaction` so no network is hit.
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { artemida } from "../../lib/artemida";
-import { FULFILL_JOB } from "../../lib/outbox";
+import { ArtemidaError, artemida, type NormalizedKey } from "../../lib/artemida";
+import { FULFILL_JOB, enqueueFulfillJob } from "../../lib/outbox";
 import {
+  TRIAL_ERROR_CODE,
   applyConfirmedPayment,
   listReconcilableOrders,
   transitionOrder,
 } from "../../lib/orders-service";
 import { platega, type TransactionStatus } from "../../lib/platega";
 import { prisma } from "../../lib/prisma";
-import { reconcileOnce } from "../../lib/worker";
+import { drainOutbox, reconcileOnce } from "../../lib/worker";
 
 const OWNER = BigInt("200000320");
 const AMOUNT = 100;
@@ -57,6 +58,49 @@ function tx(overrides: Partial<TransactionStatus> = {}): TransactionStatus {
   return { id: "tx_rec", status: "CONFIRMED", amount: AMOUNT, currency: "RUB", payload: null, ...overrides };
 }
 
+/** Minimal normalized provider key for fulfillment spies. */
+function providerKey(
+  id: string,
+  overrides: Partial<NormalizedKey> = {},
+): NormalizedKey {
+  return {
+    id,
+    name: null,
+    status: "ACTIVE",
+    isTrial: false,
+    expiresAt: "2030-01-01T00:00:00.000Z",
+    deviceLimit: 2,
+    devices: 2,
+    subscriptionUrl: `https://x.test/${id}`,
+    customerRef: String(OWNER),
+    trafficUsedBytes: null,
+    trafficLimitBytes: null,
+    ...overrides,
+  };
+}
+
+async function makeMutationOrder(
+  overrides: {
+    kind: "renew" | "upgrade";
+    keyId: string;
+    days?: number | null;
+    devices?: number;
+  },
+) {
+  return prisma.order.create({
+    data: {
+      userId,
+      kind: overrides.kind,
+      keyId: overrides.keyId,
+      days: overrides.days ?? null,
+      devices: overrides.devices ?? 2,
+      amount: AMOUNT,
+      currency: "RUB",
+      status: "paid",
+    },
+  });
+}
+
 beforeAll(async () => {
   await cleanup();
   const user = await prisma.user.create({ data: { telegramId: OWNER }, select: { id: true } });
@@ -71,6 +115,7 @@ afterAll(async () => {
 beforeEach(async () => {
   await prisma.outbox.deleteMany({ where: { order: { userId } } });
   await prisma.order.deleteMany({ where: { userId } });
+  await prisma.keyCache.deleteMany({ where: { userId } });
 });
 
 afterEach(() => {
@@ -140,6 +185,125 @@ describe("hourly reconcile (D-40)", () => {
     const row = await prisma.order.findUnique({ where: { id: order.id } });
     expect(row?.status).toBe("pending");
     expect(await prisma.outbox.count({ where: { orderId: order.id } })).toBe(0);
+  });
+});
+
+describe("worker renew/upgrade fulfillment (PAY-02/PAY-03, D-42..D-45)", () => {
+  it("fulfills a paid renew under order:<id>:renew with {days,devices}", async () => {
+    const order = await makeMutationOrder({ kind: "renew", keyId: "key_renew", days: 30 });
+    await enqueueFulfillJob(order.id);
+    const renewKey = vi
+      .spyOn(artemida, "renewKey")
+      .mockResolvedValue(providerKey("key_renew"));
+
+    await drainOutbox();
+
+    const row = await prisma.order.findUnique({ where: { id: order.id } });
+    expect(row?.status).toBe("provisioned");
+    expect(renewKey).toHaveBeenCalledTimes(1);
+    expect(renewKey.mock.calls[0]?.[0]).toBe("key_renew");
+    expect(renewKey.mock.calls[0]?.[1]).toEqual({ days: 30, devices: 2 });
+    expect(renewKey.mock.calls[0]?.[2]?.idempotencyKey).toBe(`order:${order.id}:renew`);
+  });
+
+  it("fulfills a paid upgrade under order:<id>:upgrade with {addDevices}", async () => {
+    const order = await makeMutationOrder({
+      kind: "upgrade",
+      keyId: "key_upgrade",
+      devices: 2, // stored addDevices delta
+    });
+    await enqueueFulfillJob(order.id);
+    const upgradeKey = vi
+      .spyOn(artemida, "upgradeKey")
+      .mockResolvedValue(providerKey("key_upgrade", { deviceLimit: 4, devices: 4 }));
+
+    await drainOutbox();
+
+    const row = await prisma.order.findUnique({ where: { id: order.id } });
+    expect(row?.status).toBe("provisioned");
+    expect(upgradeKey).toHaveBeenCalledTimes(1);
+    expect(upgradeKey.mock.calls[0]?.[0]).toBe("key_upgrade");
+    // Observed contract: upgrade accepts {addDevices} ONLY.
+    expect(upgradeKey.mock.calls[0]?.[1]).toEqual({ addDevices: 2 });
+    expect(upgradeKey.mock.calls[0]?.[2]?.idempotencyKey).toBe(`order:${order.id}:upgrade`);
+  });
+
+  it("reuses the identical idempotency key on a retried renew (no second renew)", async () => {
+    const order = await makeMutationOrder({ kind: "renew", keyId: "key_renew", days: 30 });
+    await enqueueFulfillJob(order.id);
+    const renewKey = vi
+      .spyOn(artemida, "renewKey")
+      .mockRejectedValueOnce(new ArtemidaError("bad_gateway", 502))
+      .mockResolvedValueOnce(providerKey("key_renew"));
+
+    await drainOutbox();
+
+    let row = await prisma.order.findUnique({ where: { id: order.id } });
+    expect(row?.status).toBe("provisioning");
+    const job = await prisma.outbox.findFirst({
+      where: { orderId: order.id, type: FULFILL_JOB },
+    });
+    if (!job) throw new Error("expected a fulfill job");
+    expect(job.status).toBe("pending");
+    await prisma.outbox.update({ where: { id: job.id }, data: { nextAttemptAt: new Date(0) } });
+
+    await drainOutbox();
+
+    expect(renewKey).toHaveBeenCalledTimes(2);
+    expect(renewKey.mock.calls[0]?.[2]?.idempotencyKey).toBe(
+      renewKey.mock.calls[1]?.[2]?.idempotencyKey,
+    );
+    row = await prisma.order.findUnique({ where: { id: order.id } });
+    expect(row?.status).toBe("provisioned");
+  });
+
+  it("refreshes the cached key row (expiry/devices) for the owning user on success", async () => {
+    await prisma.keyCache.create({
+      data: {
+        userId,
+        keyId: "key_renew",
+        status: "ACTIVE",
+        isTrial: false,
+        expiresAt: new Date("2026-01-01T00:00:00.000Z"),
+        deviceLimit: 2,
+        devices: 2,
+        customerRef: String(OWNER),
+      },
+    });
+    const order = await makeMutationOrder({ kind: "renew", keyId: "key_renew", days: 30 });
+    await enqueueFulfillJob(order.id);
+    vi.spyOn(artemida, "renewKey").mockResolvedValue(
+      providerKey("key_renew", {
+        expiresAt: "2030-06-01T00:00:00.000Z",
+        deviceLimit: 4,
+        devices: 4,
+      }),
+    );
+
+    await drainOutbox();
+
+    const cached = await prisma.keyCache.findFirst({ where: { userId, keyId: "key_renew" } });
+    expect(cached?.deviceLimit).toBe(4);
+    expect(cached?.devices).toBe(4);
+    expect(cached?.expiresAt?.toISOString()).toBe("2030-06-01T00:00:00.000Z");
+  });
+
+  it("treats a provider 409 conflict as terminal trial-family failure (never retried)", async () => {
+    const order = await makeMutationOrder({ kind: "renew", keyId: "key_renew", days: 30 });
+    await enqueueFulfillJob(order.id);
+    const renewKey = vi
+      .spyOn(artemida, "renewKey")
+      .mockRejectedValue(new ArtemidaError("conflict", 409));
+
+    await drainOutbox();
+
+    const row = await prisma.order.findUnique({ where: { id: order.id } });
+    expect(row?.status).toBe("failed");
+    expect(row?.errorCode).toBe(TRIAL_ERROR_CODE);
+    expect(renewKey).toHaveBeenCalledTimes(1);
+    expect(
+      await prisma.outbox.count({ where: { orderId: order.id, type: "notify-failed" } }),
+    ).toBe(1);
   });
 });
 

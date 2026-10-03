@@ -17,6 +17,9 @@ services:
       DATABASE_URL: postgresql://setwhite:setwhite@db:5432/setwhite
       BOT_MODE: webhook
       NODE_ENV: production
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - uploads:/data/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -39,3 +42,4 @@ services:
 
 volumes:
   pgdata:
+  uploads:

@@ -25,6 +25,7 @@ import AdminOverviewPage from "../../app/admin/page";
 import AdminUserProfilePage from "../../app/admin/users/[id]/page";
 import { POST as adminRoleChange } from "../../app/api/admin/roles/route";
 import { getAdminRole, requireRole, type AdminRole } from "../../lib/admin-auth";
+import { changeAdminRole } from "../../lib/admin-roles";
 import { signSession } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
 import { AdminError, SessionError } from "../../lib/session";
@@ -36,9 +37,19 @@ const MANAGER = 910000203;
 const STRANGER = 910000204;
 const ROLE_TARGET = 910000205;
 const PROFILE_STAFF = 910000206;
-const IDS = [BOOTSTRAP, ADMIN, SUPPORT, MANAGER, STRANGER, ROLE_TARGET, PROFILE_STAFF].map((id) =>
-  BigInt(id),
-);
+const GUARD_SOLE = 910000207;
+const GUARD_OTHER = 910000208;
+const IDS = [
+  BOOTSTRAP,
+  ADMIN,
+  SUPPORT,
+  MANAGER,
+  STRANGER,
+  ROLE_TARGET,
+  PROFILE_STAFF,
+  GUARD_SOLE,
+  GUARD_OTHER,
+].map((id) => BigInt(id));
 
 const SECRET =
   process.env["SESSION_SECRET"] ?? "unit-test-session-secret-at-least-32-characters";
@@ -320,5 +331,81 @@ describe("/admin/users/[id] — role action visibility (UI-SPEC §4)", () => {
       params: Promise.resolve({ id: String(header.id) }),
     });
     expect(hasRoleControl(managerTree)).toBe(false);
+  });
+});
+
+describe("role changes — last-admin lockout + concurrency (T-05-16)", () => {
+  // Collapse the world to a known one: every test starts with NO administrators
+  // and creates exactly the administrator set it needs.
+  beforeEach(async () => {
+    await prisma.adminUser.deleteMany({ where: { telegramId: { in: IDS } } });
+    await prisma.adminUser.updateMany({
+      where: { role: "administrator" },
+      data: { role: "support" },
+    });
+  });
+
+  it("rejects downgrading the only administrator and leaves the role unchanged", async () => {
+    await prisma.adminUser.create({
+      data: { telegramId: BigInt(GUARD_SOLE), role: "administrator" },
+    });
+
+    const outcome = await changeAdminRole(BigInt(GUARD_SOLE), "support");
+    expect(outcome).toBe("last_admin");
+
+    const row = await prisma.adminUser.findUnique({
+      where: { telegramId: BigInt(GUARD_SOLE) },
+    });
+    expect(row?.role).toBe("administrator");
+  });
+
+  it("allows a downgrade when another administrator remains (no false positive)", async () => {
+    await prisma.adminUser.createMany({
+      data: [
+        { telegramId: BigInt(GUARD_SOLE), role: "administrator" },
+        { telegramId: BigInt(GUARD_OTHER), role: "administrator" },
+      ],
+    });
+
+    const outcome = await changeAdminRole(BigInt(GUARD_OTHER), "support");
+    expect(outcome).toBe("ok");
+
+    const remaining = await prisma.adminUser.findUnique({
+      where: { telegramId: BigInt(GUARD_SOLE) },
+    });
+    expect(remaining?.role).toBe("administrator");
+  });
+
+  it("never removes the last administrator under concurrent mutual downgrades", async () => {
+    await prisma.adminUser.createMany({
+      data: [
+        { telegramId: BigInt(GUARD_SOLE), role: "administrator" },
+        { telegramId: BigInt(GUARD_OTHER), role: "administrator" },
+      ],
+    });
+
+    const outcomes = await Promise.all([
+      changeAdminRole(BigInt(GUARD_SOLE), "support"),
+      changeAdminRole(BigInt(GUARD_OTHER), "support"),
+    ]);
+
+    // The conditional + Serializable write means at most one can win.
+    expect(outcomes.filter((outcome) => outcome === "ok").length).toBeLessThanOrEqual(1);
+    const admins = await prisma.adminUser.count({ where: { role: "administrator" } });
+    expect(admins).toBeGreaterThanOrEqual(1);
+  });
+
+  it("still rejects a self-change through the route", async () => {
+    await prisma.adminUser.create({
+      data: { telegramId: BigInt(GUARD_SOLE), role: "administrator" },
+    });
+    await authorize(GUARD_SOLE);
+
+    const res = await adminRoleChange(
+      roleChangeRequest({ telegramId: GUARD_SOLE, role: "support" }),
+    );
+    expect(res.status).toBe(400);
+    const row = await prisma.adminUser.findUnique({ where: { telegramId: BigInt(GUARD_SOLE) } });
+    expect(row?.role).toBe("administrator");
   });
 });

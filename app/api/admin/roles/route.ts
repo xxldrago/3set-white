@@ -2,18 +2,15 @@
 //
 // Copies the close-route skeleton (T-05-15): `requireRole('administrator')`,
 // zod-validate `{ telegramId, role }`, map SessionError→401 / AdminError→404,
-// else 500. Two backend guards the UI cannot be trusted to enforce:
-//   1. Self-change is rejected server-side (an administrator can never edit
-//      their own row) — the first line of defence against last-admin lockout.
-//   2. The write is a conditional single-writer `updateMany`
-//      (`where: { telegramId, role: currentRole }`): `count === 1` wins, a
-//      missing/already-changed row is a no-op (never an unguarded `update()`).
-// A rejected request carries a generic body identical to a missing route — no
-// role/target oracle (D-51).
+// else 500. The self-change block below is the first line of defence; the
+// write itself (`changeAdminRole`) adds the last-admin guard and the
+// conditional single-writer `Serializable` transaction (T-05-16). A rejected
+// request carries a generic body identical to a missing route — no role/target
+// oracle (D-51): `last_admin` and `not_found` both render as 404.
 import { z } from "zod";
 import { requireRole, type AdminRole } from "../../../../lib/admin-auth";
+import { changeAdminRole } from "../../../../lib/admin-roles";
 import { logger } from "../../../../lib/logger";
-import { prisma } from "../../../../lib/prisma";
 import { AdminError, SessionError } from "../../../../lib/session";
 
 export const dynamic = "force-dynamic";
@@ -22,29 +19,6 @@ const payloadSchema = z.object({
   telegramId: z.union([z.string().regex(/^\d+$/), z.number().int().nonnegative()]),
   role: z.enum(["administrator", "support", "manager"]),
 });
-
-type ChangeResult = "ok" | "not_found";
-
-/**
- * Apply one role change as a conditional single-writer transaction. Returns
- * `not_found` (never a leaked reason) when the target row does not exist or no
- * longer has the role the caller read — a concurrent writer already won.
- */
-async function changeRole(targetTelegramId: bigint, role: AdminRole): Promise<ChangeResult> {
-  return prisma.$transaction(async (tx) => {
-    const target = await tx.adminUser.findUnique({
-      where: { telegramId: targetTelegramId },
-      select: { role: true },
-    });
-    if (!target) return "not_found";
-
-    const { count } = await tx.adminUser.updateMany({
-      where: { telegramId: targetTelegramId, role: target.role },
-      data: { role },
-    });
-    return count === 1 ? "ok" : "not_found";
-  });
-}
 
 export async function POST(req: Request): Promise<Response> {
   let caller: { telegramId: number; role: AdminRole };
@@ -79,8 +53,9 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   try {
-    const result = await changeRole(targetTelegramId, parsed.data.role);
-    if (result === "not_found") {
+    const outcome = await changeAdminRole(targetTelegramId, parsed.data.role);
+    if (outcome !== "ok") {
+      // No oracle: an unknown target and a last-admin refusal are identical.
       return Response.json({ error: "not_found" }, { status: 404 });
     }
     return Response.json({ ok: true, role: parsed.data.role });
@@ -89,3 +64,4 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json({ error: "internal" }, { status: 500 });
   }
 }
+

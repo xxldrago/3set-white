@@ -154,6 +154,23 @@ export const ru = {
     deleteError: 'Не удалось удалить устройство. Попробуйте ещё раз.',
     clearError: 'Не удалось сбросить устройства. Попробуйте ещё раз.',
   },
+  ticket: {
+    cta: 'Создать обращение',
+    listTitle: 'Обращения',
+    emptyHeading: 'Обращений пока нет',
+    emptyBody:
+      'Если что-то не работает или остались вопросы — создайте обращение. Мы ответим здесь и в Telegram.',
+    countOne: '{n} обращение',
+    countFew: '{n} обращения',
+    countMany: '{n} обращений',
+    unreadOne: '{n} непрочитанное обращение',
+    unreadFew: '{n} непрочитанных обращения',
+    unreadMany: '{n} непрочитанных обращений',
+    lastActivity: 'Обновлено {date}',
+    statusOpen: 'Открыто',
+    statusAnswered: 'Есть ответ',
+    statusClosed: 'Закрыто',
+  },
   common: {
     retry: 'Повторить',
     cancel: 'Отмена',

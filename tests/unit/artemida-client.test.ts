@@ -359,3 +359,123 @@ describe('artemida client — full V1 surface (D-17)', () => {
     await expect(artemida.getBalance()).resolves.toEqual({ balance: 0, currency: 'RUB', unlimited: false });
   });
 });
+
+// 2026-10-03 observed paid-key create fixture (docs/artemida-v1-contract-create-probe.json).
+const CREATE_KEY_FIXTURE = {
+  operationId: 'op_455bad62af213dc155e4',
+  key: {
+    id: 'key_9f603bde96971407',
+    name: 'api_ARTΞMIDA API',
+    customerRef: 'probe1790996330',
+    status: 'ACTIVE',
+    devices: 2,
+    trafficUnlimited: true,
+    trafficLimitGb: 0,
+    trafficLimitBytes: 0,
+    expireAt: '2026-11-02T02:58:54.730Z',
+    remainingDays: 30,
+    subscriptionUrl: 'https://xskx.artemida.live/M2HGD-qjFynCB9Ns',
+    customSubscriptionUrl: null,
+    createdAt: 1790996335,
+    updatedAt: 1790996335,
+    revokedAt: null,
+    trial: false,
+  },
+  charged: 120,
+  balance: 0,
+  currency: 'RUB',
+};
+
+describe('artemida client — createKey + deterministic idempotency (03-01)', () => {
+  it('renewKey sends a caller-supplied deterministic Idempotency-Key', async () => {
+    const cap = capturing([
+      jsonResponse({ body: success({ key: { id: 'k2', status: 'active' } }) }),
+    ]);
+    const artemida = createArtemidaClient({ fetch: cap.fetch, retry: FAST });
+
+    await artemida.renewKey(
+      'k2',
+      { days: 30, devices: 4 },
+      { idempotencyKey: 'order:7:renew' },
+    );
+
+    expect(cap.calls[0]?.headers['Idempotency-Key']).toBe('order:7:renew');
+  });
+
+  it('upgradeKey sends a caller-supplied deterministic Idempotency-Key', async () => {
+    const cap = capturing([
+      jsonResponse({ body: success({ key: { id: 'k2', status: 'active' } }) }),
+    ]);
+    const artemida = createArtemidaClient({ fetch: cap.fetch, retry: FAST });
+
+    await artemida.upgradeKey(
+      'k2',
+      { days: 30, devices: 4 },
+      { idempotencyKey: 'order:7:upgrade' },
+    );
+
+    expect(cap.calls[0]?.headers['Idempotency-Key']).toBe('order:7:upgrade');
+  });
+
+  it('renewKey without an explicit key still mints a non-empty Idempotency-Key', async () => {
+    const cap = capturing([
+      jsonResponse({ body: success({ key: { id: 'k2', status: 'active' } }) }),
+    ]);
+    const artemida = createArtemidaClient({ fetch: cap.fetch, retry: FAST });
+
+    await artemida.renewKey('k2', { days: 30, devices: 4 });
+
+    expect(cap.calls[0]?.headers['Idempotency-Key']).toMatch(/[0-9a-f-]{36}/);
+  });
+
+  it('createKey POSTs the observed body to /keys and normalizes the key', async () => {
+    const cap = capturing([
+      jsonResponse({ status: 201, body: success(CREATE_KEY_FIXTURE) }),
+    ]);
+    const artemida = createArtemidaClient({ fetch: cap.fetch, retry: FAST });
+
+    await expect(
+      artemida.createKey(
+        { customerRef: 'probe1790996330', days: 30, devices: 2 },
+        { idempotencyKey: 'order:42:new' },
+      ),
+    ).resolves.toMatchObject({ id: 'key_9f603bde96971407', status: 'ACTIVE' });
+
+    expect(cap.calls[0]?.method).toBe('POST');
+    expect(cap.calls[0]?.url).toContain('/keys');
+    expect(cap.calls[0]?.url).not.toContain('/keys/');
+    expect(JSON.parse(cap.calls[0]?.body ?? '{}')).toEqual({
+      customerRef: 'probe1790996330',
+      days: 30,
+      devices: 2,
+    });
+    expect(cap.calls[0]?.headers['Idempotency-Key']).toBe('order:42:new');
+  });
+
+  it('createKey normalizes the observed 201 success body (paid key, expiry, link)', async () => {
+    const cap = capturing([
+      jsonResponse({ status: 201, body: success(CREATE_KEY_FIXTURE) }),
+    ]);
+    const artemida = createArtemidaClient({ fetch: cap.fetch, retry: FAST });
+
+    const key = await artemida.createKey({
+      customerRef: 'probe1790996330',
+      days: 30,
+      devices: 2,
+    });
+
+    expect(key.id).toBe('key_9f603bde96971407');
+    expect(key.isTrial).toBe(false);
+    expect(key.expiresAt).toBe('2026-11-02T02:58:54.730Z');
+    expect(key.subscriptionUrl).toBe('https://xskx.artemida.live/M2HGD-qjFynCB9Ns');
+    expect(key.customerRef).toBe('probe1790996330');
+    expect(key.devices).toBe(2);
+    // createKey defaults to a fresh UUID when no deterministic key is supplied.
+    const cap2 = capturing([
+      jsonResponse({ status: 201, body: success(CREATE_KEY_FIXTURE) }),
+    ]);
+    const artemida2 = createArtemidaClient({ fetch: cap2.fetch, retry: FAST });
+    await artemida2.createKey({ customerRef: 'probe1790996330', days: 30, devices: 2 });
+    expect(cap2.calls[0]?.headers['Idempotency-Key']).toMatch(/[0-9a-f-]{36}/);
+  });
+});

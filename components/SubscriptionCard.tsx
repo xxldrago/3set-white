@@ -5,10 +5,18 @@
 // string). Trial keys carry a distinct amber `trial.badge` chip so they can
 // never be mistaken for paid keys. Badges are tinted text chips, never
 // icon-only.
+import RenewPanel from './RenewPanel';
+import UpgradePanel from './UpgradePanel';
 import { formatKeyDate, statusLabel, type RenderedKey, type StatusKind } from '@/lib/keys-service';
 import { t } from '@/lib/i18n';
 
 const BADGE_BASE = 'inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold';
+const PRIMARY =
+  'flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]';
+
+// App-locked device bounds (mirror lib/orders-service MIN/MAX_DEVICES).
+const MIN_DEVICES = 2;
+const MAX_DEVICES = 10;
 
 const STATUS_BADGE: Record<StatusKind, string> = {
   active: 'bg-green-600/10 text-green-600 dark:bg-green-400/10 dark:text-green-400',
@@ -26,6 +34,10 @@ export default function SubscriptionCard({ item }: { item: RenderedKey }) {
     item.devices !== null && item.deviceLimit !== null
       ? t('key.devicesCount', { n: item.devices, max: item.deviceLimit })
       : '—';
+  const deviceLimit = Math.max(
+    MIN_DEVICES,
+    Math.min(MAX_DEVICES, item.deviceLimit ?? item.devices ?? MIN_DEVICES),
+  );
 
   return (
     <article className="flex flex-col gap-3 rounded-2xl border border-black/10 p-6 dark:border-white/15">
@@ -49,6 +61,20 @@ export default function SubscriptionCard({ item }: { item: RenderedKey }) {
           <dd>{devices}</dd>
         </div>
       </dl>
+
+      {/* D-44: a trial key has NO renew/upgrade in the DOM — only the funding
+          CTA deep-linking to the tariff section. Non-trial keys get the
+          renew/upgrade entry points (the panels stay collapsed until tapped). */}
+      {item.isTrial ? (
+        <a href="#tariff" className={PRIMARY}>
+          {t('key.buyCta')}
+        </a>
+      ) : (
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <RenewPanel keyId={item.id} deviceLimit={deviceLimit} />
+          <UpgradePanel keyId={item.id} deviceLimit={deviceLimit} />
+        </div>
+      )}
     </article>
   );
 }

@@ -4,6 +4,7 @@
 // `/api/pricing`; the ARTEMIDA key never reaches the browser. The rendered
 // price is the number ARTEMIDA returned, verbatim — never recomputed.
 import { useCallback, useEffect, useRef, useState } from 'react';
+import PayCta from './PayCta';
 import { t } from '@/lib/i18n';
 
 const DAYS = [7, 30, 90] as const;
@@ -159,6 +160,9 @@ export default function TariffPicker() {
             : t('pricing.price', { price: priceFormatter.format(price) })}
         </span>
       </div>
+
+      {/* Primary pay CTA: disabled until a price lands (no order without a price). */}
+      <PayCta kind="new" days={days} devices={devices} disabled={price === null} />
 
       {error && (
         <div className="flex flex-col gap-2" role="alert">

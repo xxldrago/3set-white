@@ -80,9 +80,13 @@ export async function claimNextJob(type: string = FULFILL_JOB): Promise<ClaimedJ
   return null;
 }
 
+// All three job-state writes use `updateMany` (not `update`): a job row that
+// vanished (order cascade-deleted, admin cleanup) must never throw into the
+// worker loop — a missing row is a no-op.
+
 /** Mark a claimed job terminal-success. */
 export async function markJobDone(jobId: string): Promise<void> {
-  await prisma.outbox.update({
+  await prisma.outbox.updateMany({
     where: { id: jobId },
     data: { status: "done", processedAt: new Date(), lastError: null },
   });
@@ -97,7 +101,7 @@ export async function rescheduleJob(
   nextAttemptAt: Date,
   reason: string,
 ): Promise<void> {
-  await prisma.outbox.update({
+  await prisma.outbox.updateMany({
     where: { id: jobId },
     data: {
       status: "pending",
@@ -110,7 +114,7 @@ export async function rescheduleJob(
 
 /** Mark a claimed job terminal-failure (typed code only). */
 export async function markJobFailed(jobId: string, reason: string): Promise<void> {
-  await prisma.outbox.update({
+  await prisma.outbox.updateMany({
     where: { id: jobId },
     data: { status: "failed", processedAt: new Date(), lastError: reason },
   });

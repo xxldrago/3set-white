@@ -6,10 +6,16 @@
 //   - NEXT_PHASE !== 'phase-production-build' — never start it during `next build`
 //     (mirrors lib/bot.ts:274).
 // The import is lazy so `lib/worker` (and its Prisma/interval side effects) is
-// never evaluated at build time.
+// never evaluated at build time. The bootstrap is wrapped so a worker start
+// failure can never crash the server process.
 export async function register(): Promise<void> {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
   if (process.env.NEXT_PHASE === "phase-production-build") return;
-  const { startWorker } = await import("./lib/worker");
-  startWorker();
+  try {
+    const { startWorker } = await import("./lib/worker");
+    startWorker();
+  } catch (err) {
+    const { logger } = await import("./lib/logger");
+    logger.error({ outcome: "worker_start_failed", err });
+  }
 }

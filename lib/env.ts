@@ -22,6 +22,10 @@ const envSchema = z.object({
   PLATEGA_SECRET: z.string().min(1, "PLATEGA_SECRET is required"),
   PLATEGA_BASE_URL: z.string().url().default("https://app.platega.io"),
   APP_BASE_URL: z.string().url().default("http://localhost:3000"),
+  // Shared secret for the optional manual reconcile trigger
+  // (POST /api/cron/reconcile). Optional: when unset the route refuses (503) —
+  // the instrumentation.ts worker remains the primary path (A6 fallback).
+  CRON_SECRET: z.string().min(16, "CRON_SECRET must be >= 16 chars").optional(),
   BOT_MODE: z.enum(["polling", "webhook"]).default("polling"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),

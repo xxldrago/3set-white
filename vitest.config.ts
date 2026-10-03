@@ -4,6 +4,11 @@ export default defineConfig({
   test: {
     include: ['tests/**/*.test.ts'],
     environment: 'node',
+    // DB-backed suites share ONE real local Postgres, and the outbox worker /
+    // reconcile scanners are global (not user-scoped). Running files in parallel
+    // lets one file's drain claim another's jobs → cross-test races. Run files
+    // one at a time; the suite is small (~6s) and deterministic.
+    fileParallelism: false,
     // Dummy values so lib/env.ts (fail-fast) can load in unit tests without a
     // real .env / database. Pure unit tests never touch the network (fake
     // fetch) or the real ARTEMIDA host. DB-backed trial/cache tests DO hit the
@@ -21,6 +26,7 @@ export default defineConfig({
       PLATEGA_SECRET: 'unit-test-platega-secret',
       PLATEGA_BASE_URL: 'https://app.platega.test',
       APP_BASE_URL: 'http://localhost:3000',
+      CRON_SECRET: 'unit-test-cron-secret-000000000000',
       NODE_ENV: 'test',
       LOG_LEVEL: 'error',
     },

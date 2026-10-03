@@ -25,14 +25,25 @@ import {
   FULFILL_JOB,
   NOTIFY_FAILED,
   NOTIFY_PROVISIONED,
+  NOTIFY_TICKET_REPLY,
+  REMIND_EXPIRY,
   claimNextJob,
+  claimNextNotification,
   enqueueNotifyFailed,
   enqueueNotifyProvisioned,
   markJobDone,
   markJobFailed,
+  markNotificationDone,
+  markNotificationFailed,
   rescheduleJob,
+  rescheduleNotification,
 } from "./outbox";
-import { dispatchNotification, type TelegramSender } from "./bot-payments";
+import {
+  dispatchNotification,
+  type NotifyDispatchResult,
+  type TelegramSender,
+} from "./bot-payments";
+import { dispatchTicketNotification } from "./ticket-notify";
 import {
   TRIAL_ERROR_CODE,
   applyConfirmedPayment,
@@ -233,6 +244,7 @@ export async function drainOutbox(opts: { telegram?: TelegramSender } = {}): Pro
 
   if (!opts.telegram) return;
   await drainNotifications(opts.telegram);
+  await drainDeliveryNotifications(opts.telegram);
 }
 
 /**
@@ -260,6 +272,77 @@ async function drainNotifications(telegram: TelegramSender): Promise<void> {
       }
     }
   }
+}
+
+/** A notification-type dispatcher: claim id + sender → outcome (worker-owned). */
+type NotificationDispatcher = (
+  notificationId: string,
+  send: TelegramSender,
+) => Promise<NotifyDispatchResult>;
+
+/**
+ * Drain one notification type: claim at most `DRAIN_BATCH` due rows and dispatch
+ * each exactly once. A `retryable_error` reschedules with the shared backoff; a
+ * success (or nothing-to-send) marks the row done. An unexpected throw marks the
+ * row failed — it is never left in `processing`.
+ */
+async function drainNotificationType(
+  type: string,
+  dispatch: NotificationDispatcher,
+  telegram: TelegramSender,
+): Promise<void> {
+  for (let i = 0; i < DRAIN_BATCH; i += 1) {
+    const job = await claimNextNotification(type);
+    if (!job) break;
+    try {
+      const result = await dispatch(job.id, telegram);
+      if (result.outcome === "retryable_error") {
+        await rescheduleNotification(
+          job.id,
+          new Date(Date.now() + backoffMs(job.attempts + 1)),
+          "telegram",
+        );
+      } else {
+        await markNotificationDone(job.id);
+      }
+    } catch {
+      logger.error({ route: "worker", outcome: "delivery_job_error", jobId: job.id });
+      await markNotificationFailed(job.id, "unexpected");
+    }
+  }
+}
+
+/**
+ * Load the expiry-reminder dispatcher added by plan 04-08. The module is
+ * imported lazily (and behind a non-literal specifier so this plan compiles
+ * before 04-08 lands): when it is absent, REMIND_EXPIRY rows are simply never
+ * claimed and stay `pending` — a dispatcher-less row is never marked done.
+ */
+async function loadReminderDispatcher(): Promise<NotificationDispatcher | null> {
+  const spec = "./reminders-service";
+  try {
+    const mod = (await import(spec)) as {
+      dispatchExpiryReminder?: NotificationDispatcher;
+    };
+    return typeof mod.dispatchExpiryReminder === "function"
+      ? mod.dispatchExpiryReminder
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Consume the sibling `Notification` delivery rows (SUP-03, D-57). Ticket-reply
+ * rows always have a dispatcher; reminder rows only once plan 04-08 wires one —
+ * until then they are left `pending` rather than dropped. A sender-less drain
+ * never reaches here (the caller returns before this), so nothing is consumed
+ * without a Telegram surface to deliver to.
+ */
+async function drainDeliveryNotifications(telegram: TelegramSender): Promise<void> {
+  await drainNotificationType(NOTIFY_TICKET_REPLY, dispatchTicketNotification, telegram);
+  const reminder = await loadReminderDispatcher();
+  if (reminder) await drainNotificationType(REMIND_EXPIRY, reminder, telegram);
 }
 
 export type ReconcileOutcome = { scanned: number; recovered: number };

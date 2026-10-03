@@ -119,3 +119,133 @@ export async function markJobFailed(jobId: string, reason: string): Promise<void
     data: { status: "failed", processedAt: new Date(), lastError: reason },
   });
 }
+
+// ---------------------------------------------------------------------------
+// Sibling Notification delivery queue (SUP-03, RESEARCH Open Q2 LOCKED).
+//
+// The order `Outbox` is money-path and its `(orderId, type)` uniqueness cannot
+// carry support/reminder deliveries, so a sibling `Notification` table exists
+// (plan 04-01) with a UNIQUE `dedupeKey`. The claim discipline is IDENTICAL to
+// `claimNextJob`: a candidate read is only a candidate, the winner is decided by
+// the per-row conditional `updateMany`, and every state write uses `updateMany`
+// so a vanished row is a no-op. The order `Outbox` is never touched.
+// ---------------------------------------------------------------------------
+
+/** Deliver a support reply to the owning chat (fan-out from an admin reply). */
+export const NOTIFY_TICKET_REPLY = "notify-ticket-reply";
+/** Deliver an expiry reminder (produced by the reminder scan, plan 04-08). */
+export const REMIND_EXPIRY = "remind-expiry";
+
+export interface NotificationInput {
+  type: string;
+  dedupeKey: string;
+  userId?: number;
+  ticketId?: string;
+  ticketMessageId?: string;
+  keyId?: string;
+}
+
+/**
+ * Idempotent enqueue of one notification keyed by its UNIQUE `dedupeKey`. A
+ * second call is a no-op (`update: {}`), so a retried reply route or a second
+ * same-day reminder scan can never mint a duplicate delivery (T-04-11). The
+ * producer chooses the key (reply: `ticket:{ticketId}:{messageId}`; reminder:
+ * `remind:{keyId}:{YYYY-MM-DD}`).
+ */
+export async function enqueueNotification(input: NotificationInput): Promise<void> {
+  await prisma.notification.upsert({
+    where: { dedupeKey: input.dedupeKey },
+    update: {},
+    create: {
+      type: input.type,
+      dedupeKey: input.dedupeKey,
+      userId: input.userId ?? null,
+      ticketId: input.ticketId ?? null,
+      ticketMessageId: input.ticketMessageId ?? null,
+      keyId: input.keyId ?? null,
+    },
+  });
+}
+
+export interface ClaimedNotification {
+  id: string;
+  type: string;
+  dedupeKey: string;
+  userId: number | null;
+  ticketId: string | null;
+  ticketMessageId: string | null;
+  keyId: string | null;
+  attempts: number;
+}
+
+/**
+ * Atomically claim the next due notification of `type`. Mirrors `claimNextJob`:
+ * a `findMany` is only a candidate read; the winner is decided by the per-row
+ * conditional `updateMany` (`status: 'pending'`). A lost race falls through to
+ * the next candidate; no row is ever delivered twice.
+ */
+export async function claimNextNotification(
+  type: string,
+): Promise<ClaimedNotification | null> {
+  const candidates = await prisma.notification.findMany({
+    where: { status: "pending", type, nextAttemptAt: { lte: new Date() } },
+    orderBy: { createdAt: "asc" },
+    take: 10,
+  });
+  for (const job of candidates) {
+    const { count } = await prisma.notification.updateMany({
+      where: { id: job.id, status: "pending" },
+      data: { status: "processing" },
+    });
+    if (count === 1) {
+      return {
+        id: job.id,
+        type: job.type,
+        dedupeKey: job.dedupeKey,
+        userId: job.userId,
+        ticketId: job.ticketId,
+        ticketMessageId: job.ticketMessageId,
+        keyId: job.keyId,
+        attempts: job.attempts,
+      };
+    }
+  }
+  return null;
+}
+
+// The three notification-state writes mirror `markJobDone`/`rescheduleJob`/
+// `markJobFailed`: `updateMany` so a row that vanished is a no-op, never a
+// throw into the worker loop.
+
+/** Mark a claimed notification terminal-success. */
+export async function markNotificationDone(id: string): Promise<void> {
+  await prisma.notification.updateMany({
+    where: { id },
+    data: { status: "done", processedAt: new Date(), lastError: null },
+  });
+}
+
+/** Return a claimed notification to the queue with a future `nextAttemptAt`. */
+export async function rescheduleNotification(
+  id: string,
+  nextAttemptAt: Date,
+  reason: string,
+): Promise<void> {
+  await prisma.notification.updateMany({
+    where: { id },
+    data: {
+      status: "pending",
+      nextAttemptAt,
+      attempts: { increment: 1 },
+      lastError: reason,
+    },
+  });
+}
+
+/** Mark a claimed notification terminal-failure (typed code only). */
+export async function markNotificationFailed(id: string, reason: string): Promise<void> {
+  await prisma.notification.updateMany({
+    where: { id },
+    data: { status: "failed", processedAt: new Date(), lastError: reason },
+  });
+}

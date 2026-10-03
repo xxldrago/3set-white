@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 11
+open_count: 13
 waived_count: 0
 fixed_count: 0
-total_count: 11
-last_updated: 2026-10-03T12:25:37.857Z
+total_count: 13
+last_updated: 2026-10-03T22:14:55.456Z
 ---
 
 # Broken Windows Ledger
@@ -26,6 +26,8 @@ last_updated: 2026-10-03T12:25:37.857Z
 | 9 | 03 | unrun-verify | scripts/artemida-probe.mjs |  | 03-01 Task 1 live paid create/upgrade probe not run: ARTEMIDA account balance 0 RUB — create/upgrade shapes remain UNKNOWN pending owner funding + approval | open |  | 2026-10-02T22:11:07.866Z |  |
 | 10 | 4 | stub | lib/worker.ts | 365 | REMIND_EXPIRY dispatcher not wired until 04-08; rows stay pending | open |  | 2026-10-03T11:48:47.550Z |  |
 | 11 | 04 | deviation | app/page.tsx |  | Rule 2 auto-fix: home unread read wrapped in try/catch defaulting to 0 so support read failure never breaks the home page (04-05 Task 3) | open |  | 2026-10-03T12:25:37.857Z |  |
+| 12 | 05 | stub | app/admin/page.tsx |  | Overview metric cards render the intentional em-dash baseline; plan 05-07 fills DB/ARTEMIDA stats | open |  | 2026-10-03T22:14:55.389Z |  |
+| 13 | 05 | stub | app/admin/page.tsx |  | Group try/catch degradation scaffolding wraps no data read yet; plan 05-07 wires the reads | open |  | 2026-10-03T22:14:55.456Z |  |
 
 ````json
 [
@@ -159,6 +161,30 @@ last_updated: 2026-10-03T12:25:37.857Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-10-03T12:25:37.857Z",
+    "resolved_at": null
+  },
+  {
+    "id": 12,
+    "kind": "stub",
+    "phase": "05",
+    "file": "app/admin/page.tsx",
+    "line": null,
+    "description": "Overview metric cards render the intentional em-dash baseline; plan 05-07 fills DB/ARTEMIDA stats",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-10-03T22:14:55.389Z",
+    "resolved_at": null
+  },
+  {
+    "id": 13,
+    "kind": "stub",
+    "phase": "05",
+    "file": "app/admin/page.tsx",
+    "line": null,
+    "description": "Group try/catch degradation scaffolding wraps no data read yet; plan 05-07 wires the reads",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-10-03T22:14:55.456Z",
     "resolved_at": null
   }
 ]

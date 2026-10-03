@@ -136,6 +136,11 @@ export default async function Home() {
             <div id="tariff">
               <TariffPicker />
             </div>
+            <nav className="flex flex-col gap-2 sm:flex-row">
+              <Link href="/payments" className={SECONDARY}>
+                {t('pay.toHistory')}
+              </Link>
+            </nav>
           </>
         ) : (
           <section className={CARD}>

@@ -4,12 +4,18 @@
 // Postgres with the keys-service.test.ts cleanup / beforeAll pattern.
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
+  addSupportMessage,
+  appendUserMessage,
   beginSupportPrompt,
   clearSupportPrompt,
+  closeTicket,
   createTicket,
   getTicketForUser,
+  hasOpenTicket,
   isSupportPromptFresh,
   listTicketsForUser,
+  markTicketRead,
+  transitionTicket,
 } from '../../lib/tickets-service';
 import { prisma } from '../../lib/prisma';
 
@@ -175,5 +181,118 @@ describe('tickets-service — create/read path + ownership + prompt claim', () =
       data: { awaitingSupport: true, supportPromptAt: new Date(Date.now() - 31 * MINUTE) },
     });
     expect(await clearSupportPrompt(TELEGRAM_ID)).toBe(false);
+  });
+});
+
+describe('tickets-service — lifecycle: transitions, reopen, unread (D-50/D-58/D-59)', () => {
+  let userId: number;
+  let otherUserId: number;
+
+  async function createOwnTicket(): Promise<string> {
+    const created = await createTicket({ telegramId: TELEGRAM_ID, subject: 'S', body: 'B' });
+    return created.kind === 'created' ? created.id : '';
+  }
+
+  beforeAll(async () => {
+    await cleanup();
+    const [user, other] = await Promise.all([
+      prisma.user.create({ data: { telegramId: TELEGRAM_ID }, select: { id: true } }),
+      prisma.user.create({ data: { telegramId: OTHER_TELEGRAM_ID }, select: { id: true } }),
+    ]);
+    userId = user.id;
+    otherUserId = other.id;
+  });
+
+  afterAll(async () => {
+    await cleanup();
+  });
+
+  it('transitions open → answered → closed', async () => {
+    await prisma.ticket.deleteMany({ where: { userId } });
+    const id = await createOwnTicket();
+    expect((await getTicketForUser(TELEGRAM_ID, id))?.status).toBe('open');
+
+    const reply = await addSupportMessage(id, 'Ответ поддержки');
+    expect(reply).not.toBeNull();
+    const answered = await getTicketForUser(TELEGRAM_ID, id);
+    expect(answered?.status).toBe('answered');
+    expect(answered?.unreadForUser).toBe(1);
+
+    expect(await closeTicket(id)).toBe(true);
+    expect((await getTicketForUser(TELEGRAM_ID, id))?.status).toBe('closed');
+  });
+
+  it('a user reply on an answered ticket reopens the SAME thread', async () => {
+    await prisma.ticket.deleteMany({ where: { userId } });
+    const id = await createOwnTicket();
+    await addSupportMessage(id, 'Ответ');
+    expect((await getTicketForUser(TELEGRAM_ID, id))?.status).toBe('answered');
+
+    const appended = await appendUserMessage(TELEGRAM_ID, id, 'Ещё вопрос');
+    expect(appended).not.toBeNull();
+
+    const thread = await getTicketForUser(TELEGRAM_ID, id);
+    expect(thread?.id).toBe(id); // same thread — never a new ticket
+    expect(thread?.status).toBe('open');
+    expect(thread?.messages).toHaveLength(3); // user, support, user
+    expect(await prisma.ticket.count({ where: { userId } })).toBe(1);
+  });
+
+  it('a user reply on a closed ticket reopens the same ticket', async () => {
+    await prisma.ticket.deleteMany({ where: { userId } });
+    const id = await createOwnTicket();
+    expect(await closeTicket(id)).toBe(true);
+
+    const appended = await appendUserMessage(TELEGRAM_ID, id, 'Вернулся');
+    expect(appended).not.toBeNull();
+
+    const thread = await getTicketForUser(TELEGRAM_ID, id);
+    expect(thread?.id).toBe(id);
+    expect(thread?.status).toBe('open');
+    expect(await prisma.ticket.count({ where: { userId } })).toBe(1);
+  });
+
+  it('unreadForUser increments exactly once per support message and clears on read', async () => {
+    await prisma.ticket.deleteMany({ where: { userId } });
+    const id = await createOwnTicket();
+
+    await addSupportMessage(id, 'r1');
+    await addSupportMessage(id, 'r2');
+    expect((await getTicketForUser(TELEGRAM_ID, id))?.unreadForUser).toBe(2);
+
+    expect(await markTicketRead(TELEGRAM_ID, id)).toBe(true);
+    expect((await getTicketForUser(TELEGRAM_ID, id))?.unreadForUser).toBe(0);
+  });
+
+  it('non-owner append/read return null/false; close on an unknown ticket is false', async () => {
+    await prisma.ticket.deleteMany({ where: { userId } });
+    const id = await createOwnTicket();
+
+    expect(await appendUserMessage(OTHER_TELEGRAM_ID, id, 'B')).toBeNull();
+    expect(await markTicketRead(OTHER_TELEGRAM_ID, id)).toBe(false);
+    expect(await closeTicket('does-not-exist')).toBe(false);
+
+    // The owner's own mark-read still wins.
+    expect(await markTicketRead(TELEGRAM_ID, id)).toBe(true);
+  });
+
+  it('hasOpenTicket reflects an open ticket for the owner only', async () => {
+    await prisma.ticket.deleteMany({ where: { userId } });
+    const id = await createOwnTicket();
+
+    expect(await hasOpenTicket(TELEGRAM_ID)).toBe(true);
+    expect(await hasOpenTicket(OTHER_TELEGRAM_ID)).toBe(false);
+
+    await closeTicket(id);
+    expect(await hasOpenTicket(TELEGRAM_ID)).toBe(false);
+  });
+
+  it('transitionTicket is a conditional single-writer', async () => {
+    await prisma.ticket.deleteMany({ where: { userId } });
+    const id = await createOwnTicket();
+
+    expect(await transitionTicket(id, 'closed', 'open')).toBe(true);
+    // Second call loses: the row is already closed.
+    expect(await transitionTicket(id, 'closed', 'open')).toBe(false);
   });
 });

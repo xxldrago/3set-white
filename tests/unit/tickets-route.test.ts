@@ -36,6 +36,8 @@ vi.mock('next/headers', () => ({
 }));
 
 import { POST as createTicket } from '../../app/api/tickets/route';
+import { POST as replyTicket } from '../../app/api/tickets/[id]/messages/route';
+import { POST as readTicket } from '../../app/api/tickets/[id]/read/route';
 import { MAX_ATTACHMENT_BYTES } from '../../lib/attachments';
 import { signSession } from '../../lib/auth';
 import { prisma } from '../../lib/prisma';
@@ -70,6 +72,41 @@ function multipartRequest(fields: {
   if (fields.body !== undefined) form.set('body', fields.body);
   if (fields.attachment !== undefined) form.set('attachment', fields.attachment);
   return new Request('http://localhost/api/tickets', { method: 'POST', body: form });
+}
+
+function jsonRequest(payload: unknown): Request {
+  return new Request('http://localhost/api/tickets', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+async function ownerUserId(): Promise<number> {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { telegramId: OWNER },
+    select: { id: true },
+  });
+  return user.id;
+}
+
+/** Seed one owner ticket in a given state, with one support message. */
+async function seedTicket(
+  status: 'open' | 'answered' | 'closed',
+  unread = 0,
+): Promise<string> {
+  const ticket = await prisma.ticket.create({
+    data: { userId: await ownerUserId(), subject: 'тема', status, unreadForUser: unread },
+    select: { id: true },
+  });
+  await prisma.ticketMessage.create({
+    data: { ticketId: ticket.id, author: 'support', body: 'Ответ поддержки' },
+  });
+  return ticket.id;
+}
+
+async function messageCount(ticketId: string): Promise<number> {
+  return prisma.ticketMessage.count({ where: { ticketId } });
 }
 
 async function ownerTicketCount(): Promise<number> {
@@ -203,3 +240,84 @@ describe('POST /api/tickets (SUP-01/SUP-02)', () => {
     expect(atts[0]!.sizeBytes).toBeGreaterThan(0);
   });
 });
+
+describe('POST /api/tickets/[id]/messages + /read (SUP-01/D-58/D-59)', () => {
+  it('rejects a malformed id with 400', async () => {
+    await authorize(OWNER);
+    expect((await replyTicket(jsonRequest({ body: 'x' }), idContext(''))).status).toBe(400);
+    expect((await readTicket(jsonRequest({}), idContext(''))).status).toBe(400);
+  });
+
+  it('reopens the SAME thread on an owner reply to a closed ticket (no second ticket)', async () => {
+    await authorize(OWNER);
+    const id = await seedTicket('closed');
+
+    const res = await replyTicket(jsonRequest({ body: 'Ещё вопрос' }), idContext(id));
+
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as { ok: boolean; messageId: string };
+    expect(json.ok).toBe(true);
+
+    expect(await ownerTicketCount()).toBe(1);
+    const ticket = await prisma.ticket.findUniqueOrThrow({ where: { id } });
+    expect(ticket.status).toBe('open');
+    expect(await messageCount(id)).toBe(2);
+  });
+
+  it('appends an image-only reply through the shared attachment pipeline', async () => {
+    await authorize(OWNER);
+    const id = await seedTicket('answered');
+    const file = new File([new Uint8Array(await jpegBytes())], 'shot.png', {
+      type: 'image/png',
+    });
+    const form = new FormData();
+    form.set('attachment', file);
+
+    const res = await replyTicket(
+      new Request('http://localhost/api/tickets', { method: 'POST', body: form }),
+      idContext(id),
+    );
+
+    expect(res.status).toBe(200);
+    expect(await messageCount(id)).toBe(2);
+    const latest = await prisma.ticketMessage.findFirst({
+      where: { ticketId: id },
+      orderBy: { createdAt: 'desc' },
+      include: { attachments: true },
+    });
+    expect(latest?.attachments).toHaveLength(1);
+    expect(path.isAbsolute(latest!.attachments[0]!.path)).toBe(false);
+  });
+
+  it('returns 404 for a non-owner reply and appends nothing', async () => {
+    await authorize(OTHER);
+    const id = await seedTicket('open');
+
+    const res = await replyTicket(jsonRequest({ body: 'не моё' }), idContext(id));
+
+    expect(res.status).toBe(404);
+    expect(await messageCount(id)).toBe(1);
+  });
+
+  it('clears unreadForUser for the owner (200)', async () => {
+    await authorize(OWNER);
+    const id = await seedTicket('answered', 3);
+
+    const res = await readTicket(jsonRequest({}), idContext(id));
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+    expect((await prisma.ticket.findUniqueOrThrow({ where: { id } })).unreadForUser).toBe(0);
+  });
+
+  it('returns 404 for a non-owner mark-read', async () => {
+    await authorize(OTHER);
+    const id = await seedTicket('answered', 3);
+
+    const res = await readTicket(jsonRequest({}), idContext(id));
+
+    expect(res.status).toBe(404);
+    expect((await prisma.ticket.findUniqueOrThrow({ where: { id } })).unreadForUser).toBe(3);
+  });
+});
+

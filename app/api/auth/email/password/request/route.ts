@@ -63,13 +63,19 @@ export async function POST(req: Request): Promise<Response> {
       return Response.json({ error: "reset_no_account" }, { status: 404 });
     }
     const token = randomBytes(32).toString("hex");
-    await prisma.passwordReset.create({
-      data: {
-        token,
-        userId: user.id,
-        expiresAt: new Date(Date.now() + RESET_TTL_MS),
-      },
-    });
+    // WR-03: issuing a new link supersedes every prior UNUSED token for this
+    // user in the same operation — only the newest 1h link stays valid, so a
+    // leaked/intercepted older link cannot be redeemed after a fresh request.
+    await prisma.$transaction([
+      prisma.passwordReset.deleteMany({ where: { userId: user.id, usedAt: null } }),
+      prisma.passwordReset.create({
+        data: {
+          token,
+          userId: user.id,
+          expiresAt: new Date(Date.now() + RESET_TTL_MS),
+        },
+      }),
+    ]);
     try {
       await sendResetMail(email, token);
     } catch (err) {

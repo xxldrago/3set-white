@@ -10,7 +10,12 @@
 
 services:
   web:
-    build: .
+    build:
+      context: .
+      args:
+        # Public bot username for the Login Widget (NEXT_PUBLIC_* is build-time).
+        # Sourced from the server .env; defaults to the current bot.
+        NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: ${BOT_PUBLIC_USERNAME:-threeSet_bot}
     env_file:
       - .env
     environment:

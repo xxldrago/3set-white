@@ -17,6 +17,10 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Build-time values only satisfy lib/env.ts while Next collects the app graph.
 # Runtime secrets are supplied by the server-side .env in Compose.
+# Public bot username is baked into the client bundle at build time
+# (NEXT_PUBLIC_* are inlined by Next). Overridable via build-arg; the server
+# .env supplies BOT_PUBLIC_USERNAME through compose build.args.
+ARG NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=threeSet_bot
 ENV BOT_TOKEN=build-placeholder \
     BOT_TEST_TOKEN=build-placeholder \
     DATABASE_URL=postgresql://build:build@localhost:5432/build \
@@ -24,7 +28,8 @@ ENV BOT_TOKEN=build-placeholder \
     WEBHOOK_SECRET=build-placeholder \
     ARTEMIDA_API_KEY=build-placeholder \
     PLATEGA_MERCHANT_ID=build-placeholder \
-    PLATEGA_SECRET=build-placeholder
+    PLATEGA_SECRET=build-placeholder \
+    NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=${NEXT_PUBLIC_TELEGRAM_BOT_USERNAME}
 RUN npx prisma generate
 RUN npm run build
 

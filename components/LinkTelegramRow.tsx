@@ -6,7 +6,7 @@
 // centered, in-flow, no absolute/fixed positioning). The widget payload is
 // POSTed to the LINK route (dual proof: session + widget, T-06-05) —
 // LoginButton itself is login-only and stays untouched.
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import TelegramWidgetInjector from './TelegramWidgetInjector';
 import { t } from '@/lib/i18n';
@@ -17,22 +17,6 @@ const SECONDARY =
   'flex h-11 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm transition-colors hover:bg-black/[.04] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
 
 const BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? '';
-
-interface TelegramAccount {
-  id: number;
-  first_name: string;
-  last_name?: string;
-  username?: string;
-  photo_url?: string;
-  auth_date: number;
-  hash: string;
-}
-
-declare global {
-  interface Window {
-    onTelegramLink?: (user: TelegramAccount) => void;
-  }
-}
 
 interface LinkTelegramRowProps {
   linked: boolean;
@@ -67,15 +51,6 @@ export default function LinkTelegramRow({ linked, telegramId }: LinkTelegramRowP
     },
     [router],
   );
-
-  useEffect(() => {
-    window.onTelegramLink = (user: TelegramAccount) => {
-      void postLink(user);
-    };
-    return () => {
-      delete window.onTelegramLink;
-    };
-  }, [postLink]);
 
   return (
     <div className="flex flex-col gap-3">

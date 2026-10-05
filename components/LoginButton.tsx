@@ -7,20 +7,9 @@ import { t } from '@/lib/i18n';
 const AUTH_ENDPOINT = '/api/auth/telegram';
 const BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? '';
 
-interface TelegramUser {
-  id: number;
-  first_name: string;
-  last_name?: string;
-  username?: string;
-  photo_url?: string;
-  auth_date: number;
-  hash: string;
-}
-
 declare global {
   interface Window {
     Telegram?: { WebApp?: { initData?: string } };
-    onTelegramAuth?: (user: TelegramUser) => void;
   }
 }
 
@@ -52,14 +41,8 @@ export default function LoginButton() {
   }, []);
 
   useEffect(() => {
-    window.onTelegramAuth = (user: TelegramUser) => {
-      void postPayload(user);
-    };
     setWebappAvailable(Boolean(window.Telegram?.WebApp?.initData));
-    return () => {
-      delete window.onTelegramAuth;
-    };
-  }, [postPayload]);
+  }, []);
 
   const loginFromBot = useCallback(() => {
     const initData = window.Telegram?.WebApp?.initData;

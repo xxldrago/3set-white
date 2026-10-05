@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { widgetCallbackName, widgetOnAuthExpression } from '@/lib/telegram-widget';
 
 interface TelegramWidgetInjectorProps {
   botUsername: string;
@@ -28,6 +29,10 @@ export default function TelegramWidgetInjector({
     // and inject the iframe there. So we need a unique ID for each instance.
     const widgetId = `telegram-login-${botUsername}-${Math.random().toString(36).substring(7)}`;
 
+    // Callback global name: identifier-only (no hyphens/dots) so Telegram's
+    // `eval('(function(user){<data-onauth>})')` can invoke it directly.
+    const callbackName = widgetCallbackName(botUsername, Math.random().toString(36).slice(2));
+
     ref.current.id = widgetId;
 
     // Dynamically create and append the script tag
@@ -42,11 +47,11 @@ export default function TelegramWidgetInjector({
       script.setAttribute('data-request-access', requestAccess);
     }
     script.setAttribute('data-lang', lang);
-    script.setAttribute('data-onauth', `window.${widgetId}OnAuth(user)`); // Use a global callback tied to this widget instance
+    script.setAttribute('data-onauth', widgetOnAuthExpression(callbackName));
     script.async = true;
 
-    // Define the global callback function
-    (window as any)[`${widgetId}OnAuth`] = onAuth;
+    // Define the identifier-only global callback for this widget instance.
+    (window as unknown as Record<string, unknown>)[callbackName] = onAuth;
 
     ref.current.appendChild(script);
 
@@ -55,7 +60,7 @@ export default function TelegramWidgetInjector({
       if (ref.current && script.parentNode === ref.current) {
         ref.current.removeChild(script);
       }
-      delete (window as any)[`${widgetId}OnAuth`];
+      delete (window as unknown as Record<string, unknown>)[callbackName];
     };
   }, [botUsername, onAuth, buttonSize, cornerRadius, requestAccess, lang]);
 

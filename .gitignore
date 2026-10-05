@@ -43,3 +43,8 @@ next-env.d.ts
 
 # prisma 7 generated client (regenerable via `npx prisma generate`, never commit)
 /generated/
+
+# GSD runtime state (regenerable, never commit)
+/.gsd/
+.planning/state.json
+.planning/milestone.lock

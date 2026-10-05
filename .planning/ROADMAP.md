@@ -215,7 +215,7 @@ Plans:
   4. Trial для email-аккаунтов защищён от фарма
   5. Кнопка «Войти через Telegram» корректно позиционирована на десктопе
 
-**Plans**: 7/7 plans executed + 3 gap-closure plans (UAT G-06-4a, G-06-4b, G-06-9)
+**Plans**: 7/7 plans executed + 9 gap-closure plans (UAT G-06-4a/G-06-4b/G-06-9; verification CR-01/CR-02 + AUTH-03/AUTH-06 widget regression + WR-01..WR-06)
 
 Plans:
 
@@ -237,6 +237,23 @@ Plans:
 - [x] 06-05-PLAN.md — In-flow widget injector, off next/script (G-06-4a, AUTH-06)
 - [x] 06-06-PLAN.md — Bot-redirect login spine: token + routes + /start bind (G-06-4b, AUTH-02)
 - [x] 06-07-PLAN.md — Bot button on /login + email-only cabinet + userId trial (G-06-4b, G-06-9)
+
+**Gap closure 2** *(verification 2026-10-05: CR-01, CR-02, AUTH-03/AUTH-06 widget regression, WR-01..WR-06)*
+
+**Wave 1** *(independent fixes)*
+
+- [ ] 06-08-PLAN.md — Telegram widget callback fix: identifier-only data-onauth + eval regression test (AUTH-03, AUTH-06)
+- [ ] 06-09-PLAN.md — Bot-redirect login-CSRF fix: bot-delivered confirmation code required at consume (AUTH-02, AUTH-03)
+- [ ] 06-10-PLAN.md — Trusted client IP + per-email-only login lock + nginx Forwarded-For hardening (AUTH-02, AUTH-04)
+- [ ] 06-12-PLAN.md — Replay error honesty + race-hardened linkAccounts merge (AUTH-02, AUTH-03)
+
+**Wave 2** *(blocked on Wave 1; shares schema/services)*
+
+- [ ] 06-11-PLAN.md — Session revocation on password change/reset/unlink + reset-token supersession (AUTH-01..AUTH-04)
+
+**Wave 3** *(blocked on Waves 1–2; shares schema/rate-limit)*
+
+- [ ] 06-13-PLAN.md — Registration throttle + canonical-mailbox alias-farm block (AUTH-01, AUTH-05)
 
 **UI hint**: yes
 

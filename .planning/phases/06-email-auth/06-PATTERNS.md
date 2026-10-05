@@ -1,8 +1,8 @@
 # Phase 6: Email Auth - Pattern Map
 
 **Mapped:** 2026-10-05
-**Files analyzed:** 18 new/modified
-**Analogs found:** 15 / 18
+**Files analyzed:** 21 new/modified
+**Analogs found:** 18 / 21
 
 No RESEARCH.md exists for this phase (research skipped). All assignments derive from CONTEXT.md (D-79..D-94) + UI-SPEC + verified codebase analogs. Every analog path below is git-TRACKED (verified via `git ls-files`).
 
@@ -25,7 +25,10 @@ No RESEARCH.md exists for this phase (research skipped). All assignments derive 
 | `components/AccountSection.tsx` + `LinkTelegramRow.tsx` + `UnlinkConfirmPanel.tsx` + `ChangePasswordForm.tsx` (NEW) | component | CRUD | `components/ConfirmPanel.tsx` (lines 1-150, inline-confirm anatomy) | exact |
 | `lib/i18n/messages/ru.ts` (MODIFY) | config (strings) | transform | itself (`auth`-adjacent `login` block lines 16-22; `flattenMessages`/`allKeys` lines 331-348) + `lib/i18n/index.ts` (`t`/`tp`, lines 21-38) | exact |
 | `tests/unit/password.test.ts` + `tests/unit/reset-flow.test.ts` + `tests/integration/email-auth-flow.test.ts` (NEW) | test | request-response | `tests/unit/session.test.ts` (lines 1-35) + `tests/integration/auth-flow.test.ts` (lines 1-88) + `tests/unit/i18n.test.ts` (completeness spec) | exact |
-| `lib/bot.ts` (UNTOUCHED) | — | — | itself (`/start` upsert lines 48-86) — DO NOT MODIFY per D-94 | exact (negative analog) |
+| `lib/bot.ts` (MODIFY — `/start` login_ branch only, 06-09) | event handler | request-response | itself (`/start` upsert lines 48-86) | exact |
+| `lib/telegram-widget.ts` (NEW, 06-08) | utility (pure string builder) | transform | `lib/auth.ts` (pure module discipline, `timingSafeEqualHex` lines 34-48; no next/headers/env) | role-match |
+| `lib/client-ip.ts` (NEW, 06-10) | utility (trusted-hop resolver) | transform | `app/api/auth/email/login/route.ts` inline `clientIp` (the duplicated parser it replaces) | role-match |
+| `lib/email-canonical.ts` (NEW, 06-13) | utility (pure normalizer) | transform | `lib/auth.ts` (pure, never-throw module discipline) | role-match |
 
 ## Pattern Assignments
 
@@ -442,9 +445,11 @@ Planner direction: `tests/unit/password.test.ts` (hash-verify roundtrip, wrong-p
 
 ---
 
-### `lib/bot.ts` (UNTOUCHED — negative analog, D-94)
+### `lib/bot.ts` (MODIFY — `/start` login_ branch only, 06-09; D-94 otherwise intact)
 
 **Analog:** `lib/bot.ts` `/start` upsert (lines 48-86). Bot stays TG-only: NO email form, reset link, or linking UI in the bot. Trial/money paths keep calling `startTrial(BigInt(telegramId))` / `createOrder({ telegramId })` — planner must ensure the accounts layer resolves `telegramId → userId` internally so bot call-sites do NOT change.
+
+Gap-closure delta (06-09 CR-01): the `/start` branch that matches `login_<token>` now replies the bot-delivered confirmation code (`t("bot.loginCode", { code })`) instead of the generic `bot.loginBound`. The non-login `/start` path and the upsert-by-telegramId pattern are unchanged.
 
 ```typescript
 // lib/bot.ts:53-68 — upsert-by-telegramId pattern bot keeps using
@@ -456,6 +461,18 @@ await prisma.user.upsert({
 ```
 
 Note: with nullable `telegramId`, this `upsert(where: { telegramId })` still works (non-null value in where). Planner must NOT rewrite bot handlers to userId.
+
+### `lib/telegram-widget.ts` (NEW, 06-08 — pure string builder)
+
+**Analog:** `lib/auth.ts` (pure module discipline — `node:crypto`/`jose` only, no next/headers, no env; importable by vitest node env). Export a sanitizer that guarantees a valid JS identifier and an expression builder returning `${callbackName}(user)` (never `window.` dot notation). Regression-tested by evaluating the emitted `data-onauth` exactly as Telegram's `__parseFunction` does.
+
+### `lib/client-ip.ts` (NEW, 06-10 — trusted-hop resolver)
+
+**Analog:** the inline `clientIp` duplicated across the three auth routes (the code it replaces). Resolution: `x-real-ip` first, else the LAST `x-forwarded-for` hop, else `"direct"`. Pure (no env/next/headers). Unit-tested against spoofed multi-entry XFF.
+
+### `lib/email-canonical.ts` (NEW, 06-13 — pure normalizer)
+
+**Analog:** `lib/auth.ts` never-throw discipline. `canonicalizeEmail` trims/lowercases, strips `+tag`, and removes dots for gmail/googlemail; invalid shapes return the trimmed lowercase input unchanged. Feeds `User.emailCanonical @unique` so aliases collapse to one account/trial.
 
 ## Shared Patterns
 

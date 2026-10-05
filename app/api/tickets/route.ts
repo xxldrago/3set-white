@@ -19,7 +19,7 @@ import {
   UnsupportedImageError,
 } from "../../../lib/attachments";
 import { logger } from "../../../lib/logger";
-import { requireSession, SessionError } from "../../../lib/session";
+import { requireTelegramSession, SessionError } from "../../../lib/session";
 import { createTicket, type AttachmentDescriptor } from "../../../lib/tickets-service";
 
 export const runtime = "nodejs";
@@ -31,7 +31,7 @@ const bodySchema = z.string().trim().min(1).max(4000);
 export async function POST(req: Request): Promise<Response> {
   let telegramId: number;
   try {
-    telegramId = await requireSession();
+    telegramId = await requireTelegramSession();
   } catch (err) {
     if (err instanceof SessionError) {
       return Response.json({ error: "unauthorized" }, { status: 401 });

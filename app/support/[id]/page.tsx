@@ -14,7 +14,7 @@ import TicketStatusChip from '@/components/TicketStatusChip';
 import TicketThread from '@/components/TicketThread';
 import { t } from '@/lib/i18n';
 import { getTicketForUser } from '@/lib/tickets-service';
-import { requireSession, SessionError } from '@/lib/session';
+import { requireTelegramSession, SessionError } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,7 +33,7 @@ export default async function TicketDetailPage({
 }) {
   let telegramId: number;
   try {
-    telegramId = await requireSession();
+    telegramId = await requireTelegramSession();
   } catch (err) {
     if (err instanceof SessionError) redirect('/login');
     throw err;

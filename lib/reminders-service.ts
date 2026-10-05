@@ -23,7 +23,10 @@ export interface ExpiringKey {
   userId: number;
   isTrial: boolean;
   expiresAt: Date;
-  telegramId: bigint;
+  // Nullable since Phase 6 D-79 (email-only accounts have no telegram row).
+  // The enqueue path only needs userId/keyId; the bot push resolves the
+  // chat at dispatch time and skips rows without one.
+  telegramId: bigint | null;
   chatId: bigint | null;
 }
 

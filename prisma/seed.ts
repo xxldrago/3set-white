@@ -19,7 +19,7 @@ async function main() {
       username: "seed_test_user",
     },
   });
-  console.log(`seed: upserted test user (telegram_id=${user.telegramId.toString()})`);
+  console.log(`seed: upserted test user (telegram_id=${user.telegramId?.toString() ?? "null"})`);
 }
 
 main()

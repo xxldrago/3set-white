@@ -13,7 +13,7 @@ import AdminNav from '@/components/admin/AdminNav';
 import RoleChip, { roleLabel } from '@/components/admin/RoleChip';
 import { can, getAdminRole, type AdminSection } from '@/lib/admin-auth';
 import { t } from '@/lib/i18n';
-import { requireSession, SessionError } from '@/lib/session';
+import { requireTelegramSession, SessionError } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +26,7 @@ const CABINET_LINK =
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   let telegramId: number;
   try {
-    telegramId = await requireSession();
+    telegramId = await requireTelegramSession();
   } catch (err) {
     if (err instanceof SessionError) redirect('/login');
     throw err;

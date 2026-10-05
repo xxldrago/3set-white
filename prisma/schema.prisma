@@ -14,12 +14,18 @@ datasource db {
   provider = "postgresql"
 }
 
-// Single identity row shared by bot and PWA cabinet (D-12).
+// Single identity row shared by bot and PWA cabinet (D-12, Phase 6 D-79).
 // PII minimum per plan prohibition: telegram id, chat id, names only.
+// Phase 6 email identity (D-79/D-80, one-way): telegramId nullable, email
+// unique, passwordHash argon2id. Trial stays one-per-account (trialUsed OR
+// on merge). Rollback to non-nullable identity requires account migration
+// and re-linking of keys/orders/tickets.
 model User {
-  id         Int      @id @default(autoincrement())
-  telegramId BigInt   @unique @map("telegram_id")
-  chatId     BigInt?  @map("chat_id")
+  id           Int      @id @default(autoincrement())
+  telegramId   BigInt?  @unique @map("telegram_id")
+  email        String?  @unique
+  passwordHash String?  @map("password_hash")
+  chatId       BigInt?  @map("chat_id")
   firstName  String?  @map("first_name")
   lastName   String?  @map("last_name")
   username   String?
@@ -43,6 +49,10 @@ model User {
   tickets         Ticket[]
   awaitingSupport Boolean   @default(false) @map("awaiting_support")
   supportPromptAt DateTime? @map("support_prompt_at")
+
+  // Phase 6 password reset (D-88): one-time tokens, 1h TTL, invalidated
+  // after use. Cascade keeps no orphan tokens after account removal.
+  passwordResets PasswordReset[]
 
   @@map("users")
 }
@@ -241,6 +251,37 @@ model Notification {
 
   @@index([status, nextAttemptAt])
   @@map("notifications")
+}
+
+// ---------------------------------------------------------------------------
+// Phase 6 email auth (D-84/D-88). PasswordReset: one-time token guard shaped
+// after ReplayCache, with expiry + used flag. LoginAttempt: per-email plus
+// per-IP counters backing the exponential-backoff + temp-lock discipline —
+// DB-backed so the counters survive restarts (unlike in-memory).
+// ---------------------------------------------------------------------------
+
+model PasswordReset {
+  token     String    @id
+  userId    Int       @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId, expiresAt])
+  @@map("password_resets")
+}
+
+model LoginAttempt {
+  id          Int       @id @default(autoincrement())
+  email       String    @map("email")
+  ip          String    @default("") @map("ip")
+  attempts    Int       @default(0)
+  lockedUntil DateTime? @map("locked_until")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@unique([email, ip])
+  @@map("login_attempts")
 }
 
 // ---------------------------------------------------------------------------

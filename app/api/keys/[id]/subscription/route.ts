@@ -8,7 +8,7 @@ import { z } from "zod";
 import { ArtemidaError } from "@/lib/artemida";
 import { getSubscriptionForUser } from "@/lib/keys-service";
 import { logger } from "@/lib/logger";
-import { requireSession, SessionError } from "@/lib/session";
+import { requireTelegramSession, SessionError } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +40,7 @@ export async function GET(
 ): Promise<Response> {
   let telegramId: number;
   try {
-    telegramId = await requireSession();
+    telegramId = await requireTelegramSession();
   } catch (err) {
     if (err instanceof SessionError) {
       return Response.json({ error: "unauthorized" }, { status: 401 });

@@ -76,7 +76,8 @@ const USER_SELECT = {
 
 type SelectedUser = {
   id: number;
-  telegramId: bigint;
+  // Nullable since Phase 6 D-79 (email-only accounts have no telegram row).
+  telegramId: bigint | null;
   firstName: string | null;
   lastName: string | null;
   username: string | null;
@@ -93,7 +94,10 @@ function displayNameOf(user: Pick<SelectedUser, "firstName" | "lastName" | "user
   return user.username && user.username.trim().length > 0 ? user.username : null;
 }
 
-function toSearchResult(user: SelectedUser): AdminSearchResult {
+function toSearchResult(user: SelectedUser): AdminSearchResult | null {
+  // Phase 6 D-79: admin search is telegram/key identity-keyed — email-only
+  // accounts (no telegram row) are excluded until admin email support lands.
+  if (user.telegramId === null) return null;
   return {
     userId: user.id,
     telegramId: String(user.telegramId),
@@ -131,7 +135,10 @@ export async function adminSearchUsers(q: string): Promise<AdminSearchResponse> 
         where: { telegramId },
         select: USER_SELECT,
       });
-      if (exact) results.set(exact.id, toSearchResult(exact));
+      if (exact) {
+        const result = toSearchResult(exact);
+        if (result) results.set(exact.id, result);
+      }
     }
   }
 
@@ -143,7 +150,9 @@ export async function adminSearchUsers(q: string): Promise<AdminSearchResponse> 
     orderBy: { updatedAt: "desc" },
   });
   for (const row of keyRows) {
-    if (!results.has(row.user.id)) results.set(row.user.id, toSearchResult(row.user));
+    if (results.has(row.user.id)) continue;
+    const result = toSearchResult(row.user);
+    if (result) results.set(row.user.id, result);
   }
 
   if (results.size > 0) {
@@ -176,7 +185,9 @@ export async function loadAdminHeader(userId: number): Promise<AdminProfileHeade
     where: { id: userId },
     select: { ...USER_SELECT, createdAt: true },
   });
-  if (!user) return null;
+  // Phase 6 D-79: the admin profile is telegram identity-keyed — email-only
+  // accounts resolve to 404 until admin email support lands.
+  if (!user || user.telegramId === null) return null;
 
   const staff = await prisma.adminUser.findUnique({
     where: { telegramId: user.telegramId },

@@ -10,7 +10,7 @@ import { ArtemidaError } from '@/lib/artemida';
 import { t, tp } from '@/lib/i18n';
 import { listKeys, revalidateKeys, type RenderedKey } from '@/lib/keys-service';
 import { logger } from '@/lib/logger';
-import { requireSession, SessionError } from '@/lib/session';
+import { requireTelegramSession, SessionError } from '@/lib/session';
 import { listTicketsForUser } from '@/lib/tickets-service';
 
 // Personalised, cache-backed page — never statically rendered.
@@ -114,7 +114,7 @@ async function SubscriptionsSection({ telegramId }: { telegramId: number }) {
 export default async function Home() {
   let telegramId: number | null = null;
   try {
-    telegramId = await requireSession();
+    telegramId = await requireTelegramSession();
   } catch (err) {
     if (!(err instanceof SessionError)) throw err;
   }

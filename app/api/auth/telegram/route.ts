@@ -71,7 +71,9 @@ export async function POST(req: Request): Promise<Response> {
       return unauthorized();
     }
     try {
-      await prisma.user.upsert({
+      // Phase 6 (D-82): the session subject is the users.id row; the
+      // telegram id rides along as the optional tid claim.
+      const row = await prisma.user.upsert({
         where: { telegramId: BigInt(user.id) },
         update: {
           firstName: typeof user.first_name === "string" ? user.first_name : undefined,
@@ -84,8 +86,9 @@ export async function POST(req: Request): Promise<Response> {
           lastName: typeof user.last_name === "string" ? user.last_name : undefined,
           username: typeof user.username === "string" ? user.username : undefined,
         },
+        select: { id: true },
       });
-      const token = await signSession(user.id, env.SESSION_SECRET);
+      const token = await signSession(row.id, user.id, env.SESSION_SECRET);
       logger.info({ via: "initdata", telegramId: user.id, outcome: "issued" });
       return Response.json(
         { ok: true },
@@ -116,7 +119,9 @@ export async function POST(req: Request): Promise<Response> {
     return unauthorized();
   }
   try {
-    await prisma.user.upsert({
+    // Phase 6 (D-82): the session subject is the users.id row; the
+    // telegram id rides along as the optional tid claim.
+    const row = await prisma.user.upsert({
       where: { telegramId: BigInt(widget.id) },
       update: {
         firstName: widget.first_name,
@@ -129,8 +134,9 @@ export async function POST(req: Request): Promise<Response> {
         lastName: widget.last_name,
         username: widget.username,
       },
+      select: { id: true },
     });
-    const token = await signSession(widget.id, env.SESSION_SECRET);
+    const token = await signSession(row.id, widget.id, env.SESSION_SECRET);
     logger.info({ via: "widget", telegramId: widget.id, outcome: "issued" });
     return Response.json(
       { ok: true },

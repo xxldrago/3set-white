@@ -12,7 +12,7 @@ import PaymentHistoryList from '@/components/PaymentHistoryList';
 import { t } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
 import { listOrdersForUser, type OrderHistoryRow } from '@/lib/orders-service';
-import { requireSession, SessionError } from '@/lib/session';
+import { requireTelegramSession, SessionError } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,7 +56,7 @@ async function HistorySection({ telegramId }: { telegramId: number }) {
 export default async function PaymentsHistoryPage() {
   let telegramId: number;
   try {
-    telegramId = await requireSession();
+    telegramId = await requireTelegramSession();
   } catch (err) {
     if (err instanceof SessionError) redirect('/login');
     throw err;

@@ -112,27 +112,70 @@ export function verifyInitData(
   return out;
 }
 
-/** Mint one HS256 session JWT for a telegram id (30d expiry). */
-export async function signSession(telegramId: number, secret: string): Promise<string> {
-  return new SignJWT({ tid: telegramId })
+/** Mint a Phase 6 userId-subject session JWT (30d expiry, D-82). */
+export async function signSession(
+  userId: number,
+  telegramId: number | null,
+  secret: string,
+): Promise<string>;
+/**
+ * Legacy tid-only mint (pre-Phase-6 tokens + old unit tests). New code MUST
+ * use the 3-arg form; this overload exists so previously minted sessions and
+ * existing callers keep verifying without a flag day.
+ */
+export async function signSession(telegramId: number, secret: string): Promise<string>;
+export async function signSession(
+  userIdOrTelegramId: number,
+  telegramIdOrSecret: number | string | null,
+  secretOrNothing?: string,
+): Promise<string> {
+  const claims =
+    typeof secretOrNothing === "string"
+      ? {
+          uid: userIdOrTelegramId,
+          ...(typeof telegramIdOrSecret === "number" ? { tid: telegramIdOrSecret } : {}),
+        }
+      : { tid: userIdOrTelegramId };
+  const secret = (
+    typeof secretOrNothing === "string" ? secretOrNothing : telegramIdOrSecret
+  ) as string;
+  return new SignJWT(claims)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(SESSION_TTL)
     .sign(new TextEncoder().encode(secret));
 }
 
+/** Resolved session identity (D-82): userId subject, telegramId optional. */
+export interface SessionClaims {
+  /** Present on Phase 6 tokens; null on legacy tid-only tokens. */
+  userId: number | null;
+  /** Present on Telegram-linked sessions; null on email-only accounts. */
+  telegramId: number | null;
+}
+
+function toFiniteNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
 /**
  * Verify a session JWT with an explicit HS256 allow-list (rejects alg:none
- * and wrong-secret tokens). Returns the telegram id or null — never throws.
+ * and wrong-secret tokens). Accepts Phase 6 `{ uid, tid? }` tokens AND
+ * legacy `{ tid }` tokens (userId null — the caller resolves it via the
+ * `User.telegramId` row). Returns null — never throws.
  */
-export async function verifySession(token: string, secret: string): Promise<number | null> {
+export async function verifySession(
+  token: string,
+  secret: string,
+): Promise<SessionClaims | null> {
   try {
     const { payload } = await jwtVerify(token, new TextEncoder().encode(secret), {
       algorithms: ["HS256"],
     });
-    return typeof payload.tid === "number" && Number.isFinite(payload.tid)
-      ? payload.tid
-      : null;
+    const userId = toFiniteNumber(payload["uid"]);
+    const telegramId = toFiniteNumber(payload["tid"]);
+    if (userId === null && telegramId === null) return null;
+    return { userId, telegramId };
   } catch {
     return null;
   }
@@ -147,6 +190,13 @@ export function buildSessionCookie(token: string, secure: boolean): string {
     "HttpOnly",
     "SameSite=Lax",
   ];
+  if (secure) parts.push("Secure");
+  return parts.join("; ");
+}
+
+/** Serialize the session-clearing cookie for logout (shared by all auth methods, D-86). */
+export function buildClearSessionCookie(secure: boolean): string {
+  const parts = [`${SESSION_COOKIE}=`, "Path=/", "Max-Age=0", "HttpOnly", "SameSite=Lax"];
   if (secure) parts.push("Secure");
   return parts.join("; ");
 }

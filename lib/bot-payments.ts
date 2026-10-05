@@ -187,8 +187,12 @@ export async function dispatchNotification(
   // The owning chat: prefer the stored chat id, else the telegram id (they
   // coincide for a private chat). Never any other chat. `String()` because the
   // Prisma id is a bigint and the Telegram API wants number|string.
-  const chatId = String(order.user.chatId ?? order.user.telegramId);
+  // Phase 6 D-79: email-only accounts have no telegram row and no bot chat —
+  // there is nobody to push to, so the job is skipped (never a "null" chat).
   const telegramId = order.user.telegramId;
+  const chatIdValue = order.user.chatId ?? telegramId;
+  if (chatIdValue === null || telegramId === null) return { outcome: "skipped" };
+  const chatId = String(chatIdValue);
 
   try {
     if (type === "notify-provisioned") {

@@ -25,7 +25,7 @@ import {
 } from '@/lib/keys-service';
 import { logger } from '@/lib/logger';
 import { renderSubscriptionQr } from '@/lib/qr';
-import { requireSession, SessionError } from '@/lib/session';
+import { requireTelegramSession, SessionError } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,7 +63,7 @@ export default async function KeyDetailPage({
 }) {
   let telegramId: number;
   try {
-    telegramId = await requireSession();
+    telegramId = await requireTelegramSession();
   } catch (err) {
     if (err instanceof SessionError) redirect('/login');
     throw err;

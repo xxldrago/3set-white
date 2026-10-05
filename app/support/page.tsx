@@ -12,7 +12,7 @@ import TicketList from '@/components/TicketList';
 import { t, tp } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
 import { listTicketsForUser, type TicketListRow } from '@/lib/tickets-service';
-import { requireSession, SessionError } from '@/lib/session';
+import { requireTelegramSession, SessionError } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,7 +87,7 @@ async function TicketsSection({ telegramId }: { telegramId: number }) {
 export default async function SupportPage() {
   let telegramId: number;
   try {
-    telegramId = await requireSession();
+    telegramId = await requireTelegramSession();
   } catch (err) {
     if (err instanceof SessionError) redirect('/login');
     throw err;

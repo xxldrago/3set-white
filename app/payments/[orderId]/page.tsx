@@ -15,7 +15,7 @@ import { ArtemidaError } from '@/lib/artemida';
 import { getKeyForUser, getSubscriptionForUser } from '@/lib/keys-service';
 import { loadOrderForUser, toHistoryRow } from '@/lib/orders-service';
 import { renderSubscriptionQr } from '@/lib/qr';
-import { requireSession, SessionError } from '@/lib/session';
+import { requireTelegramSession, SessionError } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,7 +52,7 @@ export default async function PaymentReturnPage({
 }) {
   let telegramId: number;
   try {
-    telegramId = await requireSession();
+    telegramId = await requireTelegramSession();
   } catch (err) {
     if (err instanceof SessionError) redirect('/login');
     throw err;

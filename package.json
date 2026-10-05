@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",
+    "argon2": "0.45.1",
     "jose": "6.2.12",
     "next": "16.3.7",
     "p-retry": "^7.1.1",

@@ -6,7 +6,7 @@
 // counter is never touched anywhere else (Pitfall 6).
 import { z } from "zod";
 import { logger } from "../../../../../lib/logger";
-import { requireSession, SessionError } from "../../../../../lib/session";
+import { requireTelegramSession, SessionError } from "../../../../../lib/session";
 import { markTicketRead } from "../../../../../lib/tickets-service";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,7 @@ export async function POST(
 ): Promise<Response> {
   let telegramId: number;
   try {
-    telegramId = await requireSession();
+    telegramId = await requireTelegramSession();
   } catch (err) {
     if (err instanceof SessionError) {
       return Response.json({ error: "unauthorized" }, { status: 401 });

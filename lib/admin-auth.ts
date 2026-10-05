@@ -13,7 +13,7 @@
 import { cache } from "react";
 import { prisma } from "./prisma";
 import { env } from "./env";
-import { AdminError, requireSession } from "./session";
+import { AdminError, requireTelegramSession } from "./session";
 
 export type AdminRole = "administrator" | "support" | "manager";
 
@@ -89,7 +89,7 @@ export const getAdminRole = cache(async (telegramId: number): Promise<AdminRole 
 export async function requireRole(
   ...allowed: AdminRole[]
 ): Promise<{ telegramId: number; role: AdminRole }> {
-  const telegramId = await requireSession();
+  const telegramId = await requireTelegramSession();
   const role = await getAdminRole(telegramId);
   if (!role || !allowed.includes(role)) throw new AdminError();
   return { telegramId, role };

@@ -215,7 +215,7 @@ Plans:
   4. Trial для email-аккаунтов защищён от фарма
   5. Кнопка «Войти через Telegram» корректно позиционирована на десктопе
 
-**Plans**: 13/13 plans executed + 10 gap-closure plans (UAT G-06-4a/G-06-4b/G-06-9; verification CR-01/CR-02 + AUTH-03/AUTH-06 widget regression + WR-01..WR-06; re-verification CR-01 reset-lockout DoS)
+**Plans**: 14/14 plans executed + 10 gap-closure plans (UAT G-06-4a/G-06-4b/G-06-9; verification CR-01/CR-02 + AUTH-03/AUTH-06 widget regression + WR-01..WR-06; re-verification CR-01 reset-lockout DoS)
 
 Plans:
 
@@ -259,7 +259,7 @@ Plans:
 
 **Wave 1** *(standalone; fixes 06-10's shared account-wide counter)*
 
-- [ ] 06-14-PLAN.md — Isolate reset-mail throttle namespace + atomic attempt counter (AUTH-02, AUTH-04)
+- [x] 06-14-PLAN.md — Isolate reset-mail throttle namespace + atomic attempt counter (AUTH-02, AUTH-04)
 
 **UI hint**: yes
 
@@ -275,4 +275,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 3. Payments | 7/7 | Needs Review | 2026-10-03 |
 | 4. Support & Retention | 8/8 | Needs Review | 2026-10-03 |
 | 5. Admin & Deploy | 7/7 | Needs Review | 2026-10-03 |
-| 6. Email Auth | 13/14 | In Progress | |
+| 6. Email Auth | 14/14 | In Progress|  |

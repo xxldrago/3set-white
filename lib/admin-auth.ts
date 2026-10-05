@@ -12,7 +12,8 @@
 // `/api/admin` route must re-check `requireRole` (T-05-01 / Pitfall 3).
 import { cache } from "react";
 import { prisma } from "./prisma";
-import { AdminError, isAdmin, requireSession } from "./session";
+import { env } from "./env";
+import { AdminError, requireSession } from "./session";
 
 export type AdminRole = "administrator" | "support" | "manager";
 
@@ -47,6 +48,15 @@ export function can(role: AdminRole, section: AdminSection): boolean {
   return MATRIX[role].includes(section);
 }
 
+function isBootstrapAdmin(telegramId: number): boolean {
+  const raw = env.ADMIN_TELEGRAM_IDS;
+  if (!raw) return false;
+  return raw
+    .split(",")
+    .map((part) => Number(part.trim()))
+    .some((id) => Number.isSafeInteger(id) && id === telegramId);
+}
+
 /**
  * Resolve the caller's staff role or null. `admin_users` (UI-managed) is the
  * source of truth (D-66); the env allow-list only seeds a missing row as
@@ -60,7 +70,7 @@ export const getAdminRole = cache(async (telegramId: number): Promise<AdminRole 
   });
   if (existing) return existing.role;
 
-  if (!isAdmin(telegramId)) return null;
+  if (!isBootstrapAdmin(telegramId)) return null;
 
   const created = await prisma.adminUser.upsert({
     where: { telegramId: BigInt(telegramId) },

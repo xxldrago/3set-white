@@ -202,32 +202,36 @@ Plans:
 - [x] 05-06-PLAN.md — Deploy: Dockerfile blockers, Compose/Nginx/Certbot, backup/rollback scripts, runbook (OPS-01)
 
 ### Phase 6: Email Auth
+
 **Goal:** Пользователь регистрируется и входит по email, может связать Telegram-аккаунт, восстанавливает пароль по почте
 **Mode:** mvp
 **Depends on**: Phase 5
 **Requirements**: AUTH-01, AUTH-02, AUTH-03, AUTH-04, AUTH-05, AUTH-06
 **Success Criteria** (what must be TRUE):
+
   1. Пользователь регистрируется по email + пароль без верификации и сразу входит; сессия — та же httpOnly cookie
   2. Пользователь входит по email + пароль; привязывает Telegram к email-аккаунту и наоборот
   3. Пользователь сбрасывает пароль через ссылку на email
   4. Trial для email-аккаунтов защищён от фарма
   5. Кнопка «Войти через Telegram» корректно позиционирована на десктопе
-**Plans**: 4 plans
+
+**Plans**: 4/4 plans executed
 
 Plans:
 
 **Wave 1** *(identity spine — tracer; owner-gated on one-way D-79)*
 
-- [ ] 06-01-PLAN.md — Schema + userId sessions + Argon2id + backoff + register/login/logout tracer (AUTH-01, AUTH-02)
+- [x] 06-01-PLAN.md — Schema + userId sessions + Argon2id + backoff + register/login/logout tracer (AUTH-01, AUTH-02)
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 06-02-PLAN.md — Link/merge + unlink + change-password, owner-gated on one-way D-81 (AUTH-03, AUTH-05)
-- [ ] 06-03-PLAN.md — SMTP mail + reset request/confirm, 1h one-time tokens (AUTH-04)
+- [x] 06-02-PLAN.md — Link/merge + unlink + change-password, owner-gated on one-way D-81 (AUTH-03, AUTH-05)
+- [x] 06-03-PLAN.md — SMTP mail + reset request/confirm, 1h one-time tokens (AUTH-04)
 
 **Wave 3** *(blocked on Waves 1, 2)*
 
-- [ ] 06-04-PLAN.md — Login rework + reset pages + Account section, AUTH-06 layout fix (AUTH-01, AUTH-02, AUTH-06)
+- [x] 06-04-PLAN.md — Login rework + reset pages + Account section, AUTH-06 layout fix (AUTH-01, AUTH-02, AUTH-06)
+
 **UI hint**: yes
 
 ## Progress

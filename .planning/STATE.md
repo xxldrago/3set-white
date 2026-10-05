@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 06
 current_phase_name: Email Auth
 status: executing
-stopped_at: Phase 6 UI-SPEC approved
-last_updated: "2026-10-05T05:37:53.791Z"
-last_activity: 2026-10-03
-last_activity_desc: Phase 03 execution started
-state_head: 3c755fd6a2c5fdc9fb8dcb8bfe7c26afab864e53
+stopped_at: Phase 6 executed + verified (4/4 plans, visual + SMTP UAT pending)
+last_updated: "2026-10-05T06:38:45.079Z"
+last_activity: 2026-10-05
+last_activity_desc: Phase 06 execution started
+state_head: e43a4943d4db3c1ce89a939c309ff19f16f2cc21
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 37
-  completed_plans: 33
+  completed_plans: 37
   percent: 0
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-30)
 
 **Core value:** Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
-**Current focus:** Phase 03 — Payments
+**Current focus:** Phase 06 — Email Auth
 
 ## Current Position
 
-Phase: 06 (Email Auth) — READY TO EXECUTE
-Plan: 1 of 7
-Status: Ready to execute
-Last activity: 2026-10-03 — Phase 03 execution started
+Phase: 06 (Email Auth) — EXECUTING
+Plan: 1 of 4
+Status: Executing Phase 06
+Last activity: 2026-10-05 — Phase 06 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -82,6 +82,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-05T05:30:24.920Z
-Stopped at: Phase 6 UI-SPEC approved
-Resume file: .planning/phases/06-email-auth/06-UI-SPEC.md
+Last session: 2026-10-05T06:38:44.732Z
+Stopped at: Phase 6 executed + verified (4/4 plans, visual + SMTP UAT pending)
+Resume file: .planning/phases/06-email-auth/06-VERIFICATION.md

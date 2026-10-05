@@ -296,12 +296,18 @@ model LoginAttempt {
 // ---------------------------------------------------------------------------
 
 model TelegramLoginToken {
-  token      String    @id
-  ipHash     String    @map("ip_hash")
-  telegramId BigInt?   @map("telegram_id")
-  expiresAt  DateTime  @map("expires_at")
-  consumedAt DateTime? @map("consumed_at")
-  createdAt  DateTime  @default(now()) @map("created_at")
+  token        String    @id
+  ipHash       String    @map("ip_hash")
+  telegramId   BigInt?   @map("telegram_id")
+  // sha256 hex of the bot-delivered confirmation code (plan 06-09). Null until
+  // a bind issues one; the plaintext code is never persisted or returned.
+  codeHash     String?   @map("code_hash")
+  // Wrong-code counter for brute-force defence; the token is invalidated at
+  // LOGIN_CODE_MAX_ATTEMPTS so the code space cannot be exhausted.
+  codeAttempts Int       @default(0) @map("code_attempts")
+  expiresAt    DateTime  @map("expires_at")
+  consumedAt   DateTime? @map("consumed_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
 
   @@index([expiresAt])
   @@map("telegram_login_tokens")

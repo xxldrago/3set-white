@@ -47,6 +47,13 @@ export async function POST(req: Request): Promise<Response> {
       logger.warn({ route: "telegram-bot-consume", outcome: "not_ready" });
       return Response.json({ error: "login_not_ready" }, { status: 409 });
     }
+    if (result.kind === "bad_code") {
+      // Wrong/missing confirmation code → same generic 401 as a wrong claim,
+      // so a wrong code is indistinguishable from a wrong claim (no oracle).
+      // The service rate-caps and self-invalidates the token at the limit.
+      logger.warn({ route: "telegram-bot-consume", outcome: "bad_code" });
+      return Response.json({ error: "unauthorized" }, { status: 401 });
+    }
     const session = await signSession(result.userId, result.telegramId, env.SESSION_SECRET);
     logger.info({ route: "telegram-bot-consume", outcome: "issued" });
     return Response.json(

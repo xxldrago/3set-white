@@ -1,6 +1,7 @@
 import EmailAuthCard, { type AuthMode } from '@/components/EmailAuthCard';
 import LoginButton from '@/components/LoginButton';
 import InstallPrompt from '@/components/InstallPrompt';
+import TelegramBotLoginButton from '@/components/TelegramBotLoginButton';
 import TelegramWidgetSlot from '@/components/TelegramWidgetSlot';
 import { t } from '@/lib/i18n';
 
@@ -32,6 +33,11 @@ export default async function LoginPage({
           </p>
         </header>
         <EmailAuthCard initialMode={initialMode} />
+        {/* D-91 / G-06-4b: bot-redirect login is the primary Telegram entry.
+            One tap opens the bot where authorization happens. */}
+        <div className="flex flex-col items-center">
+          <TelegramBotLoginButton />
+        </div>
         <div className="flex items-center gap-3" aria-hidden>
           <span className="h-px flex-1 bg-black/10 dark:bg-white/15" />
           <span className="text-sm text-zinc-600 dark:text-zinc-400">{t('auth.orContinue')}</span>

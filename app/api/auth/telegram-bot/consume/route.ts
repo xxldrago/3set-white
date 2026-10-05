@@ -1,9 +1,12 @@
 // POST /api/auth/telegram-bot/consume — exchange a bound token for a session
-// (G-06-4b, D-86). The claim cookie (set by /request) must match the HMAC of
-// the token, so a stolen/replayed token cannot yield another browser's session
-// (T-06-06-01). The service consumes the token atomically (single-use,
-// T-06-06-02) and upserts the user row by Telegram id, then this route mints
-// the SAME httpOnly session cookie every other auth method uses.
+// (G-06-4b, D-86; code binding plan 06-09). The claim cookie (set by /request)
+// must match the HMAC of the token, so a stolen/replayed token cannot yield
+// another browser's session (T-06-06-01). The `code` the bot delivered to the
+// authorizing Telegram chat must also match (CR-01 / T-06-09-01), so a
+// reverse-fixation hijack cannot mint a session. The service consumes the token
+// atomically (single-use, T-06-06-02), rate-caps wrong codes, and upserts the
+// user row by Telegram id; then this route mints the SAME httpOnly session
+// cookie every other auth method uses.
 import { z } from "zod";
 import { cookies } from "next/headers";
 import { buildSessionCookie, signSession } from "../../../../../lib/auth";
@@ -15,6 +18,9 @@ export const dynamic = "force-dynamic";
 
 const consumeSchema = z.object({
   token: z.string().min(1).max(256),
+  // Bot-delivered confirmation code (CR-01): a fixed-length digit string, so a
+  // malformed body is rejected before any DB work.
+  code: z.string().regex(/^\d{6}$/),
 });
 
 export async function POST(req: Request): Promise<Response> {
@@ -28,11 +34,11 @@ export async function POST(req: Request): Promise<Response> {
   if (!parsed.success) {
     return Response.json({ error: "bad_request" }, { status: 400 });
   }
-  const { token } = parsed.data;
+  const { token, code } = parsed.data;
   const claim = (await cookies()).get(LOGIN_CLAIM_COOKIE)?.value;
 
   try {
-    const result = await consumeLoginToken(token, claim);
+    const result = await consumeLoginToken(token, claim, code);
     if (result.kind === "invalid") {
       logger.warn({ route: "telegram-bot-consume", outcome: "invalid" });
       return Response.json({ error: "bad_request" }, { status: 400 });

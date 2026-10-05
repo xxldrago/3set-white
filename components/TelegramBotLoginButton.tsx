@@ -1,14 +1,17 @@
 'use client';
 
-// Bot-redirect Telegram login (G-06-4b client, plan 06-07). Consumes the
-// frozen 06-06 contract: request → open the t.me deep link → poll status →
-// consume → redirect into the signed-in cabinet.
+// Bot-redirect Telegram login (G-06-4b client, plan 06-07; code entry plan
+// 06-09). Consumes the frozen 06-06 contract plus the CR-01 confirmation code:
+// request → open the t.me deep link → poll status → on `ready` the user enters
+// the code the bot sent → consume → redirect into the signed-in cabinet.
 //
 // The httpOnly session/claim cookies are handled entirely by the browser
 // cookie jar: this island never reads or writes a cookie and makes no
 // client-side trust decisions. The claim cookie is scoped to
-// /api/auth/telegram-bot, so `consume` automatically presents the token
-// binding the issuing browser (T-06-06-01).
+// /api/auth/telegram-bot, so `consume` automatically presents the token binding
+// the issuing browser (T-06-06-01); the code — delivered only to the
+// authorizing Telegram chat — additionally binds the *authorizer* (CR-01 /
+// T-06-09-01).
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { t } from '@/lib/i18n';
 
@@ -16,17 +19,23 @@ const REQUEST_ENDPOINT = '/api/auth/telegram-bot/request';
 const STATUS_ENDPOINT = '/api/auth/telegram-bot/status';
 const CONSUME_ENDPOINT = '/api/auth/telegram-bot/consume';
 const POLL_INTERVAL_MS = 2000;
+const CODE_LENGTH = 6;
 
-type BotLoginState = 'idle' | 'waiting' | 'expired' | 'error';
+type BotLoginState = 'idle' | 'waiting' | 'ready' | 'expired' | 'error';
 
 const PRIMARY =
   'flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]';
 const SECONDARY =
   'flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:bg-black/[.04] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+const CODE_INPUT =
+  'h-12 w-full rounded-full border border-solid border-black/[.08] bg-transparent px-5 text-center text-lg tracking-[0.5em] outline-none focus:border-black/40 disabled:opacity-50 dark:border-white/[.145] dark:focus:border-white/40';
 
 export default function TelegramBotLoginButton() {
   const [state, setState] = useState<BotLoginState>('idle');
   const [botUrl, setBotUrl] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [code, setCode] = useState('');
+  const [codeWrong, setCodeWrong] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -65,27 +74,41 @@ export default function TelegramBotLoginButton() {
     [stopTimers],
   );
 
-  const consume = useCallback(
-    async (tok: string) => {
-      try {
-        const res = await fetch(CONSUME_ENDPOINT, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ token: tok }),
-        });
-        if (cancelled.current) return;
-        if (res.ok) {
-          window.location.href = '/';
-          return;
-        }
-      } catch {
-        // fall through to the error state
-      }
+  // Submit the bot-delivered code with the issuing browser's token + claim
+  // cookie. A wrong code (401, indistinguishable from a bad claim) clears the
+  // field and stays in `ready`; a terminal token (409) falls back to `expired`.
+  const submitCode = useCallback(async () => {
+    if (inFlight.current || token === null) return;
+    if (!/^\d{6}$/.test(code)) {
+      setCodeWrong(true);
+      return;
+    }
+    inFlight.current = true;
+    setBusy(true);
+    try {
+      const res = await fetch(CONSUME_ENDPOINT, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ token, code }),
+      });
       if (cancelled.current) return;
-      fail('error');
-    },
-    [fail],
-  );
+      if (res.ok) {
+        window.location.href = '/';
+        return;
+      }
+      if (res.status === 401) {
+        setCodeWrong(true);
+        setCode('');
+        return;
+      }
+      fail(res.status === 409 ? 'expired' : 'error');
+    } catch {
+      if (!cancelled.current) setState('error');
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
+    }
+  }, [code, fail, token]);
 
   const poll = useCallback(
     async (tok: string) => {
@@ -104,7 +127,11 @@ export default function TelegramBotLoginButton() {
         }
         const data = (await res.json()) as { status?: string };
         if (data.status === 'ready') {
-          await consume(tok);
+          // The bot bound the token: stop polling and require the confirmation
+          // code before consuming (CR-01).
+          stopTimers();
+          setToken(tok);
+          setState('ready');
           return;
         }
         if (data.status === 'expired' || data.status === 'consumed') {
@@ -119,7 +146,7 @@ export default function TelegramBotLoginButton() {
       if (pollTimer.current !== null) clearTimeout(pollTimer.current);
       pollTimer.current = setTimeout(() => void poll(tok), POLL_INTERVAL_MS);
     },
-    [consume, fail],
+    [fail, stopTimers],
   );
 
   const issue = useCallback(async () => {
@@ -128,6 +155,9 @@ export default function TelegramBotLoginButton() {
     setBusy(true);
     stopTimers();
     openedFor.current = null;
+    setToken(null);
+    setCode('');
+    setCodeWrong(false);
     try {
       const res = await fetch(REQUEST_ENDPOINT, { method: 'POST' });
       if (cancelled.current) return;
@@ -177,7 +207,9 @@ export default function TelegramBotLoginButton() {
   }, [state, botUrl]);
 
   return (
-    <div className="flex w-full flex-col gap-3">
+    // min-h reserves the tallest (code-entry) state so the idle→waiting→ready
+    // swap does not shift the surrounding layout.
+    <div className="flex min-h-[11rem] w-full flex-col gap-3">
       {state === 'idle' && (
         <button type="button" onClick={() => void issue()} disabled={busy} className={PRIMARY}>
           {t('auth.loginViaBot')}
@@ -194,6 +226,49 @@ export default function TelegramBotLoginButton() {
         >
           {t('auth.botLoginWaiting')}
         </a>
+      )}
+
+      {state === 'ready' && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void submitCode();
+          }}
+          className="flex w-full flex-col gap-3"
+        >
+          <label
+            htmlFor="tg-login-code"
+            className="flex flex-col gap-1 text-sm text-zinc-600 dark:text-zinc-400"
+          >
+            <span className="font-medium text-black dark:text-zinc-50">
+              {t('auth.botLoginCodeLabel')}
+            </span>
+            <span>{t('auth.botLoginCodePrompt')}</span>
+          </label>
+          <input
+            id="tg-login-code"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={CODE_LENGTH}
+            value={code}
+            onChange={(e) => {
+              setCode(e.target.value.replace(/\D/g, '').slice(0, CODE_LENGTH));
+              setCodeWrong(false);
+            }}
+            disabled={busy}
+            aria-invalid={codeWrong}
+            className={CODE_INPUT}
+          />
+          {codeWrong && (
+            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+              {t('auth.botLoginCodeWrong')}
+            </p>
+          )}
+          <button type="submit" disabled={busy || code.length !== CODE_LENGTH} className={PRIMARY}>
+            {t('auth.botLoginCodeSubmit')}
+          </button>
+        </form>
       )}
 
       {state === 'expired' && (

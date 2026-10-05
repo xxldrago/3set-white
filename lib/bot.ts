@@ -72,11 +72,13 @@ bot.start(async (ctx) => {
     telegramId,
     outcome: "start-upserted",
   });
-  // Bot-redirect login (G-06-4b, plan 06-06): when the start payload carries
-  // `login_<token>`, bind the cabinet-issued token to this Telegram id. The
-  // upsert above already stamped the profile; bind is idempotent for the same
-  // id and rejects a different one. Non-login starts skip this branch entirely
-  // and behave byte-identically (no extra reply).
+  // Bot-redirect login (G-06-4b, plan 06-06; code binding plan 06-09): when the
+  // start payload carries `login_<token>`, bind the cabinet-issued token to
+  // this Telegram id and DM the confirmation code. The upsert above already
+  // stamped the profile; bind is idempotent for the same id and rejects a
+  // different one. The code is delivered ONLY to this chat (CR-01) — the
+  // issuing browser must submit it to `consume`. Non-login starts skip this
+  // branch entirely and behave byte-identically (no extra reply).
   const loginToken = parseLoginStartPayload(ctx.startPayload);
   if (loginToken) {
     const bound = await bindLoginToken(loginToken, telegramId, {
@@ -85,7 +87,9 @@ bot.start(async (ctx) => {
       username: from.username ?? null,
       chatId: chatId === undefined ? null : BigInt(chatId),
     });
-    await ctx.reply(bound.kind === "bound" ? t("bot.loginBound") : t("bot.loginInvalid"));
+    await ctx.reply(
+      bound.kind === "bound" ? t("bot.loginCode", { code: bound.code }) : t("bot.loginInvalid"),
+    );
     logger.info({
       updateId: ctx.update.update_id,
       telegramId,

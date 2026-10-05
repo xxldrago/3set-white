@@ -12,6 +12,7 @@
 // the lock bites on the next one (same discipline as login).
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
+import { clientIp } from "../../../../../../lib/client-ip";
 import { logger } from "../../../../../../lib/logger";
 import { MailError, sendResetMail } from "../../../../../../lib/mail";
 import { prisma } from "../../../../../../lib/prisma";
@@ -25,12 +26,6 @@ const requestSchema = z.object({
 
 /** D-88: one-time token lifetime. */
 export const RESET_TTL_MS = 60 * 60 * 1000;
-
-function clientIp(req: Request): string {
-  const forwarded = req.headers.get("x-forwarded-for");
-  const first = forwarded?.split(",")[0]?.trim();
-  return first && first.length > 0 ? first : "direct";
-}
 
 export async function POST(req: Request): Promise<Response> {
   let raw: unknown;

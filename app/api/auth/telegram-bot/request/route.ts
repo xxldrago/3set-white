@@ -10,16 +10,11 @@ import {
   issueLoginToken,
   resolveBotUsername,
 } from "../../../../../lib/telegram-login";
+import { clientIp } from "../../../../../lib/client-ip";
 import { env } from "../../../../../lib/env";
 import { logger } from "../../../../../lib/logger";
 
 export const dynamic = "force-dynamic";
-
-function clientIp(req: Request): string {
-  const forwarded = req.headers.get("x-forwarded-for");
-  const first = forwarded?.split(",")[0]?.trim();
-  return first && first.length > 0 ? first : "direct";
-}
 
 export async function POST(req: Request): Promise<Response> {
   const ip = clientIp(req);

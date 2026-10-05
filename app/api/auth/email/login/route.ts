@@ -8,6 +8,7 @@
 // and resets the attempt counter.
 import { z } from "zod";
 import { buildSessionCookie, signSession } from "../../../../../lib/auth";
+import { clientIp } from "../../../../../lib/client-ip";
 import { env } from "../../../../../lib/env";
 import { logger } from "../../../../../lib/logger";
 import { dummyVerify, verifyPassword } from "../../../../../lib/password";
@@ -26,12 +27,6 @@ const loginSchema = z.object({
 });
 
 const invalid = () => Response.json({ error: "invalid_credentials" }, { status: 401 });
-
-function clientIp(req: Request): string {
-  const forwarded = req.headers.get("x-forwarded-for");
-  const first = forwarded?.split(",")[0]?.trim();
-  return first && first.length > 0 ? first : "direct";
-}
 
 export async function POST(req: Request): Promise<Response> {
   let raw: unknown;

@@ -215,7 +215,7 @@ Plans:
   4. Trial для email-аккаунтов защищён от фарма
   5. Кнопка «Войти через Telegram» корректно позиционирована на десктопе
 
-**Plans**: 4/4 plans executed + 3 gap-closure plans (UAT G-06-4a, G-06-4b, G-06-9)
+**Plans**: 7/7 plans executed + 3 gap-closure plans (UAT G-06-4a, G-06-4b, G-06-9)
 
 Plans:
 
@@ -234,9 +234,9 @@ Plans:
 
 **Gap closure** *(UAT 2026-10-05: G-06-4a, G-06-4b, G-06-9)*
 
-- [ ] 06-05-PLAN.md — In-flow widget injector, off next/script (G-06-4a, AUTH-06)
-- [ ] 06-06-PLAN.md — Bot-redirect login spine: token + routes + /start bind (G-06-4b, AUTH-02)
-- [ ] 06-07-PLAN.md — Bot button on /login + email-only cabinet + userId trial (G-06-4b, G-06-9)
+- [x] 06-05-PLAN.md — In-flow widget injector, off next/script (G-06-4a, AUTH-06)
+- [x] 06-06-PLAN.md — Bot-redirect login spine: token + routes + /start bind (G-06-4b, AUTH-02)
+- [x] 06-07-PLAN.md — Bot button on /login + email-only cabinet + userId trial (G-06-4b, G-06-9)
 
 **UI hint**: yes
 
@@ -252,4 +252,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 3. Payments | 7/7 | Needs Review | 2026-10-03 |
 | 4. Support & Retention | 8/8 | Needs Review | 2026-10-03 |
 | 5. Admin & Deploy | 7/7 | Needs Review | 2026-10-03 |
-| 6. Email Auth | 4/4 | Needs Review | 2026-10-05 |
+| 6. Email Auth | 7/7 | In Progress|  |

@@ -12,6 +12,7 @@ import { POST as loginPOST } from "../../app/api/auth/email/login/route";
 import { POST as logoutPOST } from "../../app/api/auth/email/logout/route";
 import { POST as linkPOST } from "../../app/api/auth/email/link/route";
 import { POST as unlinkPOST } from "../../app/api/auth/email/unlink/route";
+import { POST as changePOST } from "../../app/api/auth/email/password/change/route";
 import { SESSION_COOKIE, signSession, verifySession } from "../../lib/auth";
 import { claimTrialByUserId } from "../../lib/keys-service";
 import { prisma } from "../../lib/prisma";
@@ -352,5 +353,184 @@ describe("account linking (D-81 merge + D-93 unlink)", () => {
       userId: survivorId,
       telegramId: null,
     });
+  });
+});
+
+describe("account linking edges + change-password (AUTH-03/AUTH-05)", () => {
+  const RUN3 = `${RUN}-edge`;
+  const EMAIL_A = `phase6-edge-a-${RUN3}@example.test`;
+  const EMAIL_B = `phase6-edge-b-${RUN3}@example.test`;
+  const EMAIL_FARM_1 = `phase6-farm-1-${RUN3}@example.test`;
+  const EMAIL_FARM_2 = `phase6-farm-2-${RUN3}@example.test`;
+  const TG_REPEAT = 210000012;
+  const TG_TAKEN = 210000013;
+  const NEW_PASSWORD = "rotated-throwaway-456";
+  const widgetHashes: string[] = [];
+
+  function postLink(body: unknown): Promise<Response> {
+    return linkPOST(
+      new Request("http://localhost/api/auth/email/link", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      }),
+    );
+  }
+
+  function trackPayload(telegramId: number, tag: string) {
+    // Vary a signed field per use: identical fields within one second would
+    // reproduce the same hash and trip the replay guard instead of the edge.
+    const payload = widgetPayload(telegramId, { first_name: tag });
+    widgetHashes.push(payload.hash as string);
+    return payload;
+  }
+
+  beforeAll(async () => {
+    await cleanup();
+  });
+  afterAll(async () => {
+    clearAuth();
+    await prisma.user.deleteMany({ where: { telegramId: { in: [BigInt(TG_REPEAT), BigInt(TG_TAKEN)] } } });
+    await prisma.user.deleteMany({
+      where: { email: { in: [EMAIL_A, EMAIL_B, EMAIL_FARM_1, EMAIL_FARM_2] } },
+    });
+    if (widgetHashes.length > 0) {
+      await prisma.replayCache.deleteMany({ where: { hash: { in: widgetHashes } } });
+    }
+  });
+
+  it("repeat link of the same Telegram is idempotent 200 (assumption, specless probe)", async () => {
+    expect(await postRegister({ email: EMAIL_A, password: PASSWORD })).toMatchObject({
+      status: 200,
+    });
+    const survivorId = await userIdFor(EMAIL_A);
+    await prisma.user.create({ data: { telegramId: BigInt(TG_REPEAT) } });
+
+    await authorize(survivorId, null);
+    const first = await postLink(trackPayload(TG_REPEAT, "first"));
+    expect(first.status).toBe(200);
+    expect(await first.json()).toEqual({ ok: true, merged: true });
+
+    const second = await postLink(trackPayload(TG_REPEAT, "second"));
+    expect(second.status).toBe(200);
+    expect(await second.json()).toEqual({ ok: true, merged: false });
+
+    await expect(
+      prisma.user.findMany({ where: { telegramId: BigInt(TG_REPEAT) } }),
+    ).resolves.toHaveLength(1);
+  });
+
+  it("link of a Telegram bound to another email account is 409 with no merge", async () => {
+    expect(await postRegister({ email: EMAIL_B, password: PASSWORD })).toMatchObject({
+      status: 200,
+    });
+    const attackerId = await userIdFor(EMAIL_B);
+    // Victim: an already-linked account (email + password + telegram).
+    const victim = await prisma.user.create({
+      data: {
+        email: `phase6-victim-${RUN3}@example.test`,
+        passwordHash: "argon2id-fixture-hash",
+        telegramId: BigInt(TG_TAKEN),
+      },
+      select: { id: true },
+    });
+    try {
+      await authorize(attackerId, null);
+      const res = await postLink(trackPayload(TG_TAKEN, "steal"));
+      expect(res.status).toBe(409);
+      expect(await res.json()).toEqual({ error: "telegram_taken" });
+
+      // Nothing merged: victim intact, attacker still telegram-less.
+      await expect(
+        prisma.user.findUnique({ where: { id: victim.id } }),
+      ).resolves.toMatchObject({ telegramId: BigInt(TG_TAKEN) });
+      await expect(
+        prisma.user.findUnique({ where: { id: attackerId }, select: { telegramId: true } }),
+      ).resolves.toMatchObject({ telegramId: null });
+    } finally {
+      await prisma.user.deleteMany({
+        where: { email: `phase6-victim-${RUN3}@example.test` },
+      });
+    }
+  });
+
+  it("unlink without a session is 401", async () => {
+    clearAuth();
+    const res = await unlinkPOST(
+      new Request("http://localhost/api/auth/email/unlink", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ confirm: true }),
+      }),
+    );
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: "unauthorized" });
+  });
+
+  it("change with the wrong current password is 401 and rotates nothing", async () => {
+    const survivorId = await userIdFor(EMAIL_A);
+    await authorize(survivorId, TG_REPEAT);
+    const res = await changePOST(
+      new Request("http://localhost/api/auth/email/password/change", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ currentPassword: "wrong-throwaway-999", newPassword: NEW_PASSWORD }),
+      }),
+    );
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: "current_password_wrong" });
+
+    // Old password still works — nothing rotated.
+    expect(await postLogin({ email: EMAIL_A, password: PASSWORD })).toMatchObject({
+      status: 200,
+    });
+  });
+
+  it("change with the right current password rotates the hash and re-mints", async () => {
+    const survivorId = await userIdFor(EMAIL_A);
+    await authorize(survivorId, TG_REPEAT);
+    const res = await changePOST(
+      new Request("http://localhost/api/auth/email/password/change", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ currentPassword: PASSWORD, newPassword: NEW_PASSWORD }),
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+
+    // Re-minted session keeps the linked tid under the same uid.
+    const secret = process.env["SESSION_SECRET"];
+    if (!secret) throw new Error("SESSION_SECRET must be set (dummy throwaway OK)");
+    await expect(verifySession(sessionToken(res), secret)).resolves.toEqual({
+      userId: survivorId,
+      telegramId: TG_REPEAT,
+    });
+
+    // New password logs in; old one is dead.
+    expect(await postLogin({ email: EMAIL_A, password: NEW_PASSWORD })).toMatchObject({
+      status: 200,
+    });
+    const stale = await postLogin({ email: EMAIL_A, password: PASSWORD });
+    expect(stale.status).toBe(401);
+  });
+
+  it("trial farm boundary (AUTH-05): one trial per account, N emails need N mailboxes", async () => {
+    // Documented enforcement boundary: registration does NOT require a
+    // mailbox proof in Phase 6, so two distinct email accounts each claim
+    // independently (allowed). The atomic claim still blocks double-claim
+    // on the SAME account — farming without N mailboxes is impossible only
+    // insofar as each account is a distinct email.
+    for (const email of [EMAIL_FARM_1, EMAIL_FARM_2]) {
+      expect(await postRegister({ email, password: PASSWORD })).toMatchObject({
+        status: 200,
+      });
+    }
+    const first = await userIdFor(EMAIL_FARM_1);
+    const second = await userIdFor(EMAIL_FARM_2);
+    await expect(claimTrialByUserId(first)).resolves.toBe(true);
+    await expect(claimTrialByUserId(second)).resolves.toBe(true);
+    await expect(claimTrialByUserId(first)).resolves.toBe(false);
+    await expect(claimTrialByUserId(second)).resolves.toBe(false);
   });
 });

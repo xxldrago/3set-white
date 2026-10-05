@@ -8,6 +8,7 @@ import { z } from "zod";
 import { buildSessionCookie, signSession } from "../../../../../lib/auth";
 import { env } from "../../../../../lib/env";
 import { logger } from "../../../../../lib/logger";
+import { sendWelcomeMail } from "../../../../../lib/mail";
 import { hashPassword } from "../../../../../lib/password";
 import { prisma } from "../../../../../lib/prisma";
 
@@ -66,8 +67,10 @@ export async function POST(req: Request): Promise<Response> {
       }
       throw err;
     }
-    // 06-03 (D-90): welcome mail via lib/mail — fire-and-forget hook point,
-    // never blocks the 200.
+    // 06-03 (D-90): welcome mail — fire-and-forget, never blocks the 200.
+    // A mail failure must not fail registration: sendMail logs the outcome
+    // internally, the rejection is swallowed here by contract.
+    void sendWelcomeMail(email).catch(() => {});
     const token = await signSession(user.id, null, env.SESSION_SECRET);
     logger.info({ route: "email-register", outcome: "issued" });
     return Response.json(

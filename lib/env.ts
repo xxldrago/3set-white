@@ -22,6 +22,17 @@ export const envSchema = z.object({
   PLATEGA_SECRET: z.string().min(1, "PLATEGA_SECRET is required"),
   PLATEGA_BASE_URL: z.string().url().default("https://app.platega.io"),
   APP_BASE_URL: z.string().url().default("http://localhost:3000"),
+  // Own SMTP relay for Phase 6 mail (D-87/D-90, 06-03). Server-only — never
+  // a NEXT_PUBLIC_* var. All OPTIONAL on purpose: without SMTP_HOST/SMTP_FROM
+  // `lib/mail.ts` degrades to a logged no-op (dev/test need no credentials;
+  // production relay setup is an owner user_setup item). Fail-fast still
+  // applies to set-but-malformed values (bad port, non-email FROM).
+  SMTP_HOST: z.string().min(1, "SMTP_HOST is required (prod relay host)").optional(),
+  SMTP_PORT: z.coerce.number().int().positive().default(587),
+  SMTP_USER: z.string().min(1, "SMTP_USER is required (relay auth login)").optional(),
+  SMTP_PASS: z.string().min(1, "SMTP_PASS is required (relay auth password)").optional(),
+  SMTP_FROM: z.string().email("SMTP_FROM must be an email address").optional(),
+  SMTP_SECURE: z.stringbool().default(false),
   // White Label subscription host (D-72/D-74, OPS-02). The provider returns
   // subscription links on this host; `lib/whitelabel.ts` verifies the returned
   // URL against it and falls back to the provider URL on mismatch — the host is

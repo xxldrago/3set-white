@@ -191,3 +191,41 @@ export async function checkRegistrationRateLimit(ip: string): Promise<RateLimitD
 export async function recordRegistrationAttempt(ip: string): Promise<RateLimitDecision> {
   return recordFailedLogin(registrationKey(ip), EMAIL_ONLY_IP);
 }
+
+// ---------------------------------------------------------------------------
+// Reset-mail throttle (CR-01, plan 06-14). The UNAUTHENTICATED password-reset
+// request route must NEVER write the login account-wide sentinel: doing so lets
+// five anonymous reset requests drive `(<email>, EMAIL_ONLY_IP)` to the lock
+// threshold and deny the victim's next login (accounts-lockout DoS). The reset
+// counter therefore lives under its own namespace — `__reset__:<normalizedEmail>`
+// in the `email` column, `EMAIL_ONLY_IP` in `ip` — so its account-wide row is
+// `("__reset__:<email>", "")`, disjoint from login's `(<email>, "")`. D-84
+// backoff/lock is preserved, in isolation: the reset path only ever gate-checks
+// and bumps its own namespaced rows.
+// ---------------------------------------------------------------------------
+
+/** Namespace prefix isolating reset-mail counters from login counters. */
+const RESET_NAMESPACE = "__reset__:";
+
+/** Reset counter key for one normalized email (namespaced; never a login key). */
+function resetKey(email: string): string {
+  return `${RESET_NAMESPACE}${normalizeEmail(email)}`;
+}
+
+/**
+ * Pre-reset gate. Keyed on the namespaced email so a locked reset counter never
+ * aliases the login lock (CR-01). Denies with the server-computed
+ * `retryAfterSec` once the `__reset__:` lock engages.
+ */
+export async function checkResetRateLimit(email: string, ip: string): Promise<RateLimitDecision> {
+  return checkLoginRateLimit(resetKey(email), ip);
+}
+
+/**
+ * Record one reset request for the namespaced key. Called after the gate on
+ * every parsed request, so a reset-mail flood still trips D-84's lock — but
+ * only in the `__reset__:` namespace, never the login account row.
+ */
+export async function recordResetAttempt(email: string, ip: string): Promise<RateLimitDecision> {
+  return recordFailedLogin(resetKey(email), ip);
+}

@@ -123,7 +123,14 @@ function probeUnlink(token: string): Promise<Response> {
 }
 
 async function cleanup(): Promise<void> {
-  await prisma.loginAttempt.deleteMany({ where: { email: { in: EMAILS } } });
+  // CR-01 (06-14): reset requests write `__reset__:<email>` counters; list this
+  // run's namespaced addresses explicitly (never a bare prefix — files would
+  // clobber sibling suites' in-flight rows) alongside the raw login counters.
+  await prisma.loginAttempt.deleteMany({
+    where: {
+      email: { in: [...EMAILS, ...EMAILS.map((email) => `__reset__:${email}`)] },
+    },
+  });
   await prisma.loginAttempt.deleteMany({
     where: { email: { startsWith: REGISTER_IP_PREFIX } },
   });

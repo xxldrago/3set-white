@@ -7,16 +7,23 @@
 // always 200-shaped `{ ok: true }` (a mail-transport failure maps to a
 // generic 500 `reset_error`, never provider text — T-06-08).
 //
-// Abuse throttle reuses the login rate-limit counter per email+IP (D-84):
-// locked → 429 + server `retryAfterSec`; the current request still completes,
-// the lock bites on the next one (same discipline as login).
+// Abuse throttle is its OWN `__reset__:<email>`-namespaced counter (D-84,
+// CR-01), deliberately NOT the login counter: this route is unauthenticated
+// and discloses account existence (D-89), so if it bumped the login
+// account-wide row, five anonymous reset requests would lock a known email out
+// of login. locked → 429 + server `retryAfterSec`; the current request still
+// completes, the lock bites on the next one (same discipline as login, in a
+// disjoint namespace).
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import { clientIp } from "../../../../../../lib/client-ip";
 import { logger } from "../../../../../../lib/logger";
 import { MailError, sendResetMail } from "../../../../../../lib/mail";
 import { prisma } from "../../../../../../lib/prisma";
-import { checkLoginRateLimit, recordFailedLogin } from "../../../../../../lib/auth-rate-limit";
+import {
+  checkResetRateLimit,
+  recordResetAttempt,
+} from "../../../../../../lib/auth-rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +49,7 @@ export async function POST(req: Request): Promise<Response> {
   const ip = clientIp(req);
 
   try {
-    const gate = await checkLoginRateLimit(email, ip);
+    const gate = await checkResetRateLimit(email, ip);
     if (!gate.allowed) {
       logger.warn({ route: "email-reset-request", outcome: "rate_limited" });
       return Response.json(
@@ -54,9 +61,10 @@ export async function POST(req: Request): Promise<Response> {
       where: { email },
       select: { id: true },
     });
-    // The shared per-email+IP counter also throttles reset-mail spam: after
-    // MAX_ATTEMPTS rapid requests the NEXT one 429s (login discipline).
-    await recordFailedLogin(email, ip);
+    // The namespaced reset counter also throttles reset-mail spam: after
+    // MAX_ATTEMPTS rapid requests the NEXT one 429s — while the login
+    // account-wide row is never touched (CR-01 isolation).
+    await recordResetAttempt(email, ip);
     if (!user) {
       // Honest no-account answer (D-89) — accepted enumeration, owner-approved.
       logger.warn({ route: "email-reset-request", outcome: "no_account" });

@@ -74,7 +74,12 @@ async function cleanup(): Promise<void> {
   await prisma.passwordReset.deleteMany({
     where: { user: { email: { in: emails } } },
   });
-  await prisma.loginAttempt.deleteMany({ where: { email: { in: emails } } });
+  // CR-01 (06-14): reset requests now write `__reset__:<email>` counters; list
+  // this run's namespaced addresses so the rename leaves no residue. Raw-email
+  // `passwordReset`/`user` deletes above stay byte-identical.
+  await prisma.loginAttempt.deleteMany({
+    where: { email: { in: [...emails, `__reset__:${EMAIL}`, `__reset__:${GHOST}`] } },
+  });
   await prisma.loginAttempt.deleteMany({
     where: { email: { startsWith: REGISTER_IP_PREFIX } },
   });
@@ -237,7 +242,21 @@ describe("reset edges: token states, mail failure, throttling (AUTH-04)", () => 
     await prisma.passwordReset.deleteMany({
       where: { user: { email: { in: emails } } },
     });
-    await prisma.loginAttempt.deleteMany({ where: { email: { in: emails } } });
+    // CR-01 (06-14): also remove this run's `__reset__:` namespaced counters
+    // (EDGE/RL/CC send reset requests; WELCOME_FAIL is harmless to include).
+    await prisma.loginAttempt.deleteMany({
+      where: {
+        email: {
+          in: [
+            ...emails,
+            `__reset__:${EDGE}`,
+            `__reset__:${RL}`,
+            `__reset__:${CC}`,
+            `__reset__:${WELCOME_FAIL}`,
+          ],
+        },
+      },
+    });
     await prisma.user.deleteMany({ where: { email: { in: emails } } });
   });
 

@@ -26,6 +26,8 @@ interface AdminConfirmPanelProps {
   url: string;
   payload: Record<string, unknown>;
   triggerClassName?: string;
+  onSuccess?: (body: unknown) => void;
+  disabled?: boolean;
 }
 
 const TRIGGER =
@@ -47,6 +49,8 @@ export default function AdminConfirmPanel({
   url,
   payload,
   triggerClassName = TRIGGER,
+  onSuccess,
+  disabled = false,
 }: AdminConfirmPanelProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -107,17 +111,18 @@ export default function AdminConfirmPanel({
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error('admin_mutation_failed');
+      onSuccess?.(await res.json());
       close();
       router.refresh();
     } catch {
       setError(true);
       setPending(false);
     }
-  }, [close, router, url, payload]);
+  }, [close, onSuccess, router, url, payload]);
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className={triggerClassName}>
+      <button type="button" disabled={disabled} onClick={() => setOpen(true)} className={triggerClassName}>
         {triggerLabel}
       </button>
     );

@@ -31,6 +31,7 @@ import {
   NOTIFY_TICKET_REPLY,
   REMIND_EXPIRY,
   BROADCAST,
+  BALANCE_ALERT,
   claimNextJob,
   claimNextNotification,
   enqueueNotifyFailed,
@@ -49,6 +50,10 @@ import {
 } from "./bot-payments";
 import { dispatchReminder, dispatchTicketNotification } from "./ticket-notify";
 import { dispatchBroadcast, recordBroadcastOutcome } from "./broadcast";
+import { classifyBalance, dispatchBalanceAlert, parseAdminTelegramIds } from "./balance-alert";
+import { loadArtemidaStats } from "./admin-stats";
+import { env } from "./env";
+import { enqueueBalanceAlertNotifications } from "./outbox";
 import { enqueueReminderScan } from "./reminders-service";
 import {
   TRIAL_ERROR_CODE,
@@ -68,6 +73,7 @@ const DRAIN_INTERVAL_MS = 5_000;
 const RECONCILE_INTERVAL_MS = 60 * 60 * 1_000;
 /** Expiry-reminder scan cadence: once a day (D-60). The dedupe key is per-day. */
 const REMINDER_INTERVAL_MS = 24 * 60 * 60 * 1_000;
+const BALANCE_ALERT_INTERVAL_MS = 60 * 60 * 1_000;
 /** Max fulfillment attempts before a retryable order is declared failed. */
 export const MAX_FULFILL_ATTEMPTS = 5;
 const BACKOFF_BASE_MS = 5_000;
@@ -333,6 +339,7 @@ async function drainDeliveryNotifications(telegram: TelegramSender): Promise<voi
   await drainNotificationType(NOTIFY_TICKET_REPLY, dispatchTicketNotification, telegram);
   await drainNotificationType(REMIND_EXPIRY, dispatchReminder, telegram);
   await drainNotificationType(BROADCAST, dispatchBroadcast, telegram);
+  await drainNotificationType(BALANCE_ALERT, dispatchBalanceAlert, telegram);
 }
 
 export type ReconcileOutcome = { scanned: number; recovered: number };
@@ -413,6 +420,21 @@ export function startReminderTick(): NodeJS.Timeout {
   return unref(setInterval(guard("reminders", runReminderScan), REMINDER_INTERVAL_MS));
 }
 
+export async function runBalanceAlert(): Promise<void> {
+  const stats = await loadArtemidaStats();
+  const status = classifyBalance(stats.balance, env.ARTEMIDA_LOW_BALANCE_RUB);
+  if (status === 'unknown' || status === 'ok') return;
+  const level = status === 'critical' ? 'error' : 'warn';
+  logger[level]({ route: 'worker', outcome: 'low_balance', band: status });
+  const date = new Date().toISOString().slice(0, 10);
+  await enqueueBalanceAlertNotifications(date, status, parseAdminTelegramIds(env.ADMIN_TELEGRAM_IDS));
+}
+
+export function startBalanceAlertTick(): NodeJS.Timeout {
+  void runBalanceAlert().catch(() => logger.error({ route: 'worker', outcome: 'balance_alert_failed' }));
+  return unref(setInterval(guard('balance_alert', runBalanceAlert), BALANCE_ALERT_INTERVAL_MS));
+}
+
 /**
  * The production drain sender: the shared `lib/bot.ts` Telegraf singleton's
  * `telegram` surface. Imported lazily so the module (and Telegraf) is only
@@ -453,6 +475,7 @@ export function startWorker(): WorkerHandle {
   );
   const reconcileTimer = startReconcileTick();
   const reminderTimer = startReminderTick();
+  const balanceAlertTimer = startBalanceAlertTick();
 
   const handle: WorkerHandle = {
     started: true,
@@ -462,6 +485,7 @@ export function startWorker(): WorkerHandle {
       clearInterval(drainTimer);
       clearInterval(reconcileTimer);
       clearInterval(reminderTimer);
+      clearInterval(balanceAlertTimer);
       delete g.__setwhiteWorker;
     },
   };

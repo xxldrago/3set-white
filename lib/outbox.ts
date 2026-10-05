@@ -137,6 +137,8 @@ export const NOTIFY_TICKET_REPLY = "notify-ticket-reply";
 export const REMIND_EXPIRY = "remind-expiry";
 /** Deliver one administrator broadcast to its owning user chat. */
 export const BROADCAST = "broadcast";
+/** Deliver a deduplicated low-balance alert to one configured administrator. */
+export const BALANCE_ALERT = "balance-alert";
 
 export interface NotificationInput {
   type: string;
@@ -180,6 +182,23 @@ export async function enqueueBroadcastNotifications(
       type: BROADCAST,
       dedupeKey: `broadcast:${broadcastId}:${userId}`,
       userId,
+    })),
+    skipDuplicates: true,
+  });
+  return result.count;
+}
+
+export async function enqueueBalanceAlertNotifications(
+  date: string,
+  band: 'low' | 'critical',
+  telegramIds: number[],
+): Promise<number> {
+  if (telegramIds.length === 0) return 0;
+  const result = await prisma.notification.createMany({
+    data: telegramIds.map((telegramId) => ({
+      type: BALANCE_ALERT,
+      dedupeKey: `balance:${date}:${band}:${telegramId}`,
+      userId: null,
     })),
     skipDuplicates: true,
   });

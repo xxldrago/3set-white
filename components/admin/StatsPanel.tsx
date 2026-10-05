@@ -2,6 +2,10 @@ import { t } from '@/lib/i18n';
 import { loadArtemidaStats, loadDbStats, type ArtemidaStats, type DbStats } from '@/lib/admin-stats';
 import { Suspense } from 'react';
 import PeriodSelector from './PeriodSelector';
+import BalanceChip from './BalanceChip';
+import BalanceAlert from './BalanceAlert';
+import { classifyBalance } from '@/lib/balance-alert';
+import { env } from '@/lib/env';
 
 const CARD = 'flex flex-col gap-2 rounded-2xl border border-black/10 p-6 dark:border-white/15';
 const GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3';
@@ -21,10 +25,11 @@ function DbCards({ stats }: { stats: DbStats }) {
 
 function ArtemidaCards({ stats }: { stats: ArtemidaStats }) {
   const balance = stats.balance ? (stats.balance.unlimited ? t('admin.statsUnlimited') : `${money.format(stats.balance.balance)} ₽`) : '—';
+  const balanceStatus = classifyBalance(stats.balance, env.ARTEMIDA_LOW_BALANCE_RUB);
   return <div className={GRID}>
     <MetricCard label={t('admin.statsKeys')} value={stats.keys === null ? '—' : money.format(stats.keys)} />
     <MetricCard label={t('admin.statsDevices')} value={stats.devices === null ? '—' : money.format(stats.devices)} />
-    <MetricCard label={t('admin.statsBalance')} value={balance} />
+    <div className="flex flex-col gap-2"><MetricCard label={t('admin.statsBalance')} value={balance} /><BalanceChip status={balanceStatus} /><BalanceAlert status={balanceStatus} /></div>
   </div>;
 }
 

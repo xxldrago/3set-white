@@ -215,7 +215,7 @@ Plans:
   4. Trial для email-аккаунтов защищён от фарма
   5. Кнопка «Войти через Telegram» корректно позиционирована на десктопе
 
-**Plans**: 4/4 plans executed
+**Plans**: 4/4 plans executed + 3 gap-closure plans (UAT G-06-4a, G-06-4b, G-06-9)
 
 Plans:
 
@@ -231,6 +231,12 @@ Plans:
 **Wave 3** *(blocked on Waves 1, 2)*
 
 - [x] 06-04-PLAN.md — Login rework + reset pages + Account section, AUTH-06 layout fix (AUTH-01, AUTH-02, AUTH-06)
+
+**Gap closure** *(UAT 2026-10-05: G-06-4a, G-06-4b, G-06-9)*
+
+- [ ] 06-05-PLAN.md — In-flow widget injector, off next/script (G-06-4a, AUTH-06)
+- [ ] 06-06-PLAN.md — Bot-redirect login spine: token + routes + /start bind (G-06-4b, AUTH-02)
+- [ ] 06-07-PLAN.md — Bot button on /login + email-only cabinet + userId trial (G-06-4b, G-06-9)
 
 **UI hint**: yes
 

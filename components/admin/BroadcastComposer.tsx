@@ -32,7 +32,7 @@ export default function BroadcastComposer() {
         disabled={!trimmed}
         triggerClassName="flex h-11 items-center justify-center rounded-full bg-foreground px-5 text-background disabled:opacity-50"
       />
-      {result && <div role="status" className="flex items-center gap-3"><BroadcastStatusChip status={result.status ?? 'unknown'} />{result.failed ? <button type="button" className="text-sm underline">{t('common.retry')}</button> : null}</div>}
+      {result && <div role="status" className="flex items-center gap-3"><BroadcastStatusChip status={result.status ?? 'unknown'} />{result.failed ? <button type="button" onClick={() => setResult(null)} className="text-sm underline">{t('common.retry')}</button> : null}</div>}
     </section>
   );
 }

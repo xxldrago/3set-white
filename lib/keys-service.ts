@@ -313,6 +313,32 @@ export async function releaseTrialOnFailure(telegramId: bigint): Promise<void> {
   });
 }
 
+/**
+ * Phase 6 email identity (D-80): the same atomic one-trial-per-account claim
+ * as `claimTrial`, keyed by the users.id row instead of telegramId. Email
+ * accounts without Telegram claim their trial through this path; the
+ * `trialUsed` flag stays the single source of truth (trialUsed OR on merge
+ * in plan 06-02 keeps it that way).
+ */
+export async function claimTrialByUserId(userId: number): Promise<boolean> {
+  const { count } = await prisma.user.updateMany({
+    where: { id: userId, trialUsed: false },
+    data: { trialUsed: true },
+  });
+  return count === 1;
+}
+
+/**
+ * UserId-keyed counterpart of `releaseTrialOnFailure`: releases only an
+ * in-flight email-trial claim, never a recorded success.
+ */
+export async function releaseTrialOnFailureByUserId(userId: number): Promise<void> {
+  await prisma.user.updateMany({
+    where: { id: userId, trialUsed: true, trialKeyId: null },
+    data: { trialUsed: false },
+  });
+}
+
 function toBigIntOrNull(value: number | null): bigint | null {
   if (value === null || !Number.isFinite(value)) return null;
   return BigInt(Math.trunc(value));

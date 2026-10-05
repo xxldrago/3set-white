@@ -63,11 +63,14 @@ describe("auth flow (Widget → session → users row)", () => {
     expect(setCookie).toContain(`${SESSION_COOKIE}=`);
     expect(setCookie).toContain("HttpOnly");
 
-    // Session round-trips to the same telegram id.
+    // Session round-trips to the same telegram id (Phase 6: uid subject
+    // plus tid claim; the users.id row is the subject, tid rides along).
     const token = setCookie.split(";")[0]?.split("=")[1] ?? "";
     const secret = process.env["SESSION_SECRET"];
     if (!secret) throw new Error("SESSION_SECRET must be set (dummy throwaway OK)");
-    await expect(verifySession(token, secret)).resolves.toBe(TEST_TELEGRAM_ID);
+    const claims = await verifySession(token, secret);
+    expect(claims?.telegramId).toBe(TEST_TELEGRAM_ID);
+    expect(typeof claims?.userId).toBe("number");
 
     // Persisted row reads back exactly once.
     const rows = await prisma.user.findMany({

@@ -13,8 +13,10 @@ import { POST as logoutPOST } from "../../app/api/auth/email/logout/route";
 import { POST as linkPOST } from "../../app/api/auth/email/link/route";
 import { POST as unlinkPOST } from "../../app/api/auth/email/unlink/route";
 import { POST as changePOST } from "../../app/api/auth/email/password/change/route";
+import { POST as trialPOST } from "../../app/api/trial/route";
 import { SESSION_COOKIE, signSession, verifySession } from "../../lib/auth";
-import { claimTrialByUserId } from "../../lib/keys-service";
+import { artemida, type NormalizedKey } from "../../lib/artemida";
+import { claimTrialByUserId, listKeysByUserId } from "../../lib/keys-service";
 import { prisma } from "../../lib/prisma";
 
 // Session-gated routes (link/unlink/change) read next/headers cookies() —
@@ -532,5 +534,141 @@ describe("account linking edges + change-password (AUTH-03/AUTH-05)", () => {
     await expect(claimTrialByUserId(second)).resolves.toBe(true);
     await expect(claimTrialByUserId(first)).resolves.toBe(false);
     await expect(claimTrialByUserId(second)).resolves.toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Plan 06-07 (G-06-9): the session-gated /api/trial route drives the real
+// provider call through a spied `artemida.createTrial` (no network), the real
+// DB claim, and the real keys_cache write. An email-only session claims once
+// under `email:{userId}`; a Telegram-linked session keeps the TG path; the
+// userId-keyed cabinet read is scoped to the caller (T-06-07-02/03).
+// ---------------------------------------------------------------------------
+function fakeTrialKey(keyId: string, customerRef: string): NormalizedKey {
+  return {
+    id: keyId,
+    name: "Trial",
+    status: "active",
+    isTrial: true,
+    expiresAt: new Date(Date.now() + 86_400_000).toISOString(),
+    deviceLimit: 2,
+    devices: 0,
+    subscriptionUrl: "https://example.test/sub/email-trial",
+    customerRef,
+    trafficUsedBytes: 0,
+    trafficLimitBytes: null,
+  };
+}
+
+describe("email-only trial via /api/trial + cabinet read (G-06-9)", () => {
+  const RUN4 = `${RUN}-trial07`;
+  const EMAIL_TRIAL = `phase6-trial-${RUN4}@example.test`;
+  const EMAIL_TRIAL_B = `phase6-trial-b-${RUN4}@example.test`;
+  const EMAIL_TG = `phase6-trial-tg-${RUN4}@example.test`;
+  const TG_TRIAL = 210000014;
+  const KEY_A = `key-email-trial-${RUN4}-a`;
+  const KEY_B = `key-email-trial-${RUN4}-b`;
+  const KEY_TG = `key-tg-trial-${RUN4}`;
+
+  function postTrial(): Promise<Response> {
+    return trialPOST();
+  }
+
+  async function purge(): Promise<void> {
+    await prisma.keyCache.deleteMany({ where: { keyId: { in: [KEY_A, KEY_B, KEY_TG] } } });
+    await prisma.user.deleteMany({
+      where: { email: { in: [EMAIL_TRIAL, EMAIL_TRIAL_B, EMAIL_TG] } },
+    });
+    await prisma.user.deleteMany({ where: { telegramId: BigInt(TG_TRIAL) } });
+  }
+
+  beforeAll(async () => {
+    vi.restoreAllMocks();
+    await purge();
+  });
+  afterAll(async () => {
+    clearAuth();
+    vi.restoreAllMocks();
+    await purge();
+  });
+
+  it("email-only POST /api/trial succeeds once, then 409 trial_used with no provider retry", async () => {
+    expect(await postRegister({ email: EMAIL_TRIAL, password: PASSWORD })).toMatchObject({
+      status: 200,
+    });
+    const userId = await userIdFor(EMAIL_TRIAL);
+    await authorize(userId, null);
+
+    const createTrial = vi
+      .spyOn(artemida, "createTrial")
+      .mockResolvedValue(fakeTrialKey(KEY_A, `email:${userId}`));
+
+    const first = await postTrial();
+    expect(first.status).toBe(200);
+    const body = (await first.json()) as { ok: boolean; key: { id: string } };
+    expect(body.ok).toBe(true);
+    expect(body.key.id).toBe(KEY_A);
+    // Provider called under the email-scoped ownership ref (D-80).
+    expect(createTrial).toHaveBeenCalledWith({ customerRef: `email:${userId}` });
+
+    const cached = await prisma.keyCache.findMany({ where: { userId } });
+    expect(cached).toHaveLength(1);
+    expect(cached[0]).toMatchObject({
+      keyId: KEY_A,
+      isTrial: true,
+      customerRef: `email:${userId}`,
+    });
+    await expect(
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { trialUsed: true, trialKeyId: true },
+      }),
+    ).resolves.toMatchObject({ trialUsed: true, trialKeyId: KEY_A });
+
+    const second = await postTrial();
+    expect(second.status).toBe(409);
+    expect(await second.json()).toEqual({ ok: false, reason: "trial_used" });
+    // The loser never reached ARTEMIDA and added no cache row.
+    expect(createTrial).toHaveBeenCalledTimes(1);
+    await expect(prisma.keyCache.count({ where: { userId } })).resolves.toBe(1);
+  });
+
+  it("a Telegram-linked session still takes the TG trial path", async () => {
+    expect(await postRegister({ email: EMAIL_TG, password: PASSWORD })).toMatchObject({
+      status: 200,
+    });
+    const userId = await userIdFor(EMAIL_TG);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { telegramId: BigInt(TG_TRIAL), trialUsed: false, trialKeyId: null },
+    });
+    await authorize(userId, TG_TRIAL);
+
+    const createTrial = vi
+      .spyOn(artemida, "createTrial")
+      .mockResolvedValue(fakeTrialKey(KEY_TG, String(TG_TRIAL)));
+
+    const res = await postTrial();
+    expect(res.status).toBe(200);
+    expect(createTrial).toHaveBeenCalledWith({ customerRef: String(TG_TRIAL) });
+    const cached = await prisma.keyCache.findMany({ where: { userId } });
+    expect(cached).toHaveLength(1);
+    expect(cached[0]).toMatchObject({ keyId: KEY_TG, customerRef: String(TG_TRIAL) });
+  });
+
+  it("listKeysByUserId returns only the caller's rows (second-user isolation)", async () => {
+    expect(await postRegister({ email: EMAIL_TRIAL_B, password: PASSWORD })).toMatchObject({
+      status: 200,
+    });
+    const userA = await userIdFor(EMAIL_TRIAL);
+    const userB = await userIdFor(EMAIL_TRIAL_B);
+    await prisma.keyCache.deleteMany({ where: { keyId: { in: [KEY_A, KEY_B] } } });
+    await prisma.keyCache.create({ data: { userId: userA, keyId: KEY_A, status: "active" } });
+    await prisma.keyCache.create({ data: { userId: userB, keyId: KEY_B, status: "active" } });
+
+    const a = await listKeysByUserId(userA);
+    const b = await listKeysByUserId(userB);
+    expect(a.map((k) => k.id)).toEqual([KEY_A]);
+    expect(b.map((k) => k.id)).toEqual([KEY_B]);
   });
 });

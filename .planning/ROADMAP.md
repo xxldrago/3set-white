@@ -212,7 +212,22 @@ Plans:
   3. Пользователь сбрасывает пароль через ссылку на email
   4. Trial для email-аккаунтов защищён от фарма
   5. Кнопка «Войти через Telegram» корректно позиционирована на десктопе
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+
+**Wave 1** *(identity spine — tracer; owner-gated on one-way D-79)*
+
+- [ ] 06-01-PLAN.md — Schema + userId sessions + Argon2id + backoff + register/login/logout tracer (AUTH-01, AUTH-02)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 06-02-PLAN.md — Link/merge + unlink + change-password, owner-gated on one-way D-81 (AUTH-03, AUTH-05)
+- [ ] 06-03-PLAN.md — SMTP mail + reset request/confirm, 1h one-time tokens (AUTH-04)
+
+**Wave 3** *(blocked on Waves 1, 2)*
+
+- [ ] 06-04-PLAN.md — Login rework + reset pages + Account section, AUTH-06 layout fix (AUTH-01, AUTH-02, AUTH-06)
 **UI hint**: yes
 
 ## Progress

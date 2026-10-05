@@ -18,7 +18,8 @@ const EMAIL_ROTATE = `phase6-rl-rotate-${RUN}@example.test`;
 const EMAIL_SAME = `phase6-rl-same-${RUN}@example.test`;
 const EMAIL_IPONLY = `phase6-rl-iponly-${RUN}@example.test`;
 const EMAIL_RESET = `phase6-rl-reset-${RUN}@example.test`;
-const EMAILS = [EMAIL_ROTATE, EMAIL_SAME, EMAIL_IPONLY, EMAIL_RESET];
+const EMAIL_CONCURRENT = `phase6-rl-concurrent-${RUN}@example.test`;
+const EMAILS = [EMAIL_ROTATE, EMAIL_SAME, EMAIL_IPONLY, EMAIL_RESET, EMAIL_CONCURRENT];
 
 async function cleanup(): Promise<void> {
   await prisma.loginAttempt.deleteMany({ where: { email: { in: EMAILS } } });
@@ -84,6 +85,25 @@ describe("login rate limit (CR-02: per-email lock)", () => {
 
     const after = await prisma.loginAttempt.findMany({ where: { email: EMAIL_RESET } });
     expect(after).toHaveLength(0);
+  });
+
+  it("does not lose increments under a concurrent burst (WR-01: atomic bump)", async () => {
+    // Five failures from five distinct IPs fired in parallel. A read-modify-
+    // write would let them all read attempts=0 and net only +1; the atomic
+    // upsert `increment` must land all five on the account-wide row.
+    await Promise.all(
+      [1, 2, 3, 4, 5].map((i) => recordFailedLogin(EMAIL_CONCURRENT, `203.0.113.${i}`)),
+    );
+
+    const accountRow = await prisma.loginAttempt.findUnique({
+      where: { email_ip: { email: EMAIL_CONCURRENT, ip: EMAIL_ONLY_IP } },
+    });
+    expect(accountRow?.attempts).toBeGreaterThanOrEqual(5);
+    expect(accountRow?.lockedUntil).not.toBeNull();
+
+    const gate = await checkLoginRateLimit(EMAIL_CONCURRENT, "203.0.113.250");
+    expect(gate.allowed).toBe(false);
+    expect(gate.retryAfterSec).toBeGreaterThan(0);
   });
 
   it("allows when no counter row exists", async () => {

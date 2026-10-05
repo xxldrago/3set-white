@@ -100,26 +100,29 @@ export async function checkLoginRateLimit(email: string, ip: string): Promise<Ra
  * `attempts` keeps counting past MAX while the gate holds the row locked.
  */
 async function bumpAttempt(key: AttemptKey): Promise<RateLimitDecision> {
-  const existing = await prisma.loginAttempt.findUnique({
+  // WR-01: one atomic upsert with `attempts: { increment: 1 }` and the lock
+  // derived from the value the increment RETURNED. A read-modify-write let every
+  // request in a parallel burst read the same starting value and write the same
+  // result, netting +1 for N failures — which would weaken the CR-02 lock. The
+  // increment is the atomicity boundary; do NOT also write `lockedUntil: null`
+  // here (a concurrent write could clobber a just-set lock; the gate already
+  // ignores an expired lock because it only denies while `lockedUntil > now`).
+  const row = await prisma.loginAttempt.upsert({
     where: { email_ip: key },
+    update: { attempts: { increment: 1 } },
+    create: { ...key, attempts: 1 },
     select: { attempts: true },
   });
-  const attempts = (existing?.attempts ?? 0) + 1;
+  const attempts = row.attempts;
   if (attempts >= MAX_ATTEMPTS) {
     const lockMs = Math.min(LOCK_MS * 2 ** (attempts - MAX_ATTEMPTS), LOCK_CAP_MS);
     const lockedUntil = new Date(Date.now() + lockMs);
-    await prisma.loginAttempt.upsert({
+    await prisma.loginAttempt.update({
       where: { email_ip: key },
-      update: { attempts, lockedUntil },
-      create: { ...key, attempts, lockedUntil },
+      data: { lockedUntil },
     });
     return { allowed: false, retryAfterSec: Math.ceil(lockMs / 1000) };
   }
-  await prisma.loginAttempt.upsert({
-    where: { email_ip: key },
-    update: { attempts, lockedUntil: null },
-    create: { ...key, attempts },
-  });
   return { allowed: true };
 }
 

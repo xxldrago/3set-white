@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
   // The runner already copies full node_modules; this narrows nothing away.
   outputFileTracingIncludes: {
     "/api/tickets/**": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
+    "/**": ["generated/prisma/**/*"],
   },
 };
 

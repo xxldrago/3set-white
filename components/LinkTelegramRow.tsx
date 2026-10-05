@@ -8,7 +8,7 @@
 // LoginButton itself is login-only and stays untouched.
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Script from 'next/script';
+import TelegramWidgetInjector from './TelegramWidgetInjector';
 import { t } from '@/lib/i18n';
 import TelegramWidgetSlot from './TelegramWidgetSlot';
 import UnlinkConfirmPanel from './UnlinkConfirmPanel';
@@ -116,14 +116,13 @@ export default function LinkTelegramRow({ linked, telegramId }: LinkTelegramRowP
 
       {!linked && linkOpen && BOT_USERNAME && (
         <TelegramWidgetSlot>
-          <Script
-            src="https://telegram.org/js/telegram-widget.js?22"
-            data-telegram-login={BOT_USERNAME}
-            data-size="large"
-            data-onauth="onTelegramLink(user)"
-            data-request-access="write"
-            strategy="afterInteractive"
-          />
+           <TelegramWidgetInjector
+             botUsername={BOT_USERNAME}
+             onAuth={(user) => {
+               void postLink(user);
+             }}
+              requestAccess="write"
+           />
           {linkPending && (
             <div className="h-5 w-32 animate-pulse rounded-full bg-black/5 dark:bg-white/10" aria-hidden />
           )}

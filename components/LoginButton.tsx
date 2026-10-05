@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import Script from 'next/script';
+import TelegramWidgetInjector from './TelegramWidgetInjector';
 import { t } from '@/lib/i18n';
 
 const AUTH_ENDPOINT = '/api/auth/telegram';
@@ -74,14 +74,12 @@ export default function LoginButton() {
     <div className="flex flex-col gap-3">
       {BOT_USERNAME ? (
         <>
-          <Script
-            src="https://telegram.org/js/telegram-widget.js?22"
-            data-telegram-login={BOT_USERNAME}
-            data-size="large"
-            data-onauth="onTelegramAuth(user)"
-            data-request-access="write"
-            strategy="afterInteractive"
-          />
+           <TelegramWidgetInjector
+             botUsername={BOT_USERNAME}
+             onAuth={postPayload}
+             buttonSize="large"
+             requestAccess="write"
+           />
           <p className="text-sm text-zinc-600 dark:text-zinc-400">{t('login.widgetNote')}</p>
         </>
       ) : (

@@ -9,6 +9,12 @@
 // Un-merging merged rows without manual разборка is impossible (D-81,
 // one-way) — the link route surfaces this before the call.
 //
+// Race discipline (WR-06, T-06-12-01/-03): the loser row is re-read and the
+// merge invariants are re-asserted INSIDE the transaction, and Prisma
+// P2002/P2025/P2003 during the merge map to typed outcomes — a concurrent
+// change can never attach a Telegram identity to a conflicting email
+// account, and it can never escape as an uncaught 500.
+//
 // Unlink-last-method is ALLOWED (D-93, T-06-06 accepted): this service never
 // blocks, the UI warns (plan 06-04) via the `lastMethod` hint the unlink
 // route returns on the confirmation_required path.
@@ -51,6 +57,10 @@ export interface UnlinkResult {
  *   (+ PasswordReset + Notification user pins) re-point to the survivor,
  *   trialUsed = OR, trialKeyId keeps first non-null, profile/chatId fields
  *   fill only when the survivor lacks them, then the loser row is deleted.
+ *
+ * The merge decision is made on in-transaction reads; the no-loser fast path
+ * attaches directly but re-enters the transactional merge path on a P2002
+ * race (its pre-read loser is never trusted).
  */
 export async function linkAccounts({
   userId,
@@ -66,8 +76,13 @@ export async function linkAccounts({
   if (!survivor) throw new AccountNotFoundError();
   if (survivor.telegramId === tg) return { merged: false, userId: survivor.id };
 
-  let loser = await prisma.user.findUnique({ where: { telegramId: tg } });
-  if (!loser) {
+  // No-loser fast path: attach the identity directly when the account has no
+  // Telegram identity yet and nothing currently holds this one. The
+  // UNIQUE(telegram_id) constraint is the concurrency arbiter — a lost race
+  // throws P2002 and sends us through the transactional merge path instead of
+  // acting on the stale pre-read row.
+  const existing = await prisma.user.findUnique({ where: { telegramId: tg } });
+  if (!existing && survivor.telegramId === null) {
     try {
       await prisma.user.update({
         where: { id: survivor.id },
@@ -75,17 +90,61 @@ export async function linkAccounts({
       });
       return { merged: false, userId: survivor.id };
     } catch (err: unknown) {
-      // Race: a concurrent link created the TG row between our read and
-      // write — the UNIQUE constraint is the arbiter. Re-read and merge.
+      if (isErrorCode(err, "P2025")) throw new AccountNotFoundError();
       if (!isUniqueViolation(err)) throw err;
-      loser = await prisma.user.findUnique({ where: { telegramId: tg } });
-      if (!loser) throw err;
+      // Race: a concurrent link created the TG row between our read and
+      // write — fall through and merge inside the transaction, which re-reads
+      // the loser rather than using the pre-read row.
     }
   }
-  if (loser.id === survivor.id) return { merged: false, userId: survivor.id };
-  if (loser.email !== null) throw new AccountConflictError();
 
-  await prisma.$transaction(async (tx) => {
+  try {
+    const merged = await mergeTelegramIdentity(survivor.id, tg);
+    return { merged, userId: survivor.id };
+  } catch (err: unknown) {
+    // Typed failures pass straight through; Prisma codes map to typed
+    // outcomes so the route can answer 409/401 instead of a generic 500.
+    if (err instanceof AccountConflictError || err instanceof AccountNotFoundError) {
+      throw err;
+    }
+    if (isErrorCode(err, "P2025")) throw new AccountNotFoundError();
+    if (isErrorCode(err, "P2002") || isErrorCode(err, "P2003")) {
+      throw new AccountConflictError();
+    }
+    throw err;
+  }
+}
+
+/**
+ * Re-point every loser-scoped row onto the survivor and delete the loser, all
+ * inside one transaction. Invariants (T-06-12-01/-03) are re-asserted on the
+ * in-transaction reads. Returns `true` only when a real merge happened;
+ * `false` for an idempotent attach/no-op.
+ */
+async function mergeTelegramIdentity(survivorId: number, tg: bigint): Promise<boolean> {
+  return prisma.$transaction(async (tx) => {
+    const survivor = await tx.user.findUnique({ where: { id: survivorId } });
+    if (!survivor) throw new AccountNotFoundError();
+
+    // Idempotent: a concurrent link attached this identity in the meantime.
+    if (survivor.telegramId === tg) return false;
+
+    const loser = await tx.user.findUnique({ where: { telegramId: tg } });
+    if (!loser) {
+      // The identity is free now (the pre-read row vanished). Attach it, but
+      // only if the survivor's identity slot is still empty.
+      if (survivor.telegramId !== null) throw new AccountConflictError();
+      await tx.user.update({ where: { id: survivorId }, data: { telegramId: tg } });
+      return false;
+    }
+
+    // Merge invariants re-asserted on the in-transaction rows: never merge
+    // onto an email-bearing account and never overwrite a different identity
+    // already bound to the survivor (T-06-12-01, T-06-12-03).
+    if (loser.id === survivorId) return false;
+    if (loser.email !== null) throw new AccountConflictError();
+    if (survivor.telegramId !== null) throw new AccountConflictError();
+
     // KeyCache @@unique([userId, keyId]): drop loser dupes the survivor
     // already holds so the bulk re-point cannot violate the constraint
     // (keyIds are globally unique in practice — this is defense-in-depth).
@@ -138,8 +197,8 @@ export async function linkAccounts({
         username: survivor.username ?? loser.username,
       },
     });
+    return true;
   });
-  return { merged: true, userId: survivor.id };
 }
 
 /**
@@ -159,11 +218,15 @@ export async function unlinkTelegram(userId: number): Promise<UnlinkResult> {
   return { unlinked: true };
 }
 
-function isUniqueViolation(err: unknown): boolean {
+function isErrorCode(err: unknown, code: string): boolean {
   return (
     typeof err === "object" &&
     err !== null &&
     "code" in err &&
-    (err as { code: unknown }).code === "P2002"
+    (err as { code: unknown }).code === code
   );
+}
+
+function isUniqueViolation(err: unknown): boolean {
+  return isErrorCode(err, "P2002");
 }

@@ -56,6 +56,12 @@ function errorCode(error: unknown): number | undefined {
   return typeof code === "number" ? code : undefined;
 }
 
+function retryAfterSeconds(error: unknown): number | undefined {
+  const value = error as { response?: { parameters?: { retry_after?: unknown } } };
+  const seconds = value?.response?.parameters?.retry_after;
+  return typeof seconds === "number" && seconds > 0 ? seconds : undefined;
+}
+
 export async function dispatchBroadcast(
   notificationId: string,
   send: TelegramSender,
@@ -84,7 +90,7 @@ export async function dispatchBroadcast(
     const code = errorCode(error);
     return code === 400 || code === 403
       ? { outcome: "skipped" }
-      : { outcome: "retryable_error" };
+      : { outcome: "retryable_error", retryAfterSec: retryAfterSeconds(error) };
   }
 }
 

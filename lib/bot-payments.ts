@@ -161,6 +161,7 @@ export interface TelegramSender {
 
 export interface NotifyDispatchResult {
   outcome: "pushed" | "skipped" | "retryable_error";
+  retryAfterSec?: number;
 }
 
 /**

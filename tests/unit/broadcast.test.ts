@@ -43,7 +43,8 @@ describe("broadcast queue and dispatch", () => {
     expect(String(sender.calls[0]?.chatId)).toBe(String(TELEGRAM_ID));
     expect(sender.calls[0]?.text?.length).toBe(BOT_REPLY_CAP);
     expect((await dispatchBroadcast(row.id, fakeSender({ error: "forbidden" }))).outcome).toBe("skipped");
-    expect((await dispatchBroadcast(row.id, fakeSender({ error: "rate_limited" }))).outcome).toBe("retryable_error");
+    const retry = await dispatchBroadcast(row.id, fakeSender({ error: "rate_limited" }));
+    expect(retry).toEqual({ outcome: "retryable_error", retryAfterSec: 7 });
   });
 });
 

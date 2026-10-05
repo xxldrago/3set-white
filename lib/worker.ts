@@ -307,7 +307,7 @@ async function drainNotificationType(
       if (result.outcome === "retryable_error") {
         await rescheduleNotification(
           job.id,
-          new Date(Date.now() + backoffMs(job.attempts + 1)),
+          new Date(Date.now() + backoffMs(job.attempts + 1, result.retryAfterSec)),
           "telegram",
         );
       } else {

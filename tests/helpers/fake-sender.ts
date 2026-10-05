@@ -31,7 +31,12 @@ export function fakeSender(opts: { fail?: boolean; error?: SenderFailure } = {})
     if (opts.fail || opts.error) {
       const errorCode = opts.error === "bad_request" ? 400 : opts.error === "forbidden" ? 403 : opts.error === "rate_limited" ? 429 : opts.error === "server" ? 500 : undefined;
       const error = new Error("telegram_down") as Error & { response?: Record<string, unknown> };
-      if (errorCode) error.response = { error_code: errorCode };
+      if (errorCode) {
+        error.response = {
+          error_code: errorCode,
+          ...(opts.error === "rate_limited" ? { parameters: { retry_after: 7 } } : {}),
+        };
+      }
       throw error;
     }
     calls.push({ kind: "message", chatId, text });

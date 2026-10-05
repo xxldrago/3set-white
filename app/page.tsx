@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { after } from 'next/server';
+import AccountSection, { AccountSectionSkeleton } from '@/components/AccountSection';
 import InstallPrompt from '@/components/InstallPrompt';
 import SubscriptionCard from '@/components/SubscriptionCard';
 import SupportEntry from '@/components/SupportEntry';
@@ -10,7 +11,7 @@ import { ArtemidaError } from '@/lib/artemida';
 import { t, tp } from '@/lib/i18n';
 import { listKeys, revalidateKeys, type RenderedKey } from '@/lib/keys-service';
 import { logger } from '@/lib/logger';
-import { requireTelegramSession, SessionError } from '@/lib/session';
+import { requireSession, requireTelegramSession, SessionError } from '@/lib/session';
 import { listTicketsForUser } from '@/lib/tickets-service';
 
 // Personalised, cache-backed page — never statically rendered.
@@ -119,6 +120,19 @@ export default async function Home() {
     if (!(err instanceof SessionError)) throw err;
   }
 
+  // Email-only session (no linked Telegram): the TG-keyed sections below
+  // stay untouched — these users get the link banner + Account section only
+  // (Phase 6 UI-SPEC §3; trial/keys/payments render once Telegram is linked).
+  let emailSignedIn = false;
+  if (telegramId === null) {
+    try {
+      await requireSession();
+      emailSignedIn = true;
+    } catch (err) {
+      if (!(err instanceof SessionError)) throw err;
+    }
+  }
+
   // Unread parity (SUP-03): sum the caller's per-ticket unread counters through
   // the session-scoped service. A read failure degrades to no badge — the home
   // page never breaks because support is unavailable.
@@ -157,6 +171,21 @@ export default async function Home() {
               </Link>
               <SupportEntry unreadCount={unreadCount} />
             </nav>
+            <Suspense fallback={<AccountSectionSkeleton />}>
+              <AccountSection />
+            </Suspense>
+          </>
+        ) : emailSignedIn ? (
+          <>
+            <section className={CARD}>
+              <p className="text-zinc-600 dark:text-zinc-400">{t('auth.linkBanner')}</p>
+              <Link href="#account" className={PRIMARY}>
+                {t('auth.linkCta')}
+              </Link>
+            </section>
+            <Suspense fallback={<AccountSectionSkeleton />}>
+              <AccountSection />
+            </Suspense>
           </>
         ) : (
           <section className={CARD}>

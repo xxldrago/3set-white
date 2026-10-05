@@ -24,6 +24,12 @@ model User {
   id           Int      @id @default(autoincrement())
   telegramId   BigInt?  @unique @map("telegram_id")
   email        String?  @unique
+  // WR-04 gap closure: canonical mailbox identity (plus/dot aliases collapse
+  // to one value). Nullable-unique so Telegram-only rows and pre-migration
+  // accounts keep NULL (multiple NULLs allowed); the register path writes it
+  // alongside `email` so the UNIQUE constraint blocks alias account/trial
+  // farming.
+  emailCanonical String? @unique @map("email_canonical")
   passwordHash String?  @map("password_hash")
   // Phase 6 gap closure (WR-01, D-88 extension): revocation watermark bumped
   // whenever credentials or the auth method change (password change/reset,

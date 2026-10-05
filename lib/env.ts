@@ -52,6 +52,10 @@ export const envSchema = z.object({
   // (D-51). Optional: empty/unset means no admins. Server-only.
   ADMIN_TELEGRAM_IDS: z.string().optional(),
   BOT_MODE: z.enum(["polling", "webhook"]).default("polling"),
+  // Bot username for the bot-redirect login deep link (plan 06-06, G-06-4b).
+  // Optional: when unset the request route falls back to a cached `getMe()`.
+  // Server-only (the client receives only the built t.me URL, never this var).
+  TELEGRAM_BOT_USERNAME: z.string().min(1).optional(),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });

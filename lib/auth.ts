@@ -159,15 +159,27 @@ function toFiniteNumber(value: unknown): number | null {
 }
 
 /**
+ * Session identity plus the token's issue time (WR-01 revocation). `issuedAt`
+ * is the second-truncated `iat`; null when absent/non-finite. Kept SEPARATE
+ * from the public `SessionClaims` shape so `verifySession`'s exact
+ * `{ userId, telegramId }` contract (asserted by exact-match tests) is
+ * untouched.
+ */
+export interface VerifiedSessionClaims extends SessionClaims {
+  issuedAt: number | null;
+}
+
+/**
  * Verify a session JWT with an explicit HS256 allow-list (rejects alg:none
- * and wrong-secret tokens). Accepts Phase 6 `{ uid, tid? }` tokens AND
+ * and wrong-secret tokens) and surface the token issue time for the
+ * credential-watermark gate. Accepts Phase 6 `{ uid, tid? }` tokens AND
  * legacy `{ tid }` tokens (userId null — the caller resolves it via the
  * `User.telegramId` row). Returns null — never throws.
  */
-export async function verifySession(
+export async function verifySessionWithIssuedAt(
   token: string,
   secret: string,
-): Promise<SessionClaims | null> {
+): Promise<VerifiedSessionClaims | null> {
   try {
     const { payload } = await jwtVerify(token, new TextEncoder().encode(secret), {
       algorithms: ["HS256"],
@@ -175,10 +187,24 @@ export async function verifySession(
     const userId = toFiniteNumber(payload["uid"]);
     const telegramId = toFiniteNumber(payload["tid"]);
     if (userId === null && telegramId === null) return null;
-    return { userId, telegramId };
+    return { userId, telegramId, issuedAt: toFiniteNumber(payload["iat"]) };
   } catch {
     return null;
   }
+}
+
+/**
+ * Verify a session JWT. Returns EXACTLY `{ userId, telegramId }` (no `iat`) so
+ * the existing exact-match assertions stay green; the watermark gate uses
+ * `verifySessionWithIssuedAt` instead. Returns null — never throws.
+ */
+export async function verifySession(
+  token: string,
+  secret: string,
+): Promise<SessionClaims | null> {
+  const claims = await verifySessionWithIssuedAt(token, secret);
+  if (claims === null) return null;
+  return { userId: claims.userId, telegramId: claims.telegramId };
 }
 
 /** Serialize the httpOnly session cookie (secure only in production, Pitfall 4). */

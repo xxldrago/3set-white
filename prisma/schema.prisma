@@ -25,6 +25,12 @@ model User {
   telegramId   BigInt?  @unique @map("telegram_id")
   email        String?  @unique
   passwordHash String?  @map("password_hash")
+  // Phase 6 gap closure (WR-01, D-88 extension): revocation watermark bumped
+  // whenever credentials or the auth method change (password change/reset,
+  // Telegram unlink). The session gates reject a token whose second-truncated
+  // `iat` is strictly before this value; null = never rotated (back-compat,
+  // pre-existing 30-day tokens stay valid for untouched accounts).
+  credentialsChangedAt DateTime? @map("credentials_changed_at")
   chatId       BigInt?  @map("chat_id")
   firstName  String?  @map("first_name")
   lastName   String?  @map("last_name")

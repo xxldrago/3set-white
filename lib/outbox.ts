@@ -135,6 +135,8 @@ export async function markJobFailed(jobId: string, reason: string): Promise<void
 export const NOTIFY_TICKET_REPLY = "notify-ticket-reply";
 /** Deliver an expiry reminder (produced by the reminder scan, plan 04-08). */
 export const REMIND_EXPIRY = "remind-expiry";
+/** Deliver one administrator broadcast to its owning user chat. */
+export const BROADCAST = "broadcast";
 
 export interface NotificationInput {
   type: string;
@@ -165,6 +167,23 @@ export async function enqueueNotification(input: NotificationInput): Promise<voi
       keyId: input.keyId ?? null,
     },
   });
+}
+
+/** Bulk, idempotent fan-out for a broadcast. Never loop one upsert per user. */
+export async function enqueueBroadcastNotifications(
+  broadcastId: string,
+  userIds: number[],
+): Promise<number> {
+  if (userIds.length === 0) return 0;
+  const result = await prisma.notification.createMany({
+    data: userIds.map((userId) => ({
+      type: BROADCAST,
+      dedupeKey: `broadcast:${broadcastId}:${userId}`,
+      userId,
+    })),
+    skipDuplicates: true,
+  });
+  return result.count;
 }
 
 export interface ClaimedNotification {

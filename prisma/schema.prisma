@@ -265,3 +265,24 @@ model AdminUser {
 
   @@map("admin_users")
 }
+
+enum BroadcastStatus {
+  queued
+  sending
+  sent
+  failed
+}
+
+model Broadcast {
+  id               String          @id @default(cuid())
+  authorTelegramId BigInt          @map("author_telegram_id")
+  body             String
+  status           BroadcastStatus @default(queued)
+  total            Int             @default(0)
+  sent             Int             @default(0)
+  failed           Int             @default(0)
+  createdAt        DateTime        @default(now()) @map("created_at")
+  finishedAt       DateTime?       @map("finished_at")
+
+  @@map("broadcasts")
+}

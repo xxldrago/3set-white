@@ -18,21 +18,28 @@ export interface FakeSender extends TelegramSender {
   calls: CapturedSend[];
 }
 
+export type SenderFailure = "network" | "bad_request" | "forbidden" | "rate_limited" | "server";
+
 /**
  * Build a capturing `TelegramSender`. `fail: true` makes both methods throw, to
  * exercise the dispatch's `retryable_error` branch (a Telegram/network blip).
  */
-export function fakeSender(opts: { fail?: boolean } = {}): FakeSender {
+export function fakeSender(opts: { fail?: boolean; error?: SenderFailure } = {}): FakeSender {
   const calls: CapturedSend[] = [];
 
   const sendMessage: TelegramSender["sendMessage"] = async (chatId, text) => {
-    if (opts.fail) throw new Error("telegram_down");
+    if (opts.fail || opts.error) {
+      const errorCode = opts.error === "bad_request" ? 400 : opts.error === "forbidden" ? 403 : opts.error === "rate_limited" ? 429 : opts.error === "server" ? 500 : undefined;
+      const error = new Error("telegram_down") as Error & { response?: Record<string, unknown> };
+      if (errorCode) error.response = { error_code: errorCode };
+      throw error;
+    }
     calls.push({ kind: "message", chatId, text });
     return { message_id: calls.length };
   };
 
   const sendPhoto: TelegramSender["sendPhoto"] = async (chatId, _photo, extra) => {
-    if (opts.fail) throw new Error("telegram_down");
+    if (opts.fail || opts.error) throw new Error("telegram_down");
     calls.push({ kind: "photo", chatId, caption: extra?.caption });
     return { message_id: calls.length };
   };

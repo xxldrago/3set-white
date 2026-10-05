@@ -30,6 +30,7 @@ import {
   NOTIFY_PROVISIONED,
   NOTIFY_TICKET_REPLY,
   REMIND_EXPIRY,
+  BROADCAST,
   claimNextJob,
   claimNextNotification,
   enqueueNotifyFailed,
@@ -47,6 +48,7 @@ import {
   type TelegramSender,
 } from "./bot-payments";
 import { dispatchReminder, dispatchTicketNotification } from "./ticket-notify";
+import { dispatchBroadcast, recordBroadcastOutcome } from "./broadcast";
 import { enqueueReminderScan } from "./reminders-service";
 import {
   TRIAL_ERROR_CODE,
@@ -310,6 +312,9 @@ async function drainNotificationType(
         );
       } else {
         await markNotificationDone(job.id);
+        if (type === BROADCAST) {
+          await recordBroadcastOutcome(job.id, result.outcome === "pushed" ? "pushed" : "skipped");
+        }
       }
     } catch {
       logger.error({ route: "worker", outcome: "delivery_job_error", jobId: job.id });
@@ -327,6 +332,7 @@ async function drainNotificationType(
 async function drainDeliveryNotifications(telegram: TelegramSender): Promise<void> {
   await drainNotificationType(NOTIFY_TICKET_REPLY, dispatchTicketNotification, telegram);
   await drainNotificationType(REMIND_EXPIRY, dispatchReminder, telegram);
+  await drainNotificationType(BROADCAST, dispatchBroadcast, telegram);
 }
 
 export type ReconcileOutcome = { scanned: number; recovered: number };

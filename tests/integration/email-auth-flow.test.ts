@@ -35,11 +35,24 @@ const EMAIL = `phase6-tracer-${RUN}@example.test`;
 const PASSWORD = "tracer-throwaway-123";
 const RATELIMIT_EMAIL = `phase6-ratelimit-${RUN}@example.test`;
 
+// WR-02/WR-04 (06-13): registration is throttled per trusted client IP. Every
+// independent registration presents its OWN `x-real-ip` so this suite's many
+// registrations never collapse into the shared `"direct"` bucket and trip the
+// cap. The octet is run-unique so a crashed prior run's counters cannot lock
+// this one, and `cleanup()` removes this run's `__register__:` counter rows.
+const REGISTER_IP_RUN = (Date.now() % 200) + 1;
+const REGISTER_IP_PREFIX = `__register__:198.51.${REGISTER_IP_RUN}.`;
+let registerIpCounter = 0;
+function nextRegisterIp(): string {
+  registerIpCounter += 1;
+  return `198.51.${REGISTER_IP_RUN}.${registerIpCounter}`;
+}
+
 function postRegister(body: unknown): Promise<Response> {
   return registerPOST(
     new Request("http://localhost/api/auth/email/register", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", "x-real-ip": nextRegisterIp() },
       body: JSON.stringify(body),
     }),
   );
@@ -65,6 +78,9 @@ function sessionToken(res: Response): string {
 async function cleanup() {
   const emails = [EMAIL, RATELIMIT_EMAIL, `ghost-${RUN}@example.test`, `x-${RUN}@example.test`];
   await prisma.loginAttempt.deleteMany({ where: { email: { in: emails } } });
+  await prisma.loginAttempt.deleteMany({
+    where: { email: { startsWith: REGISTER_IP_PREFIX } },
+  });
   await prisma.user.deleteMany({ where: { email: { in: emails } } });
 }
 

@@ -153,3 +153,41 @@ export async function resetLoginAttempts(email: string, ip: string): Promise<voi
     where: { OR: keys.map((key) => ({ email: key.email, ip: key.ip })) },
   });
 }
+
+// ---------------------------------------------------------------------------
+// Registration throttle (WR-02/WR-04, plan 06-13). Registration is both a
+// high-volume account-existence oracle and the entry point for alias
+// account/trial farming, so it is throttled per TRUSTED CLIENT IP (a farmer
+// rotates emails, not the network) with the same DB-backed counter,
+// exponential backoff, and temp lock as login (D-84 machinery reused, no
+// captcha, no migration). The counter lives in the existing `LoginAttempt`
+// table under a namespaced key — `__register__:<ip>` in the `email` column and
+// `EMAIL_ONLY_IP` in `ip` — so it never collides with a real login counter.
+// ---------------------------------------------------------------------------
+
+/** Namespace prefix isolating register counters from login counters. */
+const REGISTER_NAMESPACE = "__register__:";
+
+/** Counter key for one trusted client IP (namespaced; never a real email). */
+function registrationKey(ip: string): string {
+  return `${REGISTER_NAMESPACE}${ip}`;
+}
+
+/**
+ * Pre-register gate. Keyed on the trusted `clientIp` (06-10: `X-Real-IP` /
+ * last XFF hop — never a client-controlled first hop), so rotating a spoofed
+ * header cannot reset a shared bucket (T-06-13-04). Denies with the
+ * server-computed `retryAfterSec` once the per-IP lock engages.
+ */
+export async function checkRegistrationRateLimit(ip: string): Promise<RateLimitDecision> {
+  return checkLoginRateLimit(registrationKey(ip), EMAIL_ONLY_IP);
+}
+
+/**
+ * Record one registration attempt for the trusted IP and return the resulting
+ * decision. Called after the gate on every parsed request, so a flood of
+ * registrations — successful, duplicate, or alias — still trips the lock.
+ */
+export async function recordRegistrationAttempt(ip: string): Promise<RateLimitDecision> {
+  return recordFailedLogin(registrationKey(ip), EMAIL_ONLY_IP);
+}

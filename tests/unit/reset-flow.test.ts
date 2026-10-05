@@ -22,6 +22,18 @@ const PASSWORD = "reset-throwaway-123";
 const NEW_PASSWORD = "reset-rotated-456";
 const GHOST = `phase6-reset-ghost-${RUN}@example.test`;
 
+// WR-02/WR-04 (06-13): registration is throttled per trusted client IP. Each
+// registration here presents its own `x-real-ip` (run-unique octet) so the
+// file-level seed and the describe-scoped helper never share the `"direct"`
+// bucket; `cleanup()` removes this run's `__register__:` counter rows.
+const REGISTER_IP_RUN = (Date.now() % 200) + 1;
+const REGISTER_IP_PREFIX = `__register__:198.51.${REGISTER_IP_RUN}.`;
+let registerIpCounter = 0;
+function nextRegisterIp(): string {
+  registerIpCounter += 1;
+  return `198.51.${REGISTER_IP_RUN}.${registerIpCounter}`;
+}
+
 const sent: MailMessage[] = [];
 /** Every transport attempt, including failed ones (welcome-failure vector). */
 const attempts: MailMessage[] = [];
@@ -63,6 +75,9 @@ async function cleanup(): Promise<void> {
     where: { user: { email: { in: emails } } },
   });
   await prisma.loginAttempt.deleteMany({ where: { email: { in: emails } } });
+  await prisma.loginAttempt.deleteMany({
+    where: { email: { startsWith: REGISTER_IP_PREFIX } },
+  });
   await prisma.user.deleteMany({ where: { email: { in: emails } } });
 }
 
@@ -80,7 +95,7 @@ describe("password reset flow (request → confirm → rotated)", () => {
     const seed = await registerPOST(
       new Request("http://localhost/api/auth/email/register", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", "x-real-ip": nextRegisterIp() },
         body: JSON.stringify({ email: EMAIL, password: PASSWORD }),
       }),
     );
@@ -186,7 +201,7 @@ describe("reset edges: token states, mail failure, throttling (AUTH-04)", () => 
     return registerPOST(
       new Request("http://localhost/api/auth/email/register", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", "x-real-ip": nextRegisterIp() },
         body: JSON.stringify(body),
       }),
     );

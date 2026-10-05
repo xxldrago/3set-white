@@ -37,6 +37,18 @@ const EMAIL_B = `phase6-wm-b-${RUN}@example.test`;
 const EMAIL_C = `phase6-wm-c-${RUN}@example.test`;
 const EMAILS = [EMAIL_A, EMAIL_B, EMAIL_C];
 
+// WR-02/WR-04 (06-13): registration is throttled per trusted client IP. Each
+// registration here presents its own `x-real-ip` (run-unique octet) so runs do
+// not accumulate in the shared `"direct"` bucket and lock the suite on a
+// second execution; `cleanup()` removes this run's `__register__:` rows.
+const REGISTER_IP_RUN = (Date.now() % 200) + 1;
+const REGISTER_IP_PREFIX = `__register__:198.51.${REGISTER_IP_RUN}.`;
+let registerIpCounter = 0;
+function nextRegisterIp(): string {
+  registerIpCounter += 1;
+  return `198.51.${REGISTER_IP_RUN}.${registerIpCounter}`;
+}
+
 function sessionSecret(): string {
   const secret = process.env["SESSION_SECRET"];
   if (!secret) throw new Error("SESSION_SECRET must be set (dummy throwaway OK)");
@@ -87,10 +99,13 @@ function sessionToken(res: Response): string {
 }
 
 async function register(email: string): Promise<number> {
-  const res = await requestJson(registerPOST, "/api/auth/email/register", {
-    email,
-    password: PASSWORD,
-  });
+  const res = await registerPOST(
+    new Request("http://localhost/api/auth/email/register", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-real-ip": nextRegisterIp() },
+      body: JSON.stringify({ email, password: PASSWORD }),
+    }),
+  );
   expect(res.status).toBe(200);
   const row = await prisma.user.findUnique({ where: { email }, select: { id: true } });
   if (!row) throw new Error(`expected user row for ${email}`);
@@ -109,6 +124,9 @@ function probeUnlink(token: string): Promise<Response> {
 
 async function cleanup(): Promise<void> {
   await prisma.loginAttempt.deleteMany({ where: { email: { in: EMAILS } } });
+  await prisma.loginAttempt.deleteMany({
+    where: { email: { startsWith: REGISTER_IP_PREFIX } },
+  });
   await prisma.user.deleteMany({ where: { email: { in: EMAILS } } });
 }
 

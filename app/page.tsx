@@ -9,7 +9,7 @@ import TariffPicker from '@/components/TariffPicker';
 import TrialButton from '@/components/TrialButton';
 import { ArtemidaError } from '@/lib/artemida';
 import { t, tp } from '@/lib/i18n';
-import { listKeys, revalidateKeys, type RenderedKey } from '@/lib/keys-service';
+import { listKeys, listKeysByUserId, revalidateKeys, revalidateKeysByUserId, type RenderedKey } from '@/lib/keys-service';
 import { logger } from '@/lib/logger';
 import { requireSession, requireTelegramSession, SessionError } from '@/lib/session';
 import { listTicketsForUser } from '@/lib/tickets-service';
@@ -83,6 +83,45 @@ async function SubscriptionsSection({ telegramId }: { telegramId: number }) {
     }
   });
 
+  return <SubscriptionsBody cached={cached} />;
+}
+
+/**
+ * Email-only cabinet reader (G-06-9): the userId-keyed mirror of
+ * `SubscriptionsSection`. Same body/empty/error copy — only the scope and the
+ * `after()` revalidate target differ, so the email landing is the real keys
+ * dashboard, not a profile view.
+ */
+async function SubscriptionsSectionByUserId({ userId }: { userId: number }) {
+  let cached: RenderedKey[];
+  try {
+    cached = await listKeysByUserId(userId);
+  } catch (err) {
+    return <SubscriptionsError error={err} />;
+  }
+
+  after(async () => {
+    try {
+      await revalidateKeysByUserId(userId);
+    } catch (err) {
+      if (err instanceof ArtemidaError) {
+        logger.warn({
+          route: 'home',
+          code: err.code,
+          requestId: err.requestId,
+          outcome: 'revalidate_failed',
+        });
+      } else {
+        logger.warn({ route: 'home', outcome: 'revalidate_failed' });
+      }
+    }
+  });
+
+  return <SubscriptionsBody cached={cached} />;
+}
+
+/** Shared subscription list rendering for both session scopes (same copy). */
+function SubscriptionsBody({ cached }: { cached: RenderedKey[] }) {
   return (
     <section className="flex flex-col gap-4">
       <div className="flex items-baseline justify-between gap-3">
@@ -120,14 +159,14 @@ export default async function Home() {
     if (!(err instanceof SessionError)) throw err;
   }
 
-  // Email-only session (no linked Telegram): the TG-keyed sections below
-  // stay untouched — these users get the link banner + Account section only
-  // (Phase 6 UI-SPEC §3; trial/keys/payments render once Telegram is linked).
-  let emailSignedIn = false;
+  // Email-only session (no linked Telegram): capture the server-resolved
+  // userId so the cabinet can read keys/trial through the userId-keyed path
+  // (G-06-9). TG-keyed sections (tariff/payments/support) stay TG-gated — a
+  // linked Telegram is still required for order/ticket surfaces.
+  let emailUserId: number | null = null;
   if (telegramId === null) {
     try {
-      await requireSession();
-      emailSignedIn = true;
+      ({ userId: emailUserId } = await requireSession());
     } catch (err) {
       if (!(err instanceof SessionError)) throw err;
     }
@@ -175,7 +214,7 @@ export default async function Home() {
               <AccountSection />
             </Suspense>
           </>
-        ) : emailSignedIn ? (
+        ) : emailUserId !== null ? (
           <>
             <section className={CARD}>
               <p className="text-zinc-600 dark:text-zinc-400">{t('auth.linkBanner')}</p>
@@ -183,6 +222,10 @@ export default async function Home() {
                 {t('auth.linkCta')}
               </Link>
             </section>
+            <Suspense fallback={<SkeletonRows />}>
+              <SubscriptionsSectionByUserId userId={emailUserId} />
+            </Suspense>
+            <TrialButton />
             <Suspense fallback={<AccountSectionSkeleton />}>
               <AccountSection />
             </Suspense>

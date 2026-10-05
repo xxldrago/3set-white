@@ -129,6 +129,22 @@ export async function listKeys(telegramId: bigint): Promise<RenderedKey[]> {
 }
 
 /**
+ * Phase 6 (D-82) counterpart of `listKeys`, scoped by the users.id row for
+ * email-only sessions (G-06-9). Same RenderedKey mapping and status ordering;
+ * the session userId is resolved server-side, never client-supplied
+ * (T-06-07-03 IDOR).
+ */
+export async function listKeysByUserId(userId: number): Promise<RenderedKey[]> {
+  const rows = await prisma.keyCache.findMany({
+    where: { userId },
+    orderBy: { updatedAt: "desc" },
+  });
+  return rows
+    .map(toRenderedKey)
+    .sort((a, b) => STATUS_ORDER[a.statusKind] - STATUS_ORDER[b.statusKind]);
+}
+
+/**
  * Background refresh from ARTEMIDA `GET /keys` (D-29). Called from the BFF
  * route and the cabinet page via `after()`, and fire-and-forget from the bot.
  *
@@ -156,6 +172,21 @@ export async function revalidateKeys(telegramId: bigint): Promise<void> {
   for (const key of list.items) {
     if (key.customerRef !== ownerRef) continue; // not owned — never mirror
     await upsertCachedKey(user.id, key);
+  }
+}
+
+/**
+ * UserId-keyed counterpart of `revalidateKeys` (G-06-9). Email trials/keys are
+ * created under `customerRef = email:{userId}` (D-80), so only entries carrying
+ * that exact ownership reference are mirrored into the caller's cache — the
+ * same T-02-22 ownership-filter discipline as the TG path.
+ */
+export async function revalidateKeysByUserId(userId: number): Promise<void> {
+  const ownerRef = `email:${userId}`;
+  const list = await artemida.listKeys();
+  for (const key of list.items) {
+    if (key.customerRef !== ownerRef) continue; // not owned — never mirror
+    await upsertCachedKey(userId, key);
   }
 }
 
@@ -412,6 +443,41 @@ export async function startTrial(telegramId: bigint): Promise<StartTrialResult> 
     select: { id: true },
   });
   await upsertCachedKey(user.id, key);
+
+  return { kind: "created", key };
+}
+
+/**
+ * UserId-keyed counterpart of `startTrial` (G-06-9, D-80). Email-only accounts
+ * claim through `claimTrialByUserId` and create the provider key under
+ * `customerRef = email:{userId}`, so the provider enforces one trial per email
+ * account in addition to the atomic local claim. The compensating rollback is
+ * `releaseTrialOnFailureByUserId` (guarded on `trialKeyId: null`, Pitfall 5).
+ * A provider `conflict` (409) is terminal: keep the claim, report `already_used`.
+ */
+export async function startTrialByUserId(userId: number): Promise<StartTrialResult> {
+  if (!(await claimTrialByUserId(userId))) {
+    return { kind: "already_used" };
+  }
+
+  let key: NormalizedKey;
+  try {
+    key = await artemida.createTrial({ customerRef: `email:${userId}` });
+  } catch (err) {
+    if (err instanceof ArtemidaError && err.code === "conflict") {
+      // Provider already enforces one trial for this email account: terminal.
+      return { kind: "already_used" };
+    }
+    await releaseTrialOnFailureByUserId(userId);
+    throw err;
+  }
+
+  // Record the success sentinel before the cache write (D-23/Pitfall 5).
+  await prisma.user.update({
+    where: { id: userId },
+    data: { trialKeyId: key.id },
+  });
+  await upsertCachedKey(userId, key);
 
   return { kind: "created", key };
 }

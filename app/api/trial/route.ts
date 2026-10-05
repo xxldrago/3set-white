@@ -1,21 +1,25 @@
 // POST /api/trial — session-gated one-tap trial (D-21..D-24, TRIAL-01).
 //
-// The telegram id is resolved server-side from the signed httpOnly cookie; no
-// client-supplied id is ever trusted (T-02-12). The DB claim in
+// The identity is resolved server-side from the signed httpOnly cookie; no
+// client-supplied id is ever trusted (T-02-12). Phase 6 (D-82) sessions carry
+// a userId and an optional telegramId: a linked Telegram session keeps the
+// exact pre-Phase-6 TG path (customerRef = telegram id), an email-only session
+// takes the userId path (customerRef = email:{userId}, D-80). The DB claim in
 // lib/keys-service is the single source of trial truth. A repeat attempt gets
 // a clean `{ok:false, reason:"trial_used"}` — the provider message/code is
 // never proxied (D-24 / T-02-11).
 import { ArtemidaError } from "../../../lib/artemida";
-import { startTrial } from "../../../lib/keys-service";
+import { startTrial, startTrialByUserId } from "../../../lib/keys-service";
 import { logger } from "../../../lib/logger";
-import { requireTelegramSession, SessionError } from "../../../lib/session";
+import { requireSession, SessionError } from "../../../lib/session";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(): Promise<Response> {
-  let telegramId: number;
+  let userId: number;
+  let telegramId: number | null;
   try {
-    telegramId = await requireTelegramSession();
+    ({ userId, telegramId } = await requireSession());
   } catch (err) {
     if (err instanceof SessionError) {
       return Response.json({ error: "unauthorized" }, { status: 401 });
@@ -25,7 +29,12 @@ export async function POST(): Promise<Response> {
   }
 
   try {
-    const result = await startTrial(BigInt(telegramId));
+    // TG-linked sessions keep the byte-for-byte pre-Phase-6 path; email-only
+    // sessions use the userId-keyed claim + `email:{userId}` customerRef.
+    const result =
+      telegramId !== null
+        ? await startTrial(BigInt(telegramId))
+        : await startTrialByUserId(userId);
     if (result.kind === "already_used") {
       // Clean RU response; the UI maps this to the "already used" copy + CTA.
       return Response.json({ ok: false, reason: "trial_used" }, { status: 409 });

@@ -18,6 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3: Payments** - Оплата Platega с мгновенной выдачей, продление, апгрейд, история платежей
 - [ ] **Phase 4: Support & Retention** - Единая очередь тикетов, напоминания об истечении, вложения
 - [ ] **Phase 5: Admin & Deploy** - Админ-панель с ролями, White Label, боевой деплой на my.3set.online
+- [ ] **Phase 6: Email Auth** - Регистрация/вход по email + привязка Telegram, сброс пароля, фикс layout кнопки Telegram на десктопе
 
 ## Phase Details
 
@@ -199,6 +200,20 @@ Plans:
 **Wave 6** *(blocked on Waves 1, 4, 5; owner-gated on one-way D-75)*
 
 - [x] 05-06-PLAN.md — Deploy: Dockerfile blockers, Compose/Nginx/Certbot, backup/rollback scripts, runbook (OPS-01)
+
+### Phase 6: Email Auth
+**Goal:** Пользователь регистрируется и входит по email, может связать Telegram-аккаунт, восстанавливает пароль по почте
+**Mode:** mvp
+**Depends on**: Phase 5
+**Requirements**: AUTH-01, AUTH-02, AUTH-03, AUTH-04, AUTH-05, AUTH-06
+**Success Criteria** (what must be TRUE):
+  1. Пользователь регистрируется по email + пароль без верификации и сразу входит; сессия — та же httpOnly cookie
+  2. Пользователь входит по email + пароль; привязывает Telegram к email-аккаунту и наоборот
+  3. Пользователь сбрасывает пароль через ссылку на email
+  4. Trial для email-аккаунтов защищён от фарма
+  5. Кнопка «Войти через Telegram» корректно позиционирована на десктопе
+**Plans**: TBD
+**UI hint**: yes
 
 ## Progress
 

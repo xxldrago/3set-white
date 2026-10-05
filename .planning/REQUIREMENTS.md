@@ -46,6 +46,15 @@
 - [ ] **OPS-02**: Subscription-ссылки используют White Label домен `my.3set.online` (настройки бренда ARTEMIDA)
 - [ ] **OPS-03**: Код хранится в GitHub `3set-white`, все изменения коммитятся и пушатся, затем деплой на сервер
 
+### Auth / Email
+
+- [ ] **AUTH-01**: Пользователь может зарегистрироваться по email + пароль без верификации email и сразу войти
+- [ ] **AUTH-02**: Пользователь может войти по email + пароль; сессия — та же httpOnly cookie, что у Telegram-входа
+- [ ] **AUTH-03**: Пользователь может привязать Telegram к email-аккаунту и наоборот (link/unlink), аккаунты объединяются
+- [ ] **AUTH-04**: Пользователь может сбросить пароль через ссылку на email
+- [ ] **AUTH-05**: Trial для email-аккаунтов защищён от фарма (политика enforcement)
+- [ ] **AUTH-06**: Кнопка «Войти через Telegram» корректно позиционирована на десктопе (layout fix)
+
 ## v2 Requirements
 
 ### Growth
@@ -102,10 +111,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OPS-01 | Phase 5 | Pending |
 | OPS-02 | Phase 5 | Pending |
 | OPS-03 | Phase 1 | Pending |
+| AUTH-01 | Phase 6 | Pending |
+| AUTH-02 | Phase 6 | Pending |
+| AUTH-03 | Phase 6 | Pending |
+| AUTH-04 | Phase 6 | Pending |
+| AUTH-05 | Phase 6 | Pending |
+| AUTH-06 | Phase 6 | Pending |
 
 **Coverage:**
-- v1 requirements: 23 total
-- Mapped to phases: 23
+- v1 requirements: 29 total
+- Mapped to phases: 29
 - Unmapped: 0 ✓
 
 ---

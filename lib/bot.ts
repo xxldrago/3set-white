@@ -35,6 +35,7 @@ import {
   createTicket,
   type AttachmentDescriptor,
 } from "./tickets-service";
+import { bindLoginToken, parseLoginStartPayload } from "./telegram-login";
 
 export const WEBHOOK_SECRET = env.WEBHOOK_SECRET;
 
@@ -71,6 +72,26 @@ bot.start(async (ctx) => {
     telegramId,
     outcome: "start-upserted",
   });
+  // Bot-redirect login (G-06-4b, plan 06-06): when the start payload carries
+  // `login_<token>`, bind the cabinet-issued token to this Telegram id. The
+  // upsert above already stamped the profile; bind is idempotent for the same
+  // id and rejects a different one. Non-login starts skip this branch entirely
+  // and behave byte-identically (no extra reply).
+  const loginToken = parseLoginStartPayload(ctx.startPayload);
+  if (loginToken) {
+    const bound = await bindLoginToken(loginToken, telegramId, {
+      firstName: from.first_name ?? null,
+      lastName: from.last_name ?? null,
+      username: from.username ?? null,
+      chatId: chatId === undefined ? null : BigInt(chatId),
+    });
+    await ctx.reply(bound.kind === "bound" ? t("bot.loginBound") : t("bot.loginInvalid"));
+    logger.info({
+      updateId: ctx.update.update_id,
+      telegramId,
+      outcome: bound.kind === "bound" ? "login-bound" : "login-invalid",
+    });
+  }
   await ctx.reply(t("bot.welcome"), {
     reply_markup: {
       keyboard: [

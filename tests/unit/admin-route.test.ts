@@ -7,6 +7,9 @@
 // bootstrap membership creates exactly one row without ever re-elevating a
 // stored role. Runs against the real local Postgres with a private id range.
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const session = vi.hoisted(() => ({ token: undefined as string | undefined }));
 
@@ -22,8 +25,10 @@ vi.mock("next/headers", () => ({
 }));
 
 import AdminOverviewPage from "../../app/admin/page";
+import AdminRolesPage from "../../app/admin/roles/page";
 import AdminUserProfilePage from "../../app/admin/users/[id]/page";
 import { POST as adminRoleChange } from "../../app/api/admin/roles/route";
+import RolesManager from "../../components/admin/RolesManager";
 import { getAdminRole, requireRole, type AdminRole } from "../../lib/admin-auth";
 import { changeAdminRole } from "../../lib/admin-roles";
 import { signSession } from "../../lib/auth";
@@ -407,5 +412,111 @@ describe("role changes — last-admin lockout + concurrency (T-05-16)", () => {
     expect(res.status).toBe(400);
     const row = await prisma.adminUser.findUnique({ where: { telegramId: BigInt(GUARD_SOLE) } });
     expect(row?.role).toBe("administrator");
+  });
+});
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const ROLES_PAGE_SOURCE = readFileSync(
+  join(HERE, "..", "..", "app", "admin", "roles", "page.tsx"),
+  "utf8",
+);
+const ROLES_MANAGER_SOURCE = readFileSync(
+  join(HERE, "..", "..", "components", "admin", "RolesManager.tsx"),
+  "utf8",
+);
+const ADMIN_CONFIRM_SOURCE = readFileSync(
+  join(HERE, "..", "..", "components", "admin", "AdminConfirmPanel.tsx"),
+  "utf8",
+);
+const ROLE_CONTROL_SOURCE = readFileSync(
+  join(HERE, "..", "..", "components", "admin", "RoleChangeControl.tsx"),
+  "utf8",
+);
+
+async function callRolesPage(): Promise<{ ok: true } | { digest: string }> {
+  try {
+    await AdminRolesPage();
+    return { ok: true };
+  } catch (err) {
+    const digest = (err as { digest?: unknown }).digest;
+    return { digest: typeof digest === "string" ? digest : "unknown" };
+  }
+}
+
+describe("/admin/roles — guard + UI states (UI-SPEC §6)", () => {
+  // The lockout suite above collapses the shared admin rows; restore the
+  // baseline administrator this describe needs.
+  beforeEach(async () => {
+    await prisma.adminUser.upsert({
+      where: { telegramId: BigInt(ADMIN) },
+      update: { role: "administrator" },
+      create: { telegramId: BigInt(ADMIN), role: "administrator" },
+    });
+  });
+
+  it("redirects signed-out to /login and 404s non-administrators", async () => {
+    const signedOut = await callRolesPage();
+    expect("digest" in signedOut && signedOut.digest).toContain("NEXT_REDIRECT");
+    expect("digest" in signedOut && signedOut.digest).toContain("/login");
+
+    await authorize(SUPPORT);
+    await expect(callRolesPage()).resolves.toEqual({ digest: "NEXT_HTTP_ERROR_FALLBACK;404" });
+
+    await authorize(MANAGER);
+    await expect(callRolesPage()).resolves.toEqual({ digest: "NEXT_HTTP_ERROR_FALLBACK;404" });
+  });
+
+  it("renders for an administrator", async () => {
+    await authorize(ADMIN);
+    await expect(callRolesPage()).resolves.toEqual({ ok: true });
+  });
+
+  it("ships empty/loading/error states and an overflow-scrolling table", () => {
+    expect(ROLES_PAGE_SOURCE).toContain("t('admin.rolesEmpty')");
+    expect(ROLES_PAGE_SOURCE).toContain("t('common.errorLoad')");
+    expect(ROLES_PAGE_SOURCE).toContain("t('common.retry')");
+    expect(ROLES_PAGE_SOURCE).toMatch(/<Suspense/);
+    expect(ROLES_MANAGER_SOURCE).toContain("overflow-x-auto");
+    expect(ROLES_MANAGER_SOURCE).toContain("<table");
+    expect(ROLES_MANAGER_SOURCE).toContain("sm:hidden");
+  });
+
+  it("truncates a long name with a title and marks the caller's own row self-blocked", () => {
+    const longName = "О".repeat(120);
+    const tree = RolesManager({
+      rows: [{ telegramId: "42", displayName: longName, role: "administrator" }],
+      callerTelegramId: 42,
+    });
+    const elements: AnyElement[] = [];
+    walkElements(tree, (element) => elements.push(element));
+
+    const named = elements.find((element) => element.props?.title === longName);
+    expect(named).toBeDefined();
+    expect(String(named?.props?.className)).toContain("truncate");
+    expect(
+      elements.some(
+        (element) => element.props?.self === true && element.props?.telegramId === "42",
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("AdminConfirmPanel + RoleChangeControl contracts (UI-SPEC §6)", () => {
+  it("dismisses on Escape with no request and uses a variant-keyed confirm", () => {
+    expect(ADMIN_CONFIRM_SOURCE).toContain("event.key === 'Escape'");
+    expect(ADMIN_CONFIRM_SOURCE).toContain("fetch(url");
+    expect(ADMIN_CONFIRM_SOURCE).toContain("variant === 'destructive'");
+    expect(ADMIN_CONFIRM_SOURCE).toContain("DESTRUCTIVE");
+    expect(ADMIN_CONFIRM_SOURCE).toContain("PRIMARY");
+  });
+
+  it("uses the destructive downgrade variant only when administrator access is removed", () => {
+    expect(ROLE_CONTROL_SOURCE).toContain(
+      "currentRole === 'administrator' && selected !== 'administrator'",
+    );
+    expect(ROLE_CONTROL_SOURCE).toContain("variant={downgrade ? 'destructive' : 'primary'}");
+    expect(ROLE_CONTROL_SOURCE).toContain("t('admin.roleDowngradeBody'");
+    expect(ROLE_CONTROL_SOURCE).toContain("t('admin.roleChangeBody'");
+    expect(ROLE_CONTROL_SOURCE).toContain("t('admin.rolesSelf')");
   });
 });

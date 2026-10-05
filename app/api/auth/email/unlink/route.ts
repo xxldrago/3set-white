@@ -58,6 +58,14 @@ export async function POST(req: Request): Promise<Response> {
 
   try {
     const result = await unlinkTelegram(userId);
+    // WR-01: detaching Telegram is a privilege change — bump the watermark so
+    // every other session (and the just-detached tid claim) is revoked. Bump
+    // BEFORE re-minting so the current session's iat is >= the floored
+    // watermark second and survives.
+    await prisma.user.update({
+      where: { id: userId },
+      data: { credentialsChangedAt: new Date() },
+    });
     const token = await signSession(userId, null, env.SESSION_SECRET);
     logger.info({ route: "email-unlink", outcome: result.unlinked ? "unlinked" : "noop" });
     return Response.json(

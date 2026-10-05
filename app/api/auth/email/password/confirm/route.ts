@@ -91,9 +91,12 @@ export async function POST(req: Request): Promise<Response> {
         data: { usedAt: new Date() },
       });
       if (marked.count !== 1) return false;
+      // WR-01: rotate the hash and bump the revocation watermark atomically —
+      // this route intentionally does NOT auto-login, so every pre-reset
+      // session is revoked here.
       await tx.user.update({
         where: { id: row.userId },
-        data: { passwordHash },
+        data: { passwordHash, credentialsChangedAt: new Date() },
       });
       return true;
     });

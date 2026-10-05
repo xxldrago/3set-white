@@ -62,7 +62,13 @@ export async function POST(req: Request): Promise<Response> {
     } catch {
       return Response.json({ error: "bad_request" }, { status: 400 });
     }
-    await prisma.user.update({ where: { id: user.id }, data: { passwordHash } });
+    // WR-01: rotate the hash and bump the revocation watermark in one write so
+    // every session issued before this second is rejected; the re-mint below
+    // happens after the bump, so the current browser stays signed in.
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash, credentialsChangedAt: new Date() },
+    });
     const token = await signSession(
       user.id,
       user.telegramId === null ? null : Number(user.telegramId),

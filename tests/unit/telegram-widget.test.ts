@@ -44,7 +44,6 @@ describe("telegram-widget callback builder", () => {
     };
 
     // Reproduce telegram-widget.js?22 __parseFunction byte-for-byte.
-    // eslint-disable-next-line no-eval
     const fn = eval("(function(user){" + widgetOnAuthExpression(name) + "})") as (
       user: unknown,
     ) => void;
@@ -57,7 +56,6 @@ describe("telegram-widget callback builder", () => {
     // Provide `window` so the failure is the hyphenated name itself, not a
     // missing global — i.e. exactly the error the verifier observed.
     globalObject().window = globalThis;
-    // eslint-disable-next-line no-eval
     const fn = eval(
       "(function(user){window.telegram-login-my-bot-abcOnAuth(user)})",
     ) as (user: unknown) => void;

@@ -1,0 +1,118 @@
+# 3set-white production topology (OPS-01 / D-75): web + db + nginx + certbot.
+#
+# Single server (64.188.97.106) behind Nginx terminating TLS for
+# my.3set.online. The Postgres port is NEVER published; `db` lives on the
+# internal Compose network only (T-05-25). The `web` port is not published
+# either — the only inbound path is Nginx 80/443 (T-05-26, fixed upstream).
+#
+# Secrets come from the server `.env` (gitignored, 0600) — never committed.
+# `${DB_PASSWORD}` is read from that same `.env` at `docker compose` time.
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        # Public bot username for the Login Widget (NEXT_PUBLIC_* is build-time).
+        # Sourced from the server .env; defaults to the current bot.
+        NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: ${BOT_PUBLIC_USERNAME:-threeSet_bot}
+    env_file:
+      - .env
+    environment:
+      # Override the dev DATABASE_URL with the internal `db` host; the rest of
+      # the env (BOT_TOKEN, SESSION_SECRET, ARTEMIDA_API_KEY, Platega creds,
+      # ADMIN_TELEGRAM_IDS, WHITELABEL_HOST, ARTEMIDA_LOW_BALANCE_RUB, ...)
+      # comes verbatim from `.env`.
+      DATABASE_URL: postgresql://setwhite:${DB_PASSWORD}@db:5432/setwhite
+      BOT_MODE: webhook
+      NODE_ENV: production
+      UPLOAD_DIR: /data/uploads
+      APP_BASE_URL: https://my.3set.online
+    volumes:
+      - uploads:/data/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    # Shallow liveness probe — no DB round-trip (app/api/health/route.ts).
+    # Uses Node's native fetch (node:24-bookworm-slim ships no wget/curl).
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 40s
+      retries: 3
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: setwhite
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: setwhite
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # No `ports:` — the DB is reachable only from the Compose network (T-05-25).
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U setwhite -d setwhite"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/my.3set.online.conf:/etc/nginx/conf.d/default.conf:ro
+      - certs:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+    depends_on:
+      - web
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  # Certbot sidecar (A7): renews via webroot while nginx serves the ACME
+  # challenge on port 80. First issuance is a one-off owner step (docs/DEPLOY.md).
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - certs:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    entrypoint:
+      - /bin/sh
+      - -c
+      - 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done;'
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+volumes:
+  pgdata:
+  uploads:
+  certs:
+  certbot_www:

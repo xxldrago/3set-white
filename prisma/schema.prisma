@@ -1,0 +1,370 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+//
+// Prisma 7 surface: the datasource `url` lives in prisma7.config.ts
+// (datasource block carries the provider only). Database identity key is
+// users.telegram_id UNIQUE per locked decision D-12 (one-way).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Single identity row shared by bot and PWA cabinet (D-12, Phase 6 D-79).
+// PII minimum per plan prohibition: telegram id, chat id, names only.
+// Phase 6 email identity (D-79/D-80, one-way): telegramId nullable, email
+// unique, passwordHash argon2id. Trial stays one-per-account (trialUsed OR
+// on merge). Rollback to non-nullable identity requires account migration
+// and re-linking of keys/orders/tickets.
+model User {
+  id           Int      @id @default(autoincrement())
+  telegramId   BigInt?  @unique @map("telegram_id")
+  email        String?  @unique
+  // WR-04 gap closure: canonical mailbox identity (plus/dot aliases collapse
+  // to one value). Nullable-unique so Telegram-only rows and pre-migration
+  // accounts keep NULL (multiple NULLs allowed); the register path writes it
+  // alongside `email` so the UNIQUE constraint blocks alias account/trial
+  // farming.
+  emailCanonical String? @unique @map("email_canonical")
+  passwordHash String?  @map("password_hash")
+  // Phase 6 gap closure (WR-01, D-88 extension): revocation watermark bumped
+  // whenever credentials or the auth method change (password change/reset,
+  // Telegram unlink). The session gates reject a token whose second-truncated
+  // `iat` is strictly before this value; null = never rotated (back-compat,
+  // pre-existing 30-day tokens stay valid for untouched accounts).
+  credentialsChangedAt DateTime? @map("credentials_changed_at")
+  chatId       BigInt?  @map("chat_id")
+  firstName  String?  @map("first_name")
+  lastName   String?  @map("last_name")
+  username   String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  keys       KeyCache[]
+
+  // Phase 2 trial anti-abuse (D-21): one trial per telegram-id. `trialUsed`
+  // is claimed by a single atomic UPDATE ... WHERE trial_used=false (D-22);
+  // `trialKeyId` doubles as the in-flight/success sentinel that guards the
+  // D-23 rollback from clobbering a recorded success (Pitfall 5).
+  trialUsed  Boolean @default(false) @map("trial_used")
+  trialKeyId String? @map("trial_key_id")
+
+  // Phase 3 money path (D-39): every purchase/renew/upgrade is an order row.
+  orders     Order[]
+
+  // Phase 4 support (D-49/D-58). `tickets` is the thread relation;
+  // `awaitingSupport`/`supportPromptAt` are the bot intake state (a persisted
+  // flag survives webhook/restart, unlike an in-memory Telegraf session). The
+  // flag is claimed atomically by `clearSupportPrompt` (claim-before-create).
+  tickets         Ticket[]
+  awaitingSupport Boolean   @default(false) @map("awaiting_support")
+  supportPromptAt DateTime? @map("support_prompt_at")
+
+  // Phase 6 password reset (D-88): one-time tokens, 1h TTL, invalidated
+  // after use. Cascade keeps no orphan tokens after account removal.
+  passwordResets PasswordReset[]
+
+  @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// Phase 3 money path (D-38/D-39). One Order per purchase intent; the state
+// machine is pending → paid → provisioning → provisioned / failed, with the
+// terminal refunded/canceled outcomes. `plategaTxId` is UNIQUE so a Platega
+// transaction can never bind to two orders (tx-id dedupe). Provisioning is
+// asynchronous via the Outbox (D-38) — the callback only flips pending→paid
+// and enqueues, it never issues a key.
+// ---------------------------------------------------------------------------
+
+enum OrderKind {
+  new
+  renew
+  upgrade
+}
+
+enum OrderStatus {
+  pending
+  paid
+  provisioning
+  provisioned
+  failed
+  canceled
+  refunded
+}
+
+enum OutboxStatus {
+  pending
+  processing
+  done
+  failed
+}
+
+model Order {
+  id               String      @id @default(cuid())
+  userId           Int         @map("user_id")
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind             OrderKind
+  keyId            String?     @map("key_id")
+  days             Int?
+  devices          Int
+  amount           Int // whole RUB from ARTEMIDA GET /pricing (server-quoted)
+  currency         String      @default("RUB")
+  status           OrderStatus @default(pending)
+  plategaTxId      String?     @unique @map("platega_tx_id")
+  paymentUrl       String?     @map("payment_url")
+  paidAt           DateTime?   @map("paid_at")
+  provisionedKeyId String?     @map("provisioned_key_id")
+  errorCode        String?     @map("error_code")
+  attempts         Int         @default(0)
+  nextAttemptAt    DateTime?   @map("next_attempt_at")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+  outbox           Outbox[]
+
+  @@index([userId, createdAt])
+  @@index([status, nextAttemptAt])
+  @@map("orders")
+}
+
+model Outbox {
+  id            String       @id @default(cuid())
+  orderId       String       @map("order_id")
+  order         Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  type          String
+  status        OutboxStatus @default(pending)
+  attempts      Int          @default(0)
+  lastError     String?      @map("last_error")
+  nextAttemptAt DateTime     @default(now()) @map("next_attempt_at")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  processedAt   DateTime?    @map("processed_at")
+
+  @@unique([orderId, type])
+  @@index([status, nextAttemptAt])
+  @@map("outbox")
+}
+
+// ARTEMIDA mirror only — ARTEMIDA owns the truth (D-07/D-29).
+model KeyCache {
+  id                Int       @id @default(autoincrement())
+  userId            Int       @map("user_id")
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  keyId             String    @map("key_id")
+  name              String?
+  status            String
+  isTrial           Boolean   @default(false) @map("is_trial")
+  expiresAt         DateTime? @map("expires_at")
+  deviceLimit       Int?      @map("device_limit")
+  devices           Int?
+  trafficUsedBytes  BigInt?   @map("traffic_used_bytes")
+  trafficLimitBytes BigInt?   @map("traffic_limit_bytes")
+  subscriptionUrl   String?   @map("subscription_url")
+  customerRef       String?   @map("customer_ref")
+  lastSyncedAt      DateTime? @map("last_synced_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@unique([userId, keyId])
+  @@map("keys_cache")
+}
+
+// One-time Login Widget payload guard (D-11). Rows older than 48h are
+// pruned by a later-phase cron; initData relies on the auth_date window.
+model ReplayCache {
+  hash   String   @id
+  usedAt DateTime @default(now()) @map("used_at")
+
+  @@map("replay_cache")
+}
+
+// ---------------------------------------------------------------------------
+// Phase 4 support & retention (D-49..D-63). Ticket = thread dialog: one
+// `Ticket` carries a subject + status and 1→N `TicketMessage` rows; an image
+// attaches to a message (`Attachment`). Bot and cabinet both write through the
+// single `lib/tickets-service.ts` path, so the "единая очередь" (SUP-01) is a
+// property of the write path, not a sync job. `Notification` is a sibling
+// delivery queue (RESEARCH Open Q2 LOCKED): it reuses the Outbox claim
+// discipline but is NOT order-scoped, so the money-path `Outbox` stays intact.
+// ---------------------------------------------------------------------------
+
+enum TicketStatus {
+  open
+  answered
+  closed
+}
+
+enum TicketAuthor {
+  user
+  support
+}
+
+model Ticket {
+  id            String          @id @default(cuid())
+  userId        Int             @map("user_id")
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject       String
+  status        TicketStatus    @default(open)
+  unreadForUser Int             @default(0) @map("unread_for_user")
+  lastMessageAt DateTime        @default(now()) @map("last_message_at")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  messages      TicketMessage[]
+
+  @@index([userId, lastMessageAt])
+  @@index([status, lastMessageAt])
+  @@map("tickets")
+}
+
+model TicketMessage {
+  id          String       @id @default(cuid())
+  ticketId    String       @map("ticket_id")
+  ticket      Ticket       @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author      TicketAuthor
+  // Nullable: an image-only message is valid (UI-SPEC §2).
+  body        String?
+  createdAt   DateTime     @default(now()) @map("created_at")
+  attachments Attachment[]
+
+  @@index([ticketId, createdAt])
+  @@map("ticket_messages")
+}
+
+model Attachment {
+  id        String        @id @default(cuid())
+  messageId String        @map("message_id")
+  message   TicketMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  // Relative to UPLOAD_DIR only — never absolute (D-53/D-56).
+  path      String
+  mime      String
+  sizeBytes Int           @map("size_bytes")
+  width     Int?
+  height    Int?
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@index([messageId])
+  @@map("ticket_attachments")
+}
+
+model Notification {
+  id              String       @id @default(cuid())
+  // notify-ticket-reply | remind-expiry
+  type            String
+  dedupeKey       String       @unique @map("dedupe_key")
+  userId          Int?         @map("user_id")
+  ticketId        String?      @map("ticket_id")
+  ticketMessageId String?      @map("ticket_message_id")
+  keyId           String?      @map("key_id")
+  status          OutboxStatus @default(pending)
+  attempts        Int          @default(0)
+  lastError       String?      @map("last_error")
+  nextAttemptAt   DateTime     @default(now()) @map("next_attempt_at")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  processedAt     DateTime?    @map("processed_at")
+
+  @@index([status, nextAttemptAt])
+  @@map("notifications")
+}
+
+// ---------------------------------------------------------------------------
+// Phase 6 email auth (D-84/D-88). PasswordReset: one-time token guard shaped
+// after ReplayCache, with expiry + used flag. LoginAttempt: per-email plus
+// per-IP counters backing the exponential-backoff + temp-lock discipline —
+// DB-backed so the counters survive restarts (unlike in-memory).
+// ---------------------------------------------------------------------------
+
+model PasswordReset {
+  token     String    @id
+  userId    Int       @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId, expiresAt])
+  @@map("password_resets")
+}
+
+model LoginAttempt {
+  id          Int       @id @default(autoincrement())
+  email       String    @map("email")
+  ip          String    @default("") @map("ip")
+  attempts    Int       @default(0)
+  lockedUntil DateTime? @map("locked_until")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@unique([email, ip])
+  @@map("login_attempts")
+}
+
+// ---------------------------------------------------------------------------
+// Bot-redirect login (G-06-4b, D-86 analogue, plan 06-06). One-time token the
+// cabinet issues and the bot binds to a Telegram id when the user presses
+// Start on `t.me/<bot>?start=login_<token>`; the issuing browser then consumes
+// it into the standard httpOnly session. `token` is 48 hex chars (24 random
+// bytes) so the `login_` start parameter fits Telegram's 64-byte cap.
+// `ipHash` is sha256 of the issuer IP (PII discipline — the raw IP is never
+// stored); `telegramId` is null until the bot binds; `consumedAt` enforces
+// single-use. No FK: the token exists before any users row is guaranteed.
+// ---------------------------------------------------------------------------
+
+model TelegramLoginToken {
+  token        String    @id
+  ipHash       String    @map("ip_hash")
+  telegramId   BigInt?   @map("telegram_id")
+  // sha256 hex of the bot-delivered confirmation code (plan 06-09). Null until
+  // a bind issues one; the plaintext code is never persisted or returned.
+  codeHash     String?   @map("code_hash")
+  // Wrong-code counter for brute-force defence; the token is invalidated at
+  // LOGIN_CODE_MAX_ATTEMPTS so the code space cannot be exhausted.
+  codeAttempts Int       @default(0) @map("code_attempts")
+  expiresAt    DateTime  @map("expires_at")
+  consumedAt   DateTime? @map("consumed_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@index([expiresAt])
+  @@map("telegram_login_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Phase 5 admin RBAC (D-64/D-65). Roles live in a dedicated `admin_users` table
+// (never env) keyed by telegram id; `ADMIN_TELEGRAM_IDS` is a bootstrap-only
+// seed — create-only, so env membership can never re-elevate a role an
+// administrator downgraded in the UI (D-67 / T-05-02).
+// ---------------------------------------------------------------------------
+
+enum AdminRole {
+  administrator
+  support
+  manager
+}
+
+model AdminUser {
+  id         Int       @id @default(autoincrement())
+  telegramId BigInt    @unique @map("telegram_id")
+  role       AdminRole
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@map("admin_users")
+}
+
+enum BroadcastStatus {
+  queued
+  sending
+  sent
+  failed
+}
+
+model Broadcast {
+  id               String          @id @default(cuid())
+  authorTelegramId BigInt          @map("author_telegram_id")
+  body             String
+  status           BroadcastStatus @default(queued)
+  total            Int             @default(0)
+  sent             Int             @default(0)
+  failed           Int             @default(0)
+  createdAt        DateTime        @default(now()) @map("created_at")
+  finishedAt       DateTime?       @map("finished_at")
+
+  @@map("broadcasts")
+}

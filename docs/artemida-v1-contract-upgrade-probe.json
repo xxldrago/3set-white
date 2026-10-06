@@ -1,0 +1,511 @@
+{
+  "startedAt": "2026-10-03T02:59:24.539Z",
+  "baseUrl": "https://artemida.cc/v1",
+  "pricing": [
+    {
+      "request": "GET /pricing?days=7&devices=2",
+      "status": 200,
+      "requestId": "req_b123543dae38eb2b",
+      "body": {
+        "ok": true,
+        "data": {
+          "segment": {
+            "id": "telegram",
+            "title": "Default price 120/220/300",
+            "currency": "RUB",
+            "base_devices": 2,
+            "prices_by_days": {
+              "7": 49,
+              "30": 120,
+              "60": 220,
+              "90": 300
+            }
+          },
+          "periods": [
+            7,
+            30,
+            60,
+            90
+          ],
+          "minDevices": 2,
+          "maxDevices": 9999,
+          "discountTiers": [],
+          "apiPricing": {
+            "baseDevices": 2,
+            "keyTiers": [
+              {
+                "from": 0,
+                "price": 120
+              },
+              {
+                "from": 100,
+                "price": 110
+              },
+              {
+                "from": 1000,
+                "price": 100
+              }
+            ],
+            "deviceTiers": [
+              {
+                "from": 0,
+                "price": 60
+              },
+              {
+                "from": 100,
+                "price": 55
+              },
+              {
+                "from": 1000,
+                "price": 50
+              }
+            ],
+            "periodFactors": {
+              "7": 0.4083333333333333,
+              "30": 1,
+              "60": 1.8333333333333333,
+              "90": 2.5
+            },
+            "volume": {
+              "keys": 1,
+              "devices": 2
+            },
+            "keyPrices": {
+              "7": 49,
+              "30": 120,
+              "60": 220,
+              "90": 300
+            },
+            "keyMonthPrice": 120,
+            "devicePricePerMonth": 60,
+            "personal": false,
+            "tierBasis": "active paid keys / devices on active paid keys, including the order being placed",
+            "upgradeRule": "tier device price per added device; minimum one full month, proportional above 30 remaining days"
+          },
+          "trial": {
+            "days": 1,
+            "devices": 2,
+            "amount": 2,
+            "currency": "RUB"
+          },
+          "quote": {
+            "devices": 2,
+            "days": 7,
+            "amount": 49,
+            "currency": "RUB"
+          }
+        },
+        "meta": {
+          "requestId": "req_b123543dae38eb2b"
+        }
+      }
+    },
+    {
+      "request": "GET /pricing?days=30&devices=2",
+      "status": 200,
+      "requestId": "req_5d7320c5f407dda8",
+      "body": {
+        "ok": true,
+        "data": {
+          "segment": {
+            "id": "telegram",
+            "title": "Default price 120/220/300",
+            "currency": "RUB",
+            "base_devices": 2,
+            "prices_by_days": {
+              "7": 49,
+              "30": 120,
+              "60": 220,
+              "90": 300
+            }
+          },
+          "periods": [
+            7,
+            30,
+            60,
+            90
+          ],
+          "minDevices": 2,
+          "maxDevices": 9999,
+          "discountTiers": [],
+          "apiPricing": {
+            "baseDevices": 2,
+            "keyTiers": [
+              {
+                "from": 0,
+                "price": 120
+              },
+              {
+                "from": 100,
+                "price": 110
+              },
+              {
+                "from": 1000,
+                "price": 100
+              }
+            ],
+            "deviceTiers": [
+              {
+                "from": 0,
+                "price": 60
+              },
+              {
+                "from": 100,
+                "price": 55
+              },
+              {
+                "from": 1000,
+                "price": 50
+              }
+            ],
+            "periodFactors": {
+              "7": 0.4083333333333333,
+              "30": 1,
+              "60": 1.8333333333333333,
+              "90": 2.5
+            },
+            "volume": {
+              "keys": 1,
+              "devices": 2
+            },
+            "keyPrices": {
+              "7": 49,
+              "30": 120,
+              "60": 220,
+              "90": 300
+            },
+            "keyMonthPrice": 120,
+            "devicePricePerMonth": 60,
+            "personal": false,
+            "tierBasis": "active paid keys / devices on active paid keys, including the order being placed",
+            "upgradeRule": "tier device price per added device; minimum one full month, proportional above 30 remaining days"
+          },
+          "trial": {
+            "days": 1,
+            "devices": 2,
+            "amount": 2,
+            "currency": "RUB"
+          },
+          "quote": {
+            "devices": 2,
+            "days": 30,
+            "amount": 120,
+            "currency": "RUB"
+          }
+        },
+        "meta": {
+          "requestId": "req_5d7320c5f407dda8"
+        }
+      }
+    },
+    {
+      "request": "GET /pricing?days=90&devices=2",
+      "status": 200,
+      "requestId": "req_3b4d82e0b43ec3fb",
+      "body": {
+        "ok": true,
+        "data": {
+          "segment": {
+            "id": "telegram",
+            "title": "Default price 120/220/300",
+            "currency": "RUB",
+            "base_devices": 2,
+            "prices_by_days": {
+              "7": 49,
+              "30": 120,
+              "60": 220,
+              "90": 300
+            }
+          },
+          "periods": [
+            7,
+            30,
+            60,
+            90
+          ],
+          "minDevices": 2,
+          "maxDevices": 9999,
+          "discountTiers": [],
+          "apiPricing": {
+            "baseDevices": 2,
+            "keyTiers": [
+              {
+                "from": 0,
+                "price": 120
+              },
+              {
+                "from": 100,
+                "price": 110
+              },
+              {
+                "from": 1000,
+                "price": 100
+              }
+            ],
+            "deviceTiers": [
+              {
+                "from": 0,
+                "price": 60
+              },
+              {
+                "from": 100,
+                "price": 55
+              },
+              {
+                "from": 1000,
+                "price": 50
+              }
+            ],
+            "periodFactors": {
+              "7": 0.4083333333333333,
+              "30": 1,
+              "60": 1.8333333333333333,
+              "90": 2.5
+            },
+            "volume": {
+              "keys": 1,
+              "devices": 2
+            },
+            "keyPrices": {
+              "7": 49,
+              "30": 120,
+              "60": 220,
+              "90": 300
+            },
+            "keyMonthPrice": 120,
+            "devicePricePerMonth": 60,
+            "personal": false,
+            "tierBasis": "active paid keys / devices on active paid keys, including the order being placed",
+            "upgradeRule": "tier device price per added device; minimum one full month, proportional above 30 remaining days"
+          },
+          "trial": {
+            "days": 1,
+            "devices": 2,
+            "amount": 2,
+            "currency": "RUB"
+          },
+          "quote": {
+            "devices": 2,
+            "days": 90,
+            "amount": 300,
+            "currency": "RUB"
+          }
+        },
+        "meta": {
+          "requestId": "req_3b4d82e0b43ec3fb"
+        }
+      }
+    },
+    {
+      "request": "GET /pricing?days=7&devices=1",
+      "status": 400,
+      "requestId": "req_9f057fb1d8217fa8",
+      "body": {
+        "ok": false,
+        "error": {
+          "code": "invalid_pricing_params",
+          "message": "Параметры тарифа вне допустимого диапазона."
+        },
+        "meta": {
+          "requestId": "req_9f057fb1d8217fa8"
+        }
+      }
+    }
+  ],
+  "keys": {
+    "request": "GET /keys",
+    "status": 200,
+    "requestId": "req_b990d6fdfb8f3149",
+    "body": {
+      "ok": true,
+      "data": {
+        "items": [
+          {
+            "id": "key_9f603bde96971407",
+            "name": "api_ARTΞMIDA API",
+            "customerRef": "probe1790996330",
+            "status": "ACTIVE",
+            "devices": 2,
+            "trafficUnlimited": true,
+            "trafficLimitGb": 0,
+            "trafficLimitBytes": 0,
+            "expireAt": "2026-11-02T02:58:54.730Z",
+            "remainingDays": 30,
+            "subscriptionUrl": "https://xskx.artemida.live/M2HGD-qjFynCB9Ns",
+            "customSubscriptionUrl": null,
+            "createdAt": 1790996335,
+            "updatedAt": 1790996335,
+            "revokedAt": null,
+            "trial": false
+          }
+        ],
+        "count": 1,
+        "query": ""
+      },
+      "meta": {
+        "requestId": "req_b990d6fdfb8f3149"
+      }
+    }
+  },
+  "balance": {
+    "request": "GET /balance",
+    "status": 200,
+    "requestId": "req_4fc569a11f019c45",
+    "body": {
+      "ok": true,
+      "data": {
+        "balance": 0,
+        "currency": "RUB",
+        "unlimited": false
+      },
+      "meta": {
+        "requestId": "req_4fc569a11f019c45"
+      }
+    }
+  },
+  "keyDetail": {
+    "request": "GET /keys/key_9f603bde96971407",
+    "status": 200,
+    "requestId": "req_acac80c00dadca77",
+    "body": {
+      "ok": true,
+      "data": {
+        "key": {
+          "id": "key_9f603bde96971407",
+          "name": "api_ARTΞMIDA API",
+          "customerRef": "probe1790996330",
+          "status": "ACTIVE",
+          "devices": 2,
+          "trafficUnlimited": true,
+          "trafficLimitGb": 0,
+          "trafficLimitBytes": 0,
+          "expireAt": "2026-11-02T02:58:54.730Z",
+          "remainingDays": 30,
+          "subscriptionUrl": "https://xskx.artemida.live/M2HGD-qjFynCB9Ns",
+          "customSubscriptionUrl": null,
+          "createdAt": 1790996335,
+          "updatedAt": 1790996368,
+          "revokedAt": null,
+          "trial": false
+        }
+      },
+      "meta": {
+        "requestId": "req_acac80c00dadca77"
+      }
+    }
+  },
+  "subscriptionLinks": {
+    "request": "GET /keys/key_9f603bde96971407/subscription-links",
+    "status": 200,
+    "requestId": "req_a26907b276d9936e",
+    "body": {
+      "ok": true,
+      "data": {
+        "keyId": "key_9f603bde96971407",
+        "subscriptionUrl": "https://xskx.artemida.live/M2HGD-qjFynCB9Ns",
+        "fetchedAt": 1790996368,
+        "cached": false,
+        "count": 3,
+        "vless": [
+          "vless://00000000-0000-0000-0000-000000000000@0.0.0.0:1?encryption=none&type=tcp&security=none#%E2%9A%A0%EF%B8%8F%20%D0%9F%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5%20%D0%BD%D0%B5%20%D0%BF%D0%BE%D0%B4%D0%B4%D0%B5%D1%80%D0%B6%D0%B8%D0%B2%D0%B0%D0%B5%D1%82%D1%81%D1%8F",
+          "vless://00000000-0000-0000-0000-000000000000@0.0.0.0:1?encryption=none&type=tcp&security=none#%F0%9F%93%B2%20%D0%98%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D1%83%D0%B9%D1%82%D0%B5%20%D1%80%D0%B5%D0%BA%D0%BE%D0%BC%D0%B5%D0%BD%D0%B4%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D0%B5%20%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5",
+          "vless://00000000-0000-0000-0000-000000000000@0.0.0.0:1?encryption=none&type=tcp&security=none#%F0%9F%94%A7%20%D0%98%D0%BB%D0%B8%20%D0%B2%D0%BA%D0%BB%D1%8E%D1%87%D0%B8%D1%82%D0%B5%20HWID%20%D0%B2%20%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0%D1%85%2C%20%D1%8D%D1%82%D0%BE%20%D0%B1%D1%8B%D1%81%D1%82%D1%80%D0%BE%20%3D)"
+        ],
+        "links": [
+          "vless://00000000-0000-0000-0000-000000000000@0.0.0.0:1?encryption=none&type=tcp&security=none#%E2%9A%A0%EF%B8%8F%20%D0%9F%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5%20%D0%BD%D0%B5%20%D0%BF%D0%BE%D0%B4%D0%B4%D0%B5%D1%80%D0%B6%D0%B8%D0%B2%D0%B0%D0%B5%D1%82%D1%81%D1%8F",
+          "vless://00000000-0000-0000-0000-000000000000@0.0.0.0:1?encryption=none&type=tcp&security=none#%F0%9F%93%B2%20%D0%98%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D1%83%D0%B9%D1%82%D0%B5%20%D1%80%D0%B5%D0%BA%D0%BE%D0%BC%D0%B5%D0%BD%D0%B4%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D0%B5%20%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5",
+          "vless://00000000-0000-0000-0000-000000000000@0.0.0.0:1?encryption=none&type=tcp&security=none#%F0%9F%94%A7%20%D0%98%D0%BB%D0%B8%20%D0%B2%D0%BA%D0%BB%D1%8E%D1%87%D0%B8%D1%82%D0%B5%20HWID%20%D0%B2%20%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0%D1%85%2C%20%D1%8D%D1%82%D0%BE%20%D0%B1%D1%8B%D1%81%D1%82%D1%80%D0%BE%20%3D)"
+        ],
+        "protocols": {
+          "vless": [
+            "vless://00000000-0000-0000-0000-000000000000@0.0.0.0:1?encryption=none&type=tcp&security=none#%E2%9A%A0%EF%B8%8F%20%D0%9F%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5%20%D0%BD%D0%B5%20%D0%BF%D0%BE%D0%B4%D0%B4%D0%B5%D1%80%D0%B6%D0%B8%D0%B2%D0%B0%D0%B5%D1%82%D1%81%D1%8F",
+            "vless://00000000-0000-0000-0000-000000000000@0.0.0.0:1?encryption=none&type=tcp&security=none#%F0%9F%93%B2%20%D0%98%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D1%83%D0%B9%D1%82%D0%B5%20%D1%80%D0%B5%D0%BA%D0%BE%D0%BC%D0%B5%D0%BD%D0%B4%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D0%B5%20%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5",
+            "vless://00000000-0000-0000-0000-000000000000@0.0.0.0:1?encryption=none&type=tcp&security=none#%F0%9F%94%A7%20%D0%98%D0%BB%D0%B8%20%D0%B2%D0%BA%D0%BB%D1%8E%D1%87%D0%B8%D1%82%D0%B5%20HWID%20%D0%B2%20%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0%D1%85%2C%20%D1%8D%D1%82%D0%BE%20%D0%B1%D1%8B%D1%81%D1%82%D1%80%D0%BE%20%3D)"
+          ]
+        }
+      },
+      "meta": {
+        "requestId": "req_a26907b276d9936e"
+      }
+    }
+  },
+  "devices": {
+    "request": "GET /keys/key_9f603bde96971407/devices",
+    "status": 200,
+    "requestId": "req_eb2f2c1f216c89be",
+    "body": {
+      "ok": true,
+      "data": {
+        "items": [],
+        "used": 0,
+        "limit": 2
+      },
+      "meta": {
+        "requestId": "req_eb2f2c1f216c89be"
+      }
+    }
+  },
+  "upgrade": {
+    "keyId": "key_9f603bde96971407",
+    "addDevices": 1,
+    "derived": {
+      "currentDevices": 2,
+      "planDays": null,
+      "usedDays": 30
+    },
+    "keyDetail": {
+      "request": "GET /keys/key_9f603bde96971407",
+      "status": 200,
+      "requestId": "req_932921b67935d278",
+      "body": {
+        "ok": true,
+        "data": {
+          "key": {
+            "id": "key_9f603bde96971407",
+            "name": "api_ARTΞMIDA API",
+            "customerRef": "probe1790996330",
+            "status": "ACTIVE",
+            "devices": 2,
+            "trafficUnlimited": true,
+            "trafficLimitGb": 0,
+            "trafficLimitBytes": 0,
+            "expireAt": "2026-11-02T02:58:54.730Z",
+            "remainingDays": 30,
+            "subscriptionUrl": "https://xskx.artemida.live/M2HGD-qjFynCB9Ns",
+            "customSubscriptionUrl": null,
+            "createdAt": 1790996335,
+            "updatedAt": 1790996369,
+            "revokedAt": null,
+            "trial": false
+          }
+        },
+        "meta": {
+          "requestId": "req_932921b67935d278"
+        }
+      }
+    },
+    "requestBody": {
+      "days": 30,
+      "devices": 3
+    },
+    "result": {
+      "request": "POST /keys/key_9f603bde96971407/upgrade",
+      "status": 400,
+      "requestId": "req_5df01b8b49cd2a2e",
+      "body": {
+        "ok": false,
+        "error": {
+          "code": "unsupported_fields",
+          "message": "Неподдерживаемые поля для операции «добавление устройств»: days, devices. Используйте только параметры из документации."
+        },
+        "meta": {
+          "requestId": "req_5df01b8b49cd2a2e"
+        }
+      }
+    },
+    "balanceBefore": 0,
+    "balanceAfter": 0,
+    "chargedAmount": 0,
+    "observed": null
+  }
+}

@@ -1,0 +1,86 @@
+'use client';
+
+// Pay CTA client island (UI-SPEC §1). Creates the order via the session-gated
+// BFF, then redirects SAME-TAB to the Platega hosted page. The browser sends
+// only `{kind, days?, devices?, addDevices?, keyId?}` — never a price (the
+// server re-quotes, T-03-amount). An in-flight lock disables the CTA and swaps
+// the label so a double tap cannot create two orders (T-03-double-submit). The
+// returned provider URL is used solely for `window.location.assign` and is
+// never held in state (T-03-url-state). A failure renders `pay.createError` +
+// `common.retry` and re-enables the CTA — never a raw provider string.
+import { useCallback, useState } from 'react';
+import { t } from '@/lib/i18n';
+
+type PayKind = 'new' | 'renew' | 'upgrade';
+type PayState = 'idle' | 'loading' | 'error';
+
+interface PayCtaProps {
+  kind: PayKind;
+  days?: number;
+  devices?: number;
+  addDevices?: number;
+  keyId?: string;
+  /** Disabled until a price lands (or while a parent control is unavailable). */
+  disabled?: boolean;
+}
+
+const PRIMARY =
+  'flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]';
+const SECONDARY =
+  'flex h-11 w-full items-center justify-center rounded-full border border-black/[.08] px-4 transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+
+export default function PayCta({
+  kind,
+  days,
+  devices,
+  addDevices,
+  keyId,
+  disabled = false,
+}: PayCtaProps) {
+  const [state, setState] = useState<PayState>('idle');
+
+  const createOrder = useCallback(async () => {
+    if (state === 'loading') return; // in-flight lock
+    setState('loading');
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // `undefined` fields are dropped by JSON.stringify — only the intent
+        // for this kind is sent; no price.
+        body: JSON.stringify({ kind, days, devices, addDevices, keyId }),
+      });
+      if (!res.ok) throw new Error('order_create_failed');
+      const body = (await res.json()) as { url?: unknown };
+      if (typeof body.url !== 'string' || body.url.length === 0) {
+        throw new Error('order_url_missing');
+      }
+      // Same-tab redirect to the Platega hosted page (never stored in state).
+      window.location.assign(body.url);
+    } catch {
+      setState('error');
+    }
+  }, [state, kind, days, devices, addDevices, keyId]);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={() => void createOrder()}
+        disabled={disabled || state === 'loading'}
+        className={PRIMARY}
+      >
+        {state === 'loading' ? t('pay.ctaLoading') : t('pay.cta')}
+      </button>
+
+      {state === 'error' && (
+        <div className="flex flex-col gap-2" role="alert">
+          <p className="text-sm text-red-600 dark:text-red-400">{t('pay.createError')}</p>
+          <button type="button" onClick={() => void createOrder()} className={SECONDARY}>
+            {t('common.retry')}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

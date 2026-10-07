@@ -111,3 +111,40 @@ export async function requireTelegramSession(): Promise<number> {
   }
   return claims.telegramId;
 }
+
+/** Display identity for cabinet chrome (nav avatar, profile page). */
+export interface SessionUser {
+  userId: number;
+  telegramId: number | null;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  username: string | null;
+}
+
+/**
+ * Resolve the caller's display identity (email/name) for cabinet chrome.
+ * Returns null when unauthenticated — callers render anonymous chrome rather
+ * than redirecting. The userId is resolved server-side by `requireSession`
+ * (never from client input); the row lookup reads display fields only.
+ */
+export async function getSessionUser(): Promise<SessionUser | null> {
+  let identity: SessionIdentity;
+  try {
+    identity = await requireSession();
+  } catch {
+    return null;
+  }
+  const user = await prisma.user.findUnique({
+    where: { id: identity.userId },
+    select: { email: true, firstName: true, lastName: true, username: true },
+  });
+  return {
+    userId: identity.userId,
+    telegramId: identity.telegramId,
+    email: user?.email ?? null,
+    firstName: user?.firstName ?? null,
+    lastName: user?.lastName ?? null,
+    username: user?.username ?? null,
+  };
+}

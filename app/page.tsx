@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { after } from 'next/server';
 import AccountSection, { AccountSectionSkeleton } from '@/components/AccountSection';
 import InstallPrompt from '@/components/InstallPrompt';
+import Nav from '@/components/Nav';
 import SubscriptionCard from '@/components/SubscriptionCard';
 import SupportEntry from '@/components/SupportEntry';
 import TariffPicker from '@/components/TariffPicker';
@@ -11,7 +12,7 @@ import { ArtemidaError } from '@/lib/artemida';
 import { t, tp } from '@/lib/i18n';
 import { listKeys, listKeysByUserId, revalidateKeys, revalidateKeysByUserId, type RenderedKey } from '@/lib/keys-service';
 import { logger } from '@/lib/logger';
-import { requireSession, requireTelegramSession, SessionError } from '@/lib/session';
+import { getSessionUser, requireSession, requireTelegramSession, SessionError } from '@/lib/session';
 import { listTicketsForUser } from '@/lib/tickets-service';
 
 // Personalised, cache-backed page — never statically rendered.
@@ -159,6 +160,9 @@ export default async function Home() {
     if (!(err instanceof SessionError)) throw err;
   }
 
+  // Display identity for the cabinet nav (null when anonymous).
+  const navUser = await getSessionUser();
+
   // Email-only session (no linked Telegram): capture the server-resolved
   // userId so the cabinet can read keys/trial through the userId-keyed path
   // (G-06-9). TG-keyed sections (tariff/payments/support) stay TG-gated — a
@@ -187,6 +191,7 @@ export default async function Home() {
 
   return (
     <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
+      <Nav user={navUser} />
       <main className="flex flex-1 w-full max-w-3xl flex-col gap-8 px-6 py-12 sm:px-16">
         <header className="flex flex-col gap-2">
           <h1 className="text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">

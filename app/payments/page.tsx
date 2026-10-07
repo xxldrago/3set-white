@@ -18,9 +18,9 @@ import { getSessionUser, requireTelegramSession, SessionError } from '@/lib/sess
 export const dynamic = 'force-dynamic';
 
 const CARD =
-  'flex flex-col gap-4 rounded-2xl border border-black/10 p-6 dark:border-white/15';
+  'flex flex-col gap-4 rounded-2xl border border-line bg-panel p-6';
 const SECONDARY =
-  'flex h-12 items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-12 items-center justify-center rounded-lg border border-line px-5 transition-colors hover:bg-foreground/5';
 
 /** Loading fallback while the DB read resolves (UI-SPEC loading state). */
 function SkeletonRows() {

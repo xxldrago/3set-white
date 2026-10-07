@@ -10,7 +10,7 @@ export const metadata = {
 };
 
 const SECONDARY =
-  'flex h-12 items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-12 items-center justify-center rounded-lg border border-line px-5 transition-colors hover:bg-foreground/5';
 
 export default async function ProfilePage() {
   const user = await getSessionUser();
@@ -22,20 +22,20 @@ export default async function ProfilePage() {
     <div className="flex min-h-screen flex-col bg-zinc-50 font-sans dark:bg-black">
       <Nav user={user} />
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
-        <div className="rounded-2xl border border-black/10 bg-white p-6 dark:border-white/15 dark:bg-zinc-900">
-          <h1 className="text-2xl font-semibold text-black dark:text-zinc-50">Профиль</h1>
+        <div className="rounded-2xl border border-line bg-panel p-6">
+          <h1 className="text-2xl font-semibold text-foreground">Профиль</h1>
           <div className="mt-4 space-y-4">
             <div>
-              <h3 className="text-sm font-medium text-zinc-500">Имя</h3>
-              <p className="text-black dark:text-zinc-100">{name ?? '—'}</p>
+              <h3 className="font-mono text-xs uppercase tracking-widest text-dim">Имя</h3>
+              <p className="text-foreground">{name ?? '—'}</p>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-zinc-500">Email</h3>
-              <p className="text-black dark:text-zinc-100">{user.email ?? '—'}</p>
+              <h3 className="font-mono text-xs uppercase tracking-widest text-dim">Email</h3>
+              <p className="text-foreground">{user.email ?? '—'}</p>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-zinc-500">Telegram</h3>
-              <p className="text-black dark:text-zinc-100">
+              <h3 className="font-mono text-xs uppercase tracking-widest text-dim">Telegram</h3>
+              <p className="text-foreground">
                 {user.telegramId != null ? `@id_${user.telegramId}` : 'Не привязан'}
               </p>
             </div>

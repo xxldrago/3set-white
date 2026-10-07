@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Logo from '@/components/Logo';
 
 /** Serializable display identity passed from the server (see getSessionUser). */
 export interface NavUser {
@@ -43,15 +44,13 @@ export default function Nav({ user }: { user: NavUser | null }) {
   ];
 
   return (
-    <nav className="sticky top-0 z-40 w-full border-b border-black/10 bg-white/80 backdrop-blur dark:border-white/15 dark:bg-black/80">
-      <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="3set" className="h-8 w-auto" />
-          <span className="text-lg font-semibold text-black dark:text-zinc-50">3set</span>
+    <nav className="sticky top-0 z-40 w-full border-b border-line bg-background/85 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-3xl items-center justify-between gap-4 px-4 sm:px-6">
+        <Link href="/" aria-label="3set — на главную">
+          <Logo />
         </Link>
 
-        <ul className="flex items-center gap-1.5">
+        <ul className="flex items-center gap-1">
           {items.map((item) => {
             const active = item.exact
               ? pathname === item.href
@@ -60,10 +59,10 @@ export default function Nav({ user }: { user: NavUser | null }) {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                     active
-                      ? 'bg-black text-white dark:bg-white dark:text-black'
-                      : 'text-zinc-600 hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white'
+                      ? 'bg-foreground text-lime'
+                      : 'text-muted hover:bg-foreground/5 hover:text-foreground'
                   }`}
                 >
                   {item.label}
@@ -77,7 +76,7 @@ export default function Nav({ user }: { user: NavUser | null }) {
               href="/profile"
               aria-label="Профиль"
               title={user?.email ?? user?.username ?? 'Профиль'}
-              className="ml-1 flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 bg-zinc-100 text-xs font-medium text-zinc-900 transition-colors hover:bg-black/5 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-white/10"
+              className="ml-1 flex h-9 w-9 items-center justify-center rounded-full border border-line bg-panel-2 text-xs font-semibold text-foreground transition-colors hover:bg-foreground/5"
             >
               {displayName(user)}
             </Link>

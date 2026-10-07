@@ -1,27 +1,58 @@
 @import "tailwindcss";
 
+/* 3set brand design tokens — ported from the 3set.online landing page.
+   Light is the brand default; the dark scheme is a dark-green adaptation. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f6f4ee;
+  --foreground: #0e1512;
+  --panel: #ffffff;
+  --panel-2: #fbfaf5;
+  --line: #e4dfd1;
+  --muted: #5b645e;
+  --dim: #8f968f;
+  --lime: #b7ff45;
+  --lime-dk: #8fd41f;
+  --green: #0c4f36;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-line: var(--line);
+  --color-muted: var(--muted);
+  --color-dim: var(--dim);
+  --color-lime: var(--lime);
+  --color-lime-dk: var(--lime-dk);
+  --color-green: var(--green);
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-unbounded), var(--font-manrope), sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0e1512;
+    --foreground: #f6f4ee;
+    --panel: #141d18;
+    --panel-2: #101814;
+    --line: #26332b;
+    --muted: #9aa79d;
+    --dim: #6b7a70;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  /* No body font override: the loaded Geist face wins via the --font-sans
-     token (UI-SPEC "Font rationale"). */
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
 }

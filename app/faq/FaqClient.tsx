@@ -28,12 +28,18 @@ export default function FaqClient() {
 
   const filtered = useMemo(() => {
     const words = norm(query).split(/\s+/).filter(Boolean);
-    return FAQ_ITEMS.filter((item) => {
-      if (category !== 'all' && item.category !== category) return false;
-      if (words.length === 0) return true;
-      const hay = norm(`${item.title} ${item.tag} ${item.search} ${item.answer}`);
-      return words.every((w) => hay.includes(w));
-    });
+    const byCat = FAQ_ITEMS.filter(
+      (item) => category === 'all' || item.category === category,
+    );
+    if (words.length === 0) return byCat;
+    const hay = (item: (typeof FAQ_ITEMS)[number]) =>
+      norm(`${item.title} ${item.tag} ${item.search} ${item.answer}`);
+    // Prefer items matching ALL words; if that yields nothing (e.g. a different
+    // word form), fall back to ANY word so the search never looks dead.
+    const all = byCat.filter((item) => words.every((w) => hay(item).includes(w)));
+    return all.length > 0
+      ? all
+      : byCat.filter((item) => words.some((w) => hay(item).includes(w)));
   }, [query, category]);
 
   const shown = filtered.slice(0, visible);

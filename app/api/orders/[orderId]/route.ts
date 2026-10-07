@@ -11,9 +11,9 @@
 // The response emits ONLY our mapped fields; the Platega transaction id and any
 // other provider field are never serialized (T-03-provider-leak, D-19/D-24).
 import { z } from "zod";
-import { loadOrderForUser, toHistoryRow } from "../../../../lib/orders-service";
+import { loadOrderForUserId, toHistoryRow } from "../../../../lib/orders-service";
 import { logger } from "../../../../lib/logger";
-import { requireTelegramSession, SessionError } from "../../../../lib/session";
+import { requireSession, SessionError } from "../../../../lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -23,9 +23,9 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ orderId: string }> },
 ): Promise<Response> {
-  let telegramId: number;
+  let userId: number;
   try {
-    telegramId = await requireTelegramSession();
+    ({ userId } = await requireSession());
   } catch (err) {
     if (err instanceof SessionError) {
       return Response.json({ error: "unauthorized" }, { status: 401 });
@@ -41,7 +41,7 @@ export async function GET(
   }
 
   try {
-    const order = await loadOrderForUser(BigInt(telegramId), parsed.data);
+    const order = await loadOrderForUserId(userId, parsed.data);
     if (!order) {
       // Missing and non-owned are deliberately identical (no enumeration oracle).
       return Response.json({ error: "not_found" }, { status: 404 });

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import CreateTicketForm from '@/components/CreateTicketForm';
 import { t } from '@/lib/i18n';
-import { requireTelegramSession, SessionError } from '@/lib/session';
+import { requireSession, SessionError } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,7 +20,7 @@ const SECONDARY =
 
 export default async function NewTicketPage() {
   try {
-    await requireTelegramSession();
+    await requireSession();
   } catch (err) {
     if (err instanceof SessionError) redirect('/login');
     throw err;

@@ -246,8 +246,23 @@ export async function getSubscriptionForUser(
   telegramId: bigint,
   keyId: string,
 ): Promise<SubscriptionForUser | null> {
+  return getSubscriptionForOwnedKey({ telegramId }, keyId);
+}
+
+/** userId-scoped subscription read (email-only accounts included). */
+export async function getSubscriptionForUserId(
+  userId: number,
+  keyId: string,
+): Promise<SubscriptionForUser | null> {
+  return getSubscriptionForOwnedKey({ id: userId }, keyId);
+}
+
+async function getSubscriptionForOwnedKey(
+  ownerWhere: { telegramId: bigint } | { id: number },
+  keyId: string,
+): Promise<SubscriptionForUser | null> {
   const row = await prisma.keyCache.findFirst({
-    where: { keyId, user: { telegramId } },
+    where: { keyId, user: ownerWhere },
     select: { id: true },
   });
   if (!row) return null; // not owned / missing — same result (no oracle)

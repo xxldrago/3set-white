@@ -13,8 +13,8 @@ import TicketComposer from '@/components/TicketComposer';
 import TicketStatusChip from '@/components/TicketStatusChip';
 import TicketThread from '@/components/TicketThread';
 import { t } from '@/lib/i18n';
-import { getTicketForUser } from '@/lib/tickets-service';
-import { requireTelegramSession, SessionError } from '@/lib/session';
+import { getTicketForUserId } from '@/lib/tickets-service';
+import { requireSession, SessionError } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,16 +31,16 @@ export default async function TicketDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  let telegramId: number;
+  let userId: number;
   try {
-    telegramId = await requireTelegramSession();
+    ({ userId } = await requireSession());
   } catch (err) {
     if (err instanceof SessionError) redirect('/login');
     throw err;
   }
 
   const { id } = await params;
-  const thread = await getTicketForUser(BigInt(telegramId), id);
+  const thread = await getTicketForUserId(userId, id);
   if (!thread) notFound();
 
   return (

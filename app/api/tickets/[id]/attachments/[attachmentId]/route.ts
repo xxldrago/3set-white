@@ -15,8 +15,11 @@ import { z } from "zod";
 import { getAdminRole } from "../../../../../../lib/admin-auth";
 import { readAttachment } from "../../../../../../lib/attachments";
 import { logger } from "../../../../../../lib/logger";
-import { requireTelegramSession, SessionError } from "../../../../../../lib/session";
-import { getOwnedAttachment } from "../../../../../../lib/tickets-service";
+import { requireSession, requireTelegramSession, SessionError } from "../../../../../../lib/session";
+import {
+  getOwnedAttachment,
+  getOwnedAttachmentByUserId,
+} from "../../../../../../lib/tickets-service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,15 +30,26 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string; attachmentId: string }> },
 ): Promise<Response> {
-  let telegramId: number;
+  // Resolve identity: `userId` (owner) when a users row exists; `telegramId`
+  // (staff, or legacy tid sessions with no row). Staff are telegram-keyed.
+  let userId: number | null = null;
+  let telegramId: number | null = null;
   try {
-    telegramId = await requireTelegramSession();
+    ({ userId, telegramId } = await requireSession());
   } catch (err) {
-    if (err instanceof SessionError) {
-      return Response.json({ error: "unauthorized" }, { status: 401 });
+    if (!(err instanceof SessionError)) {
+      logger.error({ route: "ticket-attachment", outcome: "session_error" });
+      return Response.json({ error: "internal" }, { status: 500 });
     }
-    logger.error({ route: "ticket-attachment", outcome: "session_error" });
-    return Response.json({ error: "internal" }, { status: 500 });
+    try {
+      telegramId = await requireTelegramSession();
+    } catch (err2) {
+      if (err2 instanceof SessionError) {
+        return Response.json({ error: "unauthorized" }, { status: 401 });
+      }
+      logger.error({ route: "ticket-attachment", outcome: "session_error" });
+      return Response.json({ error: "internal" }, { status: 500 });
+    }
   }
 
   const { id, attachmentId } = await params;
@@ -45,10 +59,16 @@ export async function GET(
 
   try {
     // Staff = the ticket-viewing role set only; a manager or a non-staff caller
-    // falls through to the owner join (T-05-17).
-    const role = await getAdminRole(telegramId);
+    // falls through to the owner join (T-05-17). Staff identity is telegram-based.
+    const role = telegramId !== null ? await getAdminRole(telegramId) : null;
     const isStaff = role === "administrator" || role === "support";
-    const attachment = await getOwnedAttachment(BigInt(telegramId), id, attachmentId, isStaff);
+
+    let attachment: { path: string; mime: string } | null = null;
+    if (isStaff && telegramId !== null) {
+      attachment = await getOwnedAttachment(BigInt(telegramId), id, attachmentId, true);
+    } else if (userId !== null) {
+      attachment = await getOwnedAttachmentByUserId(userId, id, attachmentId, false);
+    }
     if (!attachment) return Response.json({ error: "not_found" }, { status: 404 });
 
     const bytes = await readAttachment(attachment.path);

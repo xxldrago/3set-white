@@ -19,12 +19,11 @@ interface NavItem {
   exact?: boolean;
 }
 
-// Always available to any signed-in identity.
-const BASE_ITEMS: NavItem[] = [{ href: '/', label: 'Подписки', exact: true }];
-// Telegram-gated surfaces (orders/tickets key by telegram id) — hidden for
-// email-only accounts so the nav never links to a page that redirects to /login.
-const TG_ITEMS: NavItem[] = [
+// Cabinet nav — shown to every signed-in identity (email-only included).
+const NAV_ITEMS: NavItem[] = [
+  { href: '/', label: 'Подписки', exact: true },
   { href: '/payments', label: 'История платежей' },
+  { href: '/faq', label: 'FAQ' },
   { href: '/support', label: 'Поддержка' },
 ];
 
@@ -37,7 +36,7 @@ function displayName(user: NavUser | null): string {
 export default function Nav({ user }: { user: NavUser | null }) {
   const pathname = usePathname();
   // Profile is reachable only via the avatar icon (no text link).
-  const items = [...BASE_ITEMS, ...(user?.telegramId != null ? TG_ITEMS : [])];
+  const items = NAV_ITEMS;
 
   return (
     <nav className="sticky top-0 z-40 w-full border-b border-line bg-background/85 backdrop-blur">

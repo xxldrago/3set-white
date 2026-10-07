@@ -12,8 +12,8 @@ import Nav from '@/components/Nav';
 import TicketList from '@/components/TicketList';
 import { t, tp } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
-import { listTicketsForUser, type TicketListRow } from '@/lib/tickets-service';
-import { getSessionUser, requireTelegramSession, SessionError } from '@/lib/session';
+import { listTicketsByUserId, type TicketListRow } from '@/lib/tickets-service';
+import { getSessionUser, requireSession, SessionError } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,10 +41,10 @@ function SkeletonRows() {
   );
 }
 
-async function TicketsSection({ telegramId }: { telegramId: number }) {
+async function TicketsSection({ userId }: { userId: number }) {
   let rows: TicketListRow[];
   try {
-    rows = await listTicketsForUser(BigInt(telegramId));
+    rows = await listTicketsByUserId(userId);
   } catch {
     logger.error({ route: 'support', outcome: 'tickets_load_failed' });
     return (
@@ -86,9 +86,9 @@ async function TicketsSection({ telegramId }: { telegramId: number }) {
 }
 
 export default async function SupportPage() {
-  let telegramId: number;
+  let userId: number;
   try {
-    telegramId = await requireTelegramSession();
+    ({ userId } = await requireSession());
   } catch (err) {
     if (err instanceof SessionError) redirect('/login');
     throw err;
@@ -107,7 +107,7 @@ export default async function SupportPage() {
         </header>
 
         <Suspense fallback={<SkeletonRows />}>
-          <TicketsSection telegramId={telegramId} />
+          <TicketsSection userId={userId} />
         </Suspense>
 
         <nav className="flex flex-col gap-2 sm:flex-row">

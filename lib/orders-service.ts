@@ -264,6 +264,16 @@ export async function loadOrderForUser(
   });
 }
 
+/** userId-scoped order load (email-only accounts included). */
+export async function loadOrderForUserId(
+  userId: number,
+  orderId: string,
+): Promise<Order | null> {
+  return prisma.order.findFirst({
+    where: { id: orderId, user: { id: userId } },
+  });
+}
+
 /**
  * Raw, provider-free view of an order for the cabinet + bot payment history
  * (D-48). Amounts/dates are the stored values verbatim — formatting is the UI's
@@ -306,6 +316,15 @@ export function toHistoryRow(order: Order): OrderHistoryRow {
 export async function listOrdersForUser(telegramId: bigint): Promise<OrderHistoryRow[]> {
   const orders = await prisma.order.findMany({
     where: { user: { telegramId } },
+    orderBy: { createdAt: "desc" },
+  });
+  return orders.map(toHistoryRow);
+}
+
+/** userId-scoped order history (email-only accounts included). */
+export async function listOrdersByUserId(userId: number): Promise<OrderHistoryRow[]> {
+  const orders = await prisma.order.findMany({
+    where: { userId },
     orderBy: { createdAt: "desc" },
   });
   return orders.map(toHistoryRow);

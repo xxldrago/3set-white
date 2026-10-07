@@ -17,9 +17,9 @@ import {
   UnsupportedImageError,
 } from "../../../../../lib/attachments";
 import { logger } from "../../../../../lib/logger";
-import { requireTelegramSession, SessionError } from "../../../../../lib/session";
+import { requireSession, SessionError } from "../../../../../lib/session";
 import {
-  appendUserMessage,
+  appendUserMessageByUserId,
   type AttachmentDescriptor,
 } from "../../../../../lib/tickets-service";
 
@@ -33,9 +33,9 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
-  let telegramId: number;
+  let userId: number;
   try {
-    telegramId = await requireTelegramSession();
+    ({ userId } = await requireSession());
   } catch (err) {
     if (err instanceof SessionError) {
       return Response.json({ error: "unauthorized" }, { status: 401 });
@@ -108,8 +108,8 @@ export async function POST(
   }
 
   try {
-    const result = await appendUserMessage(
-      BigInt(telegramId),
+    const result = await appendUserMessageByUserId(
+      userId,
       parsedId.data,
       bodyText,
       attachment,

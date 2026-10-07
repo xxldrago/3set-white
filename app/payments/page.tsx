@@ -12,8 +12,8 @@ import Nav from '@/components/Nav';
 import PaymentHistoryList from '@/components/PaymentHistoryList';
 import { t } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
-import { listOrdersForUser, type OrderHistoryRow } from '@/lib/orders-service';
-import { getSessionUser, requireTelegramSession, SessionError } from '@/lib/session';
+import { listOrdersByUserId, type OrderHistoryRow } from '@/lib/orders-service';
+import { getSessionUser, requireSession, SessionError } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,10 +36,10 @@ function SkeletonRows() {
   );
 }
 
-async function HistorySection({ telegramId }: { telegramId: number }) {
+async function HistorySection({ userId }: { userId: number }) {
   let rows: OrderHistoryRow[];
   try {
-    rows = await listOrdersForUser(BigInt(telegramId));
+    rows = await listOrdersByUserId(userId);
   } catch {
     logger.error({ route: 'payments', outcome: 'history_load_failed' });
     return (
@@ -55,9 +55,9 @@ async function HistorySection({ telegramId }: { telegramId: number }) {
 }
 
 export default async function PaymentsHistoryPage() {
-  let telegramId: number;
+  let userId: number;
   try {
-    telegramId = await requireTelegramSession();
+    ({ userId } = await requireSession());
   } catch (err) {
     if (err instanceof SessionError) redirect('/login');
     throw err;
@@ -76,7 +76,7 @@ export default async function PaymentsHistoryPage() {
         </header>
 
         <Suspense fallback={<SkeletonRows />}>
-          <HistorySection telegramId={telegramId} />
+          <HistorySection userId={userId} />
         </Suspense>
 
         <nav className="flex flex-col gap-2 sm:flex-row">

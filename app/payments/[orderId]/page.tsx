@@ -12,10 +12,10 @@
 import { notFound, redirect } from 'next/navigation';
 import OrderStatusPanel, { type DeliveredKey } from '@/components/OrderStatusPanel';
 import { ArtemidaError } from '@/lib/artemida';
-import { getKeyForUser, getSubscriptionForUser } from '@/lib/keys-service';
-import { loadOrderForUser, toHistoryRow } from '@/lib/orders-service';
+import { getKeyForUserId, getSubscriptionForUserId } from '@/lib/keys-service';
+import { loadOrderForUserId, toHistoryRow } from '@/lib/orders-service';
 import { renderSubscriptionQr } from '@/lib/qr';
-import { requireTelegramSession, SessionError } from '@/lib/session';
+import { requireSession, SessionError } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,19 +26,19 @@ export const dynamic = 'force-dynamic';
  * fabricated/empty QR is never rendered.
  */
 async function loadDelivered(
-  telegramId: number,
+  userId: number,
   keyId: string,
 ): Promise<DeliveredKey> {
   let subscriptionUrl: string | null = null;
   try {
-    const subscription = await getSubscriptionForUser(BigInt(telegramId), keyId);
+    const subscription = await getSubscriptionForUserId(userId, keyId);
     subscriptionUrl = subscription?.subscriptionUrl ?? null;
   } catch (err) {
     if (!(err instanceof ArtemidaError)) throw err;
     // Provider link fetch failed — fall through to the cache mirror.
   }
   if (!subscriptionUrl) {
-    const key = await getKeyForUser(BigInt(telegramId), keyId);
+    const key = await getKeyForUserId(userId, keyId);
     subscriptionUrl = key?.subscriptionUrl ?? null;
   }
   const qr = subscriptionUrl ? await renderSubscriptionQr(subscriptionUrl) : null;
@@ -50,21 +50,21 @@ export default async function PaymentReturnPage({
 }: {
   params: Promise<{ orderId: string }>;
 }) {
-  let telegramId: number;
+  let userId: number;
   try {
-    telegramId = await requireTelegramSession();
+    ({ userId } = await requireSession());
   } catch (err) {
     if (err instanceof SessionError) redirect('/login');
     throw err;
   }
 
   const { orderId } = await params;
-  const order = await loadOrderForUser(BigInt(telegramId), orderId);
+  const order = await loadOrderForUserId(userId, orderId);
   if (!order) notFound();
 
   const delivered =
     order.status === 'provisioned' && order.provisionedKeyId
-      ? await loadDelivered(telegramId, order.provisionedKeyId)
+      ? await loadDelivered(userId, order.provisionedKeyId)
       : null;
 
   return (

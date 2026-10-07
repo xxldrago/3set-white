@@ -80,8 +80,25 @@ export interface TicketThread {
  * every ticket lands in the single queue with identical fields.
  */
 export async function createTicket(input: CreateTicketInput): Promise<CreateTicketResult> {
-  const user = await prisma.user.findUnique({
-    where: { telegramId: input.telegramId },
+  return createTicketForOwner({ telegramId: input.telegramId }, input);
+}
+
+/** userId-scoped ticket creation (email-only accounts included). */
+export async function createTicketByUserId(input: {
+  userId: number;
+  subject: string;
+  body: string;
+  attachment?: AttachmentDescriptor | null;
+}): Promise<CreateTicketResult> {
+  return createTicketForOwner({ id: input.userId }, input);
+}
+
+async function createTicketForOwner(
+  ownerWhere: { telegramId: bigint } | { id: number },
+  input: { subject: string; body: string; attachment?: AttachmentDescriptor | null },
+): Promise<CreateTicketResult> {
+  const user = await prisma.user.findFirst({
+    where: ownerWhere,
     select: { id: true },
   });
   if (!user) return { kind: "no_user" };
@@ -119,8 +136,19 @@ export async function createTicket(input: CreateTicketInput): Promise<CreateTick
  * newest message body, or `null` for an image-only last message.
  */
 export async function listTicketsForUser(telegramId: bigint): Promise<TicketListRow[]> {
+  return listTicketsByOwner({ telegramId });
+}
+
+/** userId-scoped ticket list (email-only accounts included). */
+export async function listTicketsByUserId(userId: number): Promise<TicketListRow[]> {
+  return listTicketsByOwner({ id: userId });
+}
+
+async function listTicketsByOwner(
+  ownerWhere: { telegramId: bigint } | { id: number },
+): Promise<TicketListRow[]> {
   const rows = await prisma.ticket.findMany({
-    where: { user: { telegramId } },
+    where: { user: ownerWhere },
     orderBy: { lastMessageAt: "desc" },
     include: {
       messages: {
@@ -205,8 +233,23 @@ export async function getTicketForUser(
   telegramId: bigint,
   ticketId: string,
 ): Promise<TicketThread | null> {
+  return getTicketForOwner({ telegramId }, ticketId);
+}
+
+/** userId-scoped ticket thread read (email-only accounts included). */
+export async function getTicketForUserId(
+  userId: number,
+  ticketId: string,
+): Promise<TicketThread | null> {
+  return getTicketForOwner({ id: userId }, ticketId);
+}
+
+async function getTicketForOwner(
+  ownerWhere: { telegramId: bigint } | { id: number },
+  ticketId: string,
+): Promise<TicketThread | null> {
   const row = await prisma.ticket.findFirst({
-    where: { id: ticketId, user: { telegramId } },
+    where: { id: ticketId, user: ownerWhere },
     include: THREAD_INCLUDE,
   });
   return row ? toThread(row) : null;
@@ -330,8 +373,27 @@ export async function appendUserMessage(
   body: string,
   attachment?: AttachmentDescriptor | null,
 ): Promise<{ messageId: string } | null> {
+  return appendUserMessageForOwner({ telegramId }, ticketId, body, attachment);
+}
+
+/** userId-scoped user reply (email-only accounts included). */
+export async function appendUserMessageByUserId(
+  userId: number,
+  ticketId: string,
+  body: string,
+  attachment?: AttachmentDescriptor | null,
+): Promise<{ messageId: string } | null> {
+  return appendUserMessageForOwner({ id: userId }, ticketId, body, attachment);
+}
+
+async function appendUserMessageForOwner(
+  ownerWhere: { telegramId: bigint } | { id: number },
+  ticketId: string,
+  body: string,
+  attachment?: AttachmentDescriptor | null,
+): Promise<{ messageId: string } | null> {
   const owned = await prisma.ticket.findFirst({
-    where: { id: ticketId, user: { telegramId } },
+    where: { id: ticketId, user: ownerWhere },
     select: { id: true },
   });
   if (!owned) return null;
@@ -362,8 +424,20 @@ export async function appendUserMessage(
  * oracle).
  */
 export async function markTicketRead(telegramId: bigint, ticketId: string): Promise<boolean> {
+  return markTicketReadForOwner({ telegramId }, ticketId);
+}
+
+/** userId-scoped mark-read (email-only accounts included). */
+export async function markTicketReadByUserId(userId: number, ticketId: string): Promise<boolean> {
+  return markTicketReadForOwner({ id: userId }, ticketId);
+}
+
+async function markTicketReadForOwner(
+  ownerWhere: { telegramId: bigint } | { id: number },
+  ticketId: string,
+): Promise<boolean> {
   const { count } = await prisma.ticket.updateMany({
-    where: { id: ticketId, user: { telegramId } },
+    where: { id: ticketId, user: ownerWhere },
     data: { unreadForUser: 0 },
   });
   return count === 1;
@@ -417,12 +491,39 @@ export async function getOwnedAttachment(
   attachmentId: string,
   isStaff = false,
 ): Promise<{ path: string; mime: string } | null> {
+  return getOwnedAttachmentForOwner(
+    isStaff ? null : { telegramId },
+    ticketId,
+    attachmentId,
+    isStaff,
+  );
+}
+
+/** userId-scoped attachment ownership (email-only accounts included). */
+export async function getOwnedAttachmentByUserId(
+  userId: number,
+  ticketId: string,
+  attachmentId: string,
+  isStaff = false,
+): Promise<{ path: string; mime: string } | null> {
+  return getOwnedAttachmentForOwner(
+    isStaff ? null : { id: userId },
+    ticketId,
+    attachmentId,
+    isStaff,
+  );
+}
+
+async function getOwnedAttachmentForOwner(
+  ownerWhere: { telegramId: bigint } | { id: number } | null,
+  ticketId: string,
+  attachmentId: string,
+  isStaff: boolean,
+): Promise<{ path: string; mime: string } | null> {
   const attachment = await prisma.attachment.findFirst({
     where: {
       id: attachmentId,
-      message: isStaff
-        ? { ticketId }
-        : { ticketId, ticket: { user: { telegramId } } },
+      message: isStaff ? { ticketId } : { ticketId, ticket: { user: ownerWhere! } },
     },
     select: { path: true, mime: true },
   });

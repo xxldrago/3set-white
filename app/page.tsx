@@ -237,8 +237,7 @@ export default async function Home() {
             </nav>
           </section>
         )}
-        <InstallPrompt />
-        {/* Email-only: the Telegram link prompt sits at the very bottom. */}
+        {/* Email-only: the Telegram link prompt sits above the install prompt. */}
         {telegramId === null && emailUserId !== null && (
           <section className={CARD}>
             <p className="text-muted">{t('auth.linkBanner')}</p>
@@ -247,6 +246,7 @@ export default async function Home() {
             </Link>
           </section>
         )}
+        <InstallPrompt />
       </main>
     </div>
   );

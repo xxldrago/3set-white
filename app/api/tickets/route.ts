@@ -19,8 +19,8 @@ import {
   UnsupportedImageError,
 } from "../../../lib/attachments";
 import { logger } from "../../../lib/logger";
-import { requireTelegramSession, SessionError } from "../../../lib/session";
-import { createTicket, type AttachmentDescriptor } from "../../../lib/tickets-service";
+import { requireSession, SessionError } from "../../../lib/session";
+import { createTicketByUserId, type AttachmentDescriptor } from "../../../lib/tickets-service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,9 +29,9 @@ const subjectSchema = z.string().trim().min(1).max(120);
 const bodySchema = z.string().trim().min(1).max(4000);
 
 export async function POST(req: Request): Promise<Response> {
-  let telegramId: number;
+  let userId: number;
   try {
-    telegramId = await requireTelegramSession();
+    ({ userId } = await requireSession());
   } catch (err) {
     if (err instanceof SessionError) {
       return Response.json({ error: "unauthorized" }, { status: 401 });
@@ -89,8 +89,8 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   try {
-    const result = await createTicket({
-      telegramId: BigInt(telegramId),
+    const result = await createTicketByUserId({
+      userId,
       subject: subject.data,
       body: body.data,
       attachment,

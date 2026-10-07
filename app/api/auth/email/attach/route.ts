@@ -30,6 +30,7 @@ import { clientIp } from "../../../../../lib/client-ip";
 import { canonicalizeEmail } from "../../../../../lib/email-canonical";
 import { env } from "../../../../../lib/env";
 import { logger } from "../../../../../lib/logger";
+import { revalidateKeys, revalidateKeysByUserId } from "../../../../../lib/keys-service";
 import { hashPassword } from "../../../../../lib/password";
 import { prisma } from "../../../../../lib/prisma";
 import { SessionError, requireSession } from "../../../../../lib/session";
@@ -142,6 +143,12 @@ export async function POST(req: Request): Promise<Response> {
       env.SESSION_SECRET,
     );
     logger.info({ route: "email-attach", outcome: "attached" });
+    // Fire-and-forget: refresh the keys cache so /subscription shows the
+    // newly-owned customerRef after the identity change (no manual sync).
+    const tid = user.telegramId === null ? telegramId : Number(user.telegramId);
+    void (tid !== null ? revalidateKeys(BigInt(tid)) : revalidateKeysByUserId(user.id)).catch(
+      () => undefined,
+    );
     return Response.json(
       { ok: true },
       {

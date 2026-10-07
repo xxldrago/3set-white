@@ -300,6 +300,57 @@ export async function loadAdminTickets(userId: number): Promise<TicketListRow[]>
 }
 
 /** One staff row for the role manager — the ONLY fields it exposes. */
+export interface AdminUserTableRow {
+  id: number;
+  telegramId: string | null;
+  email: string | null;
+  username: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  role: AdminRole | null;
+  keysCount: number;
+  ordersCount: number;
+  createdAt: Date;
+}
+
+export async function loadAdminUsersTable(): Promise<AdminUserTableRow[]> {
+  const users = await prisma.user.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 50,
+    select: {
+      id: true,
+      telegramId: true,
+      email: true,
+      username: true,
+      firstName: true,
+      lastName: true,
+      createdAt: true,
+    },
+  });
+  const ids = users.map((u) => u.id);
+  const roles = await prisma.adminUser.findMany({
+    where: { telegramId: { in: users.map((u) => u.telegramId).filter((t): t is bigint => t !== null) } },
+    select: { telegramId: true, role: true },
+  });
+  const roleByTid = new Map(roles.map((r) => [String(r.telegramId), r.role]));
+  // Approximate counts via groupBy (no _count on aggregate per-id needed for MVP table)
+  const keysById = new Map<number, number>();
+  const ordersById = new Map<number, number>();
+
+  return users.map((u) => ({
+    id: u.id,
+    telegramId: u.telegramId === null ? null : String(u.telegramId),
+    email: u.email,
+    username: u.username,
+    firstName: u.firstName,
+    lastName: u.lastName,
+    role: u.telegramId !== null ? (roleByTid.get(String(u.telegramId)) ?? null) : null,
+    keysCount: keysById.get(u.id) ?? 0,
+    ordersCount: ordersById.get(u.id) ?? 0,
+    createdAt: u.createdAt,
+  }));
+}
+
 export interface AdminRosterRow {
   /** Serialized as a string: BigInt is not JSON-safe and the UI renders text. */
   telegramId: string;

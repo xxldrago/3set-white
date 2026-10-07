@@ -149,9 +149,6 @@ export default async function SubscriptionPage() {
             <Link href="/guides" className={PRIMARY}>
               Подключить
             </Link>
-            <Link href="/subscription" className={SECONDARY}>
-              Синхронизировать
-            </Link>
           </div>
         </section>
 

@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState } from 'react';
 import Logo from '@/components/Logo';
 
 /** Serializable display identity passed from the server (see getSessionUser). */
@@ -37,8 +38,22 @@ function displayName(user: NavUser | null): string {
 
 export default function Nav({ user }: { user: NavUser | null }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [signingOut, setSigningOut] = useState(false);
   // Profile is reachable only via the avatar icon (no text link).
   const items = NAV_ITEMS;
+
+  async function signOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await fetch('/api/auth/email/logout', { method: 'POST' });
+    } catch {
+      // Cookie clear is best-effort; still leave the cabinet.
+    }
+    router.replace('/login');
+    router.refresh();
+  }
 
   return (
     <nav className="sticky top-0 z-40 w-full border-b border-line bg-background/85 backdrop-blur">
@@ -78,6 +93,18 @@ export default function Nav({ user }: { user: NavUser | null }) {
               {displayName(user)}
             </Link>
           </li>
+          {user && (
+            <li className="shrink-0">
+              <button
+                type="button"
+                onClick={() => void signOut()}
+                disabled={signingOut}
+                className="whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium text-muted transition-colors hover:bg-foreground/5 hover:text-foreground disabled:opacity-50"
+              >
+                Выйти
+              </button>
+            </li>
+          )}
         </ul>
       </div>
     </nav>

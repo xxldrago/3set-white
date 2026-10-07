@@ -5,6 +5,7 @@ import { SessionError, requireSession, requireTelegramSession } from '@/lib/sess
 import AddEmailForm from './AddEmailForm';
 import ChangePasswordForm from './ChangePasswordForm';
 import LinkTelegramRow from './LinkTelegramRow';
+import SignOutButton from './SignOutButton';
 
 const CARD = 'flex flex-col gap-4 rounded-2xl border border-line p-6 border-line';
 
@@ -106,6 +107,8 @@ export default async function AccountSection() {
       <LinkTelegramRow linked={linked} telegramId={linked ? Number(user.telegramId) : null} />
 
       {user.passwordHash && <ChangePasswordForm />}
+
+      <SignOutButton />
     </section>
   );
 }

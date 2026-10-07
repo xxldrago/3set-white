@@ -16,6 +16,7 @@ import {
 import { AccountConflictError, AccountNotFoundError, linkAccounts } from "../../../../../lib/accounts";
 import { env } from "../../../../../lib/env";
 import { logger } from "../../../../../lib/logger";
+import { revalidateKeys } from "../../../../../lib/keys-service";
 import { consumeWidgetHash } from "../../../../../lib/replay";
 import { SessionError, requireSession } from "../../../../../lib/session";
 
@@ -70,6 +71,7 @@ export async function POST(req: Request): Promise<Response> {
     // Privilege change: re-mint so the cookie carries the linked tid.
     const token = await signSession(result.userId, widget.id, env.SESSION_SECRET);
     logger.info({ route: "email-link", outcome: result.merged ? "merged" : "attached" });
+    void revalidateKeys(BigInt(widget.id)).catch(() => undefined);
     return Response.json(
       { ok: true, merged: result.merged },
       {

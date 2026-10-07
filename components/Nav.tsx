@@ -22,6 +22,7 @@ interface NavItem {
 // Cabinet nav — shown to every signed-in identity (email-only included).
 const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Подписки', exact: true },
+  { href: '/subscription', label: 'Мои ключи' },
   { href: '/payments', label: 'История платежей' },
   { href: '/faq', label: 'FAQ' },
   { href: '/support', label: 'Поддержка' },
@@ -41,20 +42,20 @@ export default function Nav({ user }: { user: NavUser | null }) {
   return (
     <nav className="sticky top-0 z-40 w-full border-b border-line bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-3xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link href="/" aria-label="3set — на главную">
+        <Link href="/" aria-label="3set — на главную" className="shrink-0">
           <Logo />
         </Link>
 
-        <ul className="flex items-center gap-1">
+        <ul className="flex min-w-0 items-center gap-1 overflow-x-auto">
           {items.map((item) => {
             const active = item.exact
               ? pathname === item.href
               : pathname.startsWith(item.href);
             return (
-              <li key={item.href}>
+              <li key={item.href} className="shrink-0">
                 <Link
                   href={item.href}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                  className={`block whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                     active
                       ? 'bg-foreground text-lime'
                       : 'text-muted hover:bg-foreground/5 hover:text-foreground'
@@ -66,7 +67,7 @@ export default function Nav({ user }: { user: NavUser | null }) {
             );
           })}
 
-          <li>
+          <li className="shrink-0">
             <Link
               href="/profile"
               aria-label="Профиль"

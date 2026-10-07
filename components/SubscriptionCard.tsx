@@ -117,7 +117,7 @@ export default function SubscriptionCard({ item }: { item: RenderedKey }) {
           {t('key.guidesCta')}
         </Link>
         {item.isTrial ? (
-          <Link href="#tariff" className={SECONDARY}>
+          <Link href="/#tariff" className={SECONDARY}>
             {t('key.buyCta')}
           </Link>
         ) : (

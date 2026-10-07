@@ -1,14 +1,14 @@
 // GET /api/keys/[id]/devices — session-gated, ownership-joined device list
 // (CAB-03). The `id` path segment is untrusted (T-02-23): zod-validate it before
-// any lookup. `listDevices` joins on `(userId, keyId)`, so a non-owned key is
+// any lookup. `listDevicesByUserId` joins on `(userId, keyId)`, so a non-owned key is
 // indistinguishable from a missing one (404, no reason oracle — T-02-21). The
 // provider shape for this endpoint is UNKNOWN (02-01 0-key probe): the client
 // normalizer is tolerant and only addressable devices are returned.
 import { z } from "zod";
 import { ArtemidaError } from "../../../../../lib/artemida";
-import { listDevices } from "../../../../../lib/keys-service";
+import { listDevicesByUserId } from "../../../../../lib/keys-service";
 import { logger } from "../../../../../lib/logger";
-import { requireTelegramSession, SessionError } from "../../../../../lib/session";
+import { requireSession, SessionError } from "../../../../../lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -38,9 +38,9 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
-  let telegramId: number;
+  let userId: number;
   try {
-    telegramId = await requireTelegramSession();
+    ({ userId } = await requireSession());
   } catch (err) {
     if (err instanceof SessionError) {
       return Response.json({ error: "unauthorized" }, { status: 401 });
@@ -56,7 +56,7 @@ export async function GET(
   }
 
   try {
-    const devices = await listDevices(BigInt(telegramId), parsed.data);
+    const devices = await listDevicesByUserId(userId, parsed.data);
     if (devices === null) return Response.json({ error: "not_found" }, { status: 404 });
     return Response.json({ devices });
   } catch (err) {

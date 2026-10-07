@@ -4,8 +4,8 @@
 // `RenderedKey` whose `statusKind` was derived from `expiresAt`.
 import Link from 'next/link';
 import CopyButton from './CopyButton';
+import DeviceListModal from './DeviceListModal';
 import RenewPanel from './RenewPanel';
-import UpgradePanel from './UpgradePanel';
 import { formatKeyDate, statusLabel, type RenderedKey, type StatusKind } from '@/lib/keys-service';
 import { t } from '@/lib/i18n';
 
@@ -121,14 +121,9 @@ export default function SubscriptionCard({ item }: { item: RenderedKey }) {
             {t('key.buyCta')}
           </Link>
         ) : (
-          <>
-            <RenewPanel keyId={item.id} deviceLimit={deviceLimit} />
-            <UpgradePanel keyId={item.id} deviceLimit={deviceLimit} />
-          </>
+          <RenewPanel keyId={item.id} deviceLimit={deviceLimit} />
         )}
-        <Link href={`/keys/${encodeURIComponent(item.id)}`} className={SECONDARY}>
-          {t('key.devicesTitle')}
-        </Link>
+        <DeviceListModal keyId={item.id} deviceLimit={deviceLimit} />
       </div>
     </article>
   );

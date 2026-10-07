@@ -7,9 +7,9 @@
 // after the UI's explicit second confirmation (D-32); this route performs it.
 import { z } from "zod";
 import { ArtemidaError } from "../../../../../../lib/artemida";
-import { removeDevice } from "../../../../../../lib/keys-service";
+import { removeDeviceByUserId } from "../../../../../../lib/keys-service";
 import { logger } from "../../../../../../lib/logger";
-import { requireTelegramSession, SessionError } from "../../../../../../lib/session";
+import { requireSession, SessionError } from "../../../../../../lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -40,9 +40,9 @@ export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string; token: string }> },
 ): Promise<Response> {
-  let telegramId: number;
+  let userId: number;
   try {
-    telegramId = await requireTelegramSession();
+    ({ userId } = await requireSession());
   } catch (err) {
     if (err instanceof SessionError) {
       return Response.json({ error: "unauthorized" }, { status: 401 });
@@ -59,7 +59,7 @@ export async function DELETE(
   }
 
   try {
-    const owned = await removeDevice(BigInt(telegramId), parsedId.data, parsedToken.data);
+    const owned = await removeDeviceByUserId(userId, parsedId.data, parsedToken.data);
     if (!owned) return Response.json({ error: "not_found" }, { status: 404 });
     return Response.json({ ok: true });
   } catch (err) {

@@ -312,10 +312,18 @@ async function getSubscriptionForOwnedKey(
 // row (02-01 KEY CONTRACT).
 // ---------------------------------------------------------------------------
 
-/** Owned `keys_cache` row id for (telegramId, keyId), or null when not owned. */
-async function ownedKeyRowId(telegramId: bigint, keyId: string): Promise<number | null> {
+type DeviceKeyOwner = { userId: number } | { telegramId: bigint };
+
+/** Owned `keys_cache` row id for (owner, keyId), or null when not owned. */
+async function ownedKeyRowIdForOwner(
+  owner: DeviceKeyOwner,
+  keyId: string,
+): Promise<number | null> {
   const row = await prisma.keyCache.findFirst({
-    where: { keyId, user: { telegramId } },
+    where: {
+      keyId,
+      user: 'userId' in owner ? { id: owner.userId } : { telegramId: owner.telegramId },
+    },
     select: { id: true },
   });
   return row?.id ?? null;
@@ -326,7 +334,22 @@ export async function listDevices(
   telegramId: bigint,
   keyId: string,
 ): Promise<Device[] | null> {
-  if ((await ownedKeyRowId(telegramId, keyId)) === null) return null;
+  return listDevicesForOwner({ telegramId }, keyId);
+}
+
+/** Ownership-joined device list for a local user id. */
+export async function listDevicesByUserId(
+  userId: number,
+  keyId: string,
+): Promise<Device[] | null> {
+  return listDevicesForOwner({ userId }, keyId);
+}
+
+async function listDevicesForOwner(
+  owner: DeviceKeyOwner,
+  keyId: string,
+): Promise<Device[] | null> {
+  if ((await ownedKeyRowIdForOwner(owner, keyId)) === null) return null;
   const devices = await artemida.getDevices(keyId);
   return devices.filter((device) => device.token.length > 0);
 }
@@ -337,14 +360,43 @@ export async function removeDevice(
   keyId: string,
   token: string,
 ): Promise<boolean> {
-  if ((await ownedKeyRowId(telegramId, keyId)) === null) return false;
+  return removeDeviceForOwner({ telegramId }, keyId, token);
+}
+
+/** Delete one device on an owned key for a local user id. */
+export async function removeDeviceByUserId(
+  userId: number,
+  keyId: string,
+  token: string,
+): Promise<boolean> {
+  return removeDeviceForOwner({ userId }, keyId, token);
+}
+
+async function removeDeviceForOwner(
+  owner: DeviceKeyOwner,
+  keyId: string,
+  token: string,
+): Promise<boolean> {
+  if ((await ownedKeyRowIdForOwner(owner, keyId)) === null) return false;
   await artemida.deleteDevice(keyId, token);
   return true;
 }
 
 /** Clear every device on an owned key. Returns false (→ 404) when not owned. */
 export async function clearDevices(telegramId: bigint, keyId: string): Promise<boolean> {
-  if ((await ownedKeyRowId(telegramId, keyId)) === null) return false;
+  return clearDevicesForOwner({ telegramId }, keyId);
+}
+
+/** Clear every device on an owned key for a local user id. */
+export async function clearDevicesByUserId(userId: number, keyId: string): Promise<boolean> {
+  return clearDevicesForOwner({ userId }, keyId);
+}
+
+async function clearDevicesForOwner(
+  owner: DeviceKeyOwner,
+  keyId: string,
+): Promise<boolean> {
+  if ((await ownedKeyRowIdForOwner(owner, keyId)) === null) return false;
   await artemida.clearDevices(keyId);
   return true;
 }

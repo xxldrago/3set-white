@@ -21,6 +21,8 @@ interface ConfirmPanelProps {
   deviceName?: string;
   /** Device count for `devices.clearBody` interpolation (clear only). */
   deviceCount?: number;
+  /** Optional parent refresh after a successful mutation. */
+  onDone?: () => void;
 }
 
 const TRIGGER =
@@ -36,6 +38,7 @@ export default function ConfirmPanel({
   method,
   deviceName,
   deviceCount,
+  onDone,
 }: ConfirmPanelProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -90,12 +93,13 @@ export default function ConfirmPanel({
       const res = await fetch(url, { method });
       if (!res.ok) throw new Error('device_mutation_failed');
       close();
+      onDone?.();
       router.refresh();
     } catch {
       setError(true);
       setPending(false);
     }
-  }, [close, router, url, method]);
+  }, [close, onDone, router, url, method]);
 
   if (!open) {
     return (

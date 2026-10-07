@@ -73,3 +73,45 @@ h3 {
   font-family: var(--font-display);
   letter-spacing: -0.01em;
 }
+
+/* FAQ answer HTML (ported from the ARTΞMIDA FAQ, rebranded) — brand styling. */
+.faq-answer p {
+  margin: 0 0 0.75rem;
+}
+.faq-answer p:last-child {
+  margin-bottom: 0;
+}
+.faq-answer b {
+  color: var(--foreground);
+  font-weight: 600;
+}
+.faq-answer ul,
+.faq-answer ol {
+  margin: 0 0 0.75rem;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.35rem;
+}
+.faq-answer ul {
+  list-style: disc;
+}
+.faq-answer ol {
+  list-style: decimal;
+}
+.faq-answer code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.05em 0.35em;
+}
+.faq-answer .warning {
+  margin-top: 0.75rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--lime-dk);
+  background: var(--panel-2);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  color: var(--foreground);
+}

@@ -1,12 +1,13 @@
 // ADM-02 admin user-search + profile vectors.
 //
-// Search returns only the PII-minimal row shape ({userId, telegramId,
-// displayName, staffRole?}) — never chatId/tokens/sub-links (T-05-05); exact
-// telegram-id matches order first; results are capped at 50 with a truncation
-// flag. Both admin BFF routes are role-gated (SessionError→401, AdminError→404,
-// never 403) for the `users` section, which all three staff roles hold. The
-// profile reads keys/payments/tickets and every sub-section degrades
-// independently. Runs against the real local Postgres with a private id range.
+// Search returns only the PII-minimal row shape ({userId, telegramId, email,
+// username, displayName, staffRole?}) — never chatId/tokens/sub-links (T-05-05);
+// exact telegram-id/email matches order first; results are capped at 50 with a
+// truncation flag. Both admin BFF routes are role-gated (SessionError→401,
+// AdminError→404, never 403) for the `users` section, which all three staff
+// roles hold. The profile reads keys/payments/tickets and every sub-section
+// degrades independently. Runs against the real local Postgres with a private
+// id range.
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -42,6 +43,10 @@ const PII_USER = BigInt("930000103");
 const STRANGER = BigInt("930000104");
 // Profile fixture.
 const PROFILE_USER = BigInt("930000105");
+// Email-only fixture (no telegram row) + a telegram user with a handle.
+const EMAIL_USER_EMAIL = "search-only-05@example.test";
+const HANDLE_USER = BigInt("930000106");
+const HANDLE = "SearchUser05";
 
 // Bulk range for the truncation boundary.
 const BULK_BASE = 930010000;
@@ -67,6 +72,7 @@ const ALL_USER_IDS: bigint[] = [
   PII_USER,
   STRANGER,
   PROFILE_USER,
+  HANDLE_USER,
   ...Array.from({ length: BULK_COUNT }, (_, i) => BigInt(BULK_BASE + i)),
 ];
 
@@ -74,6 +80,8 @@ let exactUserId: number;
 let keyUserId: number;
 let piiUserId: number;
 let profileUserId: number;
+let emailUserId: number;
+let handleUserId: number;
 
 async function cleanupUser(telegramId: bigint): Promise<void> {
   const user = await prisma.user.findUnique({
@@ -87,8 +95,21 @@ async function cleanupUser(telegramId: bigint): Promise<void> {
   await prisma.user.deleteMany({ where: { id: user.id } });
 }
 
+async function cleanupByEmail(email: string): Promise<void> {
+  const user = await prisma.user.findFirst({
+    where: { email: { equals: email, mode: "insensitive" } },
+    select: { id: true },
+  });
+  if (!user) return;
+  await prisma.keyCache.deleteMany({ where: { userId: user.id } });
+  await prisma.order.deleteMany({ where: { userId: user.id } });
+  await prisma.ticket.deleteMany({ where: { userId: user.id } });
+  await prisma.user.deleteMany({ where: { id: user.id } });
+}
+
 async function cleanup(): Promise<void> {
   for (const telegramId of ALL_USER_IDS) await cleanupUser(telegramId);
+  await cleanupByEmail(EMAIL_USER_EMAIL);
   await prisma.adminUser.deleteMany({ where: { telegramId: { in: ADMIN_IDS } } });
 }
 
@@ -159,7 +180,7 @@ function callProfilePage(id: string): Promise<{ ok: true } | { digest: string }>
 beforeAll(async () => {
   await cleanup();
 
-  const [exact, keyUser, pii, stranger, profile] = await Promise.all([
+  const [exact, keyUser, pii, , profile, handle, emailOnly] = await Promise.all([
     prisma.user.create({ data: { telegramId: EXACT, firstName: "Exact" }, select: { id: true } }),
     prisma.user.create({
       data: { telegramId: KEY_USER, firstName: "Key", username: "keyuser" },
@@ -174,11 +195,26 @@ beforeAll(async () => {
       data: { telegramId: PROFILE_USER, firstName: "Profile", lastName: "User" },
       select: { id: true },
     }),
+    prisma.user.create({
+      data: { telegramId: HANDLE_USER, firstName: "Handle", username: HANDLE },
+      select: { id: true },
+    }),
+    prisma.user.create({
+      data: {
+        email: EMAIL_USER_EMAIL,
+        emailCanonical: EMAIL_USER_EMAIL,
+        firstName: "Email",
+        lastName: "Only",
+      },
+      select: { id: true },
+    }),
   ]);
   exactUserId = exact.id;
   keyUserId = keyUser.id;
   piiUserId = pii.id;
   profileUserId = profile.id;
+  handleUserId = handle.id;
+  emailUserId = emailOnly.id;
 
   await prisma.keyCache.createMany({
     data: [
@@ -284,6 +320,23 @@ describe("adminSearchUsers — matching, ordering, dedupe", () => {
     expect(byCustomerRef.rows.map((row) => row.userId)).toEqual([keyUserId]);
   });
 
+  it("matches a @username case-insensitively (leading @ required)", async () => {
+    const lower = await adminSearchUsers(`@${HANDLE.toLowerCase()}`);
+    expect(lower.rows.map((row) => row.userId)).toContain(handleUserId);
+
+    const withoutAt = await adminSearchUsers(HANDLE.toLowerCase());
+    expect(withoutAt.rows.map((row) => row.userId)).not.toContain(handleUserId);
+  });
+
+  it("matches an email-only account by exact email and exposes no telegram row", async () => {
+    const { rows } = await adminSearchUsers(EMAIL_USER_EMAIL);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.userId).toBe(emailUserId);
+    expect(rows[0]?.telegramId).toBeNull();
+    expect(rows[0]?.email).toBe(EMAIL_USER_EMAIL);
+  });
+
   it("returns an empty result for a blank query", async () => {
     await expect(adminSearchUsers("   ")).resolves.toEqual({
       rows: [],
@@ -304,12 +357,19 @@ describe("adminSearchUsers — truncation boundary", () => {
 });
 
 describe("adminSearchUsers — PII minimum (T-05-05)", () => {
-  it("exposes only the four allowed fields and no chat id / token / sub-link", async () => {
+  it("exposes only the identity fields and no chat id / token / sub-link", async () => {
     const { rows } = await adminSearchUsers(PII_TOKEN);
     const row = rows.find((candidate) => candidate.userId === piiUserId);
     expect(row).toBeDefined();
 
-    const allowed = new Set(["userId", "telegramId", "displayName", "staffRole"]);
+    const allowed = new Set([
+      "userId",
+      "telegramId",
+      "email",
+      "username",
+      "displayName",
+      "staffRole",
+    ]);
     for (const candidate of rows) {
       for (const key of Object.keys(candidate)) expect(allowed.has(key)).toBe(true);
     }
@@ -345,6 +405,15 @@ describe("GET /api/admin/users/search — role gate (T-05-06)", () => {
 });
 
 describe("loadAdminProfile — independent sections", () => {
+  it("resolves an email-only profile (no telegram row) with its email", async () => {
+    const profileData = await loadAdminProfile(emailUserId);
+
+    expect(profileData).not.toBeNull();
+    expect(profileData?.header.telegramId).toBeNull();
+    expect(profileData?.header.email).toBe(EMAIL_USER_EMAIL);
+    expect(profileData?.keys.ok).toBe(true);
+  });
+
   it("loads keys, payments, and tickets", async () => {
     const profileData = await loadAdminProfile(profileUserId);
     expect(profileData).not.toBeNull();
@@ -401,7 +470,7 @@ describe("adminSearchUsers — edge states (no results, exact-50 boundary)", () 
 
 describe("UserSearchResults — rendering contract (structural)", () => {
   it("renders the truncation notice only when truncated", () => {
-    const row = { userId: 1, telegramId: "1", displayName: "A" };
+    const row = { userId: 1, telegramId: "1", email: null, username: null, displayName: "A" };
 
     const truncatedTree = UserSearchResults({ rows: [row], count: 1, truncated: true });
     expect(collectStrings(truncatedTree)).toContain(t("admin.searchMore"));
@@ -410,10 +479,39 @@ describe("UserSearchResults — rendering contract (structural)", () => {
     expect(collectStrings(plainTree)).not.toContain(t("admin.searchMore"));
   });
 
+  it("renders identity lines and the email-only no-telegram fallback", () => {
+    const tree = UserSearchResults({
+      rows: [
+        {
+          userId: 1,
+          telegramId: "930000106",
+          email: "a@example.test",
+          username: "somebody",
+          displayName: "Somebody",
+        },
+      ],
+      count: 1,
+      truncated: false,
+    });
+    const strings = collectStrings(tree);
+    expect(strings).toContain(t("admin.profileUsername", { name: "somebody" }));
+    expect(strings).toContain(t("admin.profileEmail", { email: "a@example.test" }));
+    expect(strings).toContain(t("admin.profileTelegramId", { id: "930000106" }));
+
+    const emailOnlyTree = UserSearchResults({
+      rows: [
+        { userId: 2, telegramId: null, email: "b@example.test", username: null, displayName: "B" },
+      ],
+      count: 1,
+      truncated: false,
+    });
+    expect(collectStrings(emailOnlyTree)).toContain(t("admin.profileNoTelegram"));
+  });
+
   it("truncates a long display name with a title and renders the id tabular-nums", () => {
     const longName = "О".repeat(120);
     const tree = UserSearchResults({
-      rows: [{ userId: 7, telegramId: "930000101", displayName: longName }],
+      rows: [{ userId: 7, telegramId: "930000101", email: null, username: null, displayName: longName }],
       count: 1,
       truncated: false,
     });
@@ -436,8 +534,8 @@ describe("UserSearchResults — rendering contract (structural)", () => {
 
   it("wraps the ≥2 count header through the plural helper", () => {
     const rows = [
-      { userId: 1, telegramId: "1", displayName: "A" },
-      { userId: 2, telegramId: "2", displayName: "B" },
+      { userId: 1, telegramId: "1", email: null, username: null, displayName: "A" },
+      { userId: 2, telegramId: "2", email: null, username: null, displayName: "B" },
     ];
     const tree = UserSearchResults({ rows, count: 2, truncated: false });
     expect(collectStrings(tree)).toContain(t("admin.searchCountFew", { n: 2 }));

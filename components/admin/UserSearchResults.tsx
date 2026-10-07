@@ -1,10 +1,10 @@
 // Presentational admin search results (ADM-02 / UI-SPEC §3).
 //
 // No data fetching here: the client island passes already-PII-minimal
-// `AdminSearchResult` rows (userId/telegramId/displayName/staffRole only). A
-// raw chat id, token, or subscription URL never reaches this component. The
-// count header renders only at ≥2 matches; over 50 matches renders the first 50
-// plus `admin.searchMore`. Long names truncate 1 line with the full value in
+// `AdminSearchResult` rows (identity + staffRole only). A raw chat id, token,
+// or subscription URL never reaches this component. The count header renders
+// only at ≥2 matches; over 50 matches renders the first 50 plus
+// `admin.searchMore`. Long names truncate 1 line with the full value in
 // `title`; the telegram id is `tabular-nums`.
 import Link from 'next/link';
 import RoleChip from './RoleChip';
@@ -52,8 +52,20 @@ export default function UserSearchResults({
                   </span>
                   {row.staffRole && <RoleChip role={row.staffRole} />}
                 </div>
+                {row.username && (
+                  <span className="text-sm text-muted">
+                    {t('admin.profileUsername', { name: row.username })}
+                  </span>
+                )}
+                {row.email && (
+                  <span className="truncate text-sm text-muted" title={row.email}>
+                    {t('admin.profileEmail', { email: row.email })}
+                  </span>
+                )}
                 <span className="text-sm tabular-nums text-muted">
-                  {t('admin.profileTelegramId', { id: row.telegramId })}
+                  {row.telegramId === null
+                    ? t('admin.profileNoTelegram')
+                    : t('admin.profileTelegramId', { id: row.telegramId })}
                 </span>
               </Link>
             </article>

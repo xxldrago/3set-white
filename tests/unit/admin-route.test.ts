@@ -29,7 +29,8 @@ import AdminRolesPage from "../../app/admin/roles/page";
 import AdminUserProfilePage from "../../app/admin/users/[id]/page";
 import { POST as adminRoleChange } from "../../app/api/admin/roles/route";
 import RolesManager from "../../components/admin/RolesManager";
-import { getAdminRole, requireRole, type AdminRole } from "../../lib/admin-auth";
+import { can, getAdminRole, requireRole, type AdminRole } from "../../lib/admin-auth";
+import AdminPricingPage from "../../app/admin/pricing/page";
 import { changeAdminRole } from "../../lib/admin-roles";
 import { signSession } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
@@ -518,5 +519,25 @@ describe("AdminConfirmPanel + RoleChangeControl contracts (UI-SPEC §6)", () => 
     expect(ROLE_CONTROL_SOURCE).toContain("t('admin.roleDowngradeBody'");
     expect(ROLE_CONTROL_SOURCE).toContain("t('admin.roleChangeBody'");
     expect(ROLE_CONTROL_SOURCE).toContain("t('admin.rolesSelf')");
+  });
+});
+describe("/admin/pricing — administrator-only tariff settings", () => {
+  it("holds the pricing section for administrator only", () => {
+    expect(can("administrator", "pricing")).toBe(true);
+    expect(can("support", "pricing")).toBe(false);
+    expect(can("manager", "pricing")).toBe(false);
+  });
+
+  it("renders the page for administrator and 404s support", async () => {
+    await authorize(ADMIN);
+    await expect(AdminPricingPage()).resolves.toBeDefined();
+
+    await authorize(SUPPORT);
+    try {
+      await AdminPricingPage();
+      expect.unreachable("support must not render the pricing page");
+    } catch (err) {
+      expect((err as { digest?: unknown }).digest).toBe("NEXT_HTTP_ERROR_FALLBACK;404");
+    }
   });
 });

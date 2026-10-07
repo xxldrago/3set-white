@@ -70,6 +70,28 @@ model User {
 }
 
 // ---------------------------------------------------------------------------
+// Admin tariff settings (user decision): explicit retail matrix for
+// days×devices. Both the storefront (/api/pricing) and the money pipeline
+// (createOrder, incl. renew/upgrade derivation) resolve through
+// resolveTariffQuote, so displayed and charged amounts cannot diverge.
+// Combos with no stored row fall back to the live ARTEMIDA quote.
+// ---------------------------------------------------------------------------
+
+model TariffPrice {
+  id                Int      @id @default(autoincrement())
+  days              Int
+  devices           Int
+  amount            Int
+  currency          String   @default("RUB")
+  updatedByTelegramId BigInt?  @map("updated_by_telegram_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@unique([days, devices])
+  @@map("tariff_prices")
+}
+
+// ---------------------------------------------------------------------------
 // Phase 3 money path (D-38/D-39). One Order per purchase intent; the state
 // machine is pending → paid → provisioning → provisioned / failed, with the
 // terminal refunded/canceled outcomes. `plategaTxId` is UNIQUE so a Platega

@@ -20,11 +20,20 @@ import type { TicketListRow } from "./tickets-service";
 /** UI-SPEC §3: over this many matches, render the first 50 + a notice. */
 export const ADMIN_SEARCH_LIMIT = 50;
 
-/** The ONLY fields a search row exposes (PII minimum — T-05-05). */
+/**
+ * The ONLY fields a search row exposes (T-05-05, scoped by the explicit admin
+ * directory requirement): identity + staff role, never chat ids, tokens, or
+ * subscription URLs.
+ */
 export interface AdminSearchResult {
   userId: number;
-  /** Serialized as a string: BigInt is not JSON-safe and the UI renders text. */
-  telegramId: string;
+  /**
+   * Serialized as a string (BigInt is not JSON-safe); null for email-only
+   * accounts. The UI renders text.
+   */
+  telegramId: string | null;
+  email: string | null;
+  username: string | null;
   displayName: string | null;
   /** Present only when the matched user is a staff member (drives RoleChip). */
   staffRole?: AdminRole;
@@ -50,7 +59,9 @@ export interface AdminKeyView {
 
 export interface AdminProfileHeader {
   userId: number;
-  telegramId: string;
+  telegramId: string | null;
+  email: string | null;
+  username: string | null;
   displayName: string | null;
   createdAt: Date;
   staffRole: AdminRole | null;
@@ -69,6 +80,7 @@ export interface AdminProfile {
 const USER_SELECT = {
   id: true,
   telegramId: true,
+  email: true,
   firstName: true,
   lastName: true,
   username: true,
@@ -78,6 +90,7 @@ type SelectedUser = {
   id: number;
   // Nullable since Phase 6 D-79 (email-only accounts have no telegram row).
   telegramId: bigint | null;
+  email: string | null;
   firstName: string | null;
   lastName: string | null;
   username: string | null;
@@ -94,13 +107,12 @@ function displayNameOf(user: Pick<SelectedUser, "firstName" | "lastName" | "user
   return user.username && user.username.trim().length > 0 ? user.username : null;
 }
 
-function toSearchResult(user: SelectedUser): AdminSearchResult | null {
-  // Phase 6 D-79: admin search is telegram/key identity-keyed — email-only
-  // accounts (no telegram row) are excluded until admin email support lands.
-  if (user.telegramId === null) return null;
+function toSearchResult(user: SelectedUser): AdminSearchResult {
   return {
     userId: user.id,
-    telegramId: String(user.telegramId),
+    telegramId: user.telegramId === null ? null : String(user.telegramId),
+    email: user.email,
+    username: user.username,
     displayName: displayNameOf(user),
   };
 }
@@ -116,17 +128,20 @@ function parseTelegramId(value: string): bigint | null {
 }
 
 /**
- * ADM-02 search. A fully-numeric `q` takes the exact telegram-id branch FIRST
- * (the match is ordered first), then both branches run a parameterised
- * `contains` on `keys_cache.key_id` / `customer_ref`. Results are de-duped by
- * user and capped at 50 with a truncation flag. Only the PII-minimal row shape
- * leaves this function (T-05-05).
+ * ADM-02 search. Exact identity branches run in order — telegram id, then
+ * email — followed by `@username` and key/customer-ref `contains` matches.
+ * Results are de-duped by user and capped at 50 with a truncation flag. Only
+ * the PII-minimal row shape leaves this function (T-05-05, scoped by the
+ * explicit admin directory requirement to identity fields).
  */
 export async function adminSearchUsers(q: string): Promise<AdminSearchResponse> {
   const trimmed = q.trim();
   if (trimmed.length === 0) return { rows: [], count: 0, truncated: false };
 
   const results = new Map<number, AdminSearchResult>();
+  const add = (user: { id: number } & Omit<SelectedUser, "id">) => {
+    if (!results.has(user.id)) results.set(user.id, toSearchResult({ ...user }));
+  };
 
   if (/^\d+$/.test(trimmed)) {
     const telegramId = parseTelegramId(trimmed);
@@ -135,10 +150,34 @@ export async function adminSearchUsers(q: string): Promise<AdminSearchResponse> 
         where: { telegramId },
         select: USER_SELECT,
       });
-      if (exact) {
-        const result = toSearchResult(exact);
-        if (result) results.set(exact.id, result);
-      }
+      if (exact) add(exact);
+    }
+  }
+
+  if (trimmed.includes("@") && !trimmed.startsWith("@")) {
+    const [exactEmail, exactCanonical] = await Promise.all([
+      prisma.user.findFirst({
+        where: { email: { equals: trimmed, mode: "insensitive" } },
+        select: USER_SELECT,
+      }),
+      prisma.user.findFirst({
+        where: { emailCanonical: { equals: trimmed, mode: "insensitive" } },
+        select: USER_SELECT,
+      }),
+    ]);
+    if (exactEmail) add(exactEmail);
+    if (exactCanonical) add(exactCanonical);
+  }
+
+  if (trimmed.startsWith("@")) {
+    const handle = trimmed.slice(1);
+    if (handle.length > 0) {
+      const byUsername = await prisma.user.findMany({
+        where: { username: { contains: handle, mode: "insensitive" } },
+        select: USER_SELECT,
+        orderBy: { id: "asc" },
+      });
+      for (const user of byUsername) add(user);
     }
   }
 
@@ -149,23 +188,24 @@ export async function adminSearchUsers(q: string): Promise<AdminSearchResponse> 
     select: { user: { select: USER_SELECT } },
     orderBy: { updatedAt: "desc" },
   });
-  for (const row of keyRows) {
-    if (results.has(row.user.id)) continue;
-    const result = toSearchResult(row.user);
-    if (result) results.set(row.user.id, result);
-  }
+  for (const row of keyRows) add(row.user);
 
   if (results.size > 0) {
-    const staff = await prisma.adminUser.findMany({
-      where: {
-        telegramId: { in: [...results.values()].map((result) => BigInt(result.telegramId)) },
-      },
-      select: { telegramId: true, role: true },
-    });
-    const roleByTelegramId = new Map(staff.map((row) => [String(row.telegramId), row.role]));
-    for (const result of results.values()) {
-      const role = roleByTelegramId.get(result.telegramId);
-      if (role) result.staffRole = role;
+    const telegramIds = [...results.values()]
+      .map((result) => result.telegramId)
+      .filter((id): id is string => id !== null)
+      .map((id) => BigInt(id));
+    if (telegramIds.length > 0) {
+      const staff = await prisma.adminUser.findMany({
+        where: { telegramId: { in: telegramIds } },
+        select: { telegramId: true, role: true },
+      });
+      const roleByTelegramId = new Map(staff.map((row) => [String(row.telegramId), row.role]));
+      for (const result of results.values()) {
+        if (result.telegramId === null) continue;
+        const role = roleByTelegramId.get(result.telegramId);
+        if (role) result.staffRole = role;
+      }
     }
   }
 
@@ -185,18 +225,21 @@ export async function loadAdminHeader(userId: number): Promise<AdminProfileHeade
     where: { id: userId },
     select: { ...USER_SELECT, createdAt: true },
   });
-  // Phase 6 D-79: the admin profile is telegram identity-keyed — email-only
-  // accounts resolve to 404 until admin email support lands.
-  if (!user || user.telegramId === null) return null;
+  if (!user) return null;
 
-  const staff = await prisma.adminUser.findUnique({
-    where: { telegramId: user.telegramId },
-    select: { role: true },
-  });
+  const staff =
+    user.telegramId === null
+      ? null
+      : await prisma.adminUser.findUnique({
+          where: { telegramId: user.telegramId },
+          select: { role: true },
+        });
 
   return {
     userId: user.id,
-    telegramId: String(user.telegramId),
+    telegramId: user.telegramId === null ? null : String(user.telegramId),
+    email: user.email,
+    username: user.username,
     displayName: displayNameOf(user),
     createdAt: user.createdAt,
     staffRole: staff?.role ?? null,

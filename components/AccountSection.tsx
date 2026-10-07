@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { t } from '@/lib/i18n';
 import { prisma } from '@/lib/prisma';
 import { SessionError, requireSession, requireTelegramSession } from '@/lib/session';
+import AddEmailForm from './AddEmailForm';
 import ChangePasswordForm from './ChangePasswordForm';
 import LinkTelegramRow from './LinkTelegramRow';
 
@@ -35,9 +36,13 @@ function AccountSectionError() {
 
 // «Аккаунт» card group (Phase 6 UI-SPEC §3, D-92): login-methods list (email
 // + Telegram rows) + change-password slot. Server-rendered from the session
-// identity — never client-supplied. Email has no change/remove affordance
-// (absence is the contract); no email-verified indicator (no verification in
-// Phase 6); no trial/key/payment/ticket surface is touched here.
+// identity — never client-supplied. An account without an email (the normal
+// Telegram-signed state) gets the add-email island instead of the email row —
+// the attachment is the symmetric half of LinkTelegramRow and turns the
+// account into a full email-login credential. No email change/remove
+// affordance (absence is the contract); no email-verified indicator (no
+// verification in Phase 6); no trial/key/payment/ticket surface is touched
+// here.
 export default async function AccountSection() {
   let userId: number | null = null;
   try {
@@ -82,7 +87,7 @@ export default async function AccountSection() {
         <p className="text-sm text-muted">{t('auth.accountIntro')}</p>
       </div>
 
-      {user.email && (
+      {user.email ? (
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 flex-col">
             <span className="text-base text-foreground">{t('auth.methodEmail')}</span>
@@ -94,6 +99,8 @@ export default async function AccountSection() {
             </span>
           </div>
         </div>
+      ) : (
+        <AddEmailForm />
       )}
 
       <LinkTelegramRow linked={linked} telegramId={linked ? Number(user.telegramId) : null} />

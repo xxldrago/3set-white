@@ -7,8 +7,8 @@
 // Platega to obtain the hosted URL; the callback's `transitionOrder` atomically
 // claims pending→paid; provisioning is the Wave-2 worker's job (D-38).
 import type { Order, Outbox } from "../generated/prisma/client";
-import { artemida } from "./artemida";
 import { logger } from "./logger";
+import { resolveTariffQuote, resolveUpgradeQuote } from "./pricing";
 import { env } from "./env";
 import { getKeyForUser, getKeyForUserId, type RenderedKey } from "./keys-service";
 import { enqueueFulfillJob } from "./outbox";
@@ -105,13 +105,13 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   const customerRef =
     user.telegramId !== null ? String(user.telegramId) : `email:${user.id}`;
 
-  // One money pipeline, kind-aware quote only (D-42/D-43). `new`/`renew` use the
-  // provider `GET /pricing` quote; `upgrade` derives the prorated device delta
-  // locally (the provider exposes no quote endpoint, 03-01 observed).
+  // One money pipeline, kind-aware quote only (D-42/D-43). The billed amount
+  // resolves through the shared retail tariff grid (manual row) with live
+  // provider fallback — the same source the storefront displays.
   let amount: number;
   let currency: string;
   if (input.kind === "upgrade") {
-    const quote = await artemida.getUpgradeQuote({
+    const quote = await resolveUpgradeQuote({
       days: input.days ?? 30,
       devices: input.devices,
       addDevices: input.addDevices ?? 1,
@@ -119,11 +119,8 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     amount = Math.round(quote.amount);
     currency = quote.currency;
   } else {
-    const quote = await artemida.getPricing({
-      days: input.days ?? 30,
-      devices: input.devices,
-    });
-    amount = Math.round(quote.price);
+    const quote = await resolveTariffQuote(input.days ?? 30, input.devices);
+    amount = Math.round(quote.amount);
     currency = quote.currency;
   }
 

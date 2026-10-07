@@ -7,8 +7,8 @@
 // through i18n keys (D-16), never hardcoded copy.
 import { randomUUID } from "node:crypto";
 import { Telegraf } from "telegraf";
-import { artemida } from "./artemida";
 import { normalizeImage, saveAttachment } from "./attachments";
+import { resolveTariffQuote } from "./pricing";
 import { env } from "./env";
 import { t, tp } from "./i18n";
 import {
@@ -114,7 +114,7 @@ bot.start(async (ctx) => {
 // Phase 2 — trial + tariff entry (D-25 / TRIAL-01).
 //
 // The bot calls the SAME lib/keys-service.startTrial the cabinet BFF uses and
-// the SAME lib/artemida.getPricing path /api/pricing uses — no duplicated
+// the SAME shared resolveTariffQuote /api/pricing uses — no duplicated
 // Prisma or fetch logic. Raw provider text is never sent (D-19/D-24): failures
 // reply with an i18n message only.
 // ---------------------------------------------------------------------------
@@ -200,10 +200,10 @@ bot.action(/^tariff:devices:(\d+):(\d+)$/, async (ctx) => {
   const devices = Number(ctx.match?.[2]);
   await ctx.answerCbQuery();
   try {
-    const pricing = await artemida.getPricing({ days, devices });
+    const pricing = await resolveTariffQuote(days, devices);
     await ctx.reply(
       `${daysLabel(days)} · ${devices}\n${t("pricing.price", {
-        price: priceFormatter.format(pricing.price),
+        price: priceFormatter.format(pricing.amount),
       })}`,
       // The purchase itself is a second tap (D-33): the price is quoted first,
       // then the user buys — the server re-quotes on creation.

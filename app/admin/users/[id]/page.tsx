@@ -225,12 +225,13 @@ export default async function AdminUserProfilePage({
   // UI-SPEC §4 role action: rendered for an administrator ONLY, and only for a
   // staff target (there is no role row to change otherwise). It is absent from
   // the DOM for support/manager — the server decides, not CSS.
-  const showRoleAction = caller.role === 'administrator' && header.staffRole !== null;
+  const showRoleAction =
+    caller.role === 'administrator' && header.staffRole !== null && header.telegramId !== null;
 
   return (
     <section className="flex flex-col gap-6">
       <UserProfileCard header={header}>
-        {showRoleAction && header.staffRole && (
+        {showRoleAction && header.staffRole && header.telegramId && (
           <RoleChangeControl
             telegramId={header.telegramId}
             currentRole={header.staffRole}

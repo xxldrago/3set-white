@@ -8,8 +8,9 @@
 // endpoint). Provider failures map to their status; the provider message is
 // never returned, only `code`.
 import { z } from "zod";
-import { ArtemidaError, artemida } from "../../../lib/artemida";
+import { ArtemidaError } from "../../../lib/artemida";
 import { logger } from "../../../lib/logger";
+import { resolveTariffQuote, resolveUpgradeQuote } from "../../../lib/pricing";
 import { requireSession, SessionError } from "../../../lib/session";
 
 export const dynamic = "force-dynamic";
@@ -68,22 +69,20 @@ export async function GET(req: Request): Promise<Response> {
 
   try {
     if (parsed.data.kind === "upgrade" && parsed.data.addDevices !== undefined) {
-      // D-43/D-28: the provider exposes no upgrade-quote endpoint; derive the
-      // prorated delta from the observed pricing document, never a fabricated
-      // number (mirrors apiPricing.upgradeRule; +1 device/30d → 60 RUB).
-      const quote = await artemida.getUpgradeQuote({
+      // D-43/D-28: the provider exposes no upgrade-quote endpoint; the delta
+      // derives from the retail tariff grid (or the observed provider tier
+      // method as fallback), never a fabricated number.
+      const quote = await resolveUpgradeQuote({
         days: parsed.data.days,
         devices: parsed.data.devices,
         addDevices: parsed.data.addDevices,
       });
       return Response.json({ price: quote.amount });
     }
-    const pricing = await artemida.getPricing({
-      days: parsed.data.days,
-      devices: parsed.data.devices,
-    });
-    // D-28: return the exact provider amount, never a locally computed value.
-    return Response.json({ price: pricing.price });
+    // Displayed price: manual tariff row wins, otherwise the live provider
+    // amount. The money pipeline resolves through the same helper.
+    const pricing = await resolveTariffQuote(parsed.data.days, parsed.data.devices);
+    return Response.json({ price: pricing.amount });
   } catch (err) {
     if (err instanceof ArtemidaError) {
       logger.warn({ route: "pricing", code: err.code, requestId: err.requestId });

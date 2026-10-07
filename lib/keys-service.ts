@@ -84,6 +84,14 @@ export function statusLabel(kind: StatusKind, expiresAt: string | null): string 
   }
 }
 
+/** Whole days from now until expiry; null when there is no expiry. */
+export function daysUntilExpiry(expiresAt: string | null): number | null {
+  if (!expiresAt) return null;
+  const expires = new Date(expiresAt).getTime();
+  if (Number.isNaN(expires)) return null;
+  return Math.max(0, Math.ceil((expires - Date.now()) / DAY_MS));
+}
+
 /** `DD.MM.YYYY` (ru-RU) for a card / bot expiry line. */
 export function formatKeyDate(expiresAt: string): string {
   const date = new Date(expiresAt);
@@ -300,10 +308,9 @@ async function getSubscriptionForOwnedKey(
 
 // ---------------------------------------------------------------------------
 // Device management (CAB-03 / D-32). Every operation resolves the owning key
-// row from the session telegram id BEFORE any provider call (T-02-21), so a
-// key the caller does not own can never mutate another user's devices: the
-// caller sees the same result as for a missing key (null / false → 404).
-//
+// row from the session user id or telegram id BEFORE any provider call
+// (T-02-21), so a key the caller does not own can never be listed, mutated, or
+// enumerated: callers see the same result as for a missing key.
 // The provider shape for `GET /keys/{id}/devices` was UNKNOWN in the 02-01
 // probe (0-key account). The client normalizer accepts both `token` and `id`
 // (ASSUMP-A5); here we additionally drop entries with no addressable token so
@@ -312,7 +319,7 @@ async function getSubscriptionForOwnedKey(
 // row (02-01 KEY CONTRACT).
 // ---------------------------------------------------------------------------
 
-type DeviceKeyOwner = { userId: number } | { telegramId: bigint };
+export type DeviceKeyOwner = { userId: number } | { telegramId: bigint };
 
 /** Owned `keys_cache` row id for (owner, keyId), or null when not owned. */
 async function ownedKeyRowIdForOwner(
@@ -352,6 +359,28 @@ async function listDevicesForOwner(
   if ((await ownedKeyRowIdForOwner(owner, keyId)) === null) return null;
   const devices = await artemida.getDevices(keyId);
   return devices.filter((device) => device.token.length > 0);
+}
+
+/**
+ * Live manageable-device counts for already-owned keys. Provider errors fall
+ * back to `null` so one key never breaks the whole list; callers fall back to
+ * the cached aggregate.
+ */
+export async function manageableDeviceCounts(
+  owner: DeviceKeyOwner,
+  keyIds: readonly string[],
+): Promise<Map<string, number | null>> {
+  const entries = await Promise.all(
+    keyIds.map(async (keyId) => {
+      try {
+        const devices = await listDevicesForOwner(owner, keyId);
+        return [keyId, devices === null ? null : devices.length] as const;
+      } catch {
+        return [keyId, null] as const;
+      }
+    }),
+  );
+  return new Map(entries);
 }
 
 /** Delete one device on an owned key. Returns false (→ 404) when not owned. */

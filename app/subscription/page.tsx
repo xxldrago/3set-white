@@ -8,6 +8,7 @@ import { t } from '@/lib/i18n';
 import {
   listKeys,
   listKeysByUserId,
+  manageableDeviceCounts,
   revalidateKeys,
   revalidateKeysByUserId,
   type RenderedKey,
@@ -47,7 +48,13 @@ function KeysError({ error }: { error: unknown }) {
   );
 }
 
-function KeysGrid({ keys }: { keys: RenderedKey[] }) {
+function KeysGrid({
+  keys,
+  manageable,
+}: {
+  keys: RenderedKey[];
+  manageable?: Map<string, number | null>;
+}) {
   if (keys.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-line bg-panel p-10 text-center">
@@ -67,7 +74,11 @@ function KeysGrid({ keys }: { keys: RenderedKey[] }) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       {keys.map((item) => (
-        <SubscriptionCard key={item.id} item={item} />
+        <SubscriptionCard
+          key={item.id}
+          item={item}
+          manageableDevices={manageable?.get(item.id)}
+        />
       ))}
     </div>
   );
@@ -81,7 +92,14 @@ async function KeysSection({ telegramId, userId }: { telegramId: number | null; 
     return <KeysError error={err} />;
   }
 
-  // D-29: refresh the mirror after the response is sent — the page stays instant.
+  const owner = telegramId !== null ? { telegramId: BigInt(telegramId) } : { userId };
+  const manageable = await manageableDeviceCounts(
+    owner,
+    keys.map((item) => item.id),
+  );
+  const grid = <KeysGrid keys={keys} manageable={manageable} />;
+
+  // D-29: keep refreshing the mirror after the response is sent.
   after(async () => {
     try {
       if (telegramId !== null) await revalidateKeys(BigInt(telegramId));
@@ -91,7 +109,7 @@ async function KeysSection({ telegramId, userId }: { telegramId: number | null; 
     }
   });
 
-  return <KeysGrid keys={keys} />;
+  return grid;
 }
 
 export default async function SubscriptionPage() {

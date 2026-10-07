@@ -9,7 +9,7 @@ import TariffPicker from '@/components/TariffPicker';
 import TrialButton from '@/components/TrialButton';
 import { ArtemidaError } from '@/lib/artemida';
 import { t, tp } from '@/lib/i18n';
-import { listKeys, listKeysByUserId, revalidateKeys, revalidateKeysByUserId, type RenderedKey } from '@/lib/keys-service';
+import { listKeys, listKeysByUserId, manageableDeviceCounts, revalidateKeys, revalidateKeysByUserId, type RenderedKey } from '@/lib/keys-service';
 import { logger } from '@/lib/logger';
 import { getSessionUser, requireSession, requireTelegramSession, SessionError } from '@/lib/session';
 import { listTicketsForUser } from '@/lib/tickets-service';
@@ -64,6 +64,12 @@ async function SubscriptionsSection({ telegramId }: { telegramId: number }) {
     return <SubscriptionsError error={err} />;
   }
 
+  const manageable = await manageableDeviceCounts(
+    { telegramId: BigInt(telegramId) },
+    cached.map((item) => item.id),
+  );
+  const body = <SubscriptionsBody cached={cached} manageable={manageable} />;
+
   // D-29: schedule the ARTEMIDA refresh after the response is sent so cabinet
   // open is instant yet the mirror catches up. Never throw into the render.
   after(async () => {
@@ -83,7 +89,7 @@ async function SubscriptionsSection({ telegramId }: { telegramId: number }) {
     }
   });
 
-  return <SubscriptionsBody cached={cached} />;
+  return body;
 }
 
 /**
@@ -99,6 +105,12 @@ async function SubscriptionsSectionByUserId({ userId }: { userId: number }) {
   } catch (err) {
     return <SubscriptionsError error={err} />;
   }
+
+  const manageable = await manageableDeviceCounts(
+    { userId },
+    cached.map((item) => item.id),
+  );
+  const body = <SubscriptionsBody cached={cached} manageable={manageable} />;
 
   after(async () => {
     try {
@@ -117,11 +129,17 @@ async function SubscriptionsSectionByUserId({ userId }: { userId: number }) {
     }
   });
 
-  return <SubscriptionsBody cached={cached} />;
+  return body;
 }
 
 /** Shared subscription list rendering for both session scopes (same copy). */
-function SubscriptionsBody({ cached }: { cached: RenderedKey[] }) {
+function SubscriptionsBody({
+  cached,
+  manageable,
+}: {
+  cached: RenderedKey[];
+  manageable?: Map<string, number | null>;
+}) {
   return (
     <section className="flex flex-col gap-4">
       <div className="flex items-baseline justify-between gap-3">
@@ -143,7 +161,11 @@ function SubscriptionsBody({ cached }: { cached: RenderedKey[] }) {
       ) : (
         <div className="flex flex-col gap-4">
           {cached.map((item) => (
-            <SubscriptionCard key={item.id} item={item} />
+            <SubscriptionCard
+              key={item.id}
+              item={item}
+              manageableDevices={manageable?.get(item.id)}
+            />
           ))}
         </div>
       )}

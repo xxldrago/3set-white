@@ -6,10 +6,8 @@ import Link from 'next/link';
 import CopyButton from './CopyButton';
 import DeviceListModal from './DeviceListModal';
 import RenewPanel from './RenewPanel';
-import { formatKeyDate, statusLabel, type RenderedKey, type StatusKind } from '@/lib/keys-service';
+import { daysUntilExpiry, formatKeyDate, statusLabel, type RenderedKey, type StatusKind } from '@/lib/keys-service';
 import { t } from '@/lib/i18n';
-
-const DAY_MS = 86_400_000;
 
 // App-locked device bounds (mirror lib/orders-service MIN/MAX_DEVICES).
 const MIN_DEVICES = 2;
@@ -37,17 +35,23 @@ function KeyIcon() {
   );
 }
 
-export default function SubscriptionCard({ item }: { item: RenderedKey }) {
+export default function SubscriptionCard({
+  item,
+  manageableDevices = item.devices,
+}: {
+  item: RenderedKey;
+  /** Live count of addressable rows; falls back to the cached aggregate. */
+  manageableDevices?: number | null;
+}) {
   const expiry = item.expiresAt ? formatKeyDate(item.expiresAt) : '—';
-  const daysLeft = item.expiresAt
-    ? Math.max(0, Math.ceil((new Date(item.expiresAt).getTime() - Date.now()) / DAY_MS))
-    : null;
+  const daysLeft = daysUntilExpiry(item.expiresAt);
   const deviceLimit = Math.max(
     MIN_DEVICES,
     Math.min(MAX_DEVICES, item.deviceLimit ?? item.devices ?? MIN_DEVICES),
   );
+  const connectedDevices = manageableDevices ?? item.devices;
   const devicesText =
-    item.devices !== null ? `${item.devices}/${item.deviceLimit ?? deviceLimit}` : '—';
+    connectedDevices !== null ? `${connectedDevices}/${item.deviceLimit ?? deviceLimit}` : '—';
 
   return (
     <article className="flex flex-col gap-5 rounded-2xl border border-line bg-panel p-6">

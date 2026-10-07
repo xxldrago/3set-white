@@ -17,10 +17,10 @@ import {
   MIN_DEVICES,
   createOrder,
   keyDeviceLimit,
-  precheckOwnedKey,
+  precheckOwnedKeyByUserId,
 } from "../../../lib/orders-service";
 import { logger } from "../../../lib/logger";
-import { requireTelegramSession, SessionError } from "../../../lib/session";
+import { requireSession, SessionError } from "../../../lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -64,9 +64,12 @@ const bodySchema = z
   });
 
 export async function POST(req: Request): Promise<Response> {
-  let telegramId: number;
+  let userId: number;
   try {
-    telegramId = await requireTelegramSession();
+    // Any authenticated session may create an order — email-only accounts buy
+    // without linking Telegram (orders are userId-keyed; provisioning uses
+    // `email:{userId}` as the provider customer ref).
+    ({ userId } = await requireSession());
   } catch (err) {
     if (err instanceof SessionError) {
       return Response.json({ error: "unauthorized" }, { status: 401 });
@@ -90,13 +93,13 @@ export async function POST(req: Request): Promise<Response> {
     const result =
       parsed.data.kind === "new"
         ? await createOrder({
-            telegramId,
+            userId,
             kind: "new",
             days: parsed.data.days ?? null,
             devices: parsed.data.devices ?? MIN_DEVICES,
             userName: null,
           })
-        : await createMutationOrder(telegramId, parsed.data);
+        : await createMutationOrder(userId, parsed.data);
 
     if (result.kind === "provider_error") {
       const status =
@@ -140,10 +143,10 @@ type MutationBody = z.infer<typeof bodySchema>;
  * The current device limit is taken from the joined key row, never the body.
  */
 async function createMutationOrder(
-  telegramId: number,
+  userId: number,
   body: MutationBody,
 ): Promise<Awaited<ReturnType<typeof createOrder>>> {
-  const precheck = await precheckOwnedKey(telegramId, body.keyId ?? "");
+  const precheck = await precheckOwnedKeyByUserId(userId, body.keyId ?? "");
   if (!precheck.ok) {
     // A discriminated failure is returned as-is; the caller maps it to HTTP.
     throw new OrderRequestError(precheck.reason === "trial" ? 409 : 404, precheck.reason);
@@ -157,7 +160,7 @@ async function createMutationOrder(
       throw new OrderRequestError(400, "bad_request");
     }
     return createOrder({
-      telegramId,
+      userId,
       kind: "upgrade",
       days: null,
       devices: currentLimit,
@@ -168,7 +171,7 @@ async function createMutationOrder(
   }
 
   return createOrder({
-    telegramId,
+    userId,
     kind: "renew",
     days: body.days ?? 30,
     devices: currentLimit,

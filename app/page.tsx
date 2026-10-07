@@ -215,17 +215,11 @@ export default async function Home() {
           </>
         ) : emailUserId !== null ? (
           <>
-            <section className={CARD}>
-              <p className="text-muted">{t('auth.linkBanner')}</p>
-              <Link href="/profile" className={PRIMARY}>
-                {t('auth.linkCta')}
-              </Link>
-            </section>
             <Suspense fallback={<SkeletonRows />}>
               <SubscriptionsSectionByUserId userId={emailUserId} />
             </Suspense>
             <TrialButton />
-            <TariffPicker canBuy={false} />
+            <TariffPicker />
           </>
         ) : (
           <section className={CARD}>
@@ -244,6 +238,15 @@ export default async function Home() {
           </section>
         )}
         <InstallPrompt />
+        {/* Email-only: the Telegram link prompt sits at the very bottom. */}
+        {telegramId === null && emailUserId !== null && (
+          <section className={CARD}>
+            <p className="text-muted">{t('auth.linkBanner')}</p>
+            <Link href="/profile" className={PRIMARY}>
+              {t('auth.linkCta')}
+            </Link>
+          </section>
+        )}
       </main>
     </div>
   );

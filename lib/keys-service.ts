@@ -205,6 +205,21 @@ export async function getKeyForUser(
   return row ? toRenderedKey(row) : null;
 }
 
+/**
+ * Ownership read scoped by the local `userId` (email-only accounts included).
+ * The mirror of `getKeyForUser` for the userId-keyed cabinet path (G-06-9):
+ * a non-owned/missing key is indistinguishable from a missing one — both `null`.
+ */
+export async function getKeyForUserId(
+  userId: number,
+  keyId: string,
+): Promise<RenderedKey | null> {
+  const row = await prisma.keyCache.findFirst({
+    where: { keyId, user: { id: userId } },
+  });
+  return row ? toRenderedKey(row) : null;
+}
+
 export interface SubscriptionForUser {
   subscriptionUrl: string | null;
   links: string[];

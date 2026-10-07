@@ -4,7 +4,6 @@
 // `/api/pricing`; the ARTEMIDA key never reaches the browser. The rendered
 // price is the number ARTEMIDA returned, verbatim — never recomputed.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import PayCta from './PayCta';
 import { t } from '@/lib/i18n';
 
@@ -14,12 +13,9 @@ const MIN_DEVICES = 2;
 const MAX_DEVICES = 10;
 const DEBOUNCE_MS = 300;
 
-const PRIMARY_LINK =
-  'flex h-12 items-center justify-center rounded-lg bg-foreground px-5 font-display text-sm font-medium tracking-wide text-lime transition-colors hover:opacity-90';
-
 const priceFormatter = new Intl.NumberFormat('ru-RU');
 
-export default function TariffPicker({ canBuy = true }: { canBuy?: boolean }) {
+export default function TariffPicker() {
   const [days, setDays] = useState<number>(30);
   const [devices, setDevices] = useState<number>(MIN_DEVICES);
   const [price, setPrice] = useState<number | null>(null);
@@ -81,12 +77,12 @@ export default function TariffPicker({ canBuy = true }: { canBuy?: boolean }) {
   return (
     <section
       id="tariff"
-      className="relative flex flex-col gap-5 overflow-hidden rounded-2xl border border-line bg-panel p-6"
+      className="relative flex flex-col gap-5 overflow-hidden rounded-2xl border-2 border-foreground/15 bg-panel p-6 shadow-[0_24px_60px_-30px_rgba(14,21,18,.35)]"
     >
       {loading && (
         <div
           aria-hidden
-          className="absolute inset-x-0 top-0 h-0.5 animate-pulse bg-lime"
+          className="absolute inset-x-0 top-0 h-1 animate-pulse bg-lime"
         />
       )}
 
@@ -131,68 +127,59 @@ export default function TariffPicker({ canBuy = true }: { canBuy?: boolean }) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <span className="text-sm text-muted">
-          {t('pricing.devicesLabel')}
-        </span>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            aria-label={t('pricing.devicesLabel')}
-            disabled={controlsDisabled || devices <= MIN_DEVICES}
-            onClick={() => stepDevices(-1)}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-xl transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line "
-          >
-            −
-          </button>
-          <span className="min-w-11 text-center text-xl font-semibold tabular-nums">
-            {devices}
+      {/* Devices + price share one row. */}
+      <div className="flex items-end justify-between gap-4 border-t border-line pt-4">
+        <div className="flex flex-col gap-2">
+          <span className="text-sm text-muted">
+            {t('pricing.devicesLabel')}
           </span>
-          <button
-            type="button"
-            aria-label={t('pricing.devicesLabel')}
-            disabled={controlsDisabled || devices >= MAX_DEVICES}
-            onClick={() => stepDevices(1)}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-xl transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line "
-          >
-            +
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              aria-label={t('pricing.devicesLabel')}
+              disabled={controlsDisabled || devices <= MIN_DEVICES}
+              onClick={() => stepDevices(-1)}
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-xl transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line "
+            >
+              −
+            </button>
+            <span className="min-w-11 text-center text-xl font-semibold tabular-nums text-foreground">
+              {devices}
+            </span>
+            <button
+              type="button"
+              aria-label={t('pricing.devicesLabel')}
+              disabled={controlsDisabled || devices >= MAX_DEVICES}
+              onClick={() => stepDevices(1)}
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-xl transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line "
+            >
+              +
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div className="flex flex-col gap-1">
-        <span className="text-sm text-muted">
-          {t('pricing.priceLabel')}
-        </span>
-        <span
-          className="text-3xl font-semibold tabular-nums"
-          aria-live="polite"
-        >
-          {price === null
-            ? '—'
-            : t('pricing.price', { price: priceFormatter.format(price) })}
-        </span>
+        <div className="flex flex-col items-end gap-1">
+          <span className="text-sm text-muted">{t('pricing.priceLabel')}</span>
+          <span
+            className="text-2xl font-semibold tabular-nums text-foreground"
+            aria-live="polite"
+          >
+            {price === null
+              ? '—'
+              : t('pricing.price', { price: priceFormatter.format(price) })}
+          </span>
+        </div>
       </div>
 
       {/* Primary pay CTA: disabled until a price lands (no order without a price).
-          Email-only accounts (no linked Telegram) get a link-to-Telegram CTA
-          instead — purchasing requires a Telegram session (/api/orders). */}
-      {canBuy ? (
-        <PayCta
-          kind="new"
-          days={days}
-          devices={devices}
-          disabled={price === null}
-          label={t('pay.buy')}
-        />
-      ) : (
-        <div className="flex flex-col gap-2">
-          <Link href="/profile" className={PRIMARY_LINK}>
-            {t('pricing.linkTelegram')}
-          </Link>
-          <p className="text-sm text-muted">{t('pricing.linkTelegramHint')}</p>
-        </div>
-      )}
+          Purchasing works for any authenticated account — email-only included. */}
+      <PayCta
+        kind="new"
+        days={days}
+        devices={devices}
+        disabled={price === null}
+        label={t('pay.buy')}
+      />
 
       {error && (
         <div className="flex flex-col gap-2" role="alert">

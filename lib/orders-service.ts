@@ -10,7 +10,7 @@ import type { Order, Outbox } from "../generated/prisma/client";
 import { artemida } from "./artemida";
 import { logger } from "./logger";
 import { env } from "./env";
-import { getKeyForUser, type RenderedKey } from "./keys-service";
+import { getKeyForUser, getKeyForUserId, type RenderedKey } from "./keys-service";
 import { enqueueFulfillJob } from "./outbox";
 import { PlategaError, platega } from "./platega";
 import { prisma } from "./prisma";
@@ -45,7 +45,13 @@ export function isTrialConflict(code: string): boolean {
 }
 
 export interface CreateOrderInput {
-  telegramId: number;
+  /**
+   * Local `users.id` — the preferred resolve path (email-only accounts have no
+   * telegram id). The route resolves it from the signed session.
+   */
+  userId?: number;
+  /** Legacy resolve path (bot): local user looked up by telegram id. */
+  telegramId?: number;
   kind: OrderKind;
   /** Purchased days: required for `new`/`renew`, `null` for `upgrade`. */
   days: number | null;
@@ -76,14 +82,28 @@ export type CreateOrderResult =
  * maps the typed code; provider text is never surfaced.
  */
 export async function createOrder(input: CreateOrderInput): Promise<CreateOrderResult> {
-  const user = await prisma.user.findUnique({
-    where: { telegramId: BigInt(input.telegramId) },
-    select: { id: true },
-  });
+  const user =
+    input.userId !== undefined
+      ? await prisma.user.findUnique({
+          where: { id: input.userId },
+          select: { id: true, telegramId: true },
+        })
+      : input.telegramId !== undefined
+        ? await prisma.user.findUnique({
+            where: { telegramId: BigInt(input.telegramId) },
+            select: { id: true, telegramId: true },
+          })
+        : null;
   if (!user) {
     // No local identity row — the caller resolves this as an auth failure.
     throw new Error("orders:unknown_user");
   }
+
+  // Provider customer reference: the telegram id when linked, otherwise the
+  // email-only convention `email:{userId}` (mirrors the trial path, D-80) so
+  // each email account gets its own provider-side key instead of a shared null.
+  const customerRef =
+    user.telegramId !== null ? String(user.telegramId) : `email:${user.id}`;
 
   // One money pipeline, kind-aware quote only (D-42/D-43). `new`/`renew` use the
   // provider `GET /pricing` quote; `upgrade` derives the prorated device delta
@@ -133,8 +153,8 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       failedUrl: `${env.APP_BASE_URL}/payments/${order.id}`,
       payload: order.id,
       metadata: {
-        userId: String(input.telegramId),
-        userName: input.userName ?? String(input.telegramId),
+        userId: customerRef,
+        userName: input.userName ?? customerRef,
       },
     });
 
@@ -176,6 +196,17 @@ export async function precheckOwnedKey(
   keyId: string,
 ): Promise<OwnedKeyPrecheck> {
   const key = await getKeyForUser(BigInt(telegramId), keyId);
+  if (!key) return { ok: false, reason: "not_found" };
+  if (key.isTrial) return { ok: false, reason: TRIAL_ERROR_CODE };
+  return { ok: true, key };
+}
+
+/** userId-scoped ownership precheck (email-only accounts included). */
+export async function precheckOwnedKeyByUserId(
+  userId: number,
+  keyId: string,
+): Promise<OwnedKeyPrecheck> {
+  const key = await getKeyForUserId(userId, keyId);
   if (!key) return { ok: false, reason: "not_found" };
   if (key.isTrial) return { ok: false, reason: TRIAL_ERROR_CODE };
   return { ok: true, key };

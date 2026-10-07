@@ -137,7 +137,12 @@ export async function processFulfillOrder(orderId: string): Promise<FulfillOutco
       keyId: order.keyId,
       days: order.days,
       devices: order.devices,
-      customerRef: String(order.user.telegramId),
+      // Provider customer reference: telegram id when linked, else the
+      // email-only convention `email:{userId}` (mirrors the trial path).
+      customerRef:
+        order.user.telegramId !== null
+          ? String(order.user.telegramId)
+          : `email:${order.userId}`,
     });
     await upsertCachedKey(order.userId, key);
     await markProvisioned(order.id, key.id);

@@ -11,48 +11,40 @@ const QUICK_START: { n: string; icon: string; title: string; body: string }[] = 
   { n: '04', icon: '✓', title: 'Обновите и подключитесь', body: 'Разрешите VPN, обновите профиль, выберите рабочий сервер и подключитесь.' },
 ];
 
-const CHECKS: { title: string; hint: string }[] = [
-  { title: 'Проверьте интернет без VPN', hint: 'Откройте несколько сайтов при выключенном клиенте.' },
-  { title: 'Закройте другие VPN и прокси', hint: 'Одновременно должен работать только один VPN-клиент.' },
-  { title: 'Обновите приложение', hint: 'Старые версии могут не понимать новый формат подписки.' },
-  { title: 'Обновите профиль', hint: 'Нажмите обновление рядом с названием подписки.' },
-  { title: 'Смените сервер', hint: 'Выберите другой узел с числовой задержкой.' },
-  { title: 'Смените сеть', hint: 'Wi-Fi ↔ мобильный интернет.' },
-  { title: 'Проверьте TUN и маршрутизацию', hint: 'Включите TUN; для теста переключите Rule/Global.' },
-  { title: 'Попробуйте другой клиент', hint: 'Например, INCY вместо Happ или FlClashX на компьютере.' },
-  { title: 'Проверьте доступность серверов', hint: 'Откройте список серверов и запустите проверку задержки.' },
-];
-
-const POPULAR = ['как настроить айфон', 'подключено но интернета нет', 'лимит устройств'];
+const POPULAR = ['не работает vpn', 'настроить iphone', 'лимит устройств'];
 
 const PAGE_SIZE = 10;
+
+/** Normalize for search: lowercase + ё→е (both common typos). */
+function norm(s: string): string {
+  return s.toLowerCase().replace(/ё/g, 'е');
+}
 
 export default function FaqClient() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [open, setOpen] = useState<Record<string, boolean>>({});
-  const [checked, setChecked] = useState<Record<number, boolean>>({});
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const words = norm(query).split(/\s+/).filter(Boolean);
     return FAQ_ITEMS.filter((item) => {
       if (category !== 'all' && item.category !== category) return false;
-      if (!q) return true;
-      return (
-        item.title.toLowerCase().includes(q) ||
-        item.tag.toLowerCase().includes(q) ||
-        item.search.toLowerCase().includes(q) ||
-        item.answer.toLowerCase().includes(q)
-      );
+      if (words.length === 0) return true;
+      const hay = norm(`${item.title} ${item.tag} ${item.search} ${item.answer}`);
+      return words.every((w) => hay.includes(w));
     });
   }, [query, category]);
 
   const shown = filtered.slice(0, visible);
-  const checkedCount = Object.values(checked).filter(Boolean).length;
 
   function pickCategory(key: string) {
     setCategory(key);
+    setVisible(PAGE_SIZE);
+  }
+
+  function onQuery(value: string) {
+    setQuery(value);
     setVisible(PAGE_SIZE);
   }
 
@@ -77,10 +69,9 @@ export default function FaqClient() {
           <input
             type="search"
             value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setVisible(PAGE_SIZE);
-            }}
+            autoComplete="off"
+            spellCheck={false}
+            onChange={(e) => onQuery(e.target.value)}
             placeholder="Например: не работает VPN или как добавить ключ"
             aria-label="Поиск по вопросам и ответам"
             className="w-full bg-transparent text-sm text-foreground placeholder:text-dim focus:outline-none"
@@ -89,7 +80,7 @@ export default function FaqClient() {
             <button
               type="button"
               aria-label="Очистить поиск"
-              onClick={() => setQuery('')}
+              onClick={() => onQuery('')}
               className="text-dim hover:text-foreground"
             >
               ×
@@ -105,10 +96,7 @@ export default function FaqClient() {
             <button
               key={p}
               type="button"
-              onClick={() => {
-                setQuery(p);
-                setVisible(PAGE_SIZE);
-              }}
+              onClick={() => onQuery(p)}
               className="rounded-full border border-line px-3 py-1 text-xs text-muted transition-colors hover:border-green hover:text-green"
             >
               {p}
@@ -149,57 +137,8 @@ export default function FaqClient() {
         </div>
       </section>
 
-      {/* DIAGNOSTIC */}
-      <section className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <span className="font-mono text-xs uppercase tracking-[0.14em] text-green">
-            Диагностика
-          </span>
-          <h2 className="text-2xl font-semibold text-foreground">VPN не работает?</h2>
-          <p className="text-sm text-muted">
-            Отмечайте шаги по порядку. После каждого шага проверяйте соединение снова.
-          </p>
-        </div>
-        <article className="flex flex-col gap-4 rounded-2xl border border-line bg-panel p-5">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-xs text-muted">
-              {checkedCount} из {CHECKS.length}
-            </span>
-            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-foreground/10">
-              <i
-                className="block h-full rounded-full bg-lime transition-[width] duration-300"
-                style={{ width: `${(checkedCount / CHECKS.length) * 100}%` }}
-              />
-            </div>
-          </div>
-          <div className="flex flex-col divide-y divide-line">
-            {CHECKS.map((c, i) => (
-              <label key={c.title} className="flex cursor-pointer items-start gap-3 py-3">
-                <input
-                  type="checkbox"
-                  checked={!!checked[i]}
-                  onChange={() => setChecked((p) => ({ ...p, [i]: !p[i] }))}
-                  className="mt-0.5 h-4 w-4 accent-[#0c4f36]"
-                />
-                <span className="flex flex-col">
-                  <b className="text-sm font-medium text-foreground">{c.title}</b>
-                  <small className="text-xs text-muted">{c.hint}</small>
-                </span>
-              </label>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => setChecked({})}
-            className="self-start rounded-lg border border-line px-4 py-2 text-xs text-muted transition-colors hover:bg-foreground/5"
-          >
-            Сбросить отметки
-          </button>
-        </article>
-      </section>
-
       {/* Q&A */}
-      <section className="flex flex-col gap-4">
+      <section id="answers" className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <span className="font-mono text-xs uppercase tracking-[0.14em] text-green">
             {FAQ_ITEMS.length} ответов
@@ -233,16 +172,18 @@ export default function FaqClient() {
 
           <div className="flex flex-col gap-3">
             <div className="font-mono text-xs text-dim" aria-live="polite">
-              {filtered.length === FAQ_ITEMS.length
-                ? `Показано ${Math.min(shown.length, filtered.length)} из ${filtered.length}`
-                : `Найдено: ${filtered.length}`}
+              {query.trim()
+                ? `Найдено: ${filtered.length}`
+                : `Показано ${Math.min(shown.length, filtered.length)} из ${filtered.length}`}
             </div>
 
             {shown.length === 0 ? (
               <div className="flex flex-col items-center gap-2 rounded-2xl border border-line bg-panel p-10 text-center">
                 <span className="text-2xl text-dim" aria-hidden>⌕</span>
                 <h3 className="font-semibold text-foreground">Ничего не найдено</h3>
-                <p className="text-sm text-muted">Попробуйте другую тему или запрос.</p>
+                <p className="text-sm text-muted">
+                  Попробуйте другой запрос или выберите тему слева.
+                </p>
               </div>
             ) : (
               shown.map((item) => {

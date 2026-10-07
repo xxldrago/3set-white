@@ -113,8 +113,8 @@ export default function SubscriptionCard({ item }: { item: RenderedKey }) {
 
       {/* Actions */}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-        <Link href={`/keys/${encodeURIComponent(item.id)}`} className={PRIMARY}>
-          {t('key.guidesCta')}
+        <Link href={`/install?key=${encodeURIComponent(item.id)}`} className={PRIMARY}>
+          {t('key.connectCta')}
         </Link>
         {item.isTrial ? (
           <Link href="/#tariff" className={SECONDARY}>

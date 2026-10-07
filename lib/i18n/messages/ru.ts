@@ -152,6 +152,7 @@ export const ru = {
     trafficUsed: '{used} использовано',
     trafficOf: '{used} из {limit}',
     guidesCta: 'Как подключиться',
+    connectCta: 'Подключить',
     linkUnavailable: 'Ссылка пока недоступна. Обновите страницу позже.',
     linkError: 'Не удалось загрузить ссылку. Попробуйте ещё раз.',
     devicesTitle: 'Устройства',

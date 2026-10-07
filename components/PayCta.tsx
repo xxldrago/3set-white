@@ -22,6 +22,8 @@ interface PayCtaProps {
   keyId?: string;
   /** Disabled until a price lands (or while a parent control is unavailable). */
   disabled?: boolean;
+  /** Override the idle label (e.g. «Купить» in the tariff picker). */
+  label?: string;
 }
 
 const PRIMARY =
@@ -36,6 +38,7 @@ export default function PayCta({
   addDevices,
   keyId,
   disabled = false,
+  label,
 }: PayCtaProps) {
   const [state, setState] = useState<PayState>('idle');
 
@@ -70,7 +73,7 @@ export default function PayCta({
         disabled={disabled || state === 'loading'}
         className={PRIMARY}
       >
-        {state === 'loading' ? t('pay.ctaLoading') : t('pay.cta')}
+        {state === 'loading' ? t('pay.ctaLoading') : (label ?? t('pay.cta'))}
       </button>
 
       {state === 'error' && (

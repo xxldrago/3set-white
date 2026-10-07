@@ -27,7 +27,6 @@ const TG_ITEMS: NavItem[] = [
   { href: '/payments', label: 'История платежей' },
   { href: '/support', label: 'Поддержка' },
 ];
-const PROFILE_ITEM: NavItem = { href: '/profile', label: 'Профиль' };
 
 function displayName(user: NavUser | null): string {
   if (!user) return '?';
@@ -37,11 +36,8 @@ function displayName(user: NavUser | null): string {
 
 export default function Nav({ user }: { user: NavUser | null }) {
   const pathname = usePathname();
-  const items = [
-    ...BASE_ITEMS,
-    ...(user?.telegramId != null ? TG_ITEMS : []),
-    PROFILE_ITEM,
-  ];
+  // Profile is reachable only via the avatar icon (no text link).
+  const items = [...BASE_ITEMS, ...(user?.telegramId != null ? TG_ITEMS : [])];
 
   return (
     <nav className="sticky top-0 z-40 w-full border-b border-line bg-background/85 backdrop-blur">

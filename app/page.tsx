@@ -1,7 +1,6 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { after } from 'next/server';
-import AccountSection, { AccountSectionSkeleton } from '@/components/AccountSection';
 import InstallPrompt from '@/components/InstallPrompt';
 import Nav from '@/components/Nav';
 import SubscriptionCard from '@/components/SubscriptionCard';
@@ -206,24 +205,19 @@ export default async function Home() {
               <SubscriptionsSection telegramId={telegramId} />
             </Suspense>
             <TrialButton />
-            <div id="tariff">
-              <TariffPicker />
-            </div>
+            <TariffPicker />
             <nav className="flex flex-col gap-2 sm:flex-row">
               <Link href="/payments" className={SECONDARY}>
                 {t('pay.toHistory')}
               </Link>
               <SupportEntry unreadCount={unreadCount} />
             </nav>
-            <Suspense fallback={<AccountSectionSkeleton />}>
-              <AccountSection />
-            </Suspense>
           </>
         ) : emailUserId !== null ? (
           <>
             <section className={CARD}>
               <p className="text-muted">{t('auth.linkBanner')}</p>
-              <Link href="#account" className={PRIMARY}>
+              <Link href="/profile" className={PRIMARY}>
                 {t('auth.linkCta')}
               </Link>
             </section>
@@ -231,9 +225,6 @@ export default async function Home() {
               <SubscriptionsSectionByUserId userId={emailUserId} />
             </Suspense>
             <TrialButton />
-            <Suspense fallback={<AccountSectionSkeleton />}>
-              <AccountSection />
-            </Suspense>
           </>
         ) : (
           <section className={CARD}>

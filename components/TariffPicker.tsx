@@ -75,15 +75,24 @@ export default function TariffPicker() {
   };
 
   return (
-    <section className="relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-line p-6 border-line">
+    <section
+      id="tariff"
+      className="relative flex flex-col gap-5 overflow-hidden rounded-2xl border border-line bg-panel p-6"
+    >
       {loading && (
         <div
           aria-hidden
-          className="absolute inset-x-0 top-0 h-0.5 animate-pulse bg-foreground"
+          className="absolute inset-x-0 top-0 h-0.5 animate-pulse bg-lime"
         />
       )}
 
-      <h2 className="text-xl font-semibold">{t('pricing.title')}</h2>
+      <div className="flex flex-col gap-1">
+        <span className="font-mono text-xs uppercase tracking-[0.14em] text-green">
+          Тарифы
+        </span>
+        <h2 className="text-2xl font-semibold text-foreground">{t('pricing.title')}</h2>
+        <p className="text-sm text-muted">{t('pricing.subtitle')}</p>
+      </div>
 
       <div className="flex flex-col gap-2">
         <span className="text-sm text-muted">
@@ -162,7 +171,13 @@ export default function TariffPicker() {
       </div>
 
       {/* Primary pay CTA: disabled until a price lands (no order without a price). */}
-      <PayCta kind="new" days={days} devices={devices} disabled={price === null} />
+      <PayCta
+        kind="new"
+        days={days}
+        devices={devices}
+        disabled={price === null}
+        label={t('pay.buy')}
+      />
 
       {error && (
         <div className="flex flex-col gap-2" role="alert">

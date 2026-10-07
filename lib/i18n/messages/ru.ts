@@ -113,6 +113,8 @@ export const ru = {
     devicesLabel: 'Устройства',
     priceLabel: 'Стоимость',
     price: '{price} ₽',
+    linkTelegram: 'Привязать Telegram, чтобы купить',
+    linkTelegramHint: 'Оплата доступна после привязки Telegram-аккаунта.',
     error: 'Не удалось загрузить цены. Попробуйте ещё раз.',
   },
   subs: {

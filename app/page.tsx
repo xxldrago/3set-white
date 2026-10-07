@@ -225,6 +225,7 @@ export default async function Home() {
               <SubscriptionsSectionByUserId userId={emailUserId} />
             </Suspense>
             <TrialButton />
+            <TariffPicker canBuy={false} />
           </>
         ) : (
           <section className={CARD}>

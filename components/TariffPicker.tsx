@@ -4,6 +4,7 @@
 // `/api/pricing`; the ARTEMIDA key never reaches the browser. The rendered
 // price is the number ARTEMIDA returned, verbatim — never recomputed.
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import PayCta from './PayCta';
 import { t } from '@/lib/i18n';
 
@@ -13,9 +14,12 @@ const MIN_DEVICES = 2;
 const MAX_DEVICES = 10;
 const DEBOUNCE_MS = 300;
 
+const PRIMARY_LINK =
+  'flex h-12 items-center justify-center rounded-lg bg-foreground px-5 font-display text-sm font-medium tracking-wide text-lime transition-colors hover:opacity-90';
+
 const priceFormatter = new Intl.NumberFormat('ru-RU');
 
-export default function TariffPicker() {
+export default function TariffPicker({ canBuy = true }: { canBuy?: boolean }) {
   const [days, setDays] = useState<number>(30);
   const [devices, setDevices] = useState<number>(MIN_DEVICES);
   const [price, setPrice] = useState<number | null>(null);
@@ -170,14 +174,25 @@ export default function TariffPicker() {
         </span>
       </div>
 
-      {/* Primary pay CTA: disabled until a price lands (no order without a price). */}
-      <PayCta
-        kind="new"
-        days={days}
-        devices={devices}
-        disabled={price === null}
-        label={t('pay.buy')}
-      />
+      {/* Primary pay CTA: disabled until a price lands (no order without a price).
+          Email-only accounts (no linked Telegram) get a link-to-Telegram CTA
+          instead — purchasing requires a Telegram session (/api/orders). */}
+      {canBuy ? (
+        <PayCta
+          kind="new"
+          days={days}
+          devices={devices}
+          disabled={price === null}
+          label={t('pay.buy')}
+        />
+      ) : (
+        <div className="flex flex-col gap-2">
+          <Link href="/profile" className={PRIMARY_LINK}>
+            {t('pricing.linkTelegram')}
+          </Link>
+          <p className="text-sm text-muted">{t('pricing.linkTelegramHint')}</p>
+        </div>
+      )}
 
       {error && (
         <div className="flex flex-col gap-2" role="alert">

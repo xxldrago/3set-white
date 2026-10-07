@@ -20,7 +20,9 @@ const SECRET =
   process.env['SESSION_SECRET'] ?? 'unit-test-session-secret-at-least-32-characters';
 
 async function authorize(): Promise<void> {
-  session.token = await signSession(424242, SECRET);
+  // Any authenticated session may read a quote — mint a uid-only (email-only)
+  // session; requireSession accepts it without a linked Telegram.
+  session.token = await signSession(424242, null, SECRET);
 }
 
 function request(query: string): Promise<Response> {
@@ -47,6 +49,19 @@ describe('GET /api/pricing (TRIAL-02)', () => {
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ error: 'unauthorized' });
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('allows an email-only (uid-only) session to read a quote', async () => {
+    await authorize();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => jsonResponse({ body: pricingEnvelope(49, { days: 7, devices: 2 }) })),
+    );
+
+    const res = await request('days=7&devices=2');
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ price: 49 });
   });
 
   it('clamps devices to the provider minimum 2 and maximum 10', async () => {

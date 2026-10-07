@@ -22,7 +22,8 @@ const SECRET =
   process.env['SESSION_SECRET'] ?? 'unit-test-session-secret-at-least-32-characters';
 
 async function authorize(): Promise<void> {
-  session.token = await signSession(424242, SECRET);
+  // Any authenticated session may read a quote — uid-only (email-only) is valid.
+  session.token = await signSession(424242, null, SECRET);
 }
 
 function request(query: string): Promise<Response> {

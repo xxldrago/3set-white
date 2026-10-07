@@ -10,7 +10,7 @@
 import { z } from "zod";
 import { ArtemidaError, artemida } from "../../../lib/artemida";
 import { logger } from "../../../lib/logger";
-import { requireTelegramSession, SessionError } from "../../../lib/session";
+import { requireSession, SessionError } from "../../../lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -45,7 +45,10 @@ const unauthorized = () => Response.json({ error: "unauthorized" }, { status: 40
 
 export async function GET(req: Request): Promise<Response> {
   try {
-    await requireTelegramSession();
+    // Any authenticated session may read a price quote (email-only accounts
+    // included — pricing carries no user-scoped data). Purchasing still
+    // requires a linked Telegram (see /api/orders).
+    await requireSession();
   } catch (err) {
     if (err instanceof SessionError) return unauthorized();
     logger.error({ route: "pricing", outcome: "session_error" });

@@ -25,8 +25,8 @@ const ITEMS: { section: NavSection; href: string }[] = [
 ];
 
 const ITEM_BASE = 'flex h-11 items-center justify-center rounded-full px-4 text-sm transition-colors';
-const ACTIVE = `${ITEM_BASE} bg-foreground text-background`;
-const INACTIVE = `${ITEM_BASE} border border-solid border-black/[.08] hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]`;
+const ACTIVE = `${ITEM_BASE} bg-foreground text-lime`;
+const INACTIVE = `${ITEM_BASE} border border-solid border-line hover:bg-foreground/5 border-line `;
 
 /** Literal keyed label for a nav section — never an interpolated key. */
 function itemLabel(section: NavSection): string {

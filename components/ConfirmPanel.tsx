@@ -24,11 +24,11 @@ interface ConfirmPanelProps {
 }
 
 const TRIGGER =
-  'flex h-11 shrink-0 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 shrink-0 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm transition-colors hover:bg-black/[.04] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 const DESTRUCTIVE =
-  'flex h-11 items-center justify-center rounded-full bg-red-600 px-4 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50 dark:bg-red-400 dark:text-black dark:hover:bg-red-300';
+  'flex h-11 items-center justify-center rounded-full bg-red-600 px-4 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50';
 
 export default function ConfirmPanel({
   kind,
@@ -116,12 +116,12 @@ export default function ConfirmPanel({
     <div
       role="group"
       aria-label={title}
-      className="flex w-full flex-col gap-2 rounded-2xl border border-red-600/30 p-3 dark:border-red-400/30"
+      className="flex w-full flex-col gap-2 rounded-2xl border border-red-600/30 p-3"
     >
-      <p className="text-sm font-semibold text-black dark:text-zinc-50">{title}</p>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">{body}</p>
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <p className="text-sm text-muted">{body}</p>
       {error && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-red-600">
           {errorLabel}
         </p>
       )}

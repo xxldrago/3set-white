@@ -8,7 +8,7 @@ import { t } from '@/lib/i18n';
 import type { AdminRole } from '@/lib/admin-auth';
 
 const BADGE_BASE = 'inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold';
-const ROLE_TINT = 'bg-zinc-500/10 text-zinc-500 dark:bg-zinc-400/10 dark:text-zinc-400';
+const ROLE_TINT = 'bg-background0/10 text-dim';
 
 /** Literal RU label for a role — shared by the chip and the shell header. */
 export function roleLabel(role: AdminRole): string {

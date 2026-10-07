@@ -14,7 +14,7 @@ import TelegramWidgetSlot from './TelegramWidgetSlot';
 import UnlinkConfirmPanel from './UnlinkConfirmPanel';
 
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm transition-colors hover:bg-black/[.04] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 
 const BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? '';
 
@@ -56,8 +56,8 @@ export default function LinkTelegramRow({ linked, telegramId }: LinkTelegramRowP
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 flex-col">
-          <span className="text-base text-black dark:text-zinc-50">{t('auth.methodTelegram')}</span>
-          <span className="truncate text-sm tabular-nums text-zinc-600 dark:text-zinc-400">
+          <span className="text-base text-foreground">{t('auth.methodTelegram')}</span>
+          <span className="truncate text-sm tabular-nums text-muted">
             {linked && telegramId !== null
               ? t('auth.tgLinked', { id: telegramId })
               : t('auth.tgNotLinked')}
@@ -99,11 +99,11 @@ export default function LinkTelegramRow({ linked, telegramId }: LinkTelegramRowP
               requestAccess="write"
            />
           {linkPending && (
-            <div className="h-5 w-32 animate-pulse rounded-full bg-black/5 dark:bg-white/10" aria-hidden />
+            <div className="h-5 w-32 animate-pulse rounded-full bg-foreground/5" aria-hidden />
           )}
           {linkError && (
             <div className="flex flex-col gap-2" role="alert">
-              <p className="text-sm text-red-600 dark:text-red-400">{t('login.error')}</p>
+              <p className="text-sm text-red-600">{t('login.error')}</p>
               <button
                 type="button"
                 onClick={() => setLinkError(false)}

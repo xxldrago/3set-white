@@ -13,11 +13,11 @@ import { t } from '@/lib/i18n';
 import PasswordField from './PasswordField';
 
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]';
+  'flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 transition-colors hover:bg-black/[.04] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 
-const CARD = 'rounded-2xl border border-black/10 p-6 dark:border-white/15';
+const CARD = 'rounded-2xl border border-line p-6 border-line';
 
 type TokenState = 'ok' | 'invalid' | 'expired' | 'used';
 type ConfirmState = 'form' | 'loading' | 'done' | 'token' | 'error';
@@ -96,7 +96,7 @@ export default function ResetConfirmForm({ token }: { token: string | null }) {
   if (state === 'done') {
     return (
       <div className={`${CARD} flex flex-col gap-5`}>
-        <div role="status" className="text-base text-black dark:text-zinc-50">
+        <div role="status" className="text-base text-foreground">
           {t('auth.resetDone')}
         </div>
         <a href="/login" className={SECONDARY}>
@@ -109,7 +109,7 @@ export default function ResetConfirmForm({ token }: { token: string | null }) {
   if (state === 'token') {
     return (
       <div className={`${CARD} flex flex-col gap-5`}>
-        <div role="alert" className="text-base text-black dark:text-zinc-50">
+        <div role="alert" className="text-base text-foreground">
           {tokenState === 'expired'
             ? t('auth.resetExpired')
             : tokenState === 'used'
@@ -156,7 +156,7 @@ export default function ResetConfirmForm({ token }: { token: string | null }) {
 
         {state === 'error' && (
           <div className="flex flex-col gap-2" role="alert">
-            <p className="text-sm text-red-600 dark:text-red-400">{t('auth.resetError')}</p>
+            <p className="text-sm text-red-600">{t('auth.resetError')}</p>
             <button
               type="button"
               onClick={() => void submit()}

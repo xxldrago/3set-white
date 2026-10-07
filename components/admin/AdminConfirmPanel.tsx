@@ -31,13 +31,13 @@ interface AdminConfirmPanelProps {
 }
 
 const TRIGGER =
-  'flex h-11 shrink-0 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 shrink-0 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm transition-colors hover:bg-black/[.04] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 const PRIMARY =
-  'flex h-11 items-center justify-center rounded-full bg-foreground px-4 text-sm text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]';
+  'flex h-11 items-center justify-center rounded-full bg-foreground px-4 text-sm text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const DESTRUCTIVE =
-  'flex h-11 items-center justify-center rounded-full bg-red-600 px-4 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50 dark:bg-red-400 dark:text-black dark:hover:bg-red-300';
+  'flex h-11 items-center justify-center rounded-full bg-red-600 px-4 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50';
 
 export default function AdminConfirmPanel({
   variant,
@@ -61,8 +61,8 @@ export default function AdminConfirmPanel({
 
   const destructive = variant === 'destructive';
   const panelBorder = destructive
-    ? 'border-red-600/30 dark:border-red-400/30'
-    : 'border-black/10 dark:border-white/15';
+    ? 'border-red-600/30'
+    : 'border-line';
   const confirmClass = destructive ? DESTRUCTIVE : PRIMARY;
 
   const close = useCallback(() => {
@@ -134,10 +134,10 @@ export default function AdminConfirmPanel({
       aria-label={title}
       className={`flex w-full flex-col gap-2 rounded-2xl border p-3 ${panelBorder}`}
     >
-      <p className="text-sm font-semibold text-black dark:text-zinc-50">{title}</p>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">{body}</p>
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <p className="text-sm text-muted">{body}</p>
       {error && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-red-600">
           {errorLabel}
         </p>
       )}

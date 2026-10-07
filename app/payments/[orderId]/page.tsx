@@ -68,7 +68,7 @@ export default async function PaymentReturnPage({
       : null;
 
   return (
-    <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
+    <div className="flex flex-col flex-1 items-center bg-background font-sans bg-background">
       <main className="flex flex-1 w-full max-w-3xl flex-col gap-6 px-6 py-12 sm:px-16">
         <OrderStatusPanel order={toHistoryRow(order)} delivered={delivered} />
       </main>

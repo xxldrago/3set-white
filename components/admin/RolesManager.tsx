@@ -13,11 +13,11 @@ import { t } from '@/lib/i18n';
 import type { AdminRosterRow } from '@/lib/admin-service';
 
 const TABLE_HEAD =
-  'px-3 py-2 text-sm font-semibold text-zinc-600 dark:text-zinc-400';
+  'px-3 py-2 text-sm font-semibold text-muted';
 const TABLE_CELL = 'px-3 py-3 align-middle';
 const CARD =
-  'flex flex-col gap-3 rounded-2xl border border-black/10 p-4 dark:border-white/15';
-const LABEL = 'text-sm text-zinc-600 dark:text-zinc-400';
+  'flex flex-col gap-3 rounded-2xl border border-line p-4 border-line';
+const LABEL = 'text-sm text-muted';
 
 function displayName(row: AdminRosterRow): string {
   return row.displayName ?? '—';
@@ -39,7 +39,7 @@ export default function RolesManager({
       <div className="hidden overflow-x-auto sm:block">
         <table className="w-full min-w-[40rem] border-collapse text-left">
           <thead>
-            <tr className="border-b border-black/10 dark:border-white/15">
+            <tr className="border-b border-line">
               <th scope="col" className={TABLE_HEAD}>
                 {t('admin.rolesColTelegramId')}
               </th>
@@ -58,14 +58,14 @@ export default function RolesManager({
             {rows.map((row) => (
               <tr
                 key={row.telegramId}
-                className="border-b border-black/5 dark:border-white/10"
+                className="border-b border-line/5"
               >
-                <td className={`${TABLE_CELL} whitespace-nowrap tabular-nums text-black dark:text-zinc-50`}>
+                <td className={`${TABLE_CELL} whitespace-nowrap tabular-nums text-foreground`}>
                   {row.telegramId}
                 </td>
                 <td className={TABLE_CELL}>
                   <span
-                    className="block max-w-[16rem] truncate text-black dark:text-zinc-50"
+                    className="block max-w-[16rem] truncate text-foreground"
                     title={displayName(row)}
                   >
                     {displayName(row)}
@@ -93,12 +93,12 @@ export default function RolesManager({
         {rows.map((row) => (
           <article key={row.telegramId} className={CARD}>
             <div className="flex items-center justify-between gap-3">
-              <span className="tabular-nums text-black dark:text-zinc-50">{row.telegramId}</span>
+              <span className="tabular-nums text-foreground">{row.telegramId}</span>
               <RoleChip role={row.role} />
             </div>
             <div className="flex min-w-0 items-center gap-2">
               <span className={`${LABEL} shrink-0`}>{t('admin.rolesColName')}</span>
-              <span className="min-w-0 truncate text-black dark:text-zinc-50" title={displayName(row)}>
+              <span className="min-w-0 truncate text-foreground" title={displayName(row)}>
                 {displayName(row)}
               </span>
             </div>

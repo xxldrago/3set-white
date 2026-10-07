@@ -30,7 +30,7 @@ export default async function AdminOverviewPage({ searchParams }: { searchParams
   const period = rawPeriod === 7 || rawPeriod === 90 ? rawPeriod : 30;
   return (
     <section className="flex flex-col gap-6">
-      <h2 className="text-xl font-semibold text-black dark:text-zinc-50">{t('admin.statsTitle')}</h2>
+      <h2 className="text-xl font-semibold text-foreground">{t('admin.statsTitle')}</h2>
 
       <StatsPanel period={period} />
     </section>

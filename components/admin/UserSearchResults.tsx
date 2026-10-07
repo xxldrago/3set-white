@@ -11,7 +11,7 @@ import RoleChip from './RoleChip';
 import { t, tp } from '@/lib/i18n';
 import type { AdminSearchResult } from '@/lib/admin-service';
 
-const CARD = 'rounded-2xl border border-black/10 p-6 dark:border-white/15';
+const CARD = 'rounded-2xl border border-line p-6 border-line';
 
 export default function UserSearchResults({
   rows,
@@ -25,13 +25,13 @@ export default function UserSearchResults({
   return (
     <section className="flex flex-col gap-4">
       {count >= 2 && (
-        <span className="text-sm text-zinc-600 dark:text-zinc-400">
+        <span className="text-sm text-muted">
           {tp('admin.searchCount', count)}
         </span>
       )}
 
       {truncated && (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">{t('admin.searchMore')}</p>
+        <p className="text-sm text-muted">{t('admin.searchMore')}</p>
       )}
 
       <div className="flex flex-col gap-4">
@@ -45,14 +45,14 @@ export default function UserSearchResults({
               >
                 <div className="flex items-start justify-between gap-3">
                   <span
-                    className="min-w-0 flex-1 truncate text-xl font-semibold text-black dark:text-zinc-50"
+                    className="min-w-0 flex-1 truncate text-xl font-semibold text-foreground"
                     title={label}
                   >
                     {label}
                   </span>
                   {row.staffRole && <RoleChip role={row.staffRole} />}
                 </div>
-                <span className="text-sm tabular-nums text-zinc-600 dark:text-zinc-400">
+                <span className="text-sm tabular-nums text-muted">
                   {t('admin.profileTelegramId', { id: row.telegramId })}
                 </span>
               </Link>

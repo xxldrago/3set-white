@@ -19,13 +19,13 @@ type FormState = 'idle' | 'loading' | 'error';
 type FieldError = 'tooLarge' | 'badType' | null;
 
 const INPUT =
-  'h-12 w-full rounded-2xl border border-black/[.08] bg-white px-4 text-base text-black placeholder:text-zinc-500 dark:border-white/[.145] dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder:text-zinc-500';
+  'h-12 w-full rounded-2xl border border-line bg-panel px-4 text-base text-foreground placeholder:text-dim border-line bg-panel text-foreground';
 const TEXTAREA = `${INPUT} min-h-28 resize-y py-3`;
-const FIELD_LABEL = 'text-sm text-zinc-600 dark:text-zinc-400';
+const FIELD_LABEL = 'text-sm text-muted';
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]';
+  'flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 transition-colors hover:bg-black/[.04] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 
 export default function TicketComposer({ ticketId }: { ticketId: string }) {
   const router = useRouter();
@@ -120,7 +120,7 @@ export default function TicketComposer({ ticketId }: { ticketId: string }) {
         {file ? (
           <div className="flex items-center justify-between gap-3">
             <span
-              className="min-w-0 flex-1 truncate text-sm text-zinc-600 dark:text-zinc-400"
+              className="min-w-0 flex-1 truncate text-sm text-muted"
               title={file.name}
             >
               {t('ticket.attachSelected', { name: file.name })}
@@ -140,19 +140,19 @@ export default function TicketComposer({ ticketId }: { ticketId: string }) {
       </div>
 
       {fieldError === 'tooLarge' && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-red-600">
           {t('ticket.attachTooLarge')}
         </p>
       )}
       {fieldError === 'badType' && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-red-600">
           {t('ticket.attachBadType')}
         </p>
       )}
 
       {state === 'error' && (
         <div className="flex flex-col gap-2" role="alert">
-          <p className="text-sm text-red-600 dark:text-red-400">{t('ticket.sendError')}</p>
+          <p className="text-sm text-red-600">{t('ticket.sendError')}</p>
           <button
             type="button"
             onClick={() => void submit()}

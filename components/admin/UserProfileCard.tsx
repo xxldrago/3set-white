@@ -21,16 +21,16 @@ export default function UserProfileCard({
   const created = formatKeyDate(header.createdAt.toISOString());
 
   return (
-    <section className="flex flex-col gap-3 rounded-2xl border border-black/10 p-6 dark:border-white/15">
+    <section className="flex flex-col gap-3 rounded-2xl border border-line p-6 border-line">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h2 className="text-xl font-semibold text-black dark:text-zinc-50">
+          <h2 className="text-xl font-semibold text-foreground">
             {t('admin.profileTitle')}
           </h2>
-          <p className="text-sm tabular-nums text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm tabular-nums text-muted">
             {t('admin.profileTelegramId', { id: header.telegramId })}
           </p>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-muted">
             {t('admin.profileCreated', { date: created })}
           </p>
         </div>

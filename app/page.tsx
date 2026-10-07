@@ -28,9 +28,9 @@ const SECONDARY =
 function SkeletonRows() {
   return (
     <section className="flex flex-col gap-4" aria-hidden>
-      <div className="h-7 w-40 animate-pulse rounded-full bg-black/5 dark:bg-white/10" />
+      <div className="h-7 w-40 animate-pulse rounded-full bg-foreground/5" />
       {Array.from({ length: 3 }, (_, index) => (
-        <div key={index} className="h-16 animate-pulse rounded-2xl bg-black/5 dark:bg-white/10" />
+        <div key={index} className="h-16 animate-pulse rounded-2xl bg-foreground/5" />
       ))}
     </section>
   );
@@ -49,7 +49,7 @@ function SubscriptionsError({ error }: { error: unknown }) {
 
   return (
     <section className={CARD} role="alert">
-      <p className="text-zinc-600 dark:text-zinc-400">{message}</p>
+      <p className="text-muted">{message}</p>
       <Link href="/" className={SECONDARY}>
         {t('common.retry')}
       </Link>
@@ -126,9 +126,9 @@ function SubscriptionsBody({ cached }: { cached: RenderedKey[] }) {
   return (
     <section className="flex flex-col gap-4">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-xl font-semibold text-black dark:text-zinc-50">{t('subs.title')}</h2>
+        <h2 className="text-xl font-semibold text-foreground">{t('subs.title')}</h2>
         {cached.length >= 2 && (
-          <span className="text-sm text-zinc-600 dark:text-zinc-400">
+          <span className="text-sm text-muted">
             {tp('subs.count', cached.length)}
           </span>
         )}
@@ -136,10 +136,10 @@ function SubscriptionsBody({ cached }: { cached: RenderedKey[] }) {
 
       {cached.length === 0 ? (
         <div className={CARD}>
-          <h3 className="text-xl font-semibold text-black dark:text-zinc-50">
+          <h3 className="text-xl font-semibold text-foreground">
             {t('subs.emptyHeading')}
           </h3>
-          <p className="text-zinc-600 dark:text-zinc-400">{t('subs.emptyBody')}</p>
+          <p className="text-muted">{t('subs.emptyBody')}</p>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
@@ -190,14 +190,14 @@ export default async function Home() {
   }
 
   return (
-    <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
+    <div className="flex flex-col flex-1 items-center bg-background font-sans bg-background">
       <Nav user={navUser} />
       <main className="flex flex-1 w-full max-w-3xl flex-col gap-8 px-6 py-12 sm:px-16">
         <header className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
+          <h1 className="text-3xl font-semibold leading-10 tracking-tight text-foreground">
             {t('app.name')}
           </h1>
-          <p className="text-base leading-6 text-zinc-600 dark:text-zinc-400">{t('app.tagline')}</p>
+          <p className="text-base leading-6 text-muted">{t('app.tagline')}</p>
         </header>
 
         {telegramId !== null ? (
@@ -222,7 +222,7 @@ export default async function Home() {
         ) : emailUserId !== null ? (
           <>
             <section className={CARD}>
-              <p className="text-zinc-600 dark:text-zinc-400">{t('auth.linkBanner')}</p>
+              <p className="text-muted">{t('auth.linkBanner')}</p>
               <Link href="#account" className={PRIMARY}>
                 {t('auth.linkCta')}
               </Link>
@@ -237,10 +237,10 @@ export default async function Home() {
           </>
         ) : (
           <section className={CARD}>
-            <h2 className="text-xl font-semibold text-black dark:text-zinc-50">
+            <h2 className="text-xl font-semibold text-foreground">
               {t('home.loginTitle')}
             </h2>
-            <p className="text-zinc-600 dark:text-zinc-400">{t('home.loginText')}</p>
+            <p className="text-muted">{t('home.loginText')}</p>
             <nav className="flex flex-col gap-2 sm:flex-row">
               <Link href="/login" className={PRIMARY}>
                 {t('home.loginCta')}

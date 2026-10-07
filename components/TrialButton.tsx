@@ -12,9 +12,9 @@ import { t } from '@/lib/i18n';
 type TrialState = 'idle' | 'loading' | 'used' | 'error';
 
 const PRIMARY =
-  'flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]';
+  'flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-black/[.08] px-4 transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 items-center justify-center rounded-full border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 
 export default function TrialButton() {
   const [state, setState] = useState<TrialState>('idle');
@@ -42,11 +42,11 @@ export default function TrialButton() {
   }, [state]);
 
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-black/10 p-6 dark:border-white/15">
+    <section className="flex flex-col gap-4 rounded-2xl border border-line p-6 border-line">
       {state === 'used' ? (
         <div className="flex flex-col gap-3">
           <h2 className="text-xl font-semibold">{t('trial.usedHeading')}</h2>
-          <p className="text-zinc-600 dark:text-zinc-400">{t('trial.usedBody')}</p>
+          <p className="text-muted">{t('trial.usedBody')}</p>
           <a href="#tariff" className={PRIMARY}>
             {t('key.buyCta')}
           </a>
@@ -64,7 +64,7 @@ export default function TrialButton() {
 
       {state === 'error' && (
         <div className="flex flex-col gap-2" role="alert">
-          <p className="text-sm text-red-600 dark:text-red-400">{t('trial.error')}</p>
+          <p className="text-sm text-red-600">{t('trial.error')}</p>
           <button type="button" onClick={() => void requestTrial()} className={SECONDARY}>
             {t('common.retry')}
           </button>

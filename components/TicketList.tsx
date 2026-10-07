@@ -12,10 +12,10 @@ import { formatPaymentDate } from './PaymentHistoryList';
 import { t, tp } from '@/lib/i18n';
 import type { TicketListRow } from '@/lib/tickets-service';
 
-const CARD = 'rounded-2xl border border-black/10 p-6 dark:border-white/15';
+const CARD = 'rounded-2xl border border-line p-6 border-line';
 
 const UNREAD_BADGE =
-  'inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-foreground px-2 text-sm font-semibold tabular-nums text-background';
+  'inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-foreground px-2 text-sm font-semibold tabular-nums text-lime';
 
 /** Cap the displayed count at `99+` (UI-SPEC zero-one-many); `0` never renders. */
 function unreadDisplay(count: number): string {
@@ -41,7 +41,7 @@ export default function TicketList({
           >
             <div className="flex items-start justify-between gap-3">
               <span
-                className="min-w-0 flex-1 truncate text-xl font-semibold text-black dark:text-zinc-50"
+                className="min-w-0 flex-1 truncate text-xl font-semibold text-foreground"
                 title={row.subject}
               >
                 {row.subject}
@@ -59,12 +59,12 @@ export default function TicketList({
               </div>
             </div>
 
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm text-muted">
               {t('ticket.lastActivity', { date: formatPaymentDate(row.lastMessageAt) })}
             </p>
 
             {row.preview && (
-              <p className="truncate text-sm text-zinc-600 dark:text-zinc-400" title={row.preview}>
+              <p className="truncate text-sm text-muted" title={row.preview}>
                 {row.preview}
               </p>
             )}

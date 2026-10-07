@@ -22,9 +22,9 @@ export const metadata = {
   title: `${t('ticket.listTitle')} — ${t('app.name')}`,
 };
 
-const CARD = 'flex flex-col gap-4 rounded-2xl border border-black/10 p-6 dark:border-white/15';
+const CARD = 'flex flex-col gap-4 rounded-2xl border border-line p-6 border-line';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 
 export default async function TicketDetailPage({
   params,
@@ -44,10 +44,10 @@ export default async function TicketDetailPage({
   if (!thread) notFound();
 
   return (
-    <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
+    <div className="flex flex-col flex-1 items-center bg-background font-sans bg-background">
       <main className="flex flex-1 w-full max-w-3xl flex-col gap-6 px-6 py-12 sm:px-16">
         <header className="flex flex-col gap-3">
-          <h1 className="text-3xl font-semibold leading-10 tracking-tight break-all text-black dark:text-zinc-50">
+          <h1 className="text-3xl font-semibold leading-10 tracking-tight break-all text-foreground">
             {thread.subject}
           </h1>
           <div className="flex items-center justify-between gap-3">
@@ -66,7 +66,7 @@ export default async function TicketDetailPage({
         </section>
 
         {thread.status === 'closed' && (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">{t('ticket.reopenNote')}</p>
+          <p className="text-sm text-muted">{t('ticket.reopenNote')}</p>
         )}
 
         <section className={CARD}>

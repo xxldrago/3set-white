@@ -75,7 +75,7 @@ export default function TariffPicker() {
   };
 
   return (
-    <section className="relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-black/10 p-6 dark:border-white/15">
+    <section className="relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-line p-6 border-line">
       {loading && (
         <div
           aria-hidden
@@ -86,7 +86,7 @@ export default function TariffPicker() {
       <h2 className="text-xl font-semibold">{t('pricing.title')}</h2>
 
       <div className="flex flex-col gap-2">
-        <span className="text-sm text-zinc-600 dark:text-zinc-400">
+        <span className="text-sm text-muted">
           {t('pricing.daysLabel')}
         </span>
         <div className="flex gap-3">
@@ -107,8 +107,8 @@ export default function TariffPicker() {
                 onClick={() => setDays(value)}
                 className={
                   selected
-                    ? 'h-11 flex-1 rounded-full bg-foreground px-4 text-background transition-colors disabled:opacity-50'
-                    : 'h-11 flex-1 rounded-full border border-black/[.08] px-4 transition-colors hover:bg-black/[.04] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-[#1a1a1a]'
+                    ? 'h-11 flex-1 rounded-full bg-foreground px-4 text-lime transition-colors disabled:opacity-50'
+                    : 'h-11 flex-1 rounded-full border border-line px-4 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line '
                 }
               >
                 {label}
@@ -119,7 +119,7 @@ export default function TariffPicker() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className="text-sm text-zinc-600 dark:text-zinc-400">
+        <span className="text-sm text-muted">
           {t('pricing.devicesLabel')}
         </span>
         <div className="flex items-center gap-3">
@@ -128,7 +128,7 @@ export default function TariffPicker() {
             aria-label={t('pricing.devicesLabel')}
             disabled={controlsDisabled || devices <= MIN_DEVICES}
             onClick={() => stepDevices(-1)}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-black/[.08] text-xl transition-colors hover:bg-black/[.04] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-xl transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line "
           >
             −
           </button>
@@ -140,7 +140,7 @@ export default function TariffPicker() {
             aria-label={t('pricing.devicesLabel')}
             disabled={controlsDisabled || devices >= MAX_DEVICES}
             onClick={() => stepDevices(1)}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-black/[.08] text-xl transition-colors hover:bg-black/[.04] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-xl transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line "
           >
             +
           </button>
@@ -148,7 +148,7 @@ export default function TariffPicker() {
       </div>
 
       <div className="flex flex-col gap-1">
-        <span className="text-sm text-zinc-600 dark:text-zinc-400">
+        <span className="text-sm text-muted">
           {t('pricing.priceLabel')}
         </span>
         <span
@@ -166,11 +166,11 @@ export default function TariffPicker() {
 
       {error && (
         <div className="flex flex-col gap-2" role="alert">
-          <p className="text-sm text-red-600 dark:text-red-400">{t('pricing.error')}</p>
+          <p className="text-sm text-red-600">{t('pricing.error')}</p>
           <button
             type="button"
             onClick={() => void fetchPrice(days, devices)}
-            className="flex h-11 items-center justify-center rounded-full border border-black/[.08] px-4 transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
+            className="flex h-11 items-center justify-center rounded-full border border-line px-4 transition-colors hover:bg-foreground/5 border-line "
           >
             {t('common.retry')}
           </button>

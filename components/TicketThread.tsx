@@ -18,20 +18,20 @@ import AttachmentImage from './AttachmentImage';
 import { formatPaymentDate } from './PaymentHistoryList';
 
 const BUBBLE =
-  'flex flex-col gap-1 rounded-2xl border border-black/10 p-4 dark:border-white/15';
+  'flex flex-col gap-1 rounded-2xl border border-line p-4 border-line';
 
 function MessageBubble({ ticketId, message }: { ticketId: string; message: TicketThreadMessage }) {
   const isSupport = message.author === 'support';
   return (
     <div className={`flex max-w-[85%] flex-col gap-1 ${isSupport ? 'self-start' : 'self-end'}`}>
-      <div className={`${BUBBLE} ${isSupport ? '' : 'bg-black/[.03] dark:bg-white/[0.06]'}`}>
+      <div className={`${BUBBLE} ${isSupport ? '' : 'bg-foreground/[.03]'}`}>
         {isSupport && (
-          <p className="text-sm font-semibold text-black dark:text-zinc-50">
+          <p className="text-sm font-semibold text-foreground">
             {t('support.senderLabel')}
           </p>
         )}
         {message.body && (
-          <p className="text-base leading-[1.5] whitespace-pre-wrap break-words text-black dark:text-zinc-50">
+          <p className="text-base leading-[1.5] whitespace-pre-wrap break-words text-foreground">
             {message.body}
           </p>
         )}
@@ -49,7 +49,7 @@ function MessageBubble({ ticketId, message }: { ticketId: string; message: Ticke
           </div>
         )}
       </div>
-      <time className="text-sm tabular-nums text-zinc-600 dark:text-zinc-400">
+      <time className="text-sm tabular-nums text-muted">
         {formatPaymentDate(message.createdAt)}
       </time>
     </div>

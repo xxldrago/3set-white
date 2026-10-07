@@ -63,25 +63,25 @@ export default function LoginButton() {
              buttonSize="large"
              requestAccess="write"
            />
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">{t('login.widgetNote')}</p>
+          <p className="text-sm text-muted">{t('login.widgetNote')}</p>
         </>
       ) : (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">{t('login.widgetNote')}</p>
+        <p className="text-sm text-muted">{t('login.widgetNote')}</p>
       )}
       {webappAvailable && (
         <>
           <button
             type="button"
             onClick={loginFromBot}
-            className="flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
+            className="flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:opacity-90"
           >
             {t('home.loginCta')}
           </button>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">{t('login.webappNote')}</p>
+          <p className="text-sm text-muted">{t('login.webappNote')}</p>
         </>
       )}
       {error && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-red-600">
           {t('login.error')}
         </p>
       )}

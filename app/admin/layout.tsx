@@ -21,7 +21,7 @@ export const dynamic = 'force-dynamic';
 const NAV_SECTIONS: AdminSection[] = ['overview', 'users', 'tickets', 'broadcast', 'roles'];
 
 const CABINET_LINK =
-  'flex h-11 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line ';
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   let telegramId: number;
@@ -36,11 +36,11 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const allowed = role ? NAV_SECTIONS.filter((section) => can(role, section)) : [];
 
   return (
-    <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
+    <div className="flex flex-col flex-1 items-center bg-background font-sans bg-background">
       <main className="flex flex-1 w-full max-w-6xl flex-col gap-8 px-6 py-12 sm:px-16">
         <header className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
+            <h1 className="text-3xl font-semibold leading-10 tracking-tight text-foreground">
               {t('admin.title')}
             </h1>
             <Link href="/" className={CABINET_LINK}>
@@ -48,7 +48,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             </Link>
           </div>
           {role && (
-            <p className="flex flex-wrap items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="flex flex-wrap items-center gap-2 text-sm text-muted">
               {t('admin.currentRole', { role: roleLabel(role) })}
               <RoleChip role={role} />
             </p>

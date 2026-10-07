@@ -1,13 +1,15 @@
 @import "tailwindcss";
 
-/* 3set brand design tokens — ported from the 3set.online landing page.
-   Light is the brand default; the dark scheme is a dark-green adaptation. */
+/* 3set brand design tokens — ported 1:1 from the 3set.online landing page.
+   The brand is LIGHT-ONLY (the landing has no dark scheme), so there is no
+   prefers-color-scheme override here. */
 :root {
   --background: #f6f4ee;
   --foreground: #0e1512;
   --panel: #ffffff;
   --panel-2: #fbfaf5;
   --line: #e4dfd1;
+  --line-2: #cec7b4;
   --muted: #5b645e;
   --dim: #8f968f;
   --lime: #b7ff45;
@@ -21,6 +23,7 @@
   --color-panel: var(--panel);
   --color-panel-2: var(--panel-2);
   --color-line: var(--line);
+  --color-line-2: var(--line-2);
   --color-muted: var(--muted);
   --color-dim: var(--dim);
   --color-lime: var(--lime);
@@ -31,15 +34,13 @@
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0e1512;
-    --foreground: #f6f4ee;
-    --panel: #141d18;
-    --panel-2: #101814;
-    --line: #26332b;
-    --muted: #9aa79d;
-    --dim: #6b7a70;
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
   }
 }
 
@@ -48,6 +49,22 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle paper-grain overlay from the landing (fixed, non-interactive). */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+}
+
+::selection {
+  background: var(--foreground);
+  color: var(--lime);
 }
 
 h1,

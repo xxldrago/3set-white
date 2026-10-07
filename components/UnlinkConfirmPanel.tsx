@@ -13,9 +13,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { t } from '@/lib/i18n';
 
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm transition-colors hover:bg-black/[.04] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 const DESTRUCTIVE =
-  'flex h-11 items-center justify-center rounded-full bg-red-600 px-4 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50 dark:bg-red-400 dark:text-black dark:hover:bg-red-300';
+  'flex h-11 items-center justify-center rounded-full bg-red-600 px-4 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50';
 
 interface UnlinkConfirmPanelProps {
   onClose: () => void;
@@ -102,12 +102,12 @@ export default function UnlinkConfirmPanel({ onClose, onDone }: UnlinkConfirmPan
     <div
       role="group"
       aria-label={t('auth.unlinkTitle')}
-      className="flex w-full flex-col gap-2 rounded-2xl border border-red-600/30 p-3 dark:border-red-400/30"
+      className="flex w-full flex-col gap-2 rounded-2xl border border-red-600/30 p-3"
     >
-      <p className="text-sm font-semibold text-black dark:text-zinc-50">{t('auth.unlinkTitle')}</p>
+      <p className="text-sm font-semibold text-foreground">{t('auth.unlinkTitle')}</p>
       {hintFailed ? (
         <>
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <p role="alert" className="text-sm text-red-600">
             {t('auth.unlinkError')}
           </p>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -124,14 +124,14 @@ export default function UnlinkConfirmPanel({ onClose, onDone }: UnlinkConfirmPan
           </div>
         </>
       ) : lastMethod === null ? (
-        <div className="h-5 animate-pulse rounded-full bg-black/5 dark:bg-white/10" aria-hidden />
+        <div className="h-5 animate-pulse rounded-full bg-foreground/5" aria-hidden />
       ) : (
         <>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-muted">
             {lastMethod ? t('auth.unlinkLastBody') : t('auth.unlinkBody')}
           </p>
           {error && (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <p role="alert" className="text-sm text-red-600">
               {t('auth.unlinkError')}
             </p>
           )}

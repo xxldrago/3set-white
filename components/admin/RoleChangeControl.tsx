@@ -16,9 +16,9 @@ import type { AdminRole } from '@/lib/admin-auth';
 const ROLES: AdminRole[] = ['administrator', 'support', 'manager'];
 
 const SELECT =
-  'h-11 rounded-2xl border border-black/[.08] bg-white px-3 text-sm text-black dark:border-white/[.145] dark:bg-zinc-900 dark:text-zinc-50';
+  'h-11 rounded-2xl border border-line bg-panel px-3 text-sm text-foreground border-line bg-panel text-foreground';
 const DISABLED_TRIGGER =
-  'flex h-11 shrink-0 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm opacity-50 dark:border-white/[.145]';
+  'flex h-11 shrink-0 items-center justify-center rounded-full border border-solid border-line px-4 text-sm opacity-50 border-line';
 
 export default function RoleChangeControl({
   telegramId,
@@ -42,7 +42,7 @@ export default function RoleChangeControl({
         <button type="button" disabled className={DISABLED_TRIGGER}>
           {t('admin.rolesChange')}
         </button>
-        <span className="text-sm text-zinc-600 dark:text-zinc-400">{t('admin.rolesSelf')}</span>
+        <span className="text-sm text-muted">{t('admin.rolesSelf')}</span>
       </div>
     );
   }

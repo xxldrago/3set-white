@@ -32,20 +32,20 @@ export default function InstallPrompt() {
   if (!deferred || dismissed) return null;
 
   return (
-    <div className="flex flex-col gap-2 rounded-2xl border border-black/10 p-4 sm:flex-row sm:items-center dark:border-white/15">
-      <p className="flex-1 text-sm text-zinc-600 dark:text-zinc-400">{t('app.tagline')}</p>
+    <div className="flex flex-col gap-2 rounded-2xl border border-line p-4 sm:flex-row sm:items-center border-line">
+      <p className="flex-1 text-sm text-muted">{t('app.tagline')}</p>
       <div className="flex gap-2">
         <button
           type="button"
           onClick={() => void install()}
-          className="flex h-10 items-center justify-center rounded-full bg-foreground px-4 text-sm text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
+          className="flex h-10 items-center justify-center rounded-full bg-foreground px-4 text-sm text-lime transition-colors hover:opacity-90"
         >
           {t('pwa.install')}
         </button>
         <button
           type="button"
           onClick={() => setDismissed(true)}
-          className="flex h-10 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
+          className="flex h-10 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line "
         >
           {t('pwa.dismiss')}
         </button>

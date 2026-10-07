@@ -2,11 +2,11 @@ import { t } from '@/lib/i18n';
 
 type BroadcastStatus = 'queued' | 'sending' | 'sent' | 'failed' | 'unknown';
 const TINT: Record<BroadcastStatus, string> = {
-  queued: 'bg-zinc-500/10 text-zinc-500 dark:bg-zinc-400/10 dark:text-zinc-400',
-  sending: 'bg-amber-600/10 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400',
-  sent: 'bg-green-600/10 text-green-600 dark:bg-green-400/10 dark:text-green-400',
-  failed: 'bg-red-600/10 text-red-600 dark:bg-red-400/10 dark:text-red-400',
-  unknown: 'bg-zinc-500/10 text-zinc-500 dark:bg-zinc-400/10 dark:text-zinc-400',
+  queued: 'bg-background0/10 text-dim',
+  sending: 'bg-amber-600/10 text-amber-600',
+  sent: 'bg-green-600/10 text-green-600',
+  failed: 'bg-red-600/10 text-red-600',
+  unknown: 'bg-background0/10 text-dim',
 };
 
 function normalize(status: string): BroadcastStatus {

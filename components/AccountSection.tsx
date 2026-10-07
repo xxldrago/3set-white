@@ -5,15 +5,15 @@ import { SessionError, requireSession, requireTelegramSession } from '@/lib/sess
 import ChangePasswordForm from './ChangePasswordForm';
 import LinkTelegramRow from './LinkTelegramRow';
 
-const CARD = 'flex flex-col gap-4 rounded-2xl border border-black/10 p-6 dark:border-white/15';
+const CARD = 'flex flex-col gap-4 rounded-2xl border border-line p-6 border-line';
 
 /** Section-scoped loading fallback (SkeletonRows discipline, UI-SPEC §3). */
 export function AccountSectionSkeleton() {
   return (
     <section className="flex flex-col gap-4" aria-hidden>
-      <div className="h-7 w-40 animate-pulse rounded-full bg-black/5 dark:bg-white/10" />
-      <div className="h-16 animate-pulse rounded-2xl bg-black/5 dark:bg-white/10" />
-      <div className="h-16 animate-pulse rounded-2xl bg-black/5 dark:bg-white/10" />
+      <div className="h-7 w-40 animate-pulse rounded-full bg-foreground/5" />
+      <div className="h-16 animate-pulse rounded-2xl bg-foreground/5" />
+      <div className="h-16 animate-pulse rounded-2xl bg-foreground/5" />
     </section>
   );
 }
@@ -22,10 +22,10 @@ export function AccountSectionSkeleton() {
 function AccountSectionError() {
   return (
     <section className={CARD} role="alert">
-      <p className="text-zinc-600 dark:text-zinc-400">{t('common.errorLoad')}</p>
+      <p className="text-muted">{t('common.errorLoad')}</p>
       <Link
         href="/"
-        className="flex h-12 items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
+        className="flex h-12 items-center justify-center rounded-full border border-solid border-line px-5 transition-colors hover:bg-foreground/5 border-line "
       >
         {t('common.retry')}
       </Link>
@@ -76,18 +76,18 @@ export default async function AccountSection() {
   return (
     <section id="account" className={CARD}>
       <div className="flex flex-col gap-1">
-        <h2 className="text-xl font-semibold text-black dark:text-zinc-50">
+        <h2 className="text-xl font-semibold text-foreground">
           {t('auth.accountTitle')}
         </h2>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">{t('auth.accountIntro')}</p>
+        <p className="text-sm text-muted">{t('auth.accountIntro')}</p>
       </div>
 
       {user.email && (
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 flex-col">
-            <span className="text-base text-black dark:text-zinc-50">{t('auth.methodEmail')}</span>
+            <span className="text-base text-foreground">{t('auth.methodEmail')}</span>
             <span
-              className="truncate text-sm tabular-nums text-zinc-600 dark:text-zinc-400"
+              className="truncate text-sm tabular-nums text-muted"
               title={user.email}
             >
               {user.email}

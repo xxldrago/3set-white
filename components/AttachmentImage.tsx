@@ -30,7 +30,7 @@ export default function AttachmentImage({
 
   if (state === 'error') {
     return (
-      <p className="rounded-xl border border-black/10 p-3 text-sm text-zinc-600 dark:border-white/15 dark:text-zinc-400">
+      <p className="rounded-xl border border-line p-3 text-sm text-muted border-line">
         {t('ticket.attachmentError')}
       </p>
     );
@@ -41,7 +41,7 @@ export default function AttachmentImage({
       {state === 'loading' && (
         <span
           aria-hidden
-          className="absolute inset-0 block animate-pulse rounded-xl bg-black/5 dark:bg-white/10"
+          className="absolute inset-0 block animate-pulse rounded-xl bg-foreground/5"
         />
       )}
       <img
@@ -53,7 +53,7 @@ export default function AttachmentImage({
         height={height ?? undefined}
         onLoad={() => setState('loaded')}
         onError={() => setState('error')}
-        className={`h-auto max-h-64 w-auto rounded-xl border border-black/10 dark:border-white/15 ${
+        className={`h-auto max-h-64 w-auto rounded-xl border border-line ${
           state === 'loading' ? 'invisible' : ''
         }`}
       />

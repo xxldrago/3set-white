@@ -17,10 +17,10 @@ const BADGE_BASE = 'inline-flex items-center rounded-full px-3 py-1 text-sm font
 export type TicketChipStatus = 'open' | 'answered' | 'closed' | 'unknown';
 
 const CHIP_TINT: Record<TicketChipStatus, string> = {
-  open: 'bg-amber-600/10 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400',
-  answered: 'bg-green-600/10 text-green-600 dark:bg-green-400/10 dark:text-green-400',
-  closed: 'bg-zinc-500/10 text-zinc-500 dark:bg-zinc-400/10 dark:text-zinc-400',
-  unknown: 'bg-zinc-500/10 text-zinc-500 dark:bg-zinc-400/10 dark:text-zinc-400',
+  open: 'bg-amber-600/10 text-amber-600',
+  answered: 'bg-green-600/10 text-green-600',
+  closed: 'bg-background0/10 text-dim',
+  unknown: 'bg-background0/10 text-dim',
 };
 
 /** Narrow an arbitrary status (including a missing/unknown one) to a chip kind. */

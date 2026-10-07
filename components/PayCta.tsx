@@ -25,9 +25,9 @@ interface PayCtaProps {
 }
 
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]';
+  'flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SECONDARY =
-  'flex h-11 w-full items-center justify-center rounded-full border border-black/[.08] px-4 transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 w-full items-center justify-center rounded-full border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 
 export default function PayCta({
   kind,
@@ -75,7 +75,7 @@ export default function PayCta({
 
       {state === 'error' && (
         <div className="flex flex-col gap-2" role="alert">
-          <p className="text-sm text-red-600 dark:text-red-400">{t('pay.createError')}</p>
+          <p className="text-sm text-red-600">{t('pay.createError')}</p>
           <button type="button" onClick={() => void createOrder()} className={SECONDARY}>
             {t('common.retry')}
           </button>

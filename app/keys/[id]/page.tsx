@@ -33,11 +33,11 @@ export const metadata = {
   title: `${t('key.linkTitle')} — ${t('app.name')}`,
 };
 
-const CARD = 'flex flex-col gap-3 rounded-2xl border border-black/10 p-6 dark:border-white/15';
+const CARD = 'flex flex-col gap-3 rounded-2xl border border-line p-6 border-line';
 const PRIMARY =
-  'flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]';
+  'flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:opacity-90';
 const SECONDARY =
-  'flex h-12 items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-12 items-center justify-center rounded-full border border-solid border-line px-5 transition-colors hover:bg-foreground/5 border-line ';
 
 /** Humanize bytes to GB (one decimal) or MB (UI-SPEC formatting rules). */
 function humanizeBytes(bytes: number): string {
@@ -115,25 +115,25 @@ export default async function KeyDetailPage({
   const expiry = key.expiresAt ? formatKeyDate(key.expiresAt) : '—';
 
   return (
-    <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
+    <div className="flex flex-col flex-1 items-center bg-background font-sans bg-background">
       <main className="flex flex-1 w-full max-w-3xl flex-col gap-6 px-6 py-12 sm:px-16">
         <header className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold leading-10 tracking-tight break-all text-black dark:text-zinc-50">
+          <h1 className="text-3xl font-semibold leading-10 tracking-tight break-all text-foreground">
             {key.name ?? key.id}
           </h1>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-muted">
             {t('key.expires', { date: expiry })} · {statusLabel(key.statusKind, key.expiresAt)}
           </p>
         </header>
 
         <section className={CARD}>
-          <h2 className="text-xl font-semibold text-black dark:text-zinc-50">
+          <h2 className="text-xl font-semibold text-foreground">
             {t('key.linkTitle')}
           </h2>
 
           {linkError ? (
             <>
-              <p role="alert" className="text-zinc-600 dark:text-zinc-400">
+              <p role="alert" className="text-muted">
                 {t('key.linkError')}
               </p>
               <Link href={`/keys/${encodeURIComponent(id)}`} className={SECONDARY}>
@@ -143,7 +143,7 @@ export default async function KeyDetailPage({
           ) : subscriptionUrl ? (
             <>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <code className="line-clamp-2 max-w-full break-all text-sm text-zinc-700 dark:text-zinc-300">
+                <code className="line-clamp-2 max-w-full break-all text-sm text-foreground">
                   {subscriptionUrl}
                 </code>
                 <CopyButton value={subscriptionUrl} />
@@ -151,33 +151,33 @@ export default async function KeyDetailPage({
               {qr && (
                 <div className="flex flex-col items-center gap-2 pt-2">
                   <QrSvg svg={qr} />
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  <p className="text-sm text-muted">
                     {t('key.qrCaption')}
                   </p>
                 </div>
               )}
             </>
           ) : (
-            <p className="text-zinc-600 dark:text-zinc-400">{t('key.linkUnavailable')}</p>
+            <p className="text-muted">{t('key.linkUnavailable')}</p>
           )}
         </section>
 
         <section className={CARD}>
-          <h2 className="text-xl font-semibold text-black dark:text-zinc-50">
+          <h2 className="text-xl font-semibold text-foreground">
             {t('key.trafficLabel')}
           </h2>
-          <p className="text-base tabular-nums text-zinc-700 dark:text-zinc-300">
+          <p className="text-base tabular-nums text-foreground">
             {trafficLine(traffic)}
           </p>
         </section>
 
         <section className={CARD}>
-          <h2 className="text-xl font-semibold text-black dark:text-zinc-50">
+          <h2 className="text-xl font-semibold text-foreground">
             {t('key.devicesTitle')}
           </h2>
 
           {devices.length === 0 ? (
-            <p className="text-zinc-600 dark:text-zinc-400">{t('devices.empty')}</p>
+            <p className="text-muted">{t('devices.empty')}</p>
           ) : (
             <ul className="flex flex-col gap-2">
               {devices.map((device) => {
@@ -188,7 +188,7 @@ export default async function KeyDetailPage({
                     className="flex flex-wrap items-center justify-between gap-3"
                   >
                     <span
-                      className="min-w-0 flex-1 truncate text-base text-zinc-700 dark:text-zinc-300"
+                      className="min-w-0 flex-1 truncate text-base text-foreground"
                       title={label}
                     >
                       {label}

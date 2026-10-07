@@ -7,12 +7,12 @@ import BalanceAlert from './BalanceAlert';
 import { classifyBalance } from '@/lib/balance-alert';
 import { env } from '@/lib/env';
 
-const CARD = 'flex flex-col gap-2 rounded-2xl border border-black/10 p-6 dark:border-white/15';
+const CARD = 'flex flex-col gap-2 rounded-2xl border border-line p-6 border-line';
 const GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3';
 const money = new Intl.NumberFormat('ru-RU');
 
 function MetricCard({ label, value }: { label: string; value: string }) {
-  return <div className={CARD}><p className="text-sm text-zinc-600 dark:text-zinc-400">{label}</p><p className="text-3xl font-semibold tabular-nums text-black dark:text-zinc-50">{value}</p></div>;
+  return <div className={CARD}><p className="text-sm text-muted">{label}</p><p className="text-3xl font-semibold tabular-nums text-foreground">{value}</p></div>;
 }
 
 function DbCards({ stats }: { stats: DbStats }) {
@@ -43,7 +43,7 @@ export async function ArtemidaStatsGroup() {
 
 export default function StatsPanel({ period }: { period: number }) {
   const from = new Date(Date.now() - period * 86_400_000);
-  const fallback = <div className={`${GRID} aria-hidden`}><div className="h-24 animate-pulse rounded-2xl bg-black/5 dark:bg-white/10" /><div className="h-24 animate-pulse rounded-2xl bg-black/5 dark:bg-white/10" /><div className="h-24 animate-pulse rounded-2xl bg-black/5 dark:bg-white/10" /></div>;
+  const fallback = <div className={`${GRID} aria-hidden`}><div className="h-24 animate-pulse rounded-2xl bg-foreground/5" /><div className="h-24 animate-pulse rounded-2xl bg-foreground/5" /><div className="h-24 animate-pulse rounded-2xl bg-foreground/5" /></div>;
   return <div className="flex flex-col gap-4">
     <PeriodSelector selected={period} />
     <Suspense fallback={fallback}><DbStatsGroup from={from} /></Suspense>

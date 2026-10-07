@@ -15,13 +15,13 @@ const MAX_DEVICES = 10;
 const DEBOUNCE_MS = 300;
 
 const CARD =
-  'flex flex-col gap-4 rounded-2xl border border-black/10 p-6 dark:border-white/15';
+  'flex flex-col gap-4 rounded-2xl border border-line p-6 border-line';
 const TRIGGER =
-  'flex h-11 flex-1 items-center justify-center rounded-full border border-black/[.08] px-4 transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 flex-1 items-center justify-center rounded-full border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-black/[.08] px-4 transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 items-center justify-center rounded-full border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 const STEP =
-  'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-black/[.08] text-xl transition-colors hover:bg-black/[.04] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line text-xl transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 
 const priceFormatter = new Intl.NumberFormat('ru-RU');
 
@@ -94,11 +94,11 @@ export default function UpgradePanel({
 
   return (
     <section className={CARD}>
-      <h3 className="text-xl font-semibold text-black dark:text-zinc-50">{t('upgrade.title')}</h3>
-      <p className="text-zinc-600 dark:text-zinc-400">{t('upgrade.body')}</p>
+      <h3 className="text-xl font-semibold text-foreground">{t('upgrade.title')}</h3>
+      <p className="text-muted">{t('upgrade.body')}</p>
 
       <div className="flex flex-col gap-2">
-        <span className="text-sm text-zinc-600 dark:text-zinc-400">
+        <span className="text-sm text-muted">
           {t('upgrade.addLabel')}
         </span>
         <div className="flex items-center gap-3">
@@ -127,7 +127,7 @@ export default function UpgradePanel({
       </div>
 
       <div className="flex flex-col gap-1">
-        <span className="text-sm text-zinc-600 dark:text-zinc-400">
+        <span className="text-sm text-muted">
           {t('pricing.priceLabel')}
         </span>
         <span className="text-3xl font-semibold tabular-nums" aria-live="polite">
@@ -139,7 +139,7 @@ export default function UpgradePanel({
 
       {error && (
         <div className="flex flex-col gap-2" role="alert">
-          <p className="text-sm text-red-600 dark:text-red-400">{t('pricing.error')}</p>
+          <p className="text-sm text-red-600">{t('pricing.error')}</p>
           <button
             type="button"
             onClick={() => void fetchPrice(addDevices)}

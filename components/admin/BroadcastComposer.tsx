@@ -16,9 +16,9 @@ export default function BroadcastComposer() {
   }, []);
   const trimmed = body.trim();
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-black/10 p-6 dark:border-white/15">
+    <section className="flex flex-col gap-4 rounded-2xl border border-line p-6 border-line">
       <label htmlFor="broadcast-body" className="text-sm font-semibold">{t('admin.broadcastLabel')}</label>
-      <textarea id="broadcast-body" value={body} onChange={(event) => setBody(event.target.value)} maxLength={4000} placeholder={t('admin.broadcastPlaceholder')} className="min-h-28 resize-y rounded-xl border border-black/10 p-3 dark:border-white/15" />
+      <textarea id="broadcast-body" value={body} onChange={(event) => setBody(event.target.value)} maxLength={4000} placeholder={t('admin.broadcastPlaceholder')} className="min-h-28 resize-y rounded-xl border border-line p-3 border-line" />
       <AdminConfirmPanel
         variant="primary"
         triggerLabel={t('admin.broadcastCta')}
@@ -30,7 +30,7 @@ export default function BroadcastComposer() {
         payload={{ body: trimmed }}
         onSuccess={onSuccess}
         disabled={!trimmed}
-        triggerClassName="flex h-11 items-center justify-center rounded-full bg-foreground px-5 text-background disabled:opacity-50"
+        triggerClassName="flex h-11 items-center justify-center rounded-full bg-foreground px-5 text-lime disabled:opacity-50"
       />
       {result && <div role="status" className="flex items-center gap-3"><BroadcastStatusChip status={result.status ?? 'unknown'} />{result.failed ? <button type="button" onClick={() => setResult(null)} className="text-sm underline">{t('common.retry')}</button> : null}</div>}
     </section>

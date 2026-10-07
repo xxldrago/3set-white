@@ -16,7 +16,7 @@ import { t, tp } from '@/lib/i18n';
 import type { OrderHistoryRow } from '@/lib/orders-service';
 
 const PRIMARY =
-  'flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]';
+  'flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:opacity-90';
 
 const priceFormatter = new Intl.NumberFormat('ru-RU');
 
@@ -51,8 +51,8 @@ function kindLabel(kind: string): string {
 export default function PaymentHistoryList({ rows }: { rows: OrderHistoryRow[] }) {
   if (rows.length === 0) {
     return (
-      <section className="flex flex-col gap-4 rounded-2xl border border-black/10 p-6 dark:border-white/15">
-        <p className="text-zinc-600 dark:text-zinc-400">{t('pay.historyEmpty')}</p>
+      <section className="flex flex-col gap-4 rounded-2xl border border-line p-6 border-line">
+        <p className="text-muted">{t('pay.historyEmpty')}</p>
         <Link href="/#tariff" className={PRIMARY}>
           {t('key.buyCta')}
         </Link>
@@ -63,7 +63,7 @@ export default function PaymentHistoryList({ rows }: { rows: OrderHistoryRow[] }
   return (
     <section className="flex flex-col gap-4">
       {rows.length >= 2 && (
-        <span className="text-sm text-zinc-600 dark:text-zinc-400">
+        <span className="text-sm text-muted">
           {tp('pay.historyCount', rows.length)}
         </span>
       )}
@@ -72,16 +72,16 @@ export default function PaymentHistoryList({ rows }: { rows: OrderHistoryRow[] }
         {rows.map((row) => (
           <article
             key={row.id}
-            className="flex flex-col gap-3 rounded-2xl border border-black/10 p-6 dark:border-white/15"
+            className="flex flex-col gap-3 rounded-2xl border border-line p-6 border-line"
           >
             <div className="flex items-start justify-between gap-3">
-              <span className="text-xl font-semibold tabular-nums text-black dark:text-zinc-50">
+              <span className="text-xl font-semibold tabular-nums text-foreground">
                 {t('pay.amount', { price: priceFormatter.format(row.amount) })}
               </span>
               <PaymentStatusChip status={row.status} />
             </div>
 
-            <dl className="flex flex-col gap-1 text-sm text-zinc-600 dark:text-zinc-400">
+            <dl className="flex flex-col gap-1 text-sm text-muted">
               <div className="flex gap-2">
                 <dd>{t('pay.date', { date: formatPaymentDate(row.createdAt) })}</dd>
               </div>

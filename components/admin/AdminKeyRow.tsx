@@ -9,15 +9,15 @@ import { t } from '@/lib/i18n';
 import type { AdminKeyView } from '@/lib/admin-service';
 
 const BADGE_BASE = 'inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold';
-const CARD = 'flex flex-col gap-3 rounded-2xl border border-black/10 p-6 dark:border-white/15';
-const TRIAL_BADGE = 'bg-amber-600/10 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400';
+const CARD = 'flex flex-col gap-3 rounded-2xl border border-line p-6 border-line';
+const TRIAL_BADGE = 'bg-amber-600/10 text-amber-600';
 
 const STATUS_TINT: Record<StatusKind, string> = {
-  active: 'bg-green-600/10 text-green-600 dark:bg-green-400/10 dark:text-green-400',
-  expiring: 'bg-amber-600/10 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400',
-  expired: 'bg-zinc-500/10 text-zinc-500 dark:bg-zinc-400/10 dark:text-zinc-400',
-  pending: 'bg-zinc-500/10 text-zinc-500 dark:bg-zinc-400/10 dark:text-zinc-400',
-  unknown: 'bg-zinc-500/10 text-zinc-500 dark:bg-zinc-400/10 dark:text-zinc-400',
+  active: 'bg-green-600/10 text-green-600',
+  expiring: 'bg-amber-600/10 text-amber-600',
+  expired: 'bg-background0/10 text-dim',
+  pending: 'bg-background0/10 text-dim',
+  unknown: 'bg-background0/10 text-dim',
 };
 
 export default function AdminKeyRow({ item }: { item: AdminKeyView }) {
@@ -30,7 +30,7 @@ export default function AdminKeyRow({ item }: { item: AdminKeyView }) {
   return (
     <article className={CARD}>
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-xl font-semibold break-all text-black dark:text-zinc-50">
+        <h3 className="text-xl font-semibold break-all text-foreground">
           {item.name ?? item.id}
         </h3>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
@@ -43,7 +43,7 @@ export default function AdminKeyRow({ item }: { item: AdminKeyView }) {
         </div>
       </div>
 
-      <dl className="flex flex-col gap-1 text-sm text-zinc-600 dark:text-zinc-400">
+      <dl className="flex flex-col gap-1 text-sm text-muted">
         <div className="flex gap-2">
           <dd>{t('key.expires', { date: expiry })}</dd>
         </div>

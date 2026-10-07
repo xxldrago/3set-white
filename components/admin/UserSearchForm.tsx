@@ -14,13 +14,13 @@ import UserSearchResults from './UserSearchResults';
 import { t } from '@/lib/i18n';
 import type { AdminSearchResult } from '@/lib/admin-service';
 
-const CARD = 'flex flex-col gap-3 rounded-2xl border border-black/10 p-6 dark:border-white/15';
+const CARD = 'flex flex-col gap-3 rounded-2xl border border-line p-6 border-line';
 const INPUT =
-  'h-12 w-full rounded-full border border-black/[.08] bg-transparent px-5 text-base text-black outline-none transition-colors focus:outline-2 focus:outline-offset-2 dark:border-white/[.145] dark:text-zinc-50';
+  'h-12 w-full rounded-full border border-line bg-transparent px-5 text-base text-foreground outline-none transition-colors focus:outline-2 focus:outline-offset-2 border-line text-foreground';
 const PRIMARY =
-  'flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]';
+  'flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line ';
 
 type SearchState = 'idle' | 'loading' | 'results' | 'empty' | 'error';
 
@@ -31,7 +31,7 @@ function SkeletonRows() {
       {Array.from({ length: 3 }, (_, index) => (
         <div
           key={index}
-          className="h-16 animate-pulse rounded-2xl bg-black/5 dark:bg-white/10"
+          className="h-16 animate-pulse rounded-2xl bg-foreground/5"
         />
       ))}
     </section>
@@ -91,7 +91,7 @@ export default function UserSearchForm() {
           void runSearch();
         }}
       >
-        <label htmlFor="admin-user-search" className="text-sm text-zinc-600 dark:text-zinc-400">
+        <label htmlFor="admin-user-search" className="text-sm text-muted">
           {t('admin.searchLabel')}
         </label>
         <input
@@ -114,7 +114,7 @@ export default function UserSearchForm() {
 
       {state === 'idle' && (
         <section className={CARD}>
-          <p className="text-zinc-600 dark:text-zinc-400">{t('admin.searchIdle')}</p>
+          <p className="text-muted">{t('admin.searchIdle')}</p>
         </section>
       )}
 
@@ -122,13 +122,13 @@ export default function UserSearchForm() {
 
       {state === 'empty' && (
         <section className={CARD}>
-          <p className="text-zinc-600 dark:text-zinc-400">{t('admin.searchNoResults')}</p>
+          <p className="text-muted">{t('admin.searchNoResults')}</p>
         </section>
       )}
 
       {state === 'error' && (
-        <section className={`${CARD} border-red-600/30 dark:border-red-400/30`} role="alert">
-          <p className="text-zinc-600 dark:text-zinc-400">{t('admin.searchError')}</p>
+        <section className={`${CARD} border-red-600/30`} role="alert">
+          <p className="text-muted">{t('admin.searchError')}</p>
           <button type="button" onClick={() => void runSearch()} className={SECONDARY}>
             {t('common.retry')}
           </button>

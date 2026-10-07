@@ -14,9 +14,9 @@ export const metadata = {
   title: `${t('ticket.cta')} — ${t('app.name')}`,
 };
 
-const CARD = 'flex flex-col gap-4 rounded-2xl border border-black/10 p-6 dark:border-white/15';
+const CARD = 'flex flex-col gap-4 rounded-2xl border border-line p-6 border-line';
 const SECONDARY =
-  'flex h-12 items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-12 items-center justify-center rounded-full border border-solid border-line px-5 transition-colors hover:bg-foreground/5 border-line ';
 
 export default async function NewTicketPage() {
   try {
@@ -27,10 +27,10 @@ export default async function NewTicketPage() {
   }
 
   return (
-    <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
+    <div className="flex flex-col flex-1 items-center bg-background font-sans bg-background">
       <main className="flex flex-1 w-full max-w-3xl flex-col gap-8 px-6 py-12 sm:px-16">
         <header className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
+          <h1 className="text-3xl font-semibold leading-10 tracking-tight text-foreground">
             {t('ticket.cta')}
           </h1>
         </header>

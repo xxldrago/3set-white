@@ -18,9 +18,9 @@ import { getTicketById } from '@/lib/tickets-service';
 
 export const dynamic = 'force-dynamic';
 
-const CARD = 'flex flex-col gap-4 rounded-2xl border border-black/10 p-6 dark:border-white/15';
+const CARD = 'flex flex-col gap-4 rounded-2xl border border-line p-6 border-line';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line ';
 
 export default async function AdminTicketDetailPage({
   params,
@@ -42,7 +42,7 @@ export default async function AdminTicketDetailPage({
   return (
     <section className="flex flex-col gap-6">
       <header className="flex flex-col gap-3">
-        <h2 className="text-xl font-semibold leading-8 break-words text-black dark:text-zinc-50">
+        <h2 className="text-xl font-semibold leading-8 break-words text-foreground">
           {thread.subject}
         </h2>
         <div className="flex flex-wrap items-center justify-between gap-3">

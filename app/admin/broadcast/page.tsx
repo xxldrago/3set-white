@@ -20,7 +20,7 @@ export default async function AdminBroadcastPage() {
     <section className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
         <h2 className="text-xl font-semibold">{t('admin.broadcastTitle')}</h2>
-        <p className="text-sm tabular-nums text-zinc-600 dark:text-zinc-400">{t('admin.broadcastRecipients', { n: recipients })}</p>
+        <p className="text-sm tabular-nums text-muted">{t('admin.broadcastRecipients', { n: recipients })}</p>
       </header>
       <BroadcastComposer />
     </section>

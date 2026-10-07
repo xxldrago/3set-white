@@ -27,7 +27,7 @@ export default async function AdminUsersPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <h2 className="text-xl font-semibold text-black dark:text-zinc-50">
+      <h2 className="text-xl font-semibold text-foreground">
         {t('admin.searchLabel')}
       </h2>
       <UserSearchForm />

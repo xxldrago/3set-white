@@ -24,11 +24,11 @@ const CODE_LENGTH = 6;
 type BotLoginState = 'idle' | 'waiting' | 'ready' | 'expired' | 'error';
 
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]';
+  'flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SECONDARY =
-  'flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:bg-black/[.04] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-12 w-full items-center justify-center rounded-full border border-solid border-line px-5 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 const CODE_INPUT =
-  'h-12 w-full rounded-full border border-solid border-black/[.08] bg-transparent px-5 text-center text-lg tracking-[0.5em] outline-none focus:border-black/40 disabled:opacity-50 dark:border-white/[.145] dark:focus:border-white/40';
+  'h-12 w-full rounded-full border border-solid border-line bg-transparent px-5 text-center text-lg tracking-[0.5em] outline-none focus:border-line/40 disabled:opacity-50 border-line';
 
 export default function TelegramBotLoginButton() {
   const [state, setState] = useState<BotLoginState>('idle');
@@ -238,9 +238,9 @@ export default function TelegramBotLoginButton() {
         >
           <label
             htmlFor="tg-login-code"
-            className="flex flex-col gap-1 text-sm text-zinc-600 dark:text-zinc-400"
+            className="flex flex-col gap-1 text-sm text-muted"
           >
-            <span className="font-medium text-black dark:text-zinc-50">
+            <span className="font-medium text-foreground">
               {t('auth.botLoginCodeLabel')}
             </span>
             <span>{t('auth.botLoginCodePrompt')}</span>
@@ -261,7 +261,7 @@ export default function TelegramBotLoginButton() {
             className={CODE_INPUT}
           />
           {codeWrong && (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <p role="alert" className="text-sm text-red-600">
               {t('auth.botLoginCodeWrong')}
             </p>
           )}
@@ -273,7 +273,7 @@ export default function TelegramBotLoginButton() {
 
       {state === 'expired' && (
         <>
-          <p role="alert" className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p role="alert" className="text-sm text-muted">
             {t('auth.botLoginExpired')}
           </p>
           <button type="button" onClick={() => void issue()} disabled={busy} className={PRIMARY}>
@@ -284,7 +284,7 @@ export default function TelegramBotLoginButton() {
 
       {state === 'error' && (
         <>
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <p role="alert" className="text-sm text-red-600">
             {t('login.error')}
           </p>
           <button type="button" onClick={() => void issue()} disabled={busy} className={SECONDARY}>

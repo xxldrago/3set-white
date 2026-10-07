@@ -17,9 +17,9 @@ import { AdminError, SessionError } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
-const CARD = 'flex flex-col gap-4 rounded-2xl border border-black/10 p-6 dark:border-white/15';
+const CARD = 'flex flex-col gap-4 rounded-2xl border border-line p-6 border-line';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line ';
 
 /** Loading fallback while the roster resolves (UI-SPEC §6). */
 function SkeletonRows() {
@@ -28,7 +28,7 @@ function SkeletonRows() {
       {Array.from({ length: 3 }, (_, index) => (
         <div
           key={index}
-          className="h-16 animate-pulse rounded-2xl bg-black/5 dark:bg-white/10"
+          className="h-16 animate-pulse rounded-2xl bg-foreground/5"
         />
       ))}
     </section>
@@ -43,7 +43,7 @@ async function RosterSection({ callerTelegramId }: { callerTelegramId: number })
     logger.error({ route: 'admin-roles', outcome: 'roster_load_failed' });
     return (
       <section className={CARD} role="alert">
-        <p className="text-zinc-600 dark:text-zinc-400">{t('common.errorLoad')}</p>
+        <p className="text-muted">{t('common.errorLoad')}</p>
         <Link href="/admin/roles" className={SECONDARY}>
           {t('common.retry')}
         </Link>
@@ -54,7 +54,7 @@ async function RosterSection({ callerTelegramId }: { callerTelegramId: number })
   if (rows.length === 0) {
     return (
       <section className={CARD}>
-        <p className="text-zinc-600 dark:text-zinc-400">{t('admin.rolesEmpty')}</p>
+        <p className="text-muted">{t('admin.rolesEmpty')}</p>
       </section>
     );
   }
@@ -75,10 +75,10 @@ export default async function AdminRolesPage() {
   return (
     <section className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h2 className="text-xl font-semibold text-black dark:text-zinc-50">
+        <h2 className="text-xl font-semibold text-foreground">
           {t('admin.rolesTitle')}
         </h2>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">{t('admin.rolesSubtitle')}</p>
+        <p className="text-sm text-muted">{t('admin.rolesSubtitle')}</p>
       </header>
 
       <Suspense fallback={<SkeletonRows />}>

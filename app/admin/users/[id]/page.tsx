@@ -31,11 +31,11 @@ import type { TicketListRow } from '@/lib/tickets-service';
 
 export const dynamic = 'force-dynamic';
 
-const CARD = 'flex flex-col gap-4 rounded-2xl border border-black/10 p-6 dark:border-white/15';
-const ROW = 'flex flex-col gap-3 rounded-2xl border border-black/10 p-6 dark:border-white/15';
-const SECTION_TITLE = 'text-xl font-semibold text-black dark:text-zinc-50';
+const CARD = 'flex flex-col gap-4 rounded-2xl border border-line p-6 border-line';
+const ROW = 'flex flex-col gap-3 rounded-2xl border border-line p-6 border-line';
+const SECTION_TITLE = 'text-xl font-semibold text-foreground';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line ';
 
 const priceFormatter = new Intl.NumberFormat('ru-RU');
 
@@ -46,7 +46,7 @@ function SkeletonRows() {
       {Array.from({ length: 3 }, (_, index) => (
         <div
           key={index}
-          className="h-16 animate-pulse rounded-2xl bg-black/5 dark:bg-white/10"
+          className="h-16 animate-pulse rounded-2xl bg-foreground/5"
         />
       ))}
     </section>
@@ -58,7 +58,7 @@ function PartialSection({ userId, title }: { userId: number; title: string }) {
   return (
     <section className={CARD} role="alert">
       <h2 className={SECTION_TITLE}>{title}</h2>
-      <p className="text-zinc-600 dark:text-zinc-400">{t('admin.profilePartial')}</p>
+      <p className="text-muted">{t('admin.profilePartial')}</p>
       <Link href={`/admin/users/${userId}`} className={SECONDARY}>
         {t('common.retry')}
       </Link>
@@ -71,7 +71,7 @@ function EmptySection({ title, body }: { title: string; body: string }) {
   return (
     <section className={CARD}>
       <h2 className={SECTION_TITLE}>{title}</h2>
-      <p className="text-zinc-600 dark:text-zinc-400">{body}</p>
+      <p className="text-muted">{body}</p>
     </section>
   );
 }
@@ -131,12 +131,12 @@ async function PaymentsSection({ userId }: { userId: number }) {
         {rows.map((row) => (
           <article key={row.id} className={ROW}>
             <div className="flex items-start justify-between gap-3">
-              <span className="text-xl font-semibold tabular-nums text-black dark:text-zinc-50">
+              <span className="text-xl font-semibold tabular-nums text-foreground">
                 {t('pay.amount', { price: priceFormatter.format(row.amount) })}
               </span>
               <PaymentStatusChip status={row.status} />
             </div>
-            <dl className="flex flex-col gap-1 text-sm text-zinc-600 dark:text-zinc-400">
+            <dl className="flex flex-col gap-1 text-sm text-muted">
               <div className="flex gap-2">
                 <dd>{t('pay.date', { date: formatPaymentDate(row.createdAt) })}</dd>
               </div>
@@ -183,14 +183,14 @@ async function TicketsSection({ userId }: { userId: number }) {
             >
               <div className="flex items-start justify-between gap-3">
                 <span
-                  className="min-w-0 flex-1 truncate text-xl font-semibold text-black dark:text-zinc-50"
+                  className="min-w-0 flex-1 truncate text-xl font-semibold text-foreground"
                   title={row.subject}
                 >
                   {row.subject}
                 </span>
                 <TicketStatusChip status={row.status} />
               </div>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              <p className="text-sm text-muted">
                 {t('ticket.lastActivity', { date: formatPaymentDate(row.lastMessageAt) })}
               </p>
             </Link>

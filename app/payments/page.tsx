@@ -29,7 +29,7 @@ function SkeletonRows() {
       {Array.from({ length: 3 }, (_, index) => (
         <div
           key={index}
-          className="h-16 animate-pulse rounded-2xl bg-black/5 dark:bg-white/10"
+          className="h-16 animate-pulse rounded-2xl bg-foreground/5"
         />
       ))}
     </section>
@@ -44,7 +44,7 @@ async function HistorySection({ telegramId }: { telegramId: number }) {
     logger.error({ route: 'payments', outcome: 'history_load_failed' });
     return (
       <section className={CARD} role="alert">
-        <p className="text-zinc-600 dark:text-zinc-400">{t('common.errorLoad')}</p>
+        <p className="text-muted">{t('common.errorLoad')}</p>
         <Link href="/payments" className={SECONDARY}>
           {t('common.retry')}
         </Link>
@@ -66,11 +66,11 @@ export default async function PaymentsHistoryPage() {
   const navUser = await getSessionUser();
 
   return (
-    <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
+    <div className="flex flex-col flex-1 items-center bg-background font-sans bg-background">
       <Nav user={navUser} />
       <main className="flex flex-1 w-full max-w-3xl flex-col gap-8 px-6 py-12 sm:px-16">
         <header className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
+          <h1 className="text-3xl font-semibold leading-10 tracking-tight text-foreground">
             {t('pay.historyTitle')}
           </h1>
         </header>

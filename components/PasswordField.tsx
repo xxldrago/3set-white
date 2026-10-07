@@ -9,11 +9,11 @@ import { useState } from 'react';
 import { t } from '@/lib/i18n';
 
 const INPUT =
-  'h-12 w-full rounded-2xl border border-black/[.08] bg-white px-4 text-base text-black placeholder:text-zinc-500 disabled:opacity-50 dark:border-white/[.145] dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder:text-zinc-500';
-const INPUT_INVALID = 'border-red-600/50 dark:border-red-400/50';
-const FIELD_LABEL = 'text-sm text-zinc-600 dark:text-zinc-400';
+  'h-12 w-full rounded-2xl border border-line bg-panel px-4 text-base text-foreground placeholder:text-dim disabled:opacity-50 border-line bg-panel text-foreground';
+const INPUT_INVALID = 'border-red-600/50';
+const FIELD_LABEL = 'text-sm text-muted';
 const TOGGLE =
-  'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-solid border-black/[.08] transition-colors hover:bg-black/[.04] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-solid border-line transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 
 interface PasswordFieldProps {
   id: string;
@@ -88,12 +88,12 @@ export default function PasswordField({
         </button>
       </div>
       {hint && !error && (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">{hint}</p>
+        <p className="text-sm text-muted">{hint}</p>
       )}
       {/* Reserved slot: the submit button never shifts when an error appears. */}
       <div className="min-h-5">
         {error && (
-          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          <p role="alert" className="text-sm text-red-600">
             {error}
           </p>
         )}

@@ -25,14 +25,14 @@ export type OrderChipStatus =
   | 'unknown';
 
 const CHIP_TINT: Record<OrderChipStatus, string> = {
-  provisioned: 'bg-green-600/10 text-green-600 dark:bg-green-400/10 dark:text-green-400',
-  paid: 'bg-amber-600/10 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400',
-  provisioning: 'bg-amber-600/10 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400',
-  pending: 'bg-zinc-500/10 text-zinc-500 dark:bg-zinc-400/10 dark:text-zinc-400',
-  canceled: 'bg-zinc-500/10 text-zinc-500 dark:bg-zinc-400/10 dark:text-zinc-400',
-  unknown: 'bg-zinc-500/10 text-zinc-500 dark:bg-zinc-400/10 dark:text-zinc-400',
-  failed: 'bg-red-600/10 text-red-600 dark:bg-red-400/10 dark:text-red-400',
-  refunded: 'bg-red-600/10 text-red-600 dark:bg-red-400/10 dark:text-red-400',
+  provisioned: 'bg-green-600/10 text-green-600',
+  paid: 'bg-amber-600/10 text-amber-600',
+  provisioning: 'bg-amber-600/10 text-amber-600',
+  pending: 'bg-background0/10 text-dim',
+  canceled: 'bg-background0/10 text-dim',
+  unknown: 'bg-background0/10 text-dim',
+  failed: 'bg-red-600/10 text-red-600',
+  refunded: 'bg-red-600/10 text-red-600',
 };
 
 /** Narrow an arbitrary status (including a missing/unknown one) to a chip kind. */

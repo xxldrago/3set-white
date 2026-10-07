@@ -11,9 +11,9 @@ import { t } from '@/lib/i18n';
 import PasswordField from './PasswordField';
 
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]';
+  'flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 transition-colors hover:bg-black/[.04] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 
 export default function ChangePasswordForm() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -81,11 +81,11 @@ export default function ChangePasswordForm() {
 
   return (
     <div className="flex flex-col gap-2">
-      <h3 className="text-xl font-semibold text-black dark:text-zinc-50">
+      <h3 className="text-xl font-semibold text-foreground">
         {t('auth.changePasswordTitle')}
       </h3>
       {done && (
-        <div role="status" className="text-sm text-zinc-600 dark:text-zinc-400">
+        <div role="status" className="text-sm text-muted">
           {t('auth.passwordChanged')}
         </div>
       )}
@@ -119,7 +119,7 @@ export default function ChangePasswordForm() {
 
         {failed && (
           <div className="flex flex-col gap-2" role="alert">
-            <p className="text-sm text-red-600 dark:text-red-400">{t('common.errorLoad')}</p>
+            <p className="text-sm text-red-600">{t('common.errorLoad')}</p>
             <button
               type="button"
               onClick={() => void submit()}

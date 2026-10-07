@@ -11,15 +11,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { t } from '@/lib/i18n';
 
 const INPUT =
-  'h-12 w-full rounded-2xl border border-black/[.08] bg-white px-4 text-base text-black placeholder:text-zinc-500 disabled:opacity-50 dark:border-white/[.145] dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder:text-zinc-500';
-const INPUT_INVALID = 'border-red-600/50 dark:border-red-400/50';
-const FIELD_LABEL = 'text-sm text-zinc-600 dark:text-zinc-400';
+  'h-12 w-full rounded-2xl border border-line bg-panel px-4 text-base text-foreground placeholder:text-dim disabled:opacity-50 border-line bg-panel text-foreground';
+const INPUT_INVALID = 'border-red-600/50';
+const FIELD_LABEL = 'text-sm text-muted';
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]';
+  'flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 transition-colors hover:bg-black/[.04] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 
-const CARD = 'rounded-2xl border border-black/10 p-6 dark:border-white/15';
+const CARD = 'rounded-2xl border border-line p-6 border-line';
 const EMAIL_SHAPE = /[^@\s]+@[^@\s]+\.[^@\s]+/;
 
 type RequestState = 'form' | 'loading' | 'sent' | 'noAccount' | 'error';
@@ -94,7 +94,7 @@ export default function ResetRequestForm() {
   if (state === 'sent') {
     return (
       <div className={`${CARD} flex flex-col gap-5`}>
-        <div role="status" className="text-base text-black dark:text-zinc-50">
+        <div role="status" className="text-base text-foreground">
           {t('auth.resetSent')}
         </div>
         <a href="/login" className={SECONDARY}>
@@ -107,7 +107,7 @@ export default function ResetRequestForm() {
   if (state === 'noAccount') {
     return (
       <div className={`${CARD} flex flex-col gap-5`}>
-        <div role="alert" className="text-base text-black dark:text-zinc-50">
+        <div role="alert" className="text-base text-foreground">
           {t('auth.resetNoAccount')}
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -148,7 +148,7 @@ export default function ResetRequestForm() {
           />
           <div className="min-h-5">
             {emailError && (
-              <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+              <p role="alert" className="text-sm text-red-600">
                 {emailError}
               </p>
             )}
@@ -157,7 +157,7 @@ export default function ResetRequestForm() {
 
         <div className="min-h-5">
           {rateWaitSec !== null && (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+            <p role="alert" className="text-sm text-red-600">
               {t('auth.rateLimited', { n: rateWaitSec })}
             </p>
           )}
@@ -165,7 +165,7 @@ export default function ResetRequestForm() {
 
         {state === 'error' && (
           <div className="flex flex-col gap-2" role="alert">
-            <p className="text-sm text-red-600 dark:text-red-400">{t('auth.resetError')}</p>
+            <p className="text-sm text-red-600">{t('auth.resetError')}</p>
             <button
               type="button"
               onClick={() => void submit()}

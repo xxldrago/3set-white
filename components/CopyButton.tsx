@@ -28,7 +28,7 @@ export default function CopyButton({ value }: { value: string }) {
       type="button"
       onClick={onCopy}
       aria-live="polite"
-      className="flex h-11 min-h-11 shrink-0 items-center justify-center rounded-full border border-solid border-black/[.08] px-5 text-sm font-semibold transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
+      className="flex h-11 min-h-11 shrink-0 items-center justify-center rounded-full border border-solid border-line px-5 text-sm font-semibold transition-colors hover:bg-foreground/5 border-line "
     >
       {copied ? t('key.copied') : t('key.copy')}
     </button>

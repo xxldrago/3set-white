@@ -22,13 +22,13 @@ export default async function LoginPage({
   const initialMode: AuthMode = mode === 'register' ? 'register' : 'login';
 
   return (
-    <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
+    <div className="flex flex-col flex-1 items-center bg-background font-sans bg-background">
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-6 py-12 sm:px-16">
         <header className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
+          <h1 className="text-3xl font-semibold leading-10 tracking-tight text-foreground">
             {t('login.title')}
           </h1>
-          <p className="text-base leading-6 text-zinc-600 dark:text-zinc-400">
+          <p className="text-base leading-6 text-muted">
             {t('login.text')}
           </p>
         </header>
@@ -39,9 +39,9 @@ export default async function LoginPage({
           <TelegramBotLoginButton />
         </div>
         <div className="flex items-center gap-3" aria-hidden>
-          <span className="h-px flex-1 bg-black/10 dark:bg-white/15" />
-          <span className="text-sm text-zinc-600 dark:text-zinc-400">{t('auth.orContinue')}</span>
-          <span className="h-px flex-1 bg-black/10 dark:bg-white/15" />
+          <span className="h-px flex-1 bg-foreground/10" />
+          <span className="text-sm text-muted">{t('auth.orContinue')}</span>
+          <span className="h-px flex-1 bg-foreground/10" />
         </div>
         <TelegramWidgetSlot>
           <LoginButton />

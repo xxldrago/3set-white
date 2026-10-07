@@ -20,11 +20,11 @@ import { t } from '@/lib/i18n';
 import type { OrderHistoryRow, OrderStatus } from '@/lib/orders-service';
 
 const CARD =
-  'relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-black/10 p-6 dark:border-white/15';
+  'relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-line p-6 border-line';
 const PRIMARY =
-  'flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]';
+  'flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:opacity-90';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-black/[.08] px-4 transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]';
+  'flex h-11 items-center justify-center rounded-full border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 
 const POLL_MS = 3000;
 const CAP_MS = 120_000;
@@ -124,20 +124,20 @@ export default function OrderStatusPanel({
       )}
 
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold text-black dark:text-zinc-50">
+        <h2 className="text-xl font-semibold text-foreground">
           {t('pay.returnHeading')}
         </h2>
         <PaymentStatusChip status={status} />
       </div>
 
-      <p className="text-base tabular-nums text-zinc-600 dark:text-zinc-400">
+      <p className="text-base tabular-nums text-muted">
         {t('pay.summary', {
           kind: kindLabel(order.kind),
           price: priceFormatter.format(order.amount),
         })}
       </p>
 
-      <p className="text-zinc-600 dark:text-zinc-400">{STATUS_BODY[status]}</p>
+      <p className="text-muted">{STATUS_BODY[status]}</p>
 
       {status === 'pending' && (
         <Link href="/#tariff" className={SECONDARY}>
@@ -170,14 +170,14 @@ export default function OrderStatusPanel({
 
       {status === 'provisioned' && delivered && (
         <div className="flex flex-col gap-3">
-          <h3 className="text-xl font-semibold text-black dark:text-zinc-50">
+          <h3 className="text-xl font-semibold text-foreground">
             {t('key.linkTitle')}
           </h3>
 
           {delivered.subscriptionUrl ? (
             <>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <code className="line-clamp-2 max-w-full break-all text-sm text-zinc-700 dark:text-zinc-300">
+                <code className="line-clamp-2 max-w-full break-all text-sm text-foreground">
                   {delivered.subscriptionUrl}
                 </code>
                 <CopyButton value={delivered.subscriptionUrl} />
@@ -185,14 +185,14 @@ export default function OrderStatusPanel({
               {delivered.qr && (
                 <div className="flex flex-col items-center gap-2 pt-2">
                   <QrSvg svg={delivered.qr} />
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  <p className="text-sm text-muted">
                     {t('key.qrCaption')}
                   </p>
                 </div>
               )}
             </>
           ) : (
-            <p className="text-zinc-600 dark:text-zinc-400">{t('key.linkUnavailable')}</p>
+            <p className="text-muted">{t('key.linkUnavailable')}</p>
           )}
 
           <Link href={`/keys/${encodeURIComponent(delivered.keyId)}`} className={PRIMARY}>
@@ -202,7 +202,7 @@ export default function OrderStatusPanel({
       )}
 
       {slow && !TERMINAL.has(status) && (
-        <p role="status" className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p role="status" className="text-sm text-muted">
           {t('pay.pollingSlow')}
         </p>
       )}

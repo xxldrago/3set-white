@@ -20,8 +20,9 @@ interface NavItem {
 }
 
 // Cabinet nav — shown to every signed-in identity (email-only included).
+// The home page IS the subscriptions view, so there is no separate "Подписки"
+// item; the logo links home.
 const NAV_ITEMS: NavItem[] = [
-  { href: '/', label: 'Подписки', exact: true },
   { href: '/subscription', label: 'Мои ключи' },
   { href: '/payments', label: 'История платежей' },
   { href: '/faq', label: 'FAQ' },

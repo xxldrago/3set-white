@@ -4,6 +4,7 @@ import { after } from 'next/server';
 import InstallPrompt from '@/components/InstallPrompt';
 import Nav from '@/components/Nav';
 import RefCapture from '@/components/RefCapture';
+import ReferralLinkBox from '@/components/ReferralLinkBox';
 import SubscriptionCard from '@/components/SubscriptionCard';
 import SupportEntry from '@/components/SupportEntry';
 import TariffPicker from '@/components/TariffPicker';
@@ -14,6 +15,8 @@ import { listKeys, listKeysByUserId, manageableDeviceCounts, revalidateKeys, rev
 import { logger } from '@/lib/logger';
 import { getSessionUser, requireSession, requireTelegramSession, SessionError } from '@/lib/session';
 import { listTicketsForUser } from '@/lib/tickets-service';
+import { env } from '@/lib/env';
+import { ensureReferralCode } from '@/lib/referrals';
 
 // Personalised, cache-backed page — never statically rendered.
 export const dynamic = 'force-dynamic';
@@ -185,6 +188,19 @@ export default async function Home() {
   // Display identity for the cabinet nav (null when anonymous).
   const navUser = await getSessionUser();
 
+  // Absolute referral link for the home teaser (signed-in only — guests get
+  // the login CTA). The code is ensured lazily; a failure hides the box,
+  // never the page.
+  let referralLink: string | null = null;
+  if (navUser) {
+    try {
+      const code = await ensureReferralCode(navUser.userId);
+      referralLink = `${env.APP_BASE_URL}/?ref=${code}`;
+    } catch {
+      logger.warn({ route: 'home', outcome: 'ref_link_failed' });
+    }
+  }
+
   // Email-only session (no linked Telegram): capture the server-resolved
   // userId so the cabinet can read keys/trial through the userId-keyed path
   // (G-06-9). TG-keyed sections (tariff/payments/support) stay TG-gated — a
@@ -279,14 +295,18 @@ export default async function Home() {
             <li>2. {t('home.refStep2')}</li>
             <li>3. {t('home.refStep3')}</li>
           </ol>
-          <nav className="flex flex-col gap-2 sm:flex-row">
-            <Link
-              href={navUser ? '/profile#referrals' : '/login'}
-              className={PRIMARY}
-            >
-              {navUser ? t('home.refCtaAuthed') : t('home.refCtaGuest')}
-            </Link>
-          </nav>
+          {referralLink ? (
+            <ReferralLinkBox link={referralLink} />
+          ) : (
+            <nav className="flex flex-col gap-2 sm:flex-row">
+              <Link
+                href={navUser ? '/profile#referrals' : '/login'}
+                className={PRIMARY}
+              >
+                {navUser ? t('home.refCtaAuthed') : t('home.refCtaGuest')}
+              </Link>
+            </nav>
+          )}
         </section>
         <InstallPrompt />
       </main>

@@ -270,6 +270,24 @@ export default async function Home() {
             </Link>
           </section>
         )}
+        {/* Referral program teaser — sits after the tariffs for every visitor. */}
+        <section className={CARD}>
+          <h2 className="text-xl font-semibold text-foreground">{t('home.refTitle')}</h2>
+          <p className="text-muted">{t('home.refText')}</p>
+          <ol className="flex flex-col gap-2 text-sm text-muted">
+            <li>1. {t('home.refStep1')}</li>
+            <li>2. {t('home.refStep2')}</li>
+            <li>3. {t('home.refStep3')}</li>
+          </ol>
+          <nav className="flex flex-col gap-2 sm:flex-row">
+            <Link
+              href={navUser ? '/profile#referrals' : '/login'}
+              className={PRIMARY}
+            >
+              {navUser ? t('home.refCtaAuthed') : t('home.refCtaGuest')}
+            </Link>
+          </nav>
+        </section>
         <InstallPrompt />
       </main>
     </div>

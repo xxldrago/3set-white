@@ -24,6 +24,7 @@ export interface PromoRow {
   usedCount: number;
   expiresAt: Date | null;
   createdAt: Date;
+  ownerUserId: number | null;
 }
 
 export const promoInputSchema = z.object({
@@ -38,6 +39,8 @@ export const promoInputSchema = z.object({
   type: z.enum(["percentage", "fixed"]),
   maxUses: z.number().int().min(1).max(1_000_000).nullable().optional(),
   expiresAt: z.string().datetime({ offset: true }).nullable().optional(),
+  // Personal partner code: the internal User.id buyers are attributed to.
+  ownerUserId: z.number().int().positive().nullable().optional(),
 });
 
 export type PromoInput = z.infer<typeof promoInputSchema>;
@@ -113,7 +116,7 @@ export async function consumePromo(rawCode: string): Promise<PromoRow | null> {
     WHERE code = ${code}
       AND ("maxUses" IS NULL OR "usedCount" < "maxUses")
       AND ("expiresAt" IS NULL OR "expiresAt" > NOW())
-    RETURNING id, code, discount, type, "maxUses", "usedCount", "expiresAt", created_at AS "createdAt"
+    RETURNING id, code, discount, type, "maxUses", "usedCount", "expiresAt", created_at AS "createdAt", owner_user_id AS "ownerUserId"
   `;
   return rows[0] ?? null;
 }
@@ -128,6 +131,13 @@ export async function createPromo(input: PromoInput): Promise<PromoRow> {
   }
   const code = normalizePromoCode(input.code);
   if (!PROMO_CODE_RE.test(code)) throw new Error("promo:bad_code");
+  if (input.ownerUserId !== undefined && input.ownerUserId !== null) {
+    const owner = await prisma.user.findUnique({
+      where: { id: input.ownerUserId },
+      select: { id: true },
+    });
+    if (!owner) throw new Error("promo:bad_owner");
+  }
   return prisma.promoCode.create({
     data: {
       code,
@@ -135,7 +145,15 @@ export async function createPromo(input: PromoInput): Promise<PromoRow> {
       type: input.type,
       maxUses: input.maxUses ?? null,
       expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
+      ownerUserId: input.ownerUserId ?? null,
     },
+  });
+}
+
+export async function listPromosByOwner(ownerUserId: number): Promise<PromoRow[]> {
+  return prisma.promoCode.findMany({
+    where: { ownerUserId },
+    orderBy: { createdAt: "desc" },
   });
 }
 

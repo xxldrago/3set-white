@@ -19,6 +19,8 @@ export function roleLabel(role: AdminRole): string {
       return t('admin.roleSupport');
     case 'manager':
       return t('admin.roleManager');
+    case 'partner':
+      return t('admin.rolePartner');
   }
 }
 

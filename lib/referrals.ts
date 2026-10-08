@@ -234,16 +234,23 @@ export async function creditReferralForPaidOrder(
   const settings = await getReferralSettings();
   const inviter = await prisma.user.findUnique({
     where: { id: inviterId },
-    select: { id: true, customInviterReward: true },
+    select: { id: true, customInviterReward: true, customInviterKind: true },
   });
   if (!inviter) return;
 
+  // Per-user override (partner rate): an explicit kind wins; an amount
+  // without a kind keeps the legacy fixed-RUB meaning; otherwise global.
+  const kind =
+    inviter.customInviterKind === "percent" || inviter.customInviterKind === "fixed"
+      ? inviter.customInviterKind
+      : inviter.customInviterReward !== null && inviter.customInviterReward !== undefined
+        ? "fixed"
+        : settings.inviterKind;
+  const value = inviter.customInviterReward ?? settings.inviterValue;
   const inviterAmount =
-    inviter.customInviterReward !== null && inviter.customInviterReward !== undefined
-      ? Math.max(0, inviter.customInviterReward)
-      : settings.inviterKind === "fixed"
-        ? Math.max(0, settings.inviterValue)
-        : Math.floor((Math.max(0, finalAmount) * Math.min(100, settings.inviterValue)) / 100);
+    kind === "fixed"
+      ? Math.max(0, value)
+      : Math.floor((Math.max(0, finalAmount) * Math.min(100, Math.max(0, value))) / 100);
 
   try {
     if (inviterAmount > 0) {
@@ -321,6 +328,17 @@ export async function requestWithdrawal(
   });
   logger.info({ route: "referrals", outcome: "withdrawal_requested", userId });
   return withdrawal;
+}
+
+export async function listOwnWithdrawals(
+  userId: number,
+): Promise<{ id: string; amount: number; status: string; createdAt: Date }[]> {
+  return prisma.withdrawal.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+    select: { id: true, amount: true, status: true, createdAt: true },
+  });
 }
 
 export async function listWithdrawals(

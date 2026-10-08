@@ -11,7 +11,7 @@
 // `{ userId, telegramId, displayName, staffRole? }`; a profile key view carries
 // only display fields. chatId, session tokens, provider ids, and subscription
 // URLs are never selected into (or serialized from) an admin surface.
-import type { AdminRole } from "./admin-auth";
+import { toAdminRole, type AdminRole } from "./admin-auth";
 import { deriveStatusKind, type StatusKind } from "./keys-service";
 import { toHistoryRow, type OrderHistoryRow } from "./orders-service";
 import { prisma } from "./prisma";
@@ -67,6 +67,7 @@ export interface AdminProfileHeader {
   staffRole: AdminRole | null;
   referralCode: string | null;
   customInviterReward: number | null;
+  customInviterKind: string | null;
 }
 
 /** One independently-degrading profile sub-section (ok:false = read failed). */
@@ -205,7 +206,8 @@ export async function adminSearchUsers(q: string): Promise<AdminSearchResponse> 
       const roleByTelegramId = new Map(staff.map((row) => [String(row.telegramId), row.role]));
       for (const result of results.values()) {
         if (result.telegramId === null) continue;
-        const role = roleByTelegramId.get(result.telegramId);
+        const raw = roleByTelegramId.get(result.telegramId);
+        const role = raw === undefined ? undefined : toAdminRole(raw);
         if (role) result.staffRole = role;
       }
     }
@@ -225,7 +227,13 @@ export async function adminSearchUsers(q: string): Promise<AdminSearchResponse> 
 export async function loadAdminHeader(userId: number): Promise<AdminProfileHeader | null> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { ...USER_SELECT, createdAt: true, referralCode: true, customInviterReward: true },
+    select: {
+      ...USER_SELECT,
+      createdAt: true,
+      referralCode: true,
+      customInviterReward: true,
+      customInviterKind: true,
+    },
   });
   if (!user) return null;
 
@@ -244,9 +252,10 @@ export async function loadAdminHeader(userId: number): Promise<AdminProfileHeade
     username: user.username,
     displayName: displayNameOf(user),
     createdAt: user.createdAt,
-    staffRole: staff?.role ?? null,
+    staffRole: staff ? toAdminRole(staff.role) : null,
     referralCode: user.referralCode,
     customInviterReward: user.customInviterReward,
+    customInviterKind: user.customInviterKind,
   };
 }
 
@@ -348,7 +357,10 @@ export async function loadAdminUsersTable(): Promise<AdminUserTableRow[]> {
     username: u.username,
     firstName: u.firstName,
     lastName: u.lastName,
-    role: u.telegramId !== null ? (roleByTid.get(String(u.telegramId)) ?? null) : null,
+    role:
+      u.telegramId !== null
+        ? (toAdminRole(roleByTid.get(String(u.telegramId)) ?? "") ?? null)
+        : null,
     keysCount: keysById.get(u.id) ?? 0,
     ordersCount: ordersById.get(u.id) ?? 0,
     createdAt: u.createdAt,
@@ -381,11 +393,17 @@ export async function loadAdminRoster(): Promise<AdminRosterRow[]> {
     users.map((user) => [String(user.telegramId), displayNameOf(user)]),
   );
 
-  return staff.map((row) => ({
-    telegramId: String(row.telegramId),
-    displayName: nameByTelegramId.get(String(row.telegramId)) ?? null,
-    role: row.role,
-  }));
+  return staff.flatMap((row) => {
+    const role = toAdminRole(row.role);
+    if (!role) return [];
+    return [
+      {
+        telegramId: String(row.telegramId),
+        displayName: nameByTelegramId.get(String(row.telegramId)) ?? null,
+        role,
+      },
+    ];
+  });
 }
 
 /**

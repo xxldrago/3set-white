@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 
 const bodySchema = z.object({
   amount: z.number().int().min(0).max(1_000_000).nullable(),
+  kind: z.enum(["percent", "fixed"]).nullable().optional(),
 });
 
 export async function POST(
@@ -49,12 +50,15 @@ export async function POST(
   try {
     const updated = await prisma.user.updateMany({
       where: { id: userId },
-      data: { customInviterReward: parsed.data.amount },
+      data: {
+        customInviterReward: parsed.data.amount,
+        ...(parsed.data.kind === undefined ? {} : { customInviterKind: parsed.data.kind }),
+      },
     });
     if (updated.count === 0) {
       return Response.json({ error: "not_found" }, { status: 404 });
     }
-    return Response.json({ ok: true, amount: parsed.data.amount });
+    return Response.json({ ok: true, amount: parsed.data.amount, kind: parsed.data.kind ?? null });
   } catch {
     logger.error({ route: "admin-user-reward", outcome: "save_error" });
     return Response.json({ error: "internal" }, { status: 500 });

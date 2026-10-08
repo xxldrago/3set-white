@@ -241,7 +241,11 @@ export default async function AdminUserProfilePage({
           />
         )}
         {caller.role === 'administrator' && (
-          <RewardControl userId={header.userId} current={header.customInviterReward} />
+          <RewardControl
+            userId={header.userId}
+            current={header.customInviterReward}
+            currentKind={header.customInviterKind}
+          />
         )}
       </UserProfileCard>
 

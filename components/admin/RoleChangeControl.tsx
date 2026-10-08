@@ -13,7 +13,7 @@ import { roleLabel } from './RoleChip';
 import { t } from '@/lib/i18n';
 import type { AdminRole } from '@/lib/admin-auth';
 
-const ROLES: AdminRole[] = ['administrator', 'support', 'manager'];
+const ROLES: AdminRole[] = ['administrator', 'support', 'manager', 'partner'];
 
 const SELECT =
   'h-11 rounded-2xl border border-line bg-panel px-3 text-sm text-foreground border-line bg-panel text-foreground';

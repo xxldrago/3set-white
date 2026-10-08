@@ -55,6 +55,10 @@ model User {
   referredBy         User?   @relation("Referrals", fields: [referredById], references: [id])
   referrals          User[]  @relation("Referrals")
   customInviterReward Int?   @map("custom_inviter_reward")
+  // Partner rate kind ("percent"|"fixed", null = global kind). Together with
+  // customInviterReward this is the per-user rate the admin panel edits —
+  // partners earn their individual percent, everyone else the global rate.
+  customInviterKind   String? @map("custom_inviter_kind")
   pendingPromo       String? @map("pending_promo")
   walletTx           WalletTx[]
   withdrawals        Withdrawal[]
@@ -376,16 +380,13 @@ model TelegramLoginToken {
 // administrator downgraded in the UI (D-67 / T-05-02).
 // ---------------------------------------------------------------------------
 
-enum AdminRole {
-  administrator
-  support
-  manager
-}
-
+// Roles are plain TEXT guarded by the TS `AdminRole` union + zod enums —
+// a PG enum would need a non-transactional `ALTER TYPE ... ADD VALUE` on
+// every role addition, which migrate-deploy cannot run.
 model AdminUser {
   id         Int       @id @default(autoincrement())
   telegramId BigInt    @unique @map("telegram_id")
-  role       AdminRole
+  role       String
   createdAt  DateTime  @default(now()) @map("created_at")
   updatedAt  DateTime  @updatedAt @map("updated_at")
 
@@ -401,7 +402,12 @@ model PromoCode {
   usedCount   Int       @default(0)
   expiresAt   DateTime? // null = permanently valid
   createdAt   DateTime  @default(now()) @map("created_at")
+  // Personal partner code: orders paying with it attribute the buyer to this
+  // account (first-wins pin at order time) and surface in its dashboard.
+  // Null = generic code with no attribution.
+  ownerUserId Int?      @map("owner_user_id")
 
+  @@index([ownerUserId])
   @@map("promo_codes")
 }
 

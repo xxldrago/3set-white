@@ -18,7 +18,7 @@ import { requireTelegramSession, SessionError } from '@/lib/session';
 export const dynamic = 'force-dynamic';
 
 /** Nav destinations in display order — filtered server-side by `can()`. */
-const NAV_SECTIONS: AdminSection[] = ['overview', 'users', 'tickets', 'broadcast', 'pricing', 'promos', 'referrals', 'roles'];
+const NAV_SECTIONS: AdminSection[] = ['overview', 'users', 'tickets', 'broadcast', 'pricing', 'promos', 'referrals', 'partner', 'roles'];
 
 const CABINET_LINK =
   'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line ';

@@ -80,7 +80,10 @@ export async function POST(req: Request): Promise<Response> {
     ) {
       return Response.json({ error: "code_taken" }, { status: 409 });
     }
-    if (err instanceof Error && err.message === "promo:bad_percentage") {
+    if (
+      err instanceof Error &&
+      (err.message === "promo:bad_percentage" || err.message === "promo:bad_owner")
+    ) {
       return Response.json({ error: "bad_request" }, { status: 400 });
     }
     logger.error({ route: "admin-promos", outcome: "create_error" });

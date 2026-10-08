@@ -16,12 +16,17 @@ const PRIMARY =
 export default function RewardControl({
   userId,
   current,
+  currentKind,
 }: {
   userId: number;
   current: number | null;
+  currentKind: string | null;
 }) {
   const router = useRouter();
   const [value, setValue] = useState(current === null ? '' : String(current));
+  const [kind, setKind] = useState<'percent' | 'fixed' | ''>(
+    currentKind === 'percent' || currentKind === 'fixed' ? currentKind : '',
+  );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -41,7 +46,9 @@ export default function RewardControl({
       const res = await fetch(`/api/admin/users/${userId}/reward`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount }),
+        // An empty kind keeps the stored kind (global when never set); an
+        // empty amount clears back to the global rate entirely.
+        body: JSON.stringify({ amount, kind: kind === '' ? null : kind }),
       });
       if (!res.ok) setFailed(true);
       else {
@@ -53,13 +60,24 @@ export default function RewardControl({
     } finally {
       setSaving(false);
     }
-  }, [saving, value, userId, router]);
+  }, [saving, value, kind, userId, router]);
 
   return (
     <div className="flex flex-col gap-2 border-t border-line pt-3">
       <span className="text-base text-foreground">{t('admin.refCustomTitle')}</span>
       <p className="text-sm text-muted">{t('admin.refCustomHint')}</p>
       <div className="flex items-center gap-2">
+        <select
+          value={kind}
+          onChange={(event) => setKind(event.target.value as 'percent' | 'fixed' | '')}
+          disabled={saving}
+          aria-label={t('admin.refCustomKind')}
+          className="h-12 shrink-0 rounded-2xl border border-line bg-panel px-3 text-sm text-foreground"
+        >
+          <option value="">{t('admin.refCustomGlobal')}</option>
+          <option value="percent">%</option>
+          <option value="fixed">₽</option>
+        </select>
         <input
           value={value}
           onChange={(event) => setValue(event.target.value.replace(/[^0-9]/g, ''))}

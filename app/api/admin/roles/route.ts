@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 
 const payloadSchema = z.object({
   telegramId: z.union([z.string().regex(/^\d+$/), z.number().int().nonnegative()]),
-  role: z.enum(["administrator", "support", "manager"]),
+  role: z.enum(["administrator", "support", "manager", "partner"]),
 });
 
 export async function POST(req: Request): Promise<Response> {

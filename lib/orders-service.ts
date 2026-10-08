@@ -10,7 +10,7 @@ import type { Order, Outbox } from "../generated/prisma/client";
 import { logger } from "./logger";
 import { consumePromo, validatePromo } from "./promo";
 import { resolveTariffQuote, resolveUpgradeQuote } from "./pricing";
-import { creditReferralForPaidOrder, walletBalance } from "./referrals";
+import { creditReferralForPaidOrder, pinReferrer, walletBalance } from "./referrals";
 import { env } from "./env";
 import { getKeyForUser, getKeyForUserId, type RenderedKey } from "./keys-service";
 import { enqueueFulfillJob } from "./outbox";
@@ -162,6 +162,17 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     }
     promoCode = consumed.code;
     finalAmount = preview.finalAmount;
+    // Personal partner code: attribute the buyer to the owner (first-wins —
+    // a buyer with an inviter keeps it). Best-effort, never fails checkout.
+    if (consumed.ownerUserId !== null && consumed.ownerUserId !== user.id) {
+      const owner = await prisma.user.findUnique({
+        where: { id: consumed.ownerUserId },
+        select: { referralCode: true },
+      });
+      if (owner?.referralCode) {
+        await pinReferrer(user.id, owner.referralCode).catch(() => null);
+      }
+    }
   }
 
   // Referral balance: applied after the promo, before Platega. The debit

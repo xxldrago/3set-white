@@ -15,7 +15,17 @@ import { prisma } from "./prisma";
 import { env } from "./env";
 import { AdminError, requireTelegramSession } from "./session";
 
-export type AdminRole = "administrator" | "support" | "manager";
+export type AdminRole = "administrator" | "support" | "manager" | "partner";
+
+const KNOWN_ROLES: readonly string[] = ["administrator", "support", "manager", "partner"];
+
+/**
+ * Narrow a TEXT role from the DB to the union. Unknown strings (legacy /
+ * hand-edited rows) map to null — treated as no role, never trusted.
+ */
+export function toAdminRole(value: string): AdminRole | null {
+  return (KNOWN_ROLES as readonly string[]).includes(value) ? (value as AdminRole) : null;
+}
 
 export type AdminSection =
   | "overview"
@@ -28,6 +38,7 @@ export type AdminSection =
   | "pricing"
   | "promos"
   | "referrals"
+  | "partner"
   | "roles";
 
 /** UI-SPEC §1 role matrix — the single literal source of truth. */
@@ -47,6 +58,10 @@ const MATRIX: Record<AdminRole, readonly AdminSection[]> = {
   ],
   support: ["users", "profileKeys", "profileTickets", "tickets"],
   manager: ["overview", "users", "profilePayments"],
+  // Partners see ONLY their own dashboard. They never enter the shared
+  // queues (users/tickets/roles) — чужі дані недоступні. Support contact
+  // stays in the cabinet (/support), linked from the dashboard.
+  partner: ["partner"],
 };
 
 /** Pure section check — testable without a Next runtime. */
@@ -74,7 +89,7 @@ export const getAdminRole = cache(async (telegramId: number): Promise<AdminRole 
     where: { telegramId: BigInt(telegramId) },
     select: { role: true },
   });
-  if (existing) return existing.role;
+  if (existing) return toAdminRole(existing.role);
 
   if (!isBootstrapAdmin(telegramId)) return null;
 
@@ -84,7 +99,7 @@ export const getAdminRole = cache(async (telegramId: number): Promise<AdminRole 
     create: { telegramId: BigInt(telegramId), role: "administrator" },
     select: { role: true },
   });
-  return created.role;
+  return toAdminRole(created.role);
 });
 
 /**

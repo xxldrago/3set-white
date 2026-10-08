@@ -39,6 +39,7 @@ export default function PromoManagerForm({ initialPromos }: { initialPromos: Pro
   const [discount, setDiscount] = useState('');
   const [maxUses, setMaxUses] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
+  const [ownerUserId, setOwnerUserId] = useState('');
   const [failed, setFailed] = useState(false);
   const [taken, setTaken] = useState(false);
   const [done, setDone] = useState(false);
@@ -69,6 +70,7 @@ export default function PromoManagerForm({ initialPromos }: { initialPromos: Pro
     setTaken(false);
     setDone(false);
     try {
+      const owner = ownerUserId.trim().length === 0 ? null : Number(ownerUserId);
       const res = await fetch('/api/admin/promos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -79,6 +81,7 @@ export default function PromoManagerForm({ initialPromos }: { initialPromos: Pro
           maxUses: maxUses.trim().length === 0 ? null : Number(maxUses),
           expiresAt:
             expiresAt.trim().length === 0 ? null : new Date(expiresAt).toISOString(),
+          ownerUserId: owner,
         }),
         signal: controller.signal,
       });
@@ -87,6 +90,7 @@ export default function PromoManagerForm({ initialPromos }: { initialPromos: Pro
         setDiscount('');
         setMaxUses('');
         setExpiresAt('');
+        setOwnerUserId('');
         setDone(true);
         router.refresh();
         return;
@@ -105,7 +109,7 @@ export default function PromoManagerForm({ initialPromos }: { initialPromos: Pro
     } finally {
       setLoading(false);
     }
-  }, [valid, loading, code, discountNum, type, maxUses, expiresAt, router]);
+  }, [valid, loading, code, discountNum, type, maxUses, expiresAt, ownerUserId, router]);
 
   const remove = useCallback(
     async (id: string) => {
@@ -198,6 +202,20 @@ export default function PromoManagerForm({ initialPromos }: { initialPromos: Pro
               type="date"
               value={expiresAt}
               onChange={(event) => setExpiresAt(event.target.value)}
+              disabled={loading}
+              className={INPUT}
+            />
+          </div>
+          <div className="flex flex-col gap-2 sm:col-span-2">
+            <label htmlFor="promo-owner" className={FIELD_LABEL}>
+              {t('admin.promoOwnerLabel')}
+            </label>
+            <input
+              id="promo-owner"
+              value={ownerUserId}
+              onChange={(event) => setOwnerUserId(event.target.value.replace(/[^0-9]/g, ''))}
+              inputMode="numeric"
+              placeholder={t('admin.promoOwnerPlaceholder')}
               disabled={loading}
               className={INPUT}
             />

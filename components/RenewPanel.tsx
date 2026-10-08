@@ -9,6 +9,7 @@
 // adds only days); the browser sends no price — the server re-quotes
 // (T-03-amount).
 import { useCallback, useEffect, useRef, useState } from 'react';
+import AutoRenewToggle from './AutoRenewToggle';
 import PayCta from './PayCta';
 import PromoField from './PromoField';
 import { t } from '@/lib/i18n';
@@ -154,6 +155,9 @@ export default function RenewPanel({
       )}
 
       <PromoField key={`days=${days}&devices=${deviceLimit}`} query={`days=${days}&devices=${deviceLimit}`} onCode={setPromoCode} />
+
+      <AutoRenewToggle keyId={keyId} />
+      <p className="text-xs text-muted">{t('renew.autoRenewHint')}</p>
 
       <PayCta kind="renew" days={days} keyId={keyId} disabled={price === null} promoCode={promoCode} />
 

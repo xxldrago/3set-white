@@ -12,6 +12,7 @@ import { notFound, redirect } from 'next/navigation';
 import { requireRole } from '@/lib/admin-auth';
 import { t } from '@/lib/i18n';
 import { AdminError, SessionError } from '@/lib/session';
+import RevenuePanel from '@/components/admin/RevenuePanel';
 import StatsPanel from '@/components/admin/StatsPanel';
 
 export const dynamic = 'force-dynamic';
@@ -33,6 +34,7 @@ export default async function AdminOverviewPage({ searchParams }: { searchParams
       <h2 className="text-xl font-semibold text-foreground">{t('admin.statsTitle')}</h2>
 
       <StatsPanel period={period} />
+      <RevenuePanel period={period} />
     </section>
   );
 }

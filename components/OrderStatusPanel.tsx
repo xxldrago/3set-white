@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import CopyButton from './CopyButton';
+import DeviceGuide from './DeviceGuide';
 import PaymentStatusChip from './PaymentStatusChip';
 import QrSvg from './QrSvg';
 import { t } from '@/lib/i18n';
@@ -198,6 +199,10 @@ export default function OrderStatusPanel({
           <Link href={`/keys/${encodeURIComponent(delivered.keyId)}`} className={PRIMARY}>
             {t('pay.toKey')}
           </Link>
+
+          {delivered.subscriptionUrl && (
+            <DeviceGuide subscriptionUrl={delivered.subscriptionUrl} />
+          )}
         </div>
       )}
 

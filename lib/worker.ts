@@ -55,6 +55,7 @@ import { loadArtemidaStats } from "./admin-stats";
 import { env } from "./env";
 import { enqueueBalanceAlertNotifications } from "./outbox";
 import { enqueueReminderScan } from "./reminders-service";
+import { runAutoRenewScan } from "./autorenew";
 import {
   TRIAL_ERROR_CODE,
   applyConfirmedPayment,
@@ -423,7 +424,18 @@ export function startReminderTick(): NodeJS.Timeout {
   void runReminderScan().catch(() =>
     logger.error({ route: "worker", outcome: "reminder_scan_failed" }),
   );
-  return unref(setInterval(guard("reminders", runReminderScan), REMINDER_INTERVAL_MS));
+  void runAutoRenewScan(new Date()).catch(() =>
+    logger.error({ route: "worker", outcome: "autorenew_scan_failed" }),
+  );
+  return unref(
+    setInterval(
+      guard("reminders", async () => {
+        await runReminderScan();
+        await runAutoRenewScan(new Date(), await botSender());
+      }),
+      REMINDER_INTERVAL_MS,
+    ),
+  );
 }
 
 export async function runBalanceAlert(): Promise<void> {

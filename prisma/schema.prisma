@@ -202,6 +202,10 @@ model KeyCache {
   subscriptionUrl   String?   @map("subscription_url")
   customerRef       String?   @map("customer_ref")
   lastSyncedAt      DateTime? @map("last_synced_at")
+  // Balance auto-renew: when set, the daily scan renews this key from the
+  // referral wallet (same term as the last order, fallback 30d). A short
+  // balance mints a pending Platega order + a bot DM with the pay link.
+  autoRenew         Boolean   @default(false) @map("auto_renew")
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
   @@unique([userId, keyId])

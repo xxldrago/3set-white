@@ -41,8 +41,12 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const { runReminderScan } = await import("../../../../lib/worker");
+  const { runAutoRenewScan } = await import("../../../../lib/autorenew");
   const result = await runReminderScan();
+  // Same pass, no sender: short-balance renewals land as pending orders in
+  // the cabinet (the worker tick with a sender additionally DMs the link).
+  const renew = await runAutoRenewScan(new Date());
   // Never log chat ids, sub-links, or key ids beyond the aggregate counts.
-  logger.info({ route: "cron_remind", outcome: "ok", ...result });
-  return Response.json({ ok: true, ...result });
+  logger.info({ route: "cron_remind", outcome: "ok", ...result, renew });
+  return Response.json({ ok: true, ...result, renew });
 }

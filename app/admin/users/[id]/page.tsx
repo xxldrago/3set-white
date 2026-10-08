@@ -11,6 +11,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import AdminKeyRow from '@/components/admin/AdminKeyRow';
+import RewardControl from '@/components/admin/RewardControl';
 import RoleChangeControl from '@/components/admin/RoleChangeControl';
 import UserProfileCard from '@/components/admin/UserProfileCard';
 import PaymentStatusChip from '@/components/PaymentStatusChip';
@@ -238,6 +239,9 @@ export default async function AdminUserProfilePage({
             name={header.displayName ?? header.telegramId}
             self={header.telegramId === String(caller.telegramId)}
           />
+        )}
+        {caller.role === 'administrator' && (
+          <RewardControl userId={header.userId} current={header.customInviterReward} />
         )}
       </UserProfileCard>
 

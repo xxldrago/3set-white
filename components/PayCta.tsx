@@ -8,7 +8,7 @@
 // returned provider URL is used solely for `window.location.assign` and is
 // never held in state (T-03-url-state). A failure renders `pay.createError` +
 // `common.retry` and re-enables the CTA — never a raw provider string.
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { t } from '@/lib/i18n';
 
 type PayKind = 'new' | 'renew' | 'upgrade';
@@ -45,6 +45,25 @@ export default function PayCta({
 }: PayCtaProps) {
   const [state, setState] = useState<PayState>('idle');
   const [promoRejected, setPromoRejected] = useState(false);
+  const [balance, setBalance] = useState<number | null>(null);
+  const [useBalance, setUseBalance] = useState(false);
+
+  // Referral balance (best-effort): a missing/failed read hides the toggle.
+  useEffect(() => {
+    let cancelled = false;
+    void fetch('/api/wallet')
+      .then(async (res) => {
+        if (!res.ok || cancelled) return;
+        const body = (await res.json()) as { balance?: unknown };
+        if (typeof body.balance === 'number' && body.balance > 0 && !cancelled) {
+          setBalance(Math.floor(body.balance));
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const createOrder = useCallback(async () => {
     if (state === 'loading') return; // in-flight lock
@@ -56,8 +75,17 @@ export default function PayCta({
         headers: { 'Content-Type': 'application/json' },
         // `undefined` fields are dropped by JSON.stringify — only the intent
         // for this kind is sent; no price. The promo is re-validated +
-        // consumed server-side (a code exhausted after preview fails here).
-        body: JSON.stringify({ kind, days, devices, addDevices, keyId, promoCode }),
+        // consumed server-side (a code exhausted after preview fails here);
+        // the balance applies server-side (remainder via Platega).
+        body: JSON.stringify({
+          kind,
+          days,
+          devices,
+          addDevices,
+          keyId,
+          promoCode,
+          useBalance: useBalance && balance !== null && balance > 0,
+        }),
       });
       if (!res.ok) {
         let code: unknown = null;
@@ -82,10 +110,22 @@ export default function PayCta({
     } catch {
       setState('error');
     }
-  }, [state, kind, days, devices, addDevices, keyId, promoCode]);
+  }, [state, kind, days, devices, addDevices, keyId, promoCode, useBalance, balance]);
 
   return (
     <div className="flex flex-col gap-2">
+      {balance !== null && balance > 0 && (
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-muted">
+          <input
+            type="checkbox"
+            checked={useBalance}
+            onChange={(event) => setUseBalance(event.target.checked)}
+            disabled={state === 'loading'}
+            className="h-4 w-4 accent-[#0c4f36]"
+          />
+          {t('auth.refUseBalance')} ({balance} ₽)
+        </label>
+      )}
       <button
         type="button"
         onClick={() => void createOrder()}

@@ -44,6 +44,21 @@ model User {
   createdAt  DateTime @default(now()) @map("created_at")
   keys       KeyCache[]
 
+  // Referral program: every account lazily owns a public `referralCode`
+  // (`3SET-XXXXXX`, ensured on first use — pre-existing rows get NULL until
+  // then). `referredById` pins the inviter once (first valid code wins, never
+  // rewritten). `customInviterReward` overrides the global inviter reward for
+  // THIS account's referrals (per-user rate set in the admin panel; null =
+  // global). `pendingPromo` stashes a bot-entered promo for the next order.
+  referralCode       String? @unique @map("referral_code")
+  referredById       Int?    @map("referred_by")
+  referredBy         User?   @relation("Referrals", fields: [referredById], references: [id])
+  referrals          User[]  @relation("Referrals")
+  customInviterReward Int?   @map("custom_inviter_reward")
+  pendingPromo       String? @map("pending_promo")
+  walletTx           WalletTx[]
+  withdrawals        Withdrawal[]
+
   // Phase 2 trial anti-abuse (D-21): one trial per telegram-id. `trialUsed`
   // is claimed by a single atomic UPDATE ... WHERE trial_used=false (D-22);
   // `trialKeyId` doubles as the in-flight/success sentinel that guards the
@@ -145,6 +160,7 @@ model Order {
   updatedAt        DateTime    @updatedAt @map("updated_at")
   promoCode        String?     @map("promo_code")
   finalAmount      Int         @default(0) @map("final_amount")
+  balanceUsed      Int         @default(0) @map("balance_used")
   outbox           Outbox[]
 
   @@index([userId, createdAt])
@@ -383,6 +399,55 @@ model PromoCode {
   createdAt   DateTime  @default(now()) @map("created_at")
 
   @@map("promo_codes")
+}
+
+// Generic key-value settings (admin-editable). Referral program keys:
+// `referral.inviterKind` ("percent"|"fixed"), `referral.inviterValue`,
+// `referral.inviteeValue` (fixed RUB for the invited, 0 = off),
+// `referral.minWithdraw` (minimum withdrawal, whole RUB).
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
+
+// Wallet ledger: the single source of referral earnings. `amount` is signed
+// (+credit / −debit, whole RUB); the balance is always SUM(amount). Reasons:
+// `referral_bonus` (refId = referred userId), `order_spend` (refId = orderId),
+// `order_spend_refund`, `withdrawal_hold`, `withdrawal_refund`. `refId` is
+// required ("" when n/a) so the [userId, reason, refId] unique guards
+// double-credit of the same referral bonus under concurrent first payments
+// (P2002 → already credited).
+model WalletTx {
+  id        String   @id @default(cuid())
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Int
+  reason    String
+  refId     String   @default("") @map("ref_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, reason, refId])
+  @@index([userId, createdAt])
+  @@map("wallet_tx")
+}
+
+// Payout request: created with a `withdrawal_hold` debit reserving the
+// amount; approve keeps the debit, reject refunds via `withdrawal_refund`.
+model Withdrawal {
+  id        String   @id @default(cuid())
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Int
+  status    String   @default("pending")
+  contact   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  decidedAt DateTime? @map("decided_at")
+
+  @@index([status, createdAt])
+  @@map("withdrawals")
 }
 
 enum BroadcastStatus {

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { after } from 'next/server';
 import InstallPrompt from '@/components/InstallPrompt';
 import Nav from '@/components/Nav';
+import RefCapture from '@/components/RefCapture';
 import SubscriptionCard from '@/components/SubscriptionCard';
 import SupportEntry from '@/components/SupportEntry';
 import TariffPicker from '@/components/TariffPicker';
@@ -212,6 +213,7 @@ export default async function Home() {
 
   return (
     <div className="flex flex-col flex-1 items-center bg-background font-sans bg-background">
+      <RefCapture />
       <Nav user={navUser} />
       <main className="flex flex-1 w-full max-w-3xl flex-col gap-8 px-6 py-12 sm:px-16">
         <header className="flex flex-col gap-2">

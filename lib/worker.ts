@@ -366,7 +366,8 @@ export async function reconcileOnce(
     try {
       const tx = await platega.getTransaction(order.plategaTxId);
       if (tx.status !== "CONFIRMED") continue;
-      if (tx.amount !== order.amount || tx.currency !== order.currency) {
+      const expected = order.finalAmount > 0 ? order.finalAmount : order.amount;
+      if (tx.amount !== expected || tx.currency !== order.currency) {
         logger.error({
           route: "worker",
           outcome: "reconcile_amount_mismatch",

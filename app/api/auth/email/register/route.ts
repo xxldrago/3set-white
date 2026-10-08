@@ -17,12 +17,16 @@ import { logger } from "../../../../../lib/logger";
 import { sendWelcomeMail } from "../../../../../lib/mail";
 import { hashPassword } from "../../../../../lib/password";
 import { prisma } from "../../../../../lib/prisma";
+import { pinReferrer } from "../../../../../lib/referrals";
 
 export const dynamic = "force-dynamic";
 
 const registerSchema = z.object({
   email: z.string().trim().toLowerCase().email().max(254),
   password: z.string().min(8).max(256),
+  // Optional inviter code (`?ref=` landing) — pinned best-effort, never
+  // blocks registration.
+  ref: z.string().trim().min(1).max(32).optional(),
 });
 
 export async function POST(req: Request): Promise<Response> {
@@ -36,7 +40,7 @@ export async function POST(req: Request): Promise<Response> {
   if (!parsed.success) {
     return Response.json({ error: "bad_request" }, { status: 400 });
   }
-  const { email, password } = parsed.data;
+  const { email, password, ref } = parsed.data;
   const ip = clientIp(req);
 
   try {
@@ -109,6 +113,8 @@ export async function POST(req: Request): Promise<Response> {
     // A mail failure must not fail registration: sendMail logs the outcome
     // internally, the rejection is swallowed here by contract.
     void sendWelcomeMail(email).catch(() => {});
+    // Referral pin — best-effort, never blocks the 200.
+    if (ref) void pinReferrer(user.id, ref).catch(() => undefined);
     const token = await signSession(user.id, null, env.SESSION_SECRET);
     logger.info({ route: "email-register", outcome: "issued" });
     return Response.json(

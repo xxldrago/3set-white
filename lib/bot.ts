@@ -36,6 +36,8 @@ import {
   type AttachmentDescriptor,
 } from "./tickets-service";
 import { bindLoginToken, parseLoginStartPayload } from "./telegram-login";
+import { REFERRAL_CODE_RE, getReferralSummary, pinReferrer } from "./referrals";
+import { validatePromo } from "./promo";
 
 export const WEBHOOK_SECRET = env.WEBHOOK_SECRET;
 
@@ -51,7 +53,7 @@ bot.start(async (ctx) => {
   if (!from) return;
   const telegramId = from.id;
   const chatId = ctx.chat?.id;
-  await prisma.user.upsert({
+  const row = await prisma.user.upsert({
     where: { telegramId: BigInt(telegramId) },
     update: {
       ...(chatId === undefined ? {} : { chatId: BigInt(chatId) }),
@@ -66,7 +68,19 @@ bot.start(async (ctx) => {
       lastName: from.last_name ?? undefined,
       username: from.username ?? undefined,
     },
+    select: { id: true },
   });
+  // Referral start (`/start 3SET-XXXXXX` from a shared link): pins the
+  // inviter once — unknown codes, self-codes and re-pins are silent no-ops.
+  // Runs before the login branch so both can share one /start.
+  const refPayload = (ctx.startPayload ?? "").trim().toUpperCase();
+  if (REFERRAL_CODE_RE.test(refPayload)) {
+    const pinned = await pinReferrer(row.id, refPayload).catch(() => null);
+    if (pinned !== null) {
+      await ctx.reply(t("bot.refPinned"));
+      logger.info({ updateId: ctx.update.update_id, telegramId, outcome: "ref-pinned" });
+    }
+  }
   logger.info({
     updateId: ctx.update.update_id,
     telegramId,
@@ -102,12 +116,81 @@ bot.start(async (ctx) => {
         [{ text: t("bot.menuTrial") }, { text: t("bot.menuTariffs") }],
         [{ text: t("bot.menuKeys") }],
         [{ text: t("bot.menuPayments") }],
+        [{ text: t("bot.menuReferrals") }],
         [{ text: t("bot.menuGuides") }, { text: t("bot.menuHelp") }],
         [{ text: t("bot.menuSupport") }],
       ],
       resize_keyboard: true,
     },
   });
+});
+
+// ---------------------------------------------------------------------------
+// Referrals + promo codes in the bot.
+// ---------------------------------------------------------------------------
+
+/** «🎁 Рефералы» — code, link, stats (same summary the cabinet shows). */
+bot.hears(t("bot.menuReferrals"), async (ctx) => {
+  const from = ctx.from;
+  if (!from) return;
+  try {
+    const user = await prisma.user.findUnique({
+      where: { telegramId: BigInt(from.id) },
+      select: { id: true },
+    });
+    if (!user) {
+      await ctx.reply(t("bot.keysError"));
+      return;
+    }
+    const summary = await getReferralSummary(user.id);
+    const link = `${env.APP_BASE_URL}/?ref=${summary.code}`;
+    await ctx.reply(
+      t("bot.refStats", {
+        code: summary.code,
+        link,
+        invited: summary.referrals,
+        earned: summary.earned,
+        balance: summary.balance,
+      }),
+    );
+    logger.info({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "ref-stats" });
+  } catch {
+    await ctx.reply(t("bot.keysError"));
+    logger.warn({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "ref-stats-failed" });
+  }
+});
+
+/**
+ * `/promo CODE` — validate a discount code and stash it for the next order.
+ * Read-only check here (no consumption); the shared order pipeline consumes
+ * atomically at checkout. Unknown/expired/exhausted codes share one reply.
+ */
+bot.command("promo", async (ctx) => {
+  const from = ctx.from;
+  if (!from) return;
+  const code = (ctx.message?.text ?? "").replace(/^\/promo(@\w+)?\s*/i, "").trim();
+  if (!code) {
+    await ctx.reply(t("bot.promoHint"));
+    return;
+  }
+  try {
+    const preview = await validatePromo(code, 100);
+    if (!preview.ok) {
+      await ctx.reply(t("bot.promoBad"));
+      return;
+    }
+    await prisma.user.upsert({
+      where: { telegramId: BigInt(from.id) },
+      update: { pendingPromo: preview.row.code },
+      create: { telegramId: BigInt(from.id), pendingPromo: preview.row.code },
+      select: { id: true },
+    });
+    await ctx.reply(t("bot.promoSaved", { code: preview.row.code }));
+    logger.info({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "promo-stashed" });
+  } catch {
+    await ctx.reply(t("bot.promoBad"));
+    logger.warn({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "promo-failed" });
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -251,6 +334,14 @@ async function createBotOrderAndReply(
 ): Promise<string | null> {
   const from = ctx.from;
   if (!from) return null;
+  // Stashed bot promo (`/promo CODE`): passed to the shared pipeline, which
+  // re-validates + consumes. Cleared only on a created order — an invalid
+  // code fails the order with the generic pay error and the stash survives
+  // for correction (same fail-closed discipline as the cabinet).
+  const stashed = await prisma.user.findUnique({
+    where: { telegramId: BigInt(from.id) },
+    select: { id: true, pendingPromo: true },
+  });
   try {
     const result = await createOrder({
       telegramId: from.id,
@@ -260,10 +351,16 @@ async function createBotOrderAndReply(
       ...(input.addDevices === undefined ? {} : { addDevices: input.addDevices }),
       keyId: input.keyId ?? null,
       userName: from.id ? String(from.id) : null,
+      promoCode: stashed?.pendingPromo ?? null,
     });
     if (result.kind === "provider_error") {
       await ctx.reply(t("bot.payError"));
       return null;
+    }
+    if (stashed?.pendingPromo && stashed.id) {
+      await prisma.user
+        .update({ where: { id: stashed.id }, data: { pendingPromo: null } })
+        .catch(() => undefined);
     }
     await ctx.reply(t("bot.payCreated"), {
       reply_markup: { inline_keyboard: [[buildPayButton(result.url)]] },

@@ -86,7 +86,12 @@ export async function POST(req: Request): Promise<Response> {
     if (tx.status !== "CONFIRMED") {
       return ack(); // PENDING/CANCELED: nothing to issue, ack anyway
     }
-    if (tx.amount !== order.amount || tx.currency !== order.currency) {
+    // Charged amount is the post-promo/balance finalAmount. Pre-promo legacy
+    // rows carry finalAmount=0 (backfilled default) — those fall back to the
+    // list amount. Fully covered orders never reach Platega, so a zero
+    // finalAmount here always means legacy.
+    const expected = order.finalAmount > 0 ? order.finalAmount : order.amount;
+    if (tx.amount !== expected || tx.currency !== order.currency) {
       // Financial anomaly: never issue; flag for owner review, still ack.
       logger.error({
         route: "platega_callback",

@@ -47,6 +47,9 @@ export default function UserProfileCard({
           <p className="text-sm text-muted">
             {t('admin.profileCreated', { date: created })}
           </p>
+          {header.referralCode && (
+            <p className="font-mono text-sm text-muted">{header.referralCode}</p>
+          )}
         </div>
         {header.staffRole && <RoleChip role={header.staffRole} />}
       </div>

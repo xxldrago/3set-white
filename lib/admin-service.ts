@@ -65,6 +65,8 @@ export interface AdminProfileHeader {
   displayName: string | null;
   createdAt: Date;
   staffRole: AdminRole | null;
+  referralCode: string | null;
+  customInviterReward: number | null;
 }
 
 /** One independently-degrading profile sub-section (ok:false = read failed). */
@@ -223,7 +225,7 @@ export async function adminSearchUsers(q: string): Promise<AdminSearchResponse> 
 export async function loadAdminHeader(userId: number): Promise<AdminProfileHeader | null> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { ...USER_SELECT, createdAt: true },
+    select: { ...USER_SELECT, createdAt: true, referralCode: true, customInviterReward: true },
   });
   if (!user) return null;
 
@@ -243,6 +245,8 @@ export async function loadAdminHeader(userId: number): Promise<AdminProfileHeade
     displayName: displayNameOf(user),
     createdAt: user.createdAt,
     staffRole: staff?.role ?? null,
+    referralCode: user.referralCode,
+    customInviterReward: user.customInviterReward,
   };
 }
 

@@ -10,6 +10,7 @@ import type { Order, Outbox } from "../generated/prisma/client";
 import { logger } from "./logger";
 import { consumePromo, validatePromo } from "./promo";
 import { resolveTariffQuote, resolveUpgradeQuote } from "./pricing";
+import { creditReferralForPaidOrder, walletBalance } from "./referrals";
 import { env } from "./env";
 import { getKeyForUser, getKeyForUserId, type RenderedKey } from "./keys-service";
 import { enqueueFulfillJob } from "./outbox";
@@ -69,6 +70,8 @@ export interface CreateOrderInput {
   userName?: string | null;
   /** Optional promo code (raw, any case) — validated + consumed server-side. */
   promoCode?: string | null;
+  /** Spend the referral wallet balance against this order (remainder via Platega). */
+  useBalance?: boolean;
 }
 
 export type CreateOrderResult =
@@ -161,6 +164,16 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     finalAmount = preview.finalAmount;
   }
 
+  // Referral balance: applied after the promo, before Platega. The debit
+  // lands with the order id as refId AFTER the row exists; a Platega failure
+  // refunds it via a compensating credit (ledger stays append-only). A fully
+  // covered order skips Platega and goes paid → fulfill directly.
+  let balanceUsed = 0;
+  if (input.useBalance === true && finalAmount > 0) {
+    const balance = await walletBalance(user.id);
+    balanceUsed = Math.max(0, Math.min(balance, finalAmount));
+  }
+
   const order = await prisma.order.create({
     data: {
       userId: user.id,
@@ -173,12 +186,38 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       status: "pending",
       promoCode,
       finalAmount,
+      balanceUsed,
     },
   });
 
+  if (balanceUsed > 0) {
+    await prisma.walletTx.create({
+      data: { userId: user.id, amount: -balanceUsed, reason: "order_spend", refId: order.id },
+    });
+  }
+
+  const chargeAmount = finalAmount - balanceUsed;
+  if (chargeAmount <= 0) {
+    // Fully covered by balance (or a 100% promo): no Platega leg. The SAME
+    // paid claim + fulfill enqueue the callback uses, so referral credit and
+    // provisioning behave identically. The UI lands on the order status page
+    // instead of a payment page (same `{url}` shape, relative URL).
+    const claimed = await applyConfirmedPayment(order.id);
+    if (!claimed) {
+      logger.error({ route: "orders", outcome: "balance_claim_failed", orderId: order.id });
+      throw new Error("orders:claim_failed");
+    }
+    const settled = await prisma.order.findUnique({ where: { id: order.id } });
+    return {
+      kind: "created",
+      order: settled ?? order,
+      url: `${env.APP_BASE_URL}/payments/${order.id}`,
+    };
+  }
+
   try {
     const tx = await platega.createTransaction({
-      amount: finalAmount,
+      amount: chargeAmount,
       currency,
       description: `Order ${order.id}`,
       returnUrl: `${env.APP_BASE_URL}/payments/${order.id}`,
@@ -199,6 +238,18 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   } catch (err) {
     if (err instanceof PlategaError) {
       logger.warn({ route: "orders", code: err.code, outcome: "platega_create_failed" });
+      if (balanceUsed > 0) {
+        // Money never moved — refund the reserved balance so it is spendable
+        // again. Append-only ledger: a compensating credit, never a delete.
+        await prisma.walletTx.create({
+          data: {
+            userId: user.id,
+            amount: balanceUsed,
+            reason: "order_spend_refund",
+            refId: order.id,
+          },
+        });
+      }
       return { kind: "provider_error", code: err.code };
     }
     throw err;
@@ -386,6 +437,18 @@ export async function applyConfirmedPayment(orderId: string): Promise<boolean> {
   });
   if (!claimed) return false;
   await enqueueFulfillOrder(orderId);
+  // Referral accrual lives here — the single paid-entry point shared by the
+  // callback, the reconcile job, and balance-covered orders. Best-effort: a
+  // credit failure must never fail the payment ack.
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { userId: true, finalAmount: true },
+    });
+    if (order) await creditReferralForPaidOrder(order.userId, order.finalAmount);
+  } catch {
+    logger.error({ route: "orders", outcome: "referral_credit_failed", orderId });
+  }
   return true;
 }
 

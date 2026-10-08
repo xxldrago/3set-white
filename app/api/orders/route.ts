@@ -44,6 +44,8 @@ const bodySchema = z
     addDevices: z.number().int().min(1).max(MAX_DEVICES).optional(),
     // Optional promo code — validated + consumed server-side at order time.
     promoCode: z.string().trim().min(1).max(32).optional(),
+    // Spend the referral wallet balance first (remainder via Platega).
+    useBalance: z.boolean().optional(),
   })
   .superRefine((value, ctx) => {
     if (value.kind === "new") {
@@ -102,6 +104,7 @@ export async function POST(req: Request): Promise<Response> {
             devices: parsed.data.devices ?? MIN_DEVICES,
             userName: null,
             promoCode: parsed.data.promoCode ?? null,
+            useBalance: parsed.data.useBalance ?? false,
           })
         : await createMutationOrder(userId, parsed.data);
 
@@ -175,6 +178,7 @@ async function createMutationOrder(
       keyId: precheck.key.id,
       userName: null,
       promoCode: body.promoCode ?? null,
+      useBalance: body.useBalance ?? false,
     });
   }
 
@@ -186,6 +190,7 @@ async function createMutationOrder(
     keyId: precheck.key.id,
     userName: null,
     promoCode: body.promoCode ?? null,
+    useBalance: body.useBalance ?? false,
   });
 }
 

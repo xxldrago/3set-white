@@ -15,6 +15,7 @@ import { ArtemidaError } from "../../../lib/artemida";
 import {
   MAX_DEVICES,
   MIN_DEVICES,
+  OrderPromoError,
   createOrder,
   keyDeviceLimit,
   precheckOwnedKeyByUserId,
@@ -41,6 +42,8 @@ const bodySchema = z
     devices: z.number().int().min(MIN_DEVICES).max(MAX_DEVICES).optional(),
     // Upgrade only: devices to add, bounded to the app ceiling.
     addDevices: z.number().int().min(1).max(MAX_DEVICES).optional(),
+    // Optional promo code — validated + consumed server-side at order time.
+    promoCode: z.string().trim().min(1).max(32).optional(),
   })
   .superRefine((value, ctx) => {
     if (value.kind === "new") {
@@ -98,6 +101,7 @@ export async function POST(req: Request): Promise<Response> {
             days: parsed.data.days ?? null,
             devices: parsed.data.devices ?? MIN_DEVICES,
             userName: null,
+            promoCode: parsed.data.promoCode ?? null,
           })
         : await createMutationOrder(userId, parsed.data);
 
@@ -114,6 +118,9 @@ export async function POST(req: Request): Promise<Response> {
   } catch (err) {
     if (err instanceof OrderRequestError) {
       return Response.json({ error: err.code }, { status: err.status });
+    }
+    if (err instanceof OrderPromoError) {
+      return Response.json({ error: "promo_invalid" }, { status: 400 });
     }
     if (err instanceof ArtemidaError) {
       logger.warn({ route: "orders", code: err.code, requestId: err.requestId });
@@ -167,6 +174,7 @@ async function createMutationOrder(
       addDevices,
       keyId: precheck.key.id,
       userName: null,
+      promoCode: body.promoCode ?? null,
     });
   }
 
@@ -177,6 +185,7 @@ async function createMutationOrder(
     devices: currentLimit,
     keyId: precheck.key.id,
     userName: null,
+    promoCode: body.promoCode ?? null,
   });
 }
 

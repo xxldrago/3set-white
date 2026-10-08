@@ -5,6 +5,7 @@
 // price is the number ARTEMIDA returned, verbatim — never recomputed.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import PayCta from './PayCta';
+import PromoField from './PromoField';
 import { t } from '@/lib/i18n';
 
 const DAYS = [7, 30, 90] as const;
@@ -21,6 +22,7 @@ export default function TariffPicker() {
   const [price, setPrice] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [promoCode, setPromoCode] = useState<string | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -173,12 +175,14 @@ export default function TariffPicker() {
 
       {/* Primary pay CTA: disabled until a price lands (no order without a price).
           Purchasing works for any authenticated account — email-only included. */}
+      <PromoField key={`days=${days}&devices=${devices}`} query={`days=${days}&devices=${devices}`} onCode={setPromoCode} />
       <PayCta
         kind="new"
         days={days}
         devices={devices}
         disabled={price === null}
         label={t('pay.buy')}
+        promoCode={promoCode}
       />
 
       {error && (

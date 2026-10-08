@@ -8,6 +8,7 @@
 // claims pending→paid; provisioning is the Wave-2 worker's job (D-38).
 import type { Order, Outbox } from "../generated/prisma/client";
 import { logger } from "./logger";
+import { consumePromo, validatePromo } from "./promo";
 import { resolveTariffQuote, resolveUpgradeQuote } from "./pricing";
 import { env } from "./env";
 import { getKeyForUser, getKeyForUserId, type RenderedKey } from "./keys-service";
@@ -66,11 +67,21 @@ export interface CreateOrderInput {
   addDevices?: number;
   keyId?: string | null;
   userName?: string | null;
+  /** Optional promo code (raw, any case) — validated + consumed server-side. */
+  promoCode?: string | null;
 }
 
 export type CreateOrderResult =
   | { kind: "created"; order: Order; url: string }
   | { kind: "provider_error"; code: PlategaError["code"] };
+
+/** Typed promo failure at order time (route maps to 400 `promo_invalid`). */
+export class OrderPromoError extends Error {
+  constructor() {
+    super("promo_invalid");
+    this.name = "OrderPromoError";
+  }
+}
 
 /**
  * Server-quoted order creation (D-33/D-42).
@@ -128,6 +139,28 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   // addDevices delta (the observed wire field), for `new`/`renew` the count.
   const storedDevices = input.kind === "upgrade" ? (input.addDevices ?? 1) : input.devices;
 
+  // Promo intake: validated against the quoted amount and consumed atomically
+  // BEFORE the order row exists, so a lost race (exhausted between preview
+  // and checkout) fails closed with `promo_invalid` instead of overcharging
+  // or overspending the code. finalAmount is what Platega charges.
+  let promoCode: string | null = null;
+  let finalAmount = amount;
+  const rawPromo = input.promoCode?.trim() ?? "";
+  if (rawPromo.length > 0) {
+    const preview = await validatePromo(rawPromo, amount);
+    if (!preview.ok) {
+      logger.warn({ route: "orders", outcome: "promo_rejected", reason: preview.reason });
+      throw new OrderPromoError();
+    }
+    const consumed = await consumePromo(rawPromo);
+    if (!consumed) {
+      logger.warn({ route: "orders", outcome: "promo_race_lost" });
+      throw new OrderPromoError();
+    }
+    promoCode = consumed.code;
+    finalAmount = preview.finalAmount;
+  }
+
   const order = await prisma.order.create({
     data: {
       userId: user.id,
@@ -138,12 +171,14 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       amount,
       currency,
       status: "pending",
+      promoCode,
+      finalAmount,
     },
   });
 
   try {
     const tx = await platega.createTransaction({
-      amount,
+      amount: finalAmount,
       currency,
       description: `Order ${order.id}`,
       returnUrl: `${env.APP_BASE_URL}/payments/${order.id}`,

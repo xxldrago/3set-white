@@ -24,6 +24,8 @@ interface PayCtaProps {
   disabled?: boolean;
   /** Override the idle label (e.g. «Купить» in the tariff picker). */
   label?: string;
+  /** Applied promo code (uppercased) — validated + consumed server-side. */
+  promoCode?: string | null;
 }
 
 const PRIMARY =
@@ -39,21 +41,38 @@ export default function PayCta({
   keyId,
   disabled = false,
   label,
+  promoCode = null,
 }: PayCtaProps) {
   const [state, setState] = useState<PayState>('idle');
+  const [promoRejected, setPromoRejected] = useState(false);
 
   const createOrder = useCallback(async () => {
     if (state === 'loading') return; // in-flight lock
     setState('loading');
+    setPromoRejected(false);
     try {
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // `undefined` fields are dropped by JSON.stringify — only the intent
-        // for this kind is sent; no price.
-        body: JSON.stringify({ kind, days, devices, addDevices, keyId }),
+        // for this kind is sent; no price. The promo is re-validated +
+        // consumed server-side (a code exhausted after preview fails here).
+        body: JSON.stringify({ kind, days, devices, addDevices, keyId, promoCode }),
       });
-      if (!res.ok) throw new Error('order_create_failed');
+      if (!res.ok) {
+        let code: unknown = null;
+        try {
+          code = ((await res.json()) as { error?: unknown }).error;
+        } catch {
+          code = null;
+        }
+        if (code === 'promo_invalid') {
+          setPromoRejected(true);
+          setState('idle');
+          return;
+        }
+        throw new Error('order_create_failed');
+      }
       const body = (await res.json()) as { url?: unknown };
       if (typeof body.url !== 'string' || body.url.length === 0) {
         throw new Error('order_url_missing');
@@ -63,7 +82,7 @@ export default function PayCta({
     } catch {
       setState('error');
     }
-  }, [state, kind, days, devices, addDevices, keyId]);
+  }, [state, kind, days, devices, addDevices, keyId, promoCode]);
 
   return (
     <div className="flex flex-col gap-2">
@@ -75,6 +94,12 @@ export default function PayCta({
       >
         {state === 'loading' ? t('pay.ctaLoading') : (label ?? t('pay.cta'))}
       </button>
+
+      {promoRejected && state === 'idle' && (
+        <p role="alert" className="text-sm text-red-600">
+          {t('admin.promoInvalid')}
+        </p>
+      )}
 
       {state === 'error' && (
         <div className="flex flex-col gap-2" role="alert">

@@ -11,6 +11,7 @@ import { z } from "zod";
 import { ArtemidaError } from "../../../lib/artemida";
 import { logger } from "../../../lib/logger";
 import { resolveTariffQuote, resolveUpgradeQuote } from "../../../lib/pricing";
+import { validatePromo } from "../../../lib/promo";
 import { requireSession, SessionError } from "../../../lib/session";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +28,8 @@ const pricingQuery = z
     devices: z.coerce.number().int().min(2).max(MAX_DEVICES),
     kind: z.enum(["new", "renew", "upgrade"]).default("new"),
     addDevices: z.coerce.number().int().min(1).max(MAX_DEVICES - 2).optional(),
+    // Optional promo preview — validated read-only, never consumed here.
+    promo: z.string().trim().min(1).max(32).optional(),
   })
   .superRefine((value, ctx) => {
     if (value.kind !== "upgrade") return;
@@ -62,12 +65,14 @@ export async function GET(req: Request): Promise<Response> {
     devices: url.searchParams.get("devices"),
     kind: url.searchParams.get("kind") ?? undefined,
     addDevices: url.searchParams.get("addDevices") ?? undefined,
+    promo: url.searchParams.get("promo") ?? undefined,
   });
   if (!parsed.success) {
     return Response.json({ error: "bad_request" }, { status: 400 });
   }
 
   try {
+    let amount: number;
     if (parsed.data.kind === "upgrade" && parsed.data.addDevices !== undefined) {
       // D-43/D-28: the provider exposes no upgrade-quote endpoint; the delta
       // derives from the retail tariff grid (or the observed provider tier
@@ -77,12 +82,26 @@ export async function GET(req: Request): Promise<Response> {
         devices: parsed.data.devices,
         addDevices: parsed.data.addDevices,
       });
-      return Response.json({ price: quote.amount });
+      amount = quote.amount;
+    } else {
+      // Displayed price: manual tariff row wins, otherwise the live provider
+      // amount. The money pipeline resolves through the same helper.
+      const pricing = await resolveTariffQuote(parsed.data.days, parsed.data.devices);
+      amount = pricing.amount;
     }
-    // Displayed price: manual tariff row wins, otherwise the live provider
-    // amount. The money pipeline resolves through the same helper.
-    const pricing = await resolveTariffQuote(parsed.data.days, parsed.data.devices);
-    return Response.json({ price: pricing.amount });
+    // Promo preview (read-only): an invalid/expired code previews as null —
+    // the storefront shows the list price; checkout re-validates + consumes.
+    if (parsed.data.promo !== undefined) {
+      const preview = await validatePromo(parsed.data.promo, Math.round(amount));
+      if (preview.ok) {
+        return Response.json({
+          price: Math.round(amount),
+          promo: { code: preview.row.code, finalPrice: preview.finalAmount },
+        });
+      }
+      return Response.json({ price: Math.round(amount), promo: null });
+    }
+    return Response.json({ price: Math.round(amount) });
   } catch (err) {
     if (err instanceof ArtemidaError) {
       logger.warn({ route: "pricing", code: err.code, requestId: err.requestId });

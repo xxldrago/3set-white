@@ -10,6 +10,7 @@
 // (T-03-amount).
 import { useCallback, useEffect, useRef, useState } from 'react';
 import PayCta from './PayCta';
+import PromoField from './PromoField';
 import { t } from '@/lib/i18n';
 
 const DAYS = [7, 30, 90] as const;
@@ -35,6 +36,7 @@ export default function RenewPanel({
   const [days, setDays] = useState<number>(30);
   const [price, setPrice] = useState<number | null>(null);
   const [error, setError] = useState(false);
+  const [promoCode, setPromoCode] = useState<string | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -151,7 +153,9 @@ export default function RenewPanel({
         </div>
       )}
 
-      <PayCta kind="renew" days={days} keyId={keyId} disabled={price === null} />
+      <PromoField key={`days=${days}&devices=${deviceLimit}`} query={`days=${days}&devices=${deviceLimit}`} onCode={setPromoCode} />
+
+      <PayCta kind="renew" days={days} keyId={keyId} disabled={price === null} promoCode={promoCode} />
 
       <button type="button" onClick={() => setOpen(false)} className={SECONDARY}>
         {t('common.cancel')}

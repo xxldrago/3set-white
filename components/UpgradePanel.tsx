@@ -9,6 +9,7 @@
 // `TariffPicker`. The browser sends no price (T-03-amount/T-03-upgrade-amount).
 import { useCallback, useEffect, useRef, useState } from 'react';
 import PayCta from './PayCta';
+import PromoField from './PromoField';
 import { t } from '@/lib/i18n';
 
 const MAX_DEVICES = 10;
@@ -37,6 +38,7 @@ export default function UpgradePanel({
   const [addDevices, setAddDevices] = useState(1);
   const [price, setPrice] = useState<number | null>(null);
   const [error, setError] = useState(false);
+  const [promoCode, setPromoCode] = useState<string | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -150,11 +152,18 @@ export default function UpgradePanel({
         </div>
       )}
 
+      <PromoField
+        key={`kind=upgrade&days=30&devices=${deviceLimit}&addDevices=${addDevices}`}
+        query={`kind=upgrade&days=30&devices=${deviceLimit}&addDevices=${addDevices}`}
+        onCode={setPromoCode}
+      />
+
       <PayCta
         kind="upgrade"
         addDevices={addDevices}
         keyId={keyId}
         disabled={price === null}
+        promoCode={promoCode}
       />
 
       <button type="button" onClick={() => setOpen(false)} className={SECONDARY}>

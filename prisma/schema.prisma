@@ -143,6 +143,8 @@ model Order {
   nextAttemptAt    DateTime?   @map("next_attempt_at")
   createdAt        DateTime    @default(now()) @map("created_at")
   updatedAt        DateTime    @updatedAt @map("updated_at")
+  promoCode        String?     @map("promo_code")
+  finalAmount      Int         @default(0) @map("final_amount")
   outbox           Outbox[]
 
   @@index([userId, createdAt])
@@ -368,6 +370,19 @@ model AdminUser {
   updatedAt  DateTime  @updatedAt @map("updated_at")
 
   @@map("admin_users")
+}
+
+model PromoCode {
+  id          String    @id @default(uuid())
+  code        String    @unique
+  discount    Int       // percentage (0-100)
+  type        String    // "percentage" или "fixed"
+  maxUses     Int?      // null = unlimited
+  usedCount   Int       @default(0)
+  expiresAt   DateTime? // null = permanently valid
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@map("promo_codes")
 }
 
 enum BroadcastStatus {

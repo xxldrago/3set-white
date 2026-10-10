@@ -326,6 +326,8 @@ export const ru = {
     navPromos: 'Промокоды',
     navReferrals: 'Рефералы',
     navPartner: 'Партнёр',
+    rolesAllTitle: 'Все пользователи',
+    rolesAllSubtitle: 'Назначение ролей, доступы и переход в профиль (там же — процент партнёра). Роль требует привязанный Telegram.',
     rolePartner: 'Партнёр',
     partnerTitle: 'Партнёрский дашборд',
     partnerSubtitle: 'Ваш код, доход и выплаты. Поддержка — через кабинет.',

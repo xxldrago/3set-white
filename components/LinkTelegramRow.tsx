@@ -113,7 +113,7 @@ function LinkViaBot({ onDone }: { onDone: () => void }) {
   return (
     <div className="flex flex-col gap-2">
       {state === 'idle' && (
-        <button type="button" onClick={() => void request()} className={SECONDARY}>
+        <button type="button" onClick={() => void request()} className={PRIMARY}>
           {t('auth.linkCta')}
         </button>
       )}

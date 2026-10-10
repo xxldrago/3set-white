@@ -9,7 +9,7 @@
 // oracle (D-51): `last_admin` and `not_found` both render as 404.
 import { z } from "zod";
 import { requireRole, type AdminRole } from "../../../../lib/admin-auth";
-import { changeAdminRole } from "../../../../lib/admin-roles";
+import { assignAdminRole, changeAdminRole } from "../../../../lib/admin-roles";
 import { logger } from "../../../../lib/logger";
 import { AdminError, SessionError } from "../../../../lib/session";
 
@@ -54,10 +54,17 @@ export async function POST(req: Request): Promise<Response> {
 
   try {
     const outcome = await changeAdminRole(targetTelegramId, parsed.data.role);
-    if (outcome !== "ok") {
-      // No oracle: an unknown target and a last-admin refusal are identical.
+    if (outcome === "ok") {
+      return Response.json({ ok: true, role: parsed.data.role });
+    }
+    if (outcome === "last_admin") {
+      // No oracle: a last-admin refusal is identical to a missing route.
       return Response.json({ error: "not_found" }, { status: 404 });
     }
+    // No staff row yet → assign (the roles-page "all users" flow). Roles
+    // require a Telegram identity — the admin panel itself is Telegram-gated.
+    await assignAdminRole(targetTelegramId, parsed.data.role);
+    logger.info({ route: "admin-roles", outcome: "assigned" });
     return Response.json({ ok: true, role: parsed.data.role });
   } catch {
     logger.error({ route: "admin-roles", outcome: "unexpected_error" });

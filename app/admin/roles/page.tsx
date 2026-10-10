@@ -8,9 +8,10 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import AllUsersRolesTable from '@/components/admin/AllUsersRolesTable';
 import RolesManager from '@/components/admin/RolesManager';
 import { requireRole } from '@/lib/admin-auth';
-import { loadAdminRoster } from '@/lib/admin-service';
+import { loadAdminRoster, loadAdminUsersTable } from '@/lib/admin-service';
 import { t } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
 import { AdminError, SessionError } from '@/lib/session';
@@ -62,6 +63,39 @@ async function RosterSection({ callerTelegramId }: { callerTelegramId: number })
   return <RolesManager rows={rows} callerTelegramId={callerTelegramId} />;
 }
 
+async function AllUsersSection({ callerTelegramId }: { callerTelegramId: number }) {
+  let rows;
+  try {
+    rows = await loadAdminUsersTable();
+  } catch {
+    logger.error({ route: 'admin-roles', outcome: 'users_load_failed' });
+    return (
+      <section className={CARD} role="alert">
+        <p className="text-muted">{t('common.errorLoad')}</p>
+        <Link href="/admin/roles" className={SECONDARY}>
+          {t('common.retry')}
+        </Link>
+      </section>
+    );
+  }
+
+  if (rows.length === 0) {
+    return (
+      <section className={CARD}>
+        <p className="text-muted">{t('admin.rolesEmpty')}</p>
+      </section>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <h3 className="text-xl font-semibold text-foreground">{t('admin.rolesAllTitle')}</h3>
+      <p className="text-sm text-muted">{t('admin.rolesAllSubtitle')}</p>
+      <AllUsersRolesTable rows={rows} callerTelegramId={callerTelegramId} />
+    </div>
+  );
+}
+
 export default async function AdminRolesPage() {
   let caller: { telegramId: number };
   try {
@@ -83,6 +117,10 @@ export default async function AdminRolesPage() {
 
       <Suspense fallback={<SkeletonRows />}>
         <RosterSection callerTelegramId={caller.telegramId} />
+      </Suspense>
+
+      <Suspense fallback={<SkeletonRows />}>
+        <AllUsersSection callerTelegramId={caller.telegramId} />
       </Suspense>
     </section>
   );

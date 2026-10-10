@@ -276,12 +276,19 @@ describe("POST /api/admin/roles — gate + conditional write (D-66 / T-05-15)", 
     expect(row?.role).toBe("manager");
   });
 
-  it("404s an unknown target and writes nothing", async () => {
+  it("assigns a staff row for a target without one (roles-page all-users flow)", async () => {
     await authorize(ADMIN);
+    await prisma.adminUser.deleteMany({ where: { telegramId: BigInt(919999999) } });
     const res = await adminRoleChange(
-      roleChangeRequest({ telegramId: 919999999, role: "manager" }),
+      roleChangeRequest({ telegramId: 919999999, role: "partner" }),
     );
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, role: "partner" });
+    const row = await prisma.adminUser.findUnique({
+      where: { telegramId: BigInt(919999999) },
+    });
+    expect(row?.role).toBe("partner");
+    await prisma.adminUser.deleteMany({ where: { telegramId: BigInt(919999999) } });
   });
 
   it("rejects a self-change (400) and leaves the caller's role unchanged", async () => {

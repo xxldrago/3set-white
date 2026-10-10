@@ -19,6 +19,34 @@ import { prisma } from "./prisma";
 
 export type RoleChangeOutcome = "ok" | "not_found" | "last_admin";
 
+/**
+ * Assign a role to a Telegram id with no staff row (the roles-page "all
+ * users" flow). Creates the `admin_users` row; a concurrent assign wins via
+ * P2002 and reports `ok` (the UI refreshes to the stored role). Never
+ * touches the last-admin invariant — no administrator row is removed.
+ */
+export async function assignAdminRole(
+  targetTelegramId: bigint,
+  role: AdminRole,
+): Promise<"ok"> {
+  try {
+    await prisma.adminUser.create({
+      data: { telegramId: targetTelegramId, role },
+    });
+    return "ok";
+  } catch (err: unknown) {
+    if (
+      typeof err === "object" &&
+      err !== null &&
+      "code" in err &&
+      (err as { code: unknown }).code === "P2002"
+    ) {
+      return "ok";
+    }
+    throw err;
+  }
+}
+
 /** Prisma's write-conflict / deadlock code (surfaced from PG 40001 / 40P01). */
 function isWriteConflict(err: unknown): boolean {
   return (err as { code?: string }).code === "P2034";

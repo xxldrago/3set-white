@@ -50,6 +50,9 @@ export default function UserProfileCard({
           {header.referralCode && (
             <p className="font-mono text-sm text-muted">{header.referralCode}</p>
           )}
+          <p className="text-sm text-muted">
+            {header.passwordSet ? t('admin.profilePasswordSet') : t('admin.profilePasswordNone')}
+          </p>
         </div>
         {header.staffRole && <RoleChip role={header.staffRole} />}
       </div>

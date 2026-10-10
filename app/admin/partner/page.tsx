@@ -71,22 +71,22 @@ export default async function AdminPartnerPage() {
           {t('admin.partnerRate')}: <span className="font-semibold text-foreground">{rate}</span>{' '}
           <span className="text-xs">({t('admin.partnerRateGlobal')})</span>
         </p>
-        <dl className="grid grid-cols-3 gap-2 text-center">
+        <dl className="grid grid-cols-3 gap-2 text-center min-w-0">
           <div className="flex flex-col gap-1 rounded-2xl bg-panel p-3">
             <dt className="text-xs text-muted">{t('auth.refStatsInvited')}</dt>
-            <dd className="text-xl font-semibold tabular-nums text-foreground">
+            <dd className="truncate text-lg sm:text-xl font-semibold tabular-nums text-foreground">
               {summary.referrals}
             </dd>
           </div>
           <div className="flex flex-col gap-1 rounded-2xl bg-panel p-3">
             <dt className="text-xs text-muted">{t('auth.refStatsEarned')}</dt>
-            <dd className="text-xl font-semibold tabular-nums text-foreground">
+            <dd className="truncate text-lg sm:text-xl font-semibold tabular-nums text-foreground">
               {summary.earned} ₽
             </dd>
           </div>
           <div className="flex flex-col gap-1 rounded-2xl bg-panel p-3">
             <dt className="text-xs text-muted">{t('auth.refStatsBalance')}</dt>
-            <dd className="text-xl font-semibold tabular-nums text-foreground">
+            <dd className="truncate text-lg sm:text-xl font-semibold tabular-nums text-foreground">
               {summary.balance} ₽
             </dd>
           </div>

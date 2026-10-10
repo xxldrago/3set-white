@@ -137,7 +137,7 @@ describe("partner percent rate + personal promo", () => {
   it("credits the individual percent on first paid order", async () => {
     const code = await ensureReferralCode(partnerId);
     await expect(pinReferrer(buyerId, code)).resolves.toBe(partnerId);
-    await creditReferralForPaidOrder(buyerId, 1000);
+    await creditReferralForPaidOrder(buyerId, 1000, "order-1");
     const earned = await prisma.walletTx.aggregate({
       where: { userId: partnerId, reason: "referral_bonus" },
       _sum: { amount: true },

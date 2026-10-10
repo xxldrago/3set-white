@@ -456,7 +456,7 @@ export async function applyConfirmedPayment(orderId: string): Promise<boolean> {
       where: { id: orderId },
       select: { userId: true, finalAmount: true },
     });
-    if (order) await creditReferralForPaidOrder(order.userId, order.finalAmount);
+    if (order) await creditReferralForPaidOrder(order.userId, order.finalAmount, orderId);
   } catch {
     logger.error({ route: "orders", outcome: "referral_credit_failed", orderId });
   }

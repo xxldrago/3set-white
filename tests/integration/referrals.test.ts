@@ -199,11 +199,11 @@ describe("settings + first-paid credit", () => {
   it("credits inviter percent + invitee bonus once, on the first paid order", async () => {
     const code = await ensureReferralCode(inviterId);
     await expect(pinReferrer(refereeId, code)).resolves.toBe(inviterId);
-    await creditReferralForPaidOrder(refereeId, 1000);
+    await creditReferralForPaidOrder(refereeId, 1000, "order-1");
     await expect(walletBalance(inviterId)).resolves.toBe(200);
     await expect(walletBalance(refereeId)).resolves.toBe(50);
     // Second paid order credits nothing more.
-    await creditReferralForPaidOrder(refereeId, 1000);
+    await creditReferralForPaidOrder(refereeId, 1000, "order-1");
     await expect(walletBalance(inviterId)).resolves.toBe(200);
     await expect(getReferralSummary(inviterId)).resolves.toMatchObject({
       referrals: 1,
@@ -221,7 +221,7 @@ describe("settings + first-paid credit", () => {
       data: { telegramId: STRANGER_TG, referredById: inviterId },
       select: { id: true },
     });
-    await creditReferralForPaidOrder(stranger.id, 1000);
+    await creditReferralForPaidOrder(stranger.id, 1000, "order-1");
     // 200 (prior) + 77 custom (invitee bonus also lands on the stranger).
     await expect(walletBalance(inviterId)).resolves.toBe(277);
     await expect(walletBalance(stranger.id)).resolves.toBe(50);

@@ -68,6 +68,9 @@ export interface AdminProfileHeader {
   referralCode: string | null;
   customInviterReward: number | null;
   customInviterKind: string | null;
+  customSubdomain: string | null;
+  /** Password presence only — the hash itself never leaves the server. */
+  passwordSet: boolean;
 }
 
 /** One independently-degrading profile sub-section (ok:false = read failed). */
@@ -233,6 +236,8 @@ export async function loadAdminHeader(userId: number): Promise<AdminProfileHeade
       referralCode: true,
       customInviterReward: true,
       customInviterKind: true,
+      customSubdomain: true,
+      passwordHash: true,
     },
   });
   if (!user) return null;
@@ -256,6 +261,61 @@ export async function loadAdminHeader(userId: number): Promise<AdminProfileHeade
     referralCode: user.referralCode,
     customInviterReward: user.customInviterReward,
     customInviterKind: user.customInviterKind,
+    customSubdomain: user.customSubdomain,
+    passwordSet: user.passwordHash !== null,
+  };
+}
+
+/** Referral stats + roster for one user (admin profile section). */
+export interface AdminReferralRow {
+  userId: number;
+  displayName: string | null;
+  email: string | null;
+  createdAt: Date;
+}
+
+export interface AdminReferrals {
+  count: number;
+  earned: number;
+  spent: number;
+  rows: AdminReferralRow[];
+}
+
+export async function loadAdminReferrals(userId: number): Promise<AdminReferrals> {
+  const [referrals, sums] = await Promise.all([
+    prisma.user.findMany({
+      where: { referredById: userId },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        username: true,
+        createdAt: true,
+      },
+    }),
+    prisma.walletTx.groupBy({
+      by: ["reason"],
+      where: { userId },
+      _sum: { amount: true },
+    }),
+  ]);
+  const sumOf = (reason: string): number =>
+    sums.find((row) => row.reason === reason)?._sum.amount ?? 0;
+  return {
+    count: referrals.length,
+    // Lifetime referral earnings vs. referral-funded spending. Withdrawal
+    // holds/refunds are payout mechanics and excluded from "spent".
+    earned: Math.max(0, sumOf("referral_bonus")),
+    spent: Math.max(0, -sumOf("order_spend")),
+    rows: referrals.map((row) => ({
+      userId: row.id,
+      displayName: displayNameOf(row),
+      email: row.email,
+      createdAt: row.createdAt,
+    })),
   };
 }
 

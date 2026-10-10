@@ -101,7 +101,7 @@ export default function RenewPanel({
         <span className="text-sm text-muted">
           {t('pricing.daysLabel')}
         </span>
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3">
           {DAYS.map((value) => {
             const selected = value === days;
             const label =
@@ -119,8 +119,8 @@ export default function RenewPanel({
                 onClick={() => setDays(value)}
                 className={
                   selected
-                    ? 'h-11 flex-1 rounded-full bg-foreground px-4 text-lime transition-colors disabled:opacity-50'
-                    : 'h-11 flex-1 rounded-full border border-line px-4 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line '
+                    ? 'h-12 min-h-12 flex-1 whitespace-nowrap rounded-full bg-foreground px-5 text-sm text-lime transition-colors disabled:opacity-50'
+                    : 'h-12 min-h-12 flex-1 whitespace-nowrap rounded-full border border-line px-5 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line '
                 }
               >
                 {label}

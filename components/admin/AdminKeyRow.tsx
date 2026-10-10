@@ -7,6 +7,7 @@
 import { formatKeyDate, statusLabel, type StatusKind } from '@/lib/keys-service';
 import { t } from '@/lib/i18n';
 import type { AdminKeyView } from '@/lib/admin-service';
+import AdminKeyDevices from './AdminKeyDevices';
 
 const BADGE_BASE = 'inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold';
 const CARD = 'flex flex-col gap-3 rounded-2xl border border-line p-6 border-line';
@@ -20,7 +21,7 @@ const STATUS_TINT: Record<StatusKind, string> = {
   unknown: 'bg-background0/10 text-dim',
 };
 
-export default function AdminKeyRow({ item }: { item: AdminKeyView }) {
+export default function AdminKeyRow({ item, userId }: { item: AdminKeyView; userId: number }) {
   const expiry = item.expiresAt ? formatKeyDate(item.expiresAt) : '—';
   const devices =
     item.devices !== null && item.deviceLimit !== null
@@ -51,6 +52,8 @@ export default function AdminKeyRow({ item }: { item: AdminKeyView }) {
           <dd>{devices}</dd>
         </div>
       </dl>
+
+      <AdminKeyDevices userId={userId} keyId={item.id} />
     </article>
   );
 }

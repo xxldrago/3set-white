@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import AdminKeyRow from '@/components/admin/AdminKeyRow';
 import RewardControl from '@/components/admin/RewardControl';
+import SubdomainControl from '@/components/admin/SubdomainControl';
 import RoleChangeControl from '@/components/admin/RoleChangeControl';
 import UserProfileCard from '@/components/admin/UserProfileCard';
 import PaymentStatusChip from '@/components/PaymentStatusChip';
@@ -22,6 +23,7 @@ import {
   loadAdminHeader,
   loadAdminKeys,
   loadAdminPayments,
+  loadAdminReferrals,
   loadAdminTickets,
 } from '@/lib/admin-service';
 import { t } from '@/lib/i18n';
@@ -106,7 +108,7 @@ async function KeysSection({ userId }: { userId: number }) {
       <h2 className={SECTION_TITLE}>{title}</h2>
       <div className="flex flex-col gap-4">
         {keys.map((key) => (
-          <AdminKeyRow key={key.id} item={key} />
+          <AdminKeyRow key={key.id} item={key} userId={userId} />
         ))}
       </div>
     </section>
@@ -154,6 +156,48 @@ async function PaymentsSection({ userId }: { userId: number }) {
               </div>
             </dl>
           </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+async function ReferralsSection({ userId }: { userId: number }) {
+  const title = t('admin.profileReferrals');
+  let data;
+  try {
+    data = await loadAdminReferrals(userId);
+  } catch {
+    logger.error({ route: 'admin-user-profile', outcome: 'referrals_load_failed' });
+    return <PartialSection userId={userId} title={title} />;
+  }
+  if (data.count === 0) {
+    return <EmptySection title={title} body={t('admin.profileNoReferrals')} />;
+  }
+  return (
+    <section className={CARD}>
+      <h2 className={SECTION_TITLE}>{title}</h2>
+      <p className="text-sm tabular-nums text-muted">
+        {t('admin.profileReferralsStats', {
+          count: data.count,
+          earned: priceFormatter.format(data.earned),
+          spent: priceFormatter.format(data.spent),
+        })}
+      </p>
+      <div className="flex flex-col gap-2">
+        {data.rows.map((row) => (
+          <Link
+            key={row.userId}
+            href={`/admin/users/${row.userId}`}
+            className="flex items-center justify-between gap-3 rounded-2xl border border-line p-4 transition-colors hover:bg-foreground/5"
+          >
+            <span className="min-w-0 truncate text-sm font-medium text-foreground">
+              {row.displayName ?? row.email ?? `#${row.userId}`}
+            </span>
+            <span className="shrink-0 text-xs tabular-nums text-muted">
+              {formatPaymentDate(row.createdAt)}
+            </span>
+          </Link>
         ))}
       </div>
     </section>
@@ -247,6 +291,9 @@ export default async function AdminUserProfilePage({
             currentKind={header.customInviterKind}
           />
         )}
+        {caller.role === 'administrator' && (
+          <SubdomainControl userId={header.userId} current={header.customSubdomain} />
+        )}
       </UserProfileCard>
 
       {/* Independent boundaries: one failing read cannot blank the others. */}
@@ -258,6 +305,9 @@ export default async function AdminUserProfilePage({
       </Suspense>
       <Suspense fallback={<SkeletonRows />}>
         <TicketsSection userId={userId} />
+      </Suspense>
+      <Suspense fallback={<SkeletonRows />}>
+        <ReferralsSection userId={userId} />
       </Suspense>
     </section>
   );

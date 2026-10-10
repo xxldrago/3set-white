@@ -63,6 +63,10 @@ model User {
   // customInviterReward this is the per-user rate the admin panel edits —
   // partners earn their individual percent, everyone else the global rate.
   customInviterKind   String? @map("custom_inviter_kind")
+  // Personal subdomain (`<name>.3set.online`, admin-assigned, unique).
+  // Visitors are resolved to this account's referral code and pinned
+  // permanently on registration (first-wins, same as ?ref=).
+  customSubdomain     String? @unique @map("custom_subdomain")
   pendingPromo       String? @map("pending_promo")
   walletTx           WalletTx[]
   withdrawals        Withdrawal[]

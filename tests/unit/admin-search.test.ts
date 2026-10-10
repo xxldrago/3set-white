@@ -605,11 +605,12 @@ describe("admin profile — per-section degradation (UI-SPEC §4)", () => {
     expect(PROFILE_PAGE_SOURCE).toContain("t('admin.profileNoPayments')");
   });
 
-  it("maps a failed section to profilePartial + retry and keeps three independent boundaries", () => {
+  it("maps a failed section to profilePartial + retry and keeps four independent boundaries", () => {
     expect(PROFILE_PAGE_SOURCE).toContain("t('admin.profilePartial')");
     expect(PROFILE_PAGE_SOURCE).toContain("t('common.retry')");
-    // Each section resolves behind its own Suspense boundary.
-    expect(PROFILE_PAGE_SOURCE.match(/<Suspense/g)?.length).toBe(3);
+    // Each section (keys/payments/tickets/referrals) resolves behind its own
+    // Suspense boundary.
+    expect(PROFILE_PAGE_SOURCE.match(/<Suspense/g)?.length).toBe(4);
   });
 
   it("degrades only Keys when the keys read throws; header/payments/tickets survive", async () => {
@@ -629,6 +630,7 @@ describe("admin profile — per-section degradation (UI-SPEC §4)", () => {
 describe("AdminKeyRow — read-only (A4/T-05-07)", () => {
   it("renders name, status chip, expiry, and device count", () => {
     const tree = AdminKeyRow({
+      userId: 1,
       item: {
         id: "key-read-1",
         name: "Мой ключ",
@@ -650,6 +652,7 @@ describe("AdminKeyRow — read-only (A4/T-05-07)", () => {
     const elements: AnyElement[] = [];
     walkElements(
       AdminKeyRow({
+        userId: 1,
         item: {
           id: "key-read-2",
           name: "K",

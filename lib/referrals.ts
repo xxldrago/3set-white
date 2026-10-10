@@ -23,6 +23,93 @@ import { logger } from "./logger";
 export const REFERRAL_CODE_RE = /^3SET-[A-Z0-9]{6}$/;
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
+/** Personal subdomain handle: `<name>.3set.online`. */
+export const SUBDOMAIN_RE = /^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/;
+/** Never assignable — infrastructure + product surfaces. */
+export const RESERVED_SUBDOMAINS = new Set([
+  "www",
+  "my",
+  "api",
+  "admin",
+  "app",
+  "status",
+  "mail",
+  "cdn",
+  "static",
+  "sub",
+  "smtp",
+  "ftp",
+  "blog",
+  "support",
+  "pay",
+]);
+
+export function normalizeSubdomain(raw: string): string {
+  return raw.trim().toLowerCase();
+}
+
+export function isSubdomainAssignable(raw: string): boolean {
+  const name = normalizeSubdomain(raw);
+  return SUBDOMAIN_RE.test(name) && !RESERVED_SUBDOMAINS.has(name);
+}
+
+/** Resolve `<name>.3set.online` → the owner's referral code (null = free/unknown). */
+export async function resolveSubdomainOwner(
+  raw: string,
+): Promise<{ userId: number; code: string } | null> {
+  const name = normalizeSubdomain(raw);
+  if (!isSubdomainAssignable(name)) return null;
+  const owner = await prisma.user.findUnique({
+    where: { customSubdomain: name },
+    select: { id: true },
+  });
+  if (!owner) return null;
+  const code = await ensureReferralCode(owner.id);
+  return { userId: owner.id, code };
+}
+
+export type SubdomainOutcome = "ok" | "taken" | "invalid" | "not_found";
+
+/**
+ * Assign (or clear with null) a personal subdomain. Uniqueness is the arbiter
+ * (P2002 → taken). Clearing is unconditional.
+ */
+export async function setCustomSubdomain(
+  userId: number,
+  raw: string | null,
+): Promise<SubdomainOutcome> {
+  if (raw === null || raw.trim().length === 0) {
+    await prisma.user.update({ where: { id: userId }, data: { customSubdomain: null } }).catch(
+      () => null,
+    );
+    return "ok";
+  }
+  const name = normalizeSubdomain(raw);
+  if (!isSubdomainAssignable(name)) return "invalid";
+  try {
+    await prisma.user.update({ where: { id: userId }, data: { customSubdomain: name } });
+    return "ok";
+  } catch (err: unknown) {
+    if (
+      typeof err === "object" &&
+      err !== null &&
+      "code" in err &&
+      (err as { code: unknown }).code === "P2002"
+    ) {
+      return "taken";
+    }
+    if (
+      typeof err === "object" &&
+      err !== null &&
+      "code" in err &&
+      (err as { code: unknown }).code === "P2025"
+    ) {
+      return "not_found";
+    }
+    throw err;
+  }
+}
+
 export type WalletReason =
   | "referral_bonus"
   | "order_spend"
@@ -211,14 +298,20 @@ export async function getReferralSummary(userId: number): Promise<ReferralSummar
 }
 
 /**
- * Credit both sides on the referred account's first paid order. Called with
- * the order's (userId, finalAmount) AFTER the pending→paid claim wins, so it
- * runs once per order; the wallet unique makes it once per referral even if
- * two first orders race. P2002 on either insert → already credited.
+ * Credit both sides on a paid order. Called with the order's (userId,
+ * finalAmount, orderId) AFTER the pending→paid claim wins, so it runs once
+ * per order.
+ *
+ * Regular inviters earn once — on the referred account's FIRST paid order
+ * (the existence gate below). Partner inviters (staff role `partner`) earn
+ * on EVERY paid order: their bonus refId is order-scoped, so each payment
+ * lands separately. The wallet unique makes every path idempotent under
+ * concurrent payments (P2002 → already credited).
  */
 export async function creditReferralForPaidOrder(
   userId: number,
   finalAmount: number,
+  orderId: string,
 ): Promise<void> {
   const referred = await prisma.user.findUnique({
     where: { id: userId },
@@ -227,20 +320,33 @@ export async function creditReferralForPaidOrder(
   const inviterId = referred?.referredById;
   if (!inviterId) return;
 
-  // First-paid-order gate: a referral_bonus already pointing at this account
-  // means an earlier order credited both sides.
-  const existing = await prisma.walletTx.findFirst({
-    where: { reason: "referral_bonus", refId: String(userId) },
-    select: { id: true },
-  });
-  if (existing) return;
-
   const settings = await getReferralSettings();
   const inviter = await prisma.user.findUnique({
     where: { id: inviterId },
-    select: { id: true, customInviterReward: true, customInviterKind: true },
+    select: { id: true, telegramId: true, customInviterReward: true, customInviterKind: true },
   });
   if (!inviter) return;
+
+  // Partner inviters earn on EVERY paid order; everyone else only on the
+  // first (a referral_bonus already pointing at this account means an
+  // earlier order credited both sides).
+  const isPartner =
+    inviter.telegramId !== null &&
+    (await prisma.adminUser.findUnique({
+      where: { telegramId: inviter.telegramId },
+      select: { role: true },
+    }).then(
+      (row) => row?.role === "partner",
+      () => false,
+    ));
+  const bonusRefId = isPartner ? `${userId}:${orderId}` : String(userId);
+  if (!isPartner) {
+    const existing = await prisma.walletTx.findFirst({
+      where: { reason: "referral_bonus", refId: String(userId) },
+      select: { id: true },
+    });
+    if (existing) return;
+  }
 
   // Per-user override (partner rate): an explicit kind wins; an amount
   // without a kind keeps the legacy fixed-RUB meaning; otherwise global.
@@ -256,6 +362,12 @@ export async function creditReferralForPaidOrder(
       ? Math.max(0, value)
       : Math.floor((Math.max(0, finalAmount) * Math.min(100, Math.max(0, value))) / 100);
 
+  // The invitee signup bonus is always first-only (keyed by account).
+  const inviteeCredited = await prisma.walletTx.findFirst({
+    where: { userId, reason: "referral_bonus" },
+    select: { id: true },
+  });
+
   try {
     if (inviterAmount > 0) {
       await prisma.walletTx.create({
@@ -263,14 +375,14 @@ export async function creditReferralForPaidOrder(
           userId: inviter.id,
           amount: inviterAmount,
           reason: "referral_bonus",
-          refId: String(userId),
+          refId: bonusRefId,
         },
       });
       // Best-effort partner push — never awaited, never throws (see module).
       const { notifyReferralCredited } = await import("./partner-notify");
       notifyReferralCredited(inviter.id, inviterAmount);
     }
-    if (settings.inviteeValue > 0) {
+    if (settings.inviteeValue > 0 && !inviteeCredited) {
       await prisma.walletTx.create({
         data: {
           userId,
@@ -293,7 +405,7 @@ export async function creditReferralForPaidOrder(
       "code" in err &&
       (err as { code: unknown }).code === "P2002"
     ) {
-      return; // concurrent first payment already credited
+      return; // concurrent payment already credited
     }
     throw err;
   }

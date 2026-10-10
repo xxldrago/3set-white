@@ -28,7 +28,14 @@ const EMAIL_SHAPE = /[^@\s]+@[^@\s]+\.[^@\s]+/;
 
 export type AuthMode = 'login' | 'register';
 
-export default function EmailAuthCard({ initialMode }: { initialMode: AuthMode }) {
+export default function EmailAuthCard({
+  initialMode,
+  referral,
+}: {
+  initialMode: AuthMode;
+  /** Landing ref code (`?ref=`) — sent with register so attribution survives. */
+  referral?: string | null;
+}) {
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -88,7 +95,11 @@ export default function EmailAuthCard({ initialMode }: { initialMode: AuthMode }
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email: trimmed, password }),
+        body: JSON.stringify({
+          email: trimmed,
+          password,
+          ...(mode === 'register' && referral ? { ref: referral } : {}),
+        }),
       });
       if (res.ok) {
         window.location.href = '/';
@@ -127,7 +138,7 @@ export default function EmailAuthCard({ initialMode }: { initialMode: AuthMode }
     } finally {
       setLoading(false);
     }
-  }, [email, password, mode, loading, rateWaitSec]);
+  }, [email, password, mode, loading, rateWaitSec, referral]);
 
   return (
     <div className={`${CARD} flex flex-col gap-5`}>

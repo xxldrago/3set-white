@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { after } from 'next/server';
 import InstallPrompt from '@/components/InstallPrompt';
 import Nav from '@/components/Nav';
@@ -177,7 +178,11 @@ function SubscriptionsBody({
   );
 }
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ ref?: string }>;
+}) {
   let telegramId: number | null = null;
   try {
     telegramId = await requireTelegramSession();
@@ -187,6 +192,17 @@ export default async function Home() {
 
   // Display identity for the cabinet nav (null when anonymous).
   const navUser = await getSessionUser();
+
+  // Signed-out visitors go straight to login (attribution-safe: the landing
+  // ref code travels along so register still attributes).
+  if (!navUser) {
+    const { ref } = await searchParams;
+    const target =
+      typeof ref === 'string' && ref.trim().length > 0
+        ? `/login?ref=${encodeURIComponent(ref.trim())}`
+        : '/login';
+    redirect(target);
+  }
 
   // Absolute referral link for the home teaser (signed-in only — guests get
   // the login CTA). The code is ensured lazily; a failure hides the box,

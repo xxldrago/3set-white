@@ -53,10 +53,21 @@ export default async function AdminUsersPage() {
           <tbody className="divide-y divide-line">
             {table.map((row) => (
               <tr key={row.id} className="hover:bg-foreground/5">
-                <td className="px-4 py-3 font-mono text-xs">{row.id}</td>
+                <td className="px-4 py-3 font-mono text-xs">
+                  <Link href={`/admin/users/${row.id}`} className="hover:underline">
+                    {row.id}
+                  </Link>
+                </td>
                 <td className="px-4 py-3">{row.telegramId ?? '—'}</td>
                 <td className="px-4 py-3 truncate max-w-[12rem]">{row.email ?? '—'}</td>
-                <td className="px-4 py-3">{row.username ?? row.firstName ?? '—'}</td>
+                <td className="px-4 py-3">
+                  <Link
+                    href={`/admin/users/${row.id}`}
+                    className="font-medium text-foreground hover:underline"
+                  >
+                    {row.username ?? row.firstName ?? '—'}
+                  </Link>
+                </td>
                 <td className="px-4 py-3">{row.keysCount}</td>
                 <td className="px-4 py-3">{row.ordersCount}</td>
                 <td className="px-4 py-3">{row.role ?? '—'}</td>

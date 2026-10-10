@@ -95,6 +95,9 @@ export default function FunnelCharts({ endpoint }: { endpoint: string }) {
 
   const maxCount = Math.max(1, ...(data?.series.map((b) => Math.max(b.clicks, b.registrations, b.purchases)) ?? [1]));
   const maxRevenue = Math.max(1, ...(data?.series.map((b) => b.revenue) ?? [1]));
+  // Adaptive axis: at most 8 evenly spaced labels so dates never overlap on
+  // narrow screens (year granularity always fits — 1-2 labels per year cap).
+  const labelStep = Math.max(1, Math.ceil((data?.series.length ?? 1) / 8));
   const W = 560;
   const H = 180;
   const PAD = 28;
@@ -241,7 +244,7 @@ export default function FunnelCharts({ endpoint }: { endpoint: string }) {
                         />
                       );
                     })}
-                    {data.series.length <= 31 && (
+                    {index % labelStep === 0 && (
                       <text
                         x={x}
                         y={H - 8}

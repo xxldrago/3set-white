@@ -36,6 +36,7 @@ import {
   type AttachmentDescriptor,
 } from "./tickets-service";
 import { bindLoginToken, parseLoginStartPayload } from "./telegram-login";
+import { bindLinkToken, parseLinkStartPayload } from "./telegram-link";
 import { REFERRAL_CODE_RE, getReferralSummary, pinReferrer } from "./referrals";
 import { validatePromo } from "./promo";
 
@@ -93,6 +94,26 @@ bot.start(async (ctx) => {
   // different one. The code is delivered ONLY to this chat (CR-01) — the
   // issuing browser must submit it to `consume`. Non-login starts skip this
   // branch entirely and behave byte-identically (no extra reply).
+  // Cabinet Telegram-linking (link-via-bot): a `link_<token>` payload binds
+  // the token to this Telegram id AND links the accounts immediately — no
+  // code round-trip (the requesting browser is already authenticated).
+  // Runs before the login branch; a link payload is never a login payload.
+  const linkToken = parseLinkStartPayload(ctx.startPayload);
+  if (linkToken) {
+    const bound = await bindLinkToken(linkToken, telegramId);
+    if (bound.kind === "bound") {
+      await ctx.reply(t("bot.linkDone"));
+    } else if (bound.kind === "conflict") {
+      await ctx.reply(t("bot.linkConflict"));
+    } else {
+      await ctx.reply(t("bot.loginInvalid"));
+    }
+    logger.info({
+      updateId: ctx.update.update_id,
+      telegramId,
+      outcome: bound.kind === "bound" ? "link-bound" : "link-invalid",
+    });
+  }
   const loginToken = parseLoginStartPayload(ctx.startPayload);
   if (loginToken) {
     const bound = await bindLoginToken(loginToken, telegramId, {

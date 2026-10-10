@@ -13,13 +13,15 @@ import { requireRole } from '@/lib/admin-auth';
 import { t } from '@/lib/i18n';
 import { AdminError, SessionError } from '@/lib/session';
 import RevenuePanel from '@/components/admin/RevenuePanel';
+import FunnelCharts from '@/components/admin/FunnelCharts';
 import StatsPanel from '@/components/admin/StatsPanel';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminOverviewPage({ searchParams }: { searchParams?: Promise<{ period?: string }> } = {}) {
+  let role: string | null = null;
   try {
-    await requireRole('administrator', 'manager');
+    ({ role } = await requireRole('administrator', 'manager'));
   } catch (err) {
     if (err instanceof SessionError) redirect('/login');
     if (err instanceof AdminError) notFound();
@@ -35,6 +37,12 @@ export default async function AdminOverviewPage({ searchParams }: { searchParams
 
       <StatsPanel period={period} />
       <RevenuePanel period={period} />
+      {role === 'administrator' && (
+        <section className="flex flex-col gap-3">
+          <h3 className="text-xl font-semibold text-foreground">{t('admin.funnelTitle')}</h3>
+          <FunnelCharts endpoint="/api/admin/referrals/stats" />
+        </section>
+      )}
     </section>
   );
 }

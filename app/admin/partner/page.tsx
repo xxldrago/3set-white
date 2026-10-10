@@ -6,6 +6,7 @@
 // stays in the cabinet (/support) — the shared queue is never exposed.
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import FunnelCharts from '@/components/admin/FunnelCharts';
 import ReferralSection from '@/components/ReferralSection';
 import { requireRole } from '@/lib/admin-auth';
 import { env } from '@/lib/env';
@@ -130,6 +131,13 @@ export default async function AdminPartnerPage() {
           </ul>
         </div>
       )}
+
+      <div className={CARD}>
+        <h3 className="text-base font-semibold text-foreground">
+          {t('admin.funnelTitle')}
+        </h3>
+        <FunnelCharts endpoint="/api/referrals/stats" />
+      </div>
 
       <div className={CARD}>
         <h3 className="text-base font-semibold text-foreground">

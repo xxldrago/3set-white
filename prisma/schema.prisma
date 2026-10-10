@@ -70,6 +70,7 @@ model User {
   pendingPromo       String? @map("pending_promo")
   walletTx           WalletTx[]
   withdrawals        Withdrawal[]
+  referralClicks     ReferralClick[]
 
   // Phase 2 trial anti-abuse (D-21): one trial per telegram-id. `trialUsed`
   // is claimed by a single atomic UPDATE ... WHERE trial_used=false (D-22);
@@ -484,6 +485,23 @@ model WalletTx {
   @@unique([userId, reason, refId])
   @@index([userId, createdAt])
   @@map("wallet_tx")
+}
+
+// Referral link click (funnel top). No auth by design — the landing is
+// public. `ipHash` (sha256, never the raw IP) + 1h dedupe keep casual
+// refresh-spam out of the numbers; determined inflation is out of scope
+// (documented, same as public page-view counters).
+model ReferralClick {
+  id          String   @id @default(cuid())
+  ownerUserId Int      @map("owner_user_id")
+  owner       User     @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  code        String?
+  ipHash      String   @map("ip_hash")
+  source      String   @default("link")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([ownerUserId, createdAt])
+  @@map("referral_clicks")
 }
 
 // Payout request: created with a `withdrawal_hold` debit reserving the

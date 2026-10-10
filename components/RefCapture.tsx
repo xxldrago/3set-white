@@ -14,6 +14,13 @@ export default function RefCapture() {
     const params = new URLSearchParams(window.location.search);
     const code = (params.get('ref') ?? '').trim();
     if (!code) return;
+    // Funnel top first (public beacon), then the session pin (401s silently
+    // when signed out — the register flow carries its own `ref`).
+    void fetch('/api/referrals/click', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ code }),
+    }).catch(() => undefined);
     void fetch('/api/referrals/pin', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

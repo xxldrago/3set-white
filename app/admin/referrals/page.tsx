@@ -5,6 +5,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import FunnelCharts from '@/components/admin/FunnelCharts';
 import ReferralAdminForm from '@/components/admin/ReferralAdminForm';
 import { requireRole } from '@/lib/admin-auth';
 import { t } from '@/lib/i18n';
@@ -79,6 +80,10 @@ export default async function AdminReferralsPage() {
       <Suspense fallback={<SkeletonRows />}>
         <ReferralsSection />
       </Suspense>
+      <section className="flex flex-col gap-3">
+        <h3 className="text-xl font-semibold text-foreground">{t('admin.funnelTitle')}</h3>
+        <FunnelCharts endpoint="/api/admin/referrals/stats" />
+      </section>
     </section>
   );
 }

@@ -11,6 +11,7 @@
 import { ArtemidaError } from "../../../lib/artemida";
 import { startTrial, startTrialByUserId } from "../../../lib/keys-service";
 import { logger } from "../../../lib/logger";
+import { prisma } from "../../../lib/prisma";
 import { requireSession, SessionError } from "../../../lib/session";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +30,18 @@ export async function POST(): Promise<Response> {
   }
 
   try {
+    // Email-only sessions (no linked Telegram) must verify the mailbox
+    // first — otherwise one mailbox farm mints unlimited trials. Linked
+    // sessions skip verification: the Telegram identity is the proof.
+    if (telegramId === null) {
+      const row = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { emailVerifiedAt: true },
+      });
+      if (!row?.emailVerifiedAt) {
+        return Response.json({ ok: false, reason: "email_unverified" }, { status: 403 });
+      }
+    }
     // TG-linked sessions keep the byte-for-byte pre-Phase-6 path; email-only
     // sessions use the userId-keyed claim + `email:{userId}` customerRef.
     const result =

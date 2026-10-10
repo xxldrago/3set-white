@@ -124,6 +124,26 @@ export async function sendResetMail(to: string, token: string): Promise<MailResu
   });
 }
 
+/** Verify-link construction off the shared APP_BASE_URL (never hardcoded). */
+export function verifyLinkFor(token: string): string {
+  return `${env.APP_BASE_URL}/verify?token=${encodeURIComponent(token)}`;
+}
+
+/** Confirmation link mail: 24h TTL, single-use, stated in the body. */
+export async function sendVerifyMail(to: string, token: string): Promise<MailResult> {
+  return sendMail({
+    to,
+    subject: "Подтвердите email — 3set",
+    text: [
+      "Подтвердите адрес, чтобы получить пробный период 3set.",
+      "",
+      `Ссылка (действует 24 часа, одноразовая): ${verifyLinkFor(token)}`,
+      "",
+      "Если это были не вы — просто проигнорируйте это письмо.",
+    ].join("\n"),
+  });
+}
+
 /** D-90 template 2/2: registration greeting, no credentials inside. */
 export async function sendWelcomeMail(to: string): Promise<MailResult> {
   return sendMail({

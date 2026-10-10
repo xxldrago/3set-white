@@ -31,6 +31,10 @@ model User {
   // farming.
   emailCanonical String? @unique @map("email_canonical")
   passwordHash String?  @map("password_hash")
+  // Email confirmation: email-only accounts (no linked Telegram) must verify
+  // the mailbox before the trial is issued (anti-farming). Telegram-linked
+  // accounts skip verification — the Telegram identity is the proof.
+  emailVerifiedAt DateTime? @map("email_verified_at")
   // Phase 6 gap closure (WR-01, D-88 extension): revocation watermark bumped
   // whenever credentials or the auth method change (password change/reset,
   // Telegram unlink). The session gates reject a token whose second-truncated
@@ -84,6 +88,9 @@ model User {
   // Phase 6 password reset (D-88): one-time tokens, 1h TTL, invalidated
   // after use. Cascade keeps no orphan tokens after account removal.
   passwordResets PasswordReset[]
+
+  // Email-confirmation tokens (trial gate for email-only accounts).
+  emailVerifications EmailVerification[]
 
   @@map("users")
 }
@@ -330,6 +337,21 @@ model PasswordReset {
 
   @@index([userId, expiresAt])
   @@map("password_resets")
+}
+
+// One-time email-confirmation token (same shape/discipline as PasswordReset:
+// superseded on re-issue, single-use, 24h TTL). Consuming it stamps
+// User.emailVerifiedAt, which gates the email-only trial.
+model EmailVerification {
+  token     String    @id
+  userId    Int       @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId, expiresAt])
+  @@map("email_verifications")
 }
 
 model LoginAttempt {

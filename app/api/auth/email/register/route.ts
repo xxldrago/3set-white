@@ -15,6 +15,7 @@ import { canonicalizeEmail } from "../../../../../lib/email-canonical";
 import { env } from "../../../../../lib/env";
 import { logger } from "../../../../../lib/logger";
 import { sendWelcomeMail } from "../../../../../lib/mail";
+import { requestVerification } from "../../../../../lib/email-verify";
 import { hashPassword } from "../../../../../lib/password";
 import { prisma } from "../../../../../lib/prisma";
 import { pinReferrer } from "../../../../../lib/referrals";
@@ -113,6 +114,10 @@ export async function POST(req: Request): Promise<Response> {
     // A mail failure must not fail registration: sendMail logs the outcome
     // internally, the rejection is swallowed here by contract.
     void sendWelcomeMail(email).catch(() => {});
+    // Trial gate companion: email-only accounts verify the mailbox before
+    // the trial is issued. The link send is best-effort here — the cabinet
+    // offers an explicit resend (see /api/auth/email/verify/request).
+    void requestVerification(user.id).catch(() => undefined);
     // Referral pin — best-effort, never blocks the 200.
     if (ref) void pinReferrer(user.id, ref).catch(() => undefined);
     const token = await signSession(user.id, null, env.SESSION_SECRET);

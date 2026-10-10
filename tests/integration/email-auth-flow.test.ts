@@ -613,6 +613,11 @@ describe("email-only trial via /api/trial + cabinet read (G-06-9)", () => {
       status: 200,
     });
     const userId = await userIdFor(EMAIL_TRIAL);
+    // Trial gate: email-only accounts verify first (Telegram-linked skip it).
+    await prisma.user.update({
+      where: { id: userId },
+      data: { emailVerifiedAt: new Date() },
+    });
     await authorize(userId, null);
 
     const createTrial = vi

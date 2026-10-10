@@ -167,8 +167,12 @@ export async function pinReferrer(userId: number, rawCode: string): Promise<numb
     where: { id: userId, referredById: null },
     data: { referredById: inviter.id },
   });
-  // count === 0: already pinned (first code wins) or the row is gone.
-  return claimed.count === 1 ? inviter.id : null;
+  // count === 0: already pinned (first wins) or the row is gone.
+  if (claimed.count !== 1) return null;
+  // Best-effort partner push — never awaited, never throws (see module).
+  const { notifyReferralPinned } = await import("./partner-notify");
+  notifyReferralPinned(inviter.id);
+  return inviter.id;
 }
 
 /** Wallet balance = SUM(amount). Single-row aggregate, no caching. */
@@ -262,6 +266,9 @@ export async function creditReferralForPaidOrder(
           refId: String(userId),
         },
       });
+      // Best-effort partner push — never awaited, never throws (see module).
+      const { notifyReferralCredited } = await import("./partner-notify");
+      notifyReferralCredited(inviter.id, inviterAmount);
     }
     if (settings.inviteeValue > 0) {
       await prisma.walletTx.create({

@@ -105,9 +105,10 @@ describe("password reset flow (request → confirm → rotated)", () => {
       }),
     );
     expect(seed.status).toBe(200);
-    // The welcome mail is the only mail so far (D-90: only welcome + reset).
-    expect(sent).toHaveLength(1);
-    expect(sent[0]?.to).toBe(EMAIL);
+    // Register sends welcome + verify mails (both fire-and-forget, so wait
+    // for the pair rather than asserting an exact count immediately).
+    await vi.waitFor(() => expect(sent).toHaveLength(2));
+    expect(sent.map((msg) => msg.to)).toEqual([EMAIL, EMAIL]);
     sent.length = 0;
   });
 
@@ -133,11 +134,12 @@ describe("password reset flow (request → confirm → rotated)", () => {
     expect(ttl).toBeGreaterThan(RESET_TTL_MS - 60_000);
     expect(ttl).toBeLessThanOrEqual(RESET_TTL_MS);
 
-    expect(sent).toHaveLength(1);
-    expect(sent[0]?.to).toBe(EMAIL);
+    const resetMails = sent.filter((msg) => msg.text?.includes("/reset/confirm?token="));
+    expect(resetMails).toHaveLength(1);
+    expect(resetMails[0]?.to).toBe(EMAIL);
     // The link carries the token; the token value itself is never logged
     // (asserted structurally — logs are out of scope for the route test).
-    expect(sent[0]?.text).toContain("/reset/confirm?token=");
+    expect(resetMails[0]?.text).toContain("/reset/confirm?token=");
     expect(sent[0]?.text).toContain(rows[0]?.token ?? "missing-token");
   });
 

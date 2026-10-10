@@ -9,7 +9,7 @@
 import { useCallback, useState } from 'react';
 import { t } from '@/lib/i18n';
 
-type TrialState = 'idle' | 'loading' | 'used' | 'error';
+type TrialState = 'idle' | 'loading' | 'used' | 'unverified' | 'error';
 
 const PRIMARY =
   'flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
@@ -18,6 +18,8 @@ const SECONDARY =
 
 export default function TrialButton() {
   const [state, setState] = useState<TrialState>('idle');
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
 
   const requestTrial = useCallback(async () => {
     if (state === 'loading') return; // in-flight lock
@@ -33,6 +35,11 @@ export default function TrialButton() {
       setState('used');
       return;
     }
+    if (res.status === 403) {
+      // Email-only account with an unconfirmed mailbox — verify first.
+      setState('unverified');
+      return;
+    }
     if (!res.ok) {
       setState('error');
       return;
@@ -40,6 +47,19 @@ export default function TrialButton() {
     // Created: reload so the server-rendered cabinet reflects the new key.
     window.location.reload();
   }, [state]);
+
+  const resend = useCallback(async () => {
+    if (resending) return;
+    setResending(true);
+    try {
+      const res = await fetch('/api/auth/email/verify/request', { method: 'POST' });
+      if (res.ok) setResent(true);
+    } catch {
+      // Stays silent — the button remains for retry.
+    } finally {
+      setResending(false);
+    }
+  }, [resending]);
 
   return (
     <section className="flex flex-col gap-4 rounded-2xl border border-line p-6 border-line">
@@ -50,6 +70,25 @@ export default function TrialButton() {
           <a href="#tariff" className={PRIMARY}>
             {t('key.buyCta')}
           </a>
+        </div>
+      ) : state === 'unverified' ? (
+        <div className="flex flex-col gap-3">
+          <h2 className="text-xl font-semibold">{t('trial.verifyHeading')}</h2>
+          <p className="text-muted">{t('trial.verifyBody')}</p>
+          {resent ? (
+            <p role="status" className="text-sm text-green">
+              {t('trial.verifyResent')}
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={() => void resend()}
+              disabled={resending}
+              className={SECONDARY}
+            >
+              {t('trial.verifyResend')}
+            </button>
+          )}
         </div>
       ) : (
         <button

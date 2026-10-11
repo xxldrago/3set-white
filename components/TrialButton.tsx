@@ -6,7 +6,7 @@
 // reaches the browser. An in-flight lock disables the button and swaps the
 // label so a double tap cannot submit twice. A repeat trial (409) renders the
 // clean "already used" copy + a «Купить подписку» CTA — never raw API text.
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { t } from '@/lib/i18n';
 
 type TrialState = 'idle' | 'loading' | 'used' | 'unverified' | 'error';
@@ -20,6 +20,26 @@ export default function TrialButton() {
   const [state, setState] = useState<TrialState>('idle');
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
+  const [hidden, setHidden] = useState(false);
+
+  // Paying customers never see the trial CTA: hide it instead of offering a
+  // button that can only 409. Trial-claimed accounts stay on the "used"
+  // path (their upsell CTA), so only has_subscription hides.
+  useEffect(() => {
+    let cancelled = false;
+    void fetch('/api/trial')
+      .then(async (res) => {
+        if (!res.ok || cancelled) return;
+        const body = (await res.json()) as { eligible?: unknown; reason?: unknown };
+        if (body.eligible === false && body.reason === 'has_subscription' && !cancelled) {
+          setHidden(true);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const requestTrial = useCallback(async () => {
     if (state === 'loading') return; // in-flight lock
@@ -60,6 +80,8 @@ export default function TrialButton() {
       setResending(false);
     }
   }, [resending]);
+
+  if (hidden) return null;
 
   return (
     <section className="flex flex-col gap-4 rounded-2xl border border-line p-6 border-line">

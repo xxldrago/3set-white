@@ -9,12 +9,49 @@
 // a clean `{ok:false, reason:"trial_used"}` — the provider message/code is
 // never proxied (D-24 / T-02-11).
 import { ArtemidaError } from "../../../lib/artemida";
-import { startTrial, startTrialByUserId } from "../../../lib/keys-service";
+import {
+  hasPaidSubscriptionByUserId,
+  startTrial,
+  startTrialByUserId,
+} from "../../../lib/keys-service";
 import { logger } from "../../../lib/logger";
 import { prisma } from "../../../lib/prisma";
 import { requireSession, SessionError } from "../../../lib/session";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * GET /api/trial — eligibility read (no claim, no provider call). Lets the
+ * UI hide the trial CTA for paying customers instead of offering a button
+ * that 409s. Trial-claimed accounts report eligible:false too (trial_used).
+ */
+export async function GET(): Promise<Response> {
+  let userId: number;
+  try {
+    ({ userId } = await requireSession());
+  } catch (err) {
+    if (err instanceof SessionError) {
+      return Response.json({ error: "unauthorized" }, { status: 401 });
+    }
+    logger.error({ route: "trial", outcome: "session_error" });
+    return Response.json({ error: "internal" }, { status: 500 });
+  }
+  try {
+    const row = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { trialUsed: true },
+    });
+    if (!row) return Response.json({ error: "unauthorized" }, { status: 401 });
+    if (row.trialUsed) return Response.json({ eligible: false, reason: "trial_used" });
+    if (await hasPaidSubscriptionByUserId(userId)) {
+      return Response.json({ eligible: false, reason: "has_subscription" });
+    }
+    return Response.json({ eligible: true });
+  } catch {
+    logger.error({ route: "trial", outcome: "eligibility_error" });
+    return Response.json({ error: "internal" }, { status: 500 });
+  }
+}
 
 export async function POST(): Promise<Response> {
   let userId: number;

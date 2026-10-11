@@ -431,6 +431,16 @@ async function clearDevicesForOwner(
 }
 
 /**
+ * Paid-subscription check: any non-trial key row (active or expired) means
+ * the account is (or was) a paying customer — no trial is offered. Used by
+ * both trial paths and the UI eligibility read.
+ */
+export async function hasPaidSubscriptionByUserId(userId: number): Promise<boolean> {
+  const count = await prisma.keyCache.count({ where: { userId, isTrial: false } });
+  return count > 0;
+}
+
+/**
  * Atomically claim the one-time trial for a telegram id. A SINGLE statement
  * (`updateMany`) makes the race safe (D-22): `count === 1` means we won the
  * claim, `count === 0` means the flag was already set (or the row is absent).
@@ -529,6 +539,15 @@ export async function upsertCachedKey(userId: number, key: NormalizedKey): Promi
  * retry loop (RESEARCH Open Q3, D-24).
  */
 export async function startTrial(telegramId: bigint): Promise<StartTrialResult> {
+  // Paying customers never see a trial: any non-trial key row closes the
+  // path before the claim (no trialUsed flag is burned on this refusal).
+  const owner = await prisma.user.findUnique({
+    where: { telegramId },
+    select: { id: true },
+  });
+  if (owner && (await hasPaidSubscriptionByUserId(owner.id))) {
+    return { kind: "already_used" };
+  }
   if (!(await claimTrial(telegramId))) {
     return { kind: "already_used" };
   }
@@ -567,6 +586,9 @@ export async function startTrial(telegramId: bigint): Promise<StartTrialResult> 
  * A provider `conflict` (409) is terminal: keep the claim, report `already_used`.
  */
 export async function startTrialByUserId(userId: number): Promise<StartTrialResult> {
+  if (await hasPaidSubscriptionByUserId(userId)) {
+    return { kind: "already_used" };
+  }
   if (!(await claimTrialByUserId(userId))) {
     return { kind: "already_used" };
   }

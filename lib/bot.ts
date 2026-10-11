@@ -14,6 +14,7 @@ import { t, tp } from "./i18n";
 import {
   formatKeyDate,
   getSubscriptionForUser,
+  hasPaidSubscriptionByUserId,
   listKeys,
   revalidateKeys,
   startTrial,
@@ -259,6 +260,21 @@ bot.hears(t("bot.menuTrial"), async (ctx) => {
   const from = ctx.from;
   if (!from) return;
   try {
+    // Paying customers get no trial CTA outcome: a distinct reply instead
+    // of the generic already-used copy.
+    const owner = await prisma.user.findUnique({
+      where: { telegramId: BigInt(from.id) },
+      select: { id: true },
+    });
+    if (owner && (await hasPaidSubscriptionByUserId(owner.id))) {
+      await ctx.reply(t("bot.trialHasSub"));
+      logger.info({
+        updateId: ctx.update.update_id,
+        telegramId: from.id,
+        outcome: "trial-has-subscription",
+      });
+      return;
+    }
     const result = await startTrial(BigInt(from.id));
     if (result.kind === "already_used") {
       await ctx.reply(`${t("trial.usedHeading")}\n${t("trial.usedBody")}`);

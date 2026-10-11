@@ -3,6 +3,7 @@ import { after } from 'next/server';
 import { redirect } from 'next/navigation';
 import Nav from '@/components/Nav';
 import SubscriptionCard from '@/components/SubscriptionCard';
+import TariffPicker from '@/components/TariffPicker';
 import { ArtemidaError } from '@/lib/artemida';
 import { t } from '@/lib/i18n';
 import {
@@ -161,6 +162,18 @@ export default async function SubscriptionPage() {
             <h2 className="text-2xl font-semibold text-foreground">Подключения 3set</h2>
           </div>
           <KeysSection telegramId={telegramId} userId={userId} />
+        </section>
+
+        {/* Tariffs live here too — same picker as the home page, so a new
+            subscription starts without navigating away. */}
+        <section className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <span className="font-mono text-xs uppercase tracking-[0.14em] text-green">
+              {t('pricing.title')}
+            </span>
+            <h2 className="text-2xl font-semibold text-foreground">{t('pricing.subtitle')}</h2>
+          </div>
+          <TariffPicker />
         </section>
 
         {/* Support strip */}

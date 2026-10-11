@@ -26,6 +26,7 @@ vi.mock("next/headers", () => ({
 
 import AdminOverviewPage from "../../app/admin/page";
 import AdminRolesPage from "../../app/admin/roles/page";
+import { GET as adminMe } from "../../app/api/admin/me/route";
 import AdminUserProfilePage from "../../app/admin/users/[id]/page";
 import { POST as adminRoleChange } from "../../app/api/admin/roles/route";
 import RolesManager from "../../components/admin/RolesManager";
@@ -311,6 +312,23 @@ describe("POST /api/admin/roles — gate + conditional write (D-66 / T-05-15)", 
       (await adminRoleChange(roleChangeRequest({ telegramId: ROLE_TARGET, role: "owner" })))
         .status,
     ).toBe(400);
+  });
+});
+
+describe("GET /api/admin/me — caller's own role for the header shortcut", () => {
+  it("returns 401 signed out, the role for staff, null for non-staff", async () => {
+    session.token = undefined;
+    await expect(adminMe()).resolves.toMatchObject({ status: 401 });
+
+    await authorize(ADMIN);
+    const admin = await adminMe();
+    expect(admin.status).toBe(200);
+    expect(await admin.json()).toEqual({ role: "administrator" });
+
+    await authorize(STRANGER);
+    const stranger = await adminMe();
+    expect(stranger.status).toBe(200);
+    expect(await stranger.json()).toEqual({ role: null });
   });
 });
 

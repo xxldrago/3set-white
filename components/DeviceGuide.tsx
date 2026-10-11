@@ -108,7 +108,7 @@ export default function DeviceGuide({ subscriptionUrl }: { subscriptionUrl: stri
           {t('guides.importCta', { app: guideApp.name })}
         </a>
         <div className="flex items-center gap-2">
-          <code className="line-clamp-1 max-w-full flex-1 break-all text-xs text-muted">
+          <code className="line-clamp-1 max-w-full min-w-0 flex-1 break-all text-xs text-muted">
             {subscriptionUrl}
           </code>
           <CopyButton value={subscriptionUrl} />

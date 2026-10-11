@@ -7,7 +7,6 @@ import Nav from '@/components/Nav';
 import RefCapture from '@/components/RefCapture';
 import ReferralLinkBox from '@/components/ReferralLinkBox';
 import SubscriptionCard from '@/components/SubscriptionCard';
-import SupportEntry from '@/components/SupportEntry';
 import TariffPicker from '@/components/TariffPicker';
 import TrialButton from '@/components/TrialButton';
 import { ArtemidaError } from '@/lib/artemida';
@@ -230,19 +229,6 @@ export default async function Home({
     }
   }
 
-  // Unread parity (SUP-03): sum the caller's per-ticket unread counters through
-  // the session-scoped service. A read failure degrades to no badge — the home
-  // page never breaks because support is unavailable.
-  let unreadCount = 0;
-  if (telegramId !== null) {
-    try {
-      const tickets = await listTicketsForUser(BigInt(telegramId));
-      unreadCount = tickets.reduce((sum, ticket) => sum + ticket.unreadForUser, 0);
-    } catch {
-      logger.warn({ route: 'home', outcome: 'support_unread_failed' });
-    }
-  }
-
   return (
     <div className="flex flex-col flex-1 items-center bg-background font-sans bg-background">
       <RefCapture />
@@ -262,12 +248,6 @@ export default async function Home({
             </Suspense>
             <TrialButton />
             <TariffPicker />
-            <nav className="flex flex-col gap-2 sm:flex-row">
-              <Link href="/payments" className={SECONDARY}>
-                {t('pay.toHistory')}
-              </Link>
-              <SupportEntry unreadCount={unreadCount} />
-            </nav>
           </>
         ) : emailUserId !== null ? (
           <>

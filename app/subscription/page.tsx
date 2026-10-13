@@ -24,7 +24,7 @@ export const metadata = {
 };
 
 const PRIMARY =
-  'flex h-12 items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-sm font-medium tracking-wide text-lime transition-colors hover:opacity-90';
+  'flex h-12 items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-sm font-semibold tracking-wide text-lime transition-colors hover:opacity-90';
 const SECONDARY =
   'flex h-12 items-center justify-center gap-2 rounded-lg border border-line px-5 text-sm text-muted transition-colors hover:bg-foreground/5';
 

@@ -118,8 +118,8 @@ export default function TariffPicker() {
                 onClick={() => setDays(value)}
                 className={
                   selected
-                    ? 'h-12 min-h-12 min-w-0 whitespace-nowrap rounded-lg bg-foreground px-2 text-xs text-lime transition-colors disabled:opacity-50 sm:px-5 sm:text-sm'
-                    : 'h-12 min-h-12 min-w-0 whitespace-nowrap rounded-lg border border-line px-2 text-xs transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line sm:px-5 sm:text-sm'
+                    ? 'h-12 min-h-12 min-w-0 whitespace-nowrap rounded-lg bg-foreground px-1 text-sm font-semibold text-lime transition-colors disabled:opacity-50 sm:px-5'
+                    : 'h-12 min-h-12 min-w-0 whitespace-nowrap rounded-lg border border-line px-1 text-sm font-semibold transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line sm:px-5'
                 }
               >
                 {label}

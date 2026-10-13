@@ -77,7 +77,7 @@ export default function Nav({ user }: { user: NavUser | null }) {
             {staff && (
               <Link
                 href="/admin"
-                className="whitespace-nowrap rounded-lg bg-foreground px-3 py-1.5 text-sm font-semibold text-lime transition-colors"
+                className="whitespace-nowrap rounded-lg bg-foreground px-3 py-1.5 text-sm font-bold text-lime transition-colors"
               >
                 {t('admin.title')}
               </Link>
@@ -102,7 +102,7 @@ export default function Nav({ user }: { user: NavUser | null }) {
               <li key={item.href} className="shrink-0">
                 <Link
                   href={item.href}
-                  className={`block whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors ${
+                  className={`block whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-bold transition-colors ${
                     active
                       ? 'bg-foreground text-lime'
                       : 'text-muted hover:bg-foreground/5 hover:text-foreground'
@@ -118,7 +118,7 @@ export default function Nav({ user }: { user: NavUser | null }) {
             <li className="hidden shrink-0 md:list-item">
               <Link
                 href="/admin"
-                className="block whitespace-nowrap rounded-lg bg-foreground px-3 py-1.5 text-sm font-semibold text-lime transition-colors"
+                className="block whitespace-nowrap rounded-lg bg-foreground px-3 py-1.5 text-sm font-bold text-lime transition-colors"
               >
                 {t('admin.title')}
               </Link>

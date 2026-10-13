@@ -258,7 +258,7 @@ export default function FaqClient() {
         </div>
         <Link
           href="/support"
-          className="flex h-12 items-center justify-center rounded-lg bg-foreground px-5 text-sm font-semibold tracking-wide text-lime transition-colors hover:opacity-90"
+          className="flex h-12 items-center justify-center rounded-lg bg-foreground px-5 text-sm font-bold tracking-wide text-lime transition-colors hover:opacity-90"
         >
           Открыть поддержку
         </Link>

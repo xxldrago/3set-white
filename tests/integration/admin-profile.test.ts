@@ -18,7 +18,8 @@ vi.mock("next/headers", () => ({
 import { GET as devicesGET } from "../../app/api/admin/users/[id]/keys/[keyId]/devices/route";
 import { POST as subdomainPOST } from "../../app/api/admin/users/[id]/subdomain/route";
 import { signSession } from "../../lib/auth";
-import { loadAdminReferrals } from "../../lib/admin-service";
+import { notifyAdminsNewTicket } from "../../lib/admin-notify";
+import { loadAdminHeader, loadAdminReferrals } from "../../lib/admin-service";
 import { artemida } from "../../lib/artemida";
 import { prisma } from "../../lib/prisma";
 import {
@@ -238,5 +239,55 @@ describe("admin referrals section + key devices", () => {
       params: Promise.resolve({ id: String(buyerId), keyId: "nope" }),
     });
     expect(missing.status).toBe(404);
+  });
+});
+
+describe("profile money stats + admin ticket push", () => {
+  const TG = BigInt("970000811");
+  let userId = 0;
+
+  beforeAll(async () => {
+    await prisma.user.deleteMany({ where: { telegramId: TG } });
+    const row = await prisma.user.create({
+      data: { telegramId: TG, trialUsed: true },
+      select: { id: true },
+    });
+    userId = row.id;
+    await prisma.order.create({
+      data: {
+        userId,
+        kind: "new",
+        days: 30,
+        devices: 2,
+        amount: 1000,
+        finalAmount: 800,
+        currency: "RUB",
+        status: "paid",
+        paidAt: new Date(),
+      },
+    });
+  });
+
+  afterAll(async () => {
+    const user = await prisma.user.findUnique({
+      where: { telegramId: TG },
+      select: { id: true },
+    });
+    if (user) {
+      await prisma.order.deleteMany({ where: { userId: user.id } });
+    }
+    await prisma.user.deleteMany({ where: { telegramId: TG } });
+  });
+
+  it("exposes trial flag, paid count, and captured total on the header", async () => {
+    await expect(loadAdminHeader(userId)).resolves.toMatchObject({
+      trialUsed: true,
+      paidOrders: 1,
+      paidTotal: 800,
+    });
+  });
+
+  it("never throws dialling admins in test env", () => {
+    expect(() => notifyAdminsNewTicket("t-1", "Привет")).not.toThrow();
   });
 });

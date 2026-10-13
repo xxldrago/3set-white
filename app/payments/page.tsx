@@ -20,7 +20,7 @@ export const dynamic = 'force-dynamic';
 const CARD =
   'flex flex-col gap-4 rounded-2xl border border-line bg-panel p-6';
 const SECONDARY =
-  'flex h-12 items-center justify-center rounded-lg border border-line px-5 transition-colors hover:bg-foreground/5';
+  'flex h-12 items-center justify-center rounded-lg text-sm font-bold border border-line px-5 transition-colors hover:bg-foreground/5';
 
 /** Loading fallback while the DB read resolves (UI-SPEC loading state). */
 function SkeletonRows() {

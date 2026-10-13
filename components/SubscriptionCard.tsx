@@ -15,7 +15,7 @@ const MIN_DEVICES = 2;
 const MAX_DEVICES = 10;
 
 const PRIMARY =
-  'flex h-11 items-center justify-center gap-2 rounded-lg bg-foreground px-4 text-sm font-semibold tracking-wide text-lime transition-colors hover:opacity-90';
+  'flex h-11 items-center justify-center gap-2 rounded-lg bg-foreground px-4 text-sm font-bold tracking-wide text-lime transition-colors hover:opacity-90';
 const SECONDARY =
   'flex h-11 items-center justify-center gap-2 rounded-lg border border-line px-4 text-sm text-muted transition-colors hover:bg-foreground/5';
 

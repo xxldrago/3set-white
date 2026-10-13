@@ -13,7 +13,7 @@ const INPUT =
 const INPUT_INVALID = 'border-red-600/50';
 const FIELD_LABEL = 'text-sm text-muted';
 const TOGGLE =
-  'flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-solid border-line transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
+  'flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-sm font-bold border border-solid border-line transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 
 interface PasswordFieldProps {
   id: string;

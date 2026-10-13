@@ -21,6 +21,7 @@ export default function UserProfileCard({
   children?: ReactNode;
 }) {
   const created = formatKeyDate(header.createdAt.toISOString());
+  const trial = header.trialUsed ? t('admin.profileTrialUsed') : t('admin.profileTrialFree');
 
   return (
     <section className="flex flex-col gap-3 rounded-2xl border border-line p-6 border-line">
@@ -52,6 +53,13 @@ export default function UserProfileCard({
           )}
           <p className="text-sm text-muted">
             {header.passwordSet ? t('admin.profilePasswordSet') : t('admin.profilePasswordNone')}
+          </p>
+          <p className="text-sm tabular-nums text-muted">
+            {t('admin.profileMoneyStats', {
+              orders: header.paidOrders,
+              total: header.paidTotal,
+              trial,
+            })}
           </p>
         </div>
         {header.staffRole && <RoleChip role={header.staffRole} />}

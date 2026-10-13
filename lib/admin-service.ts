@@ -71,6 +71,9 @@ export interface AdminProfileHeader {
   customSubdomain: string | null;
   /** Password presence only — the hash itself never leaves the server. */
   passwordSet: boolean;
+  trialUsed: boolean;
+  paidOrders: number;
+  paidTotal: number;
 }
 
 /** One independently-degrading profile sub-section (ok:false = read failed). */
@@ -228,18 +231,26 @@ export async function adminSearchUsers(q: string): Promise<AdminSearchResponse> 
 
 /** Profile header read; null ⇒ the id is unknown (the page maps this to 404). */
 export async function loadAdminHeader(userId: number): Promise<AdminProfileHeader | null> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      ...USER_SELECT,
-      createdAt: true,
-      referralCode: true,
-      customInviterReward: true,
-      customInviterKind: true,
-      customSubdomain: true,
-      passwordHash: true,
-    },
-  });
+  const [user, paid] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        ...USER_SELECT,
+        createdAt: true,
+        referralCode: true,
+        customInviterReward: true,
+        customInviterKind: true,
+        customSubdomain: true,
+        passwordHash: true,
+        trialUsed: true,
+      },
+    }),
+    prisma.order.aggregate({
+      where: { userId, status: { in: ["paid", "provisioning", "provisioned"] } },
+      _count: true,
+      _sum: { finalAmount: true },
+    }),
+  ]);
   if (!user) return null;
 
   const staff =
@@ -263,6 +274,9 @@ export async function loadAdminHeader(userId: number): Promise<AdminProfileHeade
     customInviterKind: user.customInviterKind,
     customSubdomain: user.customSubdomain,
     passwordSet: user.passwordHash !== null,
+    trialUsed: user.trialUsed,
+    paidOrders: paid._count,
+    paidTotal: Math.max(0, (paid._sum.finalAmount ?? 0)),
   };
 }
 

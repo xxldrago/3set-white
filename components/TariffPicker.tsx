@@ -118,8 +118,8 @@ export default function TariffPicker() {
                 onClick={() => setDays(value)}
                 className={
                   selected
-                    ? 'h-12 min-h-12 min-w-0 whitespace-nowrap rounded-lg bg-foreground px-1 text-sm font-semibold text-lime transition-colors disabled:opacity-50 sm:px-5'
-                    : 'h-12 min-h-12 min-w-0 whitespace-nowrap rounded-lg border border-line px-1 text-sm font-semibold transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line sm:px-5'
+                    ? 'h-12 min-h-12 min-w-0 whitespace-nowrap rounded-lg bg-foreground px-1 text-sm font-bold text-lime transition-colors disabled:opacity-50 sm:px-5'
+                    : 'h-12 min-h-12 min-w-0 whitespace-nowrap rounded-lg border border-line px-1 text-sm font-bold transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line sm:px-5'
                 }
               >
                 {label}
@@ -191,7 +191,7 @@ export default function TariffPicker() {
           <button
             type="button"
             onClick={() => void fetchPrice(days, devices)}
-            className="flex h-11 items-center justify-center rounded-lg border border-line px-4 transition-colors hover:bg-foreground/5 border-line "
+            className="flex h-11 items-center justify-center rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line "
           >
             {t('common.retry')}
           </button>

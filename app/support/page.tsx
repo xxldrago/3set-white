@@ -23,9 +23,9 @@ export const metadata = {
 
 const CARD = 'flex flex-col gap-4 rounded-2xl border border-line bg-panel p-6';
 const PRIMARY =
-  'flex h-12 items-center justify-center rounded-lg bg-foreground px-5 text-sm font-semibold tracking-wide text-lime transition-colors hover:opacity-90';
+  'flex h-12 items-center justify-center rounded-lg bg-foreground px-5 text-sm font-bold tracking-wide text-lime transition-colors hover:opacity-90';
 const SECONDARY =
-  'flex h-12 items-center justify-center rounded-lg border border-line px-5 transition-colors hover:bg-foreground/5';
+  'flex h-12 items-center justify-center rounded-lg text-sm font-bold border border-line px-5 transition-colors hover:bg-foreground/5';
 
 /** Loading fallback while the DB read resolves (UI-SPEC loading state). */
 function SkeletonRows() {

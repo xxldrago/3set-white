@@ -128,6 +128,10 @@ async function createTicketForOwner(
     return ticket.id;
   });
 
+  // Best-effort admin push — never awaited, never fails creation (see module).
+  const { notifyAdminsNewTicket } = await import("./admin-notify");
+  notifyAdminsNewTicket(id, input.subject);
+
   return { kind: "created", id };
 }
 

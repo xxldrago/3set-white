@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 const SECONDARY =
-  'flex h-12 w-full items-center justify-center rounded-full border border-solid border-line px-5 transition-colors hover:bg-foreground/5 disabled:opacity-50';
+  'flex h-12 w-full items-center justify-center rounded-lg border border-solid border-line px-5 transition-colors hover:bg-foreground/5 disabled:opacity-50';
 
 export default function SignOutButton() {
   const router = useRouter();

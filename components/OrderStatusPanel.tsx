@@ -23,9 +23,9 @@ import type { OrderHistoryRow, OrderStatus } from '@/lib/orders-service';
 const CARD =
   'relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-line p-6 border-line';
 const PRIMARY =
-  'flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:opacity-90';
+  'flex h-12 items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:opacity-90';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-11 items-center justify-center rounded-lg border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 
 const POLL_MS = 3000;
 const CAP_MS = 120_000;

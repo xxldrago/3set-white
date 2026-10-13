@@ -173,6 +173,7 @@ bot.hears(t("bot.menuReferrals"), async (ctx) => {
         invited: summary.referrals,
         earned: summary.earned,
         balance: summary.balance,
+        days: summary.bonusDays,
       }),
     );
     logger.info({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "ref-stats" });

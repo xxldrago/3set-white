@@ -11,7 +11,7 @@ import { t } from '@/lib/i18n';
 const INPUT =
   'h-12 w-full rounded-2xl border border-line bg-panel px-4 text-base text-foreground placeholder:text-dim disabled:opacity-50';
 const PRIMARY =
-  'flex h-11 items-center justify-center rounded-full bg-foreground px-5 text-sm text-lime transition-colors hover:bg-[#383838] disabled:opacity-50';
+  'flex h-11 items-center justify-center rounded-lg bg-foreground px-5 text-sm text-lime transition-colors hover:bg-[#383838] disabled:opacity-50';
 
 export default function RewardControl({
   userId,

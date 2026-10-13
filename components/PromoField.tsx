@@ -15,7 +15,7 @@ import { t } from '@/lib/i18n';
 const INPUT =
   'h-12 w-full min-w-0 flex-1 rounded-2xl border border-line bg-panel px-4 text-base text-foreground placeholder:text-dim disabled:opacity-50';
 const APPLY =
-  'flex h-12 shrink-0 items-center justify-center rounded-full border border-solid border-line px-5 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50';
+  'flex h-12 shrink-0 items-center justify-center rounded-lg border border-solid border-line px-5 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50';
 
 interface PromoPreview {
   price: number;

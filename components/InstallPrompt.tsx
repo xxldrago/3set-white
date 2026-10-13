@@ -38,14 +38,14 @@ export default function InstallPrompt() {
         <button
           type="button"
           onClick={() => void install()}
-          className="flex h-10 items-center justify-center rounded-full bg-foreground px-4 text-sm text-lime transition-colors hover:opacity-90"
+          className="flex h-10 items-center justify-center rounded-lg bg-foreground px-4 text-sm text-lime transition-colors hover:opacity-90"
         >
           {t('pwa.install')}
         </button>
         <button
           type="button"
           onClick={() => setDismissed(true)}
-          className="flex h-10 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line "
+          className="flex h-10 items-center justify-center rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line "
         >
           {t('pwa.dismiss')}
         </button>

@@ -38,7 +38,7 @@ const CARD = 'flex flex-col gap-4 rounded-2xl border border-line p-6 border-line
 const ROW = 'flex flex-col gap-3 rounded-2xl border border-line p-6 border-line';
 const SECTION_TITLE = 'text-xl font-semibold text-foreground';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-11 items-center justify-center rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line ';
 
 const priceFormatter = new Intl.NumberFormat('ru-RU');
 

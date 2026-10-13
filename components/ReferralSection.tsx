@@ -11,10 +11,15 @@ const CARD = 'flex flex-col gap-4 rounded-2xl border border-line p-6 border-line
 const INPUT =
   'h-12 w-full rounded-2xl border border-line bg-panel px-4 text-base text-foreground placeholder:text-dim disabled:opacity-50';
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50';
+  'flex h-12 w-full items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50';
+  'flex h-11 items-center justify-center rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50';
 const FIELD_LABEL = 'text-sm text-muted';
+
+interface RateView {
+  kind: string;
+  value: number;
+}
 
 interface WalletSummary {
   code: string;
@@ -22,6 +27,118 @@ interface WalletSummary {
   earned: number;
   balance: number;
   minWithdraw: number;
+  bonusDays: number;
+  myRate: RateView;
+  downline: RateView | null;
+}
+
+function rateText(rate: RateView): string {
+  if (rate.kind === 'fixed') return `${rate.value} ₽`;
+  if (rate.kind === 'percent') return `${rate.value}%`;
+  return t('auth.refRateDays', { n: rate.value });
+}
+
+/** Downline rate editor: what MY referrals earn when they bring buyers. */
+function DownlineEditor({ initial }: { initial: RateView | null }) {
+  const [kind, setKind] = useState<'percent' | 'fixed' | 'days' | ''>(
+    initial && (initial.kind === 'percent' || initial.kind === 'fixed' || initial.kind === 'days')
+      ? initial.kind
+      : '',
+  );
+  const [value, setValue] = useState(initial ? String(initial.value) : '');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  const save = useCallback(async () => {
+    if (saving) return;
+    const amount = value.trim().length === 0 ? null : Number(value);
+    if (kind === '') {
+      // Clear back to global.
+      setSaving(true);
+      setFailed(false);
+      setSaved(false);
+      try {
+        const res = await fetch('/api/referrals/downline', {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ kind: null }),
+        });
+        if (res.ok) setSaved(true);
+        else setFailed(true);
+      } catch {
+        setFailed(true);
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+    if (amount === null || !Number.isSafeInteger(amount) || amount < 0) {
+      setFailed(true);
+      return;
+    }
+    setSaving(true);
+    setFailed(false);
+    setSaved(false);
+    try {
+      const res = await fetch('/api/referrals/downline', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ kind, value: amount }),
+      });
+      if (res.ok) setSaved(true);
+      else setFailed(true);
+    } catch {
+      setFailed(true);
+    } finally {
+      setSaving(false);
+    }
+  }, [saving, kind, value]);
+
+  return (
+    <div className="flex flex-col gap-2 border-t border-line pt-4">
+      <span className="text-base font-semibold text-foreground">{t('auth.refDownlineTitle')}</span>
+      <p className="text-sm text-muted">{t('auth.refDownlineHint')}</p>
+      <div className="flex items-center gap-2">
+        <select
+          value={kind}
+          onChange={(event) =>
+            setKind(event.target.value as 'percent' | 'fixed' | 'days' | '')
+          }
+          disabled={saving}
+          aria-label={t('auth.refDownlineKind')}
+          className="h-12 shrink-0 rounded-2xl border border-line bg-panel px-3 text-sm text-foreground"
+        >
+          <option value="">{t('admin.refCustomGlobal')}</option>
+          <option value="percent">%</option>
+          <option value="fixed">₽</option>
+          <option value="days">{t('auth.refDownlineDays')}</option>
+        </select>
+        <input
+          value={value}
+          onChange={(event) => setValue(event.target.value.replace(/[^0-9]/g, ''))}
+          inputMode="numeric"
+          placeholder="—"
+          disabled={saving}
+          aria-label={t('auth.refDownlineTitle')}
+          className={INPUT}
+        />
+        <button type="button" onClick={() => void save()} disabled={saving} className={SECONDARY}>
+          {t('admin.refCustomSave')}
+        </button>
+      </div>
+      {saved && (
+        <p role="status" className="text-sm text-green">
+          {t('admin.refCustomSaved')}
+        </p>
+      )}
+      {failed && (
+        <p role="alert" className="text-sm text-red-600">
+          {t('admin.refError')}
+        </p>
+      )}
+    </div>
+  );
 }
 
 export function ReferralSectionSkeleton() {
@@ -136,7 +253,11 @@ export default function ReferralSection() {
         )}
       </div>
 
-      <dl className="grid grid-cols-3 gap-2 text-center min-w-0">
+      <p className="text-sm text-muted">
+        {t('auth.refMyRate', { rate: rateText(summary.myRate) })}
+      </p>
+
+      <dl className="grid grid-cols-2 gap-2 text-center min-w-0 sm:grid-cols-4">
         <div className="flex flex-col gap-1 rounded-2xl bg-panel p-3">
           <dt className="text-xs text-muted">{t('auth.refStatsInvited')}</dt>
           <dd className="truncate text-lg sm:text-xl font-semibold tabular-nums text-foreground">
@@ -155,7 +276,15 @@ export default function ReferralSection() {
             {summary.balance} ₽
           </dd>
         </div>
+        <div className="flex flex-col gap-1 rounded-2xl bg-panel p-3">
+          <dt className="text-xs text-muted">{t('auth.refStatsDays')}</dt>
+          <dd className="truncate text-lg sm:text-xl font-semibold tabular-nums text-foreground">
+            {summary.bonusDays}
+          </dd>
+        </div>
       </dl>
+
+      <DownlineEditor initial={summary.downline} />
 
       <form
         className="flex flex-col gap-3 border-t border-line pt-4"

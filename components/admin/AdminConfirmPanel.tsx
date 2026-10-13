@@ -31,13 +31,13 @@ interface AdminConfirmPanelProps {
 }
 
 const TRIGGER =
-  'flex h-11 shrink-0 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-11 shrink-0 items-center justify-center rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
+  'flex h-11 items-center justify-center rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 const PRIMARY =
-  'flex h-11 items-center justify-center rounded-full bg-foreground px-4 text-sm text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
+  'flex h-11 items-center justify-center rounded-lg bg-foreground px-4 text-sm text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const DESTRUCTIVE =
-  'flex h-11 items-center justify-center rounded-full bg-red-600 px-4 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50';
+  'flex h-11 items-center justify-center rounded-lg bg-red-600 px-4 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50';
 
 export default function AdminConfirmPanel({
   variant,

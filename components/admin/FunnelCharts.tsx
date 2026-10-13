@@ -29,7 +29,7 @@ const PRESETS = [7, 30, 90] as const;
 
 const CARD = 'flex flex-col gap-2 rounded-2xl border border-line p-4';
 const SEG =
-  'h-10 flex-1 whitespace-nowrap rounded-full px-3 text-sm transition-colors disabled:opacity-50';
+  'h-10 flex-1 whitespace-nowrap rounded-lg px-3 text-sm transition-colors disabled:opacity-50';
 const SEG_ACTIVE = `${SEG} bg-foreground text-lime`;
 const SEG_IDLE = `${SEG} border border-solid border-line hover:bg-foreground/5 border-line`;
 const INPUT =

@@ -103,7 +103,7 @@ export default function FaqClient() {
               key={p}
               type="button"
               onClick={() => onQuery(p)}
-              className="rounded-full border border-line px-3 py-1 text-xs text-muted transition-colors hover:border-green hover:text-green"
+              className="rounded-lg border border-line px-3 py-1 text-xs text-muted transition-colors hover:border-green hover:text-green"
             >
               {p}
             </button>

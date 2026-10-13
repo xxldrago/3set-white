@@ -16,6 +16,7 @@ import { listPromosByOwner } from '@/lib/promo';
 import {
   getReferralSettings,
   getReferralSummary,
+  listDownlineDetails,
   listOwnWithdrawals,
 } from '@/lib/referrals';
 import { AdminError, SessionError } from '@/lib/session';
@@ -44,11 +45,12 @@ export default async function AdminPartnerPage() {
   if (!row) notFound();
   const userId = row.id;
 
-  const [summary, settings, promos, withdrawals] = await Promise.all([
+  const [summary, settings, promos, withdrawals, downline] = await Promise.all([
     getReferralSummary(userId),
     getReferralSettings(),
     listPromosByOwner(userId),
     listOwnWithdrawals(userId),
+    listDownlineDetails(userId),
   ]);
   const link = `${env.APP_BASE_URL}/?ref=${summary.code}`;
   const rate =
@@ -141,12 +143,63 @@ export default async function AdminPartnerPage() {
 
       <div className={CARD}>
         <h3 className="text-base font-semibold text-foreground">
+          {t('admin.partnerDownlineTitle')}
+        </h3>
+        {downline.length === 0 ? (
+          <p className="text-sm text-muted">{t('admin.partnerDownlineEmpty')}</p>
+        ) : (
+          <div className="overflow-x-auto rounded-2xl border border-line">
+            <table className="w-full min-w-[36rem] text-left text-sm">
+              <thead>
+                <tr className="border-b border-line">
+                  <th scope="col" className="px-3 py-2 font-semibold text-muted">
+                    {t('admin.partnerColWho')}
+                  </th>
+                  <th scope="col" className="px-3 py-2 font-semibold text-muted">
+                    {t('admin.partnerColDownline')}
+                  </th>
+                  <th scope="col" className="px-3 py-2 font-semibold text-muted">
+                    {t('admin.partnerColSales')}
+                  </th>
+                  <th scope="col" className="px-3 py-2 font-semibold text-muted">
+                    {t('admin.partnerColEarned')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {downline.map((row) => (
+                  <tr key={row.userId} className="border-b border-line last:border-0">
+                    <td className="px-3 py-3 align-middle">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-foreground">
+                          {row.displayName ?? row.email ?? `#${row.userId}`}
+                        </span>
+                        <span className="text-xs tabular-nums text-muted">
+                          {new Date(row.createdAt).toISOString().slice(0, 10)}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-3 align-middle tabular-nums">{row.downline}</td>
+                    <td className="px-3 py-3 align-middle tabular-nums">
+                      {row.purchases} · {row.revenue} ₽
+                    </td>
+                    <td className="px-3 py-3 align-middle tabular-nums">{row.earnedFromThem} ₽</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div className={CARD}>
+        <h3 className="text-base font-semibold text-foreground">
           {t('admin.partnerSupportTitle')}
         </h3>
         <p className="text-sm text-muted">{t('admin.partnerSupportBody')}</p>
         <Link
           href="/support"
-          className="flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5"
+          className="flex h-11 items-center justify-center rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5"
         >
           {t('admin.partnerSupportCta')}
         </Link>

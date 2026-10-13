@@ -128,7 +128,7 @@ export default function DeviceListModal({ keyId, deviceLimit }: DeviceListModalP
                 type="button"
                 onClick={closeModal}
                 aria-label={t('common.cancel')}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line text-lg text-muted transition-colors hover:bg-foreground/5"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-line text-lg text-muted transition-colors hover:bg-foreground/5"
               >
                 ×
               </button>

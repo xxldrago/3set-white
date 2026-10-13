@@ -16,7 +16,7 @@ export const metadata = {
 
 const CARD = 'flex flex-col gap-4 rounded-2xl border border-line p-6 border-line';
 const SECONDARY =
-  'flex h-12 items-center justify-center rounded-full border border-solid border-line px-5 transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-12 items-center justify-center rounded-lg border border-solid border-line px-5 transition-colors hover:bg-foreground/5 border-line ';
 
 export default async function NewTicketPage() {
   try {

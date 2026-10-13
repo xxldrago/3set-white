@@ -16,11 +16,11 @@ import type { AdminSearchResult } from '@/lib/admin-service';
 
 const CARD = 'flex flex-col gap-3 rounded-2xl border border-line p-6 border-line';
 const INPUT =
-  'h-12 w-full rounded-full border border-line bg-transparent px-5 text-base text-foreground outline-none transition-colors focus:outline-2 focus:outline-offset-2 border-line text-foreground';
+  'h-12 w-full rounded-lg border border-line bg-transparent px-5 text-base text-foreground outline-none transition-colors focus:outline-2 focus:outline-offset-2 border-line text-foreground';
 const PRIMARY =
-  'flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
+  'flex h-12 items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-11 items-center justify-center rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line ';
 
 type SearchState = 'idle' | 'loading' | 'results' | 'empty' | 'error';
 

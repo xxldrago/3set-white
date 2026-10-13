@@ -24,11 +24,11 @@ const CODE_LENGTH = 6;
 type BotLoginState = 'idle' | 'waiting' | 'ready' | 'expired' | 'error';
 
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
+  'flex h-12 w-full items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SECONDARY =
-  'flex h-12 w-full items-center justify-center rounded-full border border-solid border-line px-5 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
+  'flex h-12 w-full items-center justify-center rounded-lg border border-solid border-line px-5 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 const CODE_INPUT =
-  'h-12 w-full rounded-full border border-solid border-line bg-transparent px-5 text-center text-lg tracking-[0.5em] outline-none focus:border-line/40 disabled:opacity-50 border-line';
+  'h-12 w-full rounded-lg border border-solid border-line bg-transparent px-5 text-center text-lg tracking-[0.5em] outline-none focus:border-line/40 disabled:opacity-50 border-line';
 
 export default function TelegramBotLoginButton() {
   const [state, setState] = useState<BotLoginState>('idle');

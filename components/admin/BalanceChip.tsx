@@ -10,5 +10,5 @@ const TINT: Record<BalanceStatus, string> = {
 
 export default function BalanceChip({ status }: { status: BalanceStatus }) {
   const label = status === 'ok' ? t('admin.balanceOk') : status === 'low' ? t('admin.balanceLow') : status === 'critical' ? t('admin.balanceCritical') : t('admin.balanceUnknown');
-  return <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${TINT[status]}`}>{label}</span>;
+  return <span className={`inline-flex rounded-lg px-3 py-1 text-xs font-medium ${TINT[status]}`}>{label}</span>;
 }

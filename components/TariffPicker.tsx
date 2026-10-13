@@ -118,8 +118,8 @@ export default function TariffPicker() {
                 onClick={() => setDays(value)}
                 className={
                   selected
-                    ? 'h-12 min-h-12 min-w-0 whitespace-nowrap rounded-full bg-foreground px-2 text-xs text-lime transition-colors disabled:opacity-50 sm:px-5 sm:text-sm'
-                    : 'h-12 min-h-12 min-w-0 whitespace-nowrap rounded-full border border-line px-2 text-xs transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line sm:px-5 sm:text-sm'
+                    ? 'h-12 min-h-12 min-w-0 whitespace-nowrap rounded-lg bg-foreground px-2 text-xs text-lime transition-colors disabled:opacity-50 sm:px-5 sm:text-sm'
+                    : 'h-12 min-h-12 min-w-0 whitespace-nowrap rounded-lg border border-line px-2 text-xs transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line sm:px-5 sm:text-sm'
                 }
               >
                 {label}
@@ -141,7 +141,7 @@ export default function TariffPicker() {
               aria-label={t('pricing.devicesLabel')}
               disabled={controlsDisabled || devices <= MIN_DEVICES}
               onClick={() => stepDevices(-1)}
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-xl transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line "
+              className="flex h-11 w-11 items-center justify-center rounded-lg border border-line text-xl transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line "
             >
               −
             </button>
@@ -153,7 +153,7 @@ export default function TariffPicker() {
               aria-label={t('pricing.devicesLabel')}
               disabled={controlsDisabled || devices >= MAX_DEVICES}
               onClick={() => stepDevices(1)}
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-xl transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line "
+              className="flex h-11 w-11 items-center justify-center rounded-lg border border-line text-xl transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line "
             >
               +
             </button>
@@ -191,7 +191,7 @@ export default function TariffPicker() {
           <button
             type="button"
             onClick={() => void fetchPrice(days, devices)}
-            className="flex h-11 items-center justify-center rounded-full border border-line px-4 transition-colors hover:bg-foreground/5 border-line "
+            className="flex h-11 items-center justify-center rounded-lg border border-line px-4 transition-colors hover:bg-foreground/5 border-line "
           >
             {t('common.retry')}
           </button>

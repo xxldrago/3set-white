@@ -245,7 +245,7 @@ export default function InstallClient({
               Официальная загрузка и автоматический импорт персональной ссылки.
             </p>
           </div>
-          <span className="shrink-0 rounded-full border border-line px-3 py-1 font-mono text-xs text-muted">
+          <span className="shrink-0 rounded-lg border border-line px-3 py-1 font-mono text-xs text-muted">
             3 шага
           </span>
         </div>

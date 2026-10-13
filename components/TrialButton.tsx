@@ -12,9 +12,9 @@ import { t } from '@/lib/i18n';
 type TrialState = 'idle' | 'loading' | 'used' | 'unverified' | 'error';
 
 const PRIMARY =
-  'flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
+  'flex h-12 items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-11 items-center justify-center rounded-lg border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 
 export default function TrialButton() {
   const [state, setState] = useState<TrialState>('idle');

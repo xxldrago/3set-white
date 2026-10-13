@@ -21,9 +21,9 @@ function detectOs(): string {
 }
 
 const OS_PILL =
-  'h-11 flex-1 whitespace-nowrap rounded-full border border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
+  'h-11 flex-1 whitespace-nowrap rounded-lg border border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 const OS_PILL_ACTIVE =
-  'h-11 flex-1 whitespace-nowrap rounded-full bg-foreground px-4 text-sm text-lime transition-colors disabled:opacity-50';
+  'h-11 flex-1 whitespace-nowrap rounded-lg bg-foreground px-4 text-sm text-lime transition-colors disabled:opacity-50';
 
 export default function DeviceGuide({ subscriptionUrl }: { subscriptionUrl: string }) {
   // Lazy initializer (not an effect): the OS is read once from the buyer’s
@@ -83,37 +83,51 @@ export default function DeviceGuide({ subscriptionUrl }: { subscriptionUrl: stri
         </div>
       </div>
 
-      <ol className="flex list-decimal flex-col gap-2 pl-5 text-sm text-muted">
-        <li>{t('guides.stepInstall', { app: guideApp.name })}</li>
-        <li>{t('guides.stepImport', { app: guideApp.name })}</li>
-        <li>{t('guides.stepConnect', { app: guideApp.name, platform: platform.name })}</li>
-      </ol>
-
-      <div className="flex flex-col gap-2">
-        {downloads.map((item) => (
+      {/* Step-by-step: each step is immediately followed by its action, so
+          the reader acts without scrolling back up. */}
+      <ol className="flex list-none flex-col gap-4 pl-0">
+        <li className="flex flex-col gap-2">
+          <p className="text-sm text-muted">
+            <span className="font-mono font-semibold text-foreground">01 · </span>
+            {t('guides.stepInstall', { app: guideApp.name })}
+          </p>
+          {downloads.map((item) => (
+            <a
+              key={item.url}
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-12 items-center justify-center rounded-lg border border-line px-5 text-sm transition-colors hover:bg-foreground/5"
+            >
+              {item.label}
+            </a>
+          ))}
+        </li>
+        <li className="flex flex-col gap-2">
+          <p className="text-sm text-muted">
+            <span className="font-mono font-semibold text-foreground">02 · </span>
+            {t('guides.stepImport', { app: guideApp.name })}
+          </p>
           <a
-            key={item.url}
-            href={item.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex h-12 items-center justify-center rounded-full border border-line px-5 text-sm transition-colors hover:bg-foreground/5"
+            href={importUrl}
+            className="flex h-12 items-center justify-center rounded-lg bg-foreground px-5 text-sm text-lime transition-colors hover:opacity-90"
           >
-            {item.label}
+            {t('guides.importCta', { app: guideApp.name })}
           </a>
-        ))}
-        <a
-          href={importUrl}
-          className="flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-sm text-lime transition-colors hover:opacity-90"
-        >
-          {t('guides.importCta', { app: guideApp.name })}
-        </a>
-        <div className="flex items-center gap-2">
-          <code className="line-clamp-1 max-w-full min-w-0 flex-1 break-all text-xs text-muted">
-            {subscriptionUrl}
-          </code>
-          <CopyButton value={subscriptionUrl} />
-        </div>
-      </div>
+          <div className="flex items-center gap-2">
+            <code className="line-clamp-1 max-w-full min-w-0 flex-1 break-all text-xs text-muted">
+              {subscriptionUrl}
+            </code>
+            <CopyButton value={subscriptionUrl} />
+          </div>
+        </li>
+        <li className="flex flex-col gap-2">
+          <p className="text-sm text-muted">
+            <span className="font-mono font-semibold text-foreground">03 · </span>
+            {t('guides.stepConnect', { app: guideApp.name, platform: platform.name })}
+          </p>
+        </li>
+      </ol>
     </div>
   );
 }

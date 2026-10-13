@@ -35,9 +35,9 @@ export const metadata = {
 
 const CARD = 'flex flex-col gap-3 rounded-2xl border border-line p-6 border-line';
 const PRIMARY =
-  'flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:opacity-90';
+  'flex h-12 items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:opacity-90';
 const SECONDARY =
-  'flex h-12 items-center justify-center rounded-full border border-solid border-line px-5 transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-12 items-center justify-center rounded-lg border border-solid border-line px-5 transition-colors hover:bg-foreground/5 border-line ';
 
 /** Humanize bytes to GB (one decimal) or MB (UI-SPEC formatting rules). */
 function humanizeBytes(bytes: number): string {

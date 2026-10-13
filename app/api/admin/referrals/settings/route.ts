@@ -16,6 +16,8 @@ const bodySchema = z
     inviterKind: z.enum(["percent", "fixed"]).optional(),
     inviterValue: z.number().min(0).max(1_000_000).optional(),
     inviteeValue: z.number().min(0).max(1_000_000).optional(),
+    userDays: z.number().min(0).max(3650).optional(),
+    inviteeDays: z.number().min(0).max(3650).optional(),
     minWithdraw: z.number().min(0).max(100_000_000).optional(),
   })
   .strict();

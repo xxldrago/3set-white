@@ -3,6 +3,7 @@
 // copy, actions) in 3set branding. No data fetching: the server page passes a
 // `RenderedKey` whose `statusKind` was derived from `expiresAt`.
 import Link from 'next/link';
+import BonusDaysButton from './BonusDaysButton';
 import CopyButton from './CopyButton';
 import DeviceListModal from './DeviceListModal';
 import RenewPanel from './RenewPanel';
@@ -70,12 +71,12 @@ export default function SubscriptionCard({
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           {item.isTrial && (
-            <span className="inline-flex items-center rounded-full bg-amber-500/15 px-3 py-1 text-xs font-semibold text-amber-600">
+            <span className="inline-flex items-center rounded-lg bg-amber-500/15 px-3 py-1 text-xs font-semibold text-amber-600">
               {t('trial.badge')}
             </span>
           )}
           <span
-            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${STATUS_PILL[item.statusKind]}`}
+            className={`inline-flex items-center rounded-lg px-3 py-1 text-xs font-semibold ${STATUS_PILL[item.statusKind]}`}
           >
             {statusLabel(item.statusKind, item.expiresAt)}
           </span>
@@ -127,6 +128,7 @@ export default function SubscriptionCard({
         ) : (
           <RenewPanel keyId={item.id} deviceLimit={deviceLimit} />
         )}
+        {!item.isTrial && <BonusDaysButton keyId={item.id} />}
         <DeviceListModal keyId={item.id} deviceLimit={deviceLimit} />
       </div>
     </article>

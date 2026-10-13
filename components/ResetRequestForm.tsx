@@ -15,9 +15,9 @@ const INPUT =
 const INPUT_INVALID = 'border-red-600/50';
 const FIELD_LABEL = 'text-sm text-muted';
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
+  'flex h-12 w-full items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
+  'flex h-11 items-center justify-center rounded-lg border border-solid border-line px-4 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 
 const CARD = 'rounded-2xl border border-line p-6 border-line';
 const EMAIL_SHAPE = /[^@\s]+@[^@\s]+\.[^@\s]+/;

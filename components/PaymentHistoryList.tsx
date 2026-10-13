@@ -16,7 +16,7 @@ import { t, tp } from '@/lib/i18n';
 import type { OrderHistoryRow } from '@/lib/orders-service';
 
 const PRIMARY =
-  'flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:opacity-90';
+  'flex h-12 items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:opacity-90';
 
 const priceFormatter = new Intl.NumberFormat('ru-RU');
 

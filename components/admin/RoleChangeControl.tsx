@@ -18,7 +18,7 @@ const ROLES: AdminRole[] = ['administrator', 'support', 'manager', 'partner'];
 const SELECT =
   'h-11 rounded-2xl border border-line bg-panel px-3 text-sm text-foreground border-line bg-panel text-foreground';
 const DISABLED_TRIGGER =
-  'flex h-11 shrink-0 items-center justify-center rounded-full border border-solid border-line px-4 text-sm opacity-50 border-line';
+  'flex h-11 shrink-0 items-center justify-center rounded-lg border border-solid border-line px-4 text-sm opacity-50 border-line';
 
 export default function RoleChangeControl({
   telegramId,

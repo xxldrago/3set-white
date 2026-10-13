@@ -12,9 +12,9 @@ import type { ReferralSettings } from '@/lib/referrals';
 const INPUT =
   'h-12 w-full rounded-2xl border border-line bg-panel px-4 text-base text-foreground placeholder:text-dim disabled:opacity-50';
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50';
+  'flex h-12 w-full items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50';
 const SMALL =
-  'flex h-9 items-center justify-center rounded-full border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50';
+  'flex h-9 items-center justify-center rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50';
 const FIELD_LABEL = 'text-sm text-muted';
 
 interface WithdrawalRow {
@@ -37,6 +37,8 @@ export default function ReferralAdminForm({
   const [kind, setKind] = useState<'percent' | 'fixed'>(initialSettings.inviterKind);
   const [inviterValue, setInviterValue] = useState(String(initialSettings.inviterValue));
   const [inviteeValue, setInviteeValue] = useState(String(initialSettings.inviteeValue));
+  const [userDays, setUserDays] = useState(String(initialSettings.userDays));
+  const [inviteeDays, setInviteeDays] = useState(String(initialSettings.inviteeDays));
   const [minWithdraw, setMinWithdraw] = useState(String(initialSettings.minWithdraw));
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -57,7 +59,9 @@ export default function ReferralAdminForm({
     const a = num(inviterValue);
     const b = num(inviteeValue);
     const c = num(minWithdraw);
-    if (a === null || b === null || c === null) {
+    const d = num(userDays);
+    const e = num(inviteeDays);
+    if (a === null || b === null || c === null || d === null || e === null) {
       setFailed(true);
       return;
     }
@@ -71,7 +75,14 @@ export default function ReferralAdminForm({
       const res = await fetch('/api/admin/referrals/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inviterKind: kind, inviterValue: a, inviteeValue: b, minWithdraw: c }),
+        body: JSON.stringify({
+          inviterKind: kind,
+          inviterValue: a,
+          inviteeValue: b,
+          userDays: d,
+          inviteeDays: e,
+          minWithdraw: c,
+        }),
         signal: controller.signal,
       });
       if (!res.ok) setFailed(true);
@@ -85,7 +96,7 @@ export default function ReferralAdminForm({
     } finally {
       setSaving(false);
     }
-  }, [saving, kind, inviterValue, inviteeValue, minWithdraw, router]);
+  }, [saving, kind, inviterValue, inviteeValue, userDays, inviteeDays, minWithdraw, router]);
 
   const decide = useCallback(
     async (id: string, approve: boolean) => {
@@ -154,6 +165,32 @@ export default function ReferralAdminForm({
               id="ref-invitee-value"
               value={inviteeValue}
               onChange={(event) => setInviteeValue(event.target.value.replace(/[^0-9]/g, ''))}
+              inputMode="numeric"
+              disabled={saving}
+              className={INPUT}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="ref-user-days" className={FIELD_LABEL}>
+              {t('admin.refUserDays')}
+            </label>
+            <input
+              id="ref-user-days"
+              value={userDays}
+              onChange={(event) => setUserDays(event.target.value.replace(/[^0-9]/g, ''))}
+              inputMode="numeric"
+              disabled={saving}
+              className={INPUT}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="ref-invitee-days" className={FIELD_LABEL}>
+              {t('admin.refInviteeDays')}
+            </label>
+            <input
+              id="ref-invitee-days"
+              value={inviteeDays}
+              onChange={(event) => setInviteeDays(event.target.value.replace(/[^0-9]/g, ''))}
               inputMode="numeric"
               disabled={saving}
               className={INPUT}

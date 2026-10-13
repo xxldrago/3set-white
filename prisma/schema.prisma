@@ -63,6 +63,14 @@ model User {
   // customInviterReward this is the per-user rate the admin panel edits —
   // partners earn their individual percent, everyone else the global rate.
   customInviterKind   String? @map("custom_inviter_kind")
+  // Downline rate this account sets for ITS referrals (what my referrals
+  // earn when THEY bring buyers). Null = global rate. My residual as an
+  // inviter = my entitlement minus the downline share (floored at zero).
+  subRateKind         String? @map("sub_rate_kind")
+  subRateValue        Int?    @map("sub_rate_value")
+  // Bonus subscription days (user referral program): credited instead of
+  // money for non-partner inviters/invitees; spent via key extension.
+  bonusDays           Int     @default(0) @map("bonus_days")
   // Personal subdomain (`<name>.3set.online`, admin-assigned, unique).
   // Visitors are resolved to this account's referral code and pinned
   // permanently on registration (first-wins, same as ?ref=).

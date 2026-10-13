@@ -9,7 +9,7 @@ import { t } from '@/lib/i18n';
 const INPUT =
   'h-12 w-full rounded-2xl border border-line bg-panel px-4 text-base text-foreground disabled:opacity-50';
 const SECONDARY =
-  'flex h-12 shrink-0 items-center justify-center rounded-full border border-solid border-line px-5 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50';
+  'flex h-12 shrink-0 items-center justify-center rounded-lg border border-solid border-line px-5 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50';
 
 export default function ReferralLinkBox({ link }: { link: string }) {
   const [copied, setCopied] = useState(false);

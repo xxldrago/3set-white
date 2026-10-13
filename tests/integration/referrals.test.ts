@@ -24,6 +24,7 @@ import { signSession } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
 import {
   REFERRAL_CODE_RE,
+  bonusBalance,
   creditReferralForPaidOrder,
   decideWithdrawal,
   ensureReferralCode,
@@ -44,6 +45,21 @@ const SECRET =
   process.env["SESSION_SECRET"] ?? "unit-test-session-secret-at-least-32-characters";
 
 async function cleanup(): Promise<void> {
+  // Settings are global rows — reset so the defaults test reads true values.
+  await prisma.setting.deleteMany({
+    where: {
+      key: {
+        in: [
+          "referral.inviterKind",
+          "referral.inviterValue",
+          "referral.inviteeValue",
+          "referral.userDays",
+          "referral.inviteeDays",
+          "referral.minWithdraw",
+        ],
+      },
+    },
+  });
   for (const telegramId of [INVITER_TG, REFEREE_TG, STRANGER_TG]) {
     const user = await prisma.user.findUnique({
       where: { telegramId },
@@ -181,38 +197,49 @@ describe("settings + first-paid credit", () => {
 
   it("reads defaults and saves admin rates", async () => {
     const defaults = await getReferralSettings();
-    expect(defaults).toMatchObject({ inviterKind: "percent", inviterValue: 10 });
+    expect(defaults).toMatchObject({
+      inviterKind: "percent",
+      inviterValue: 10,
+      userDays: 5,
+      inviteeDays: 3,
+    });
     const saved = await setReferralSettings({
       inviterKind: "percent",
       inviterValue: 20,
       inviteeValue: 50,
+      userDays: 7,
+      inviteeDays: 4,
       minWithdraw: 100,
     });
     expect(saved).toMatchObject({
       inviterKind: "percent",
       inviterValue: 20,
-      inviteeValue: 50,
+      userDays: 7,
+      inviteeDays: 4,
       minWithdraw: 100,
     });
   });
 
-  it("credits inviter percent + invitee bonus once, on the first paid order", async () => {
+  it("credits inviter days + invitee days once, on the first paid order", async () => {
     const code = await ensureReferralCode(inviterId);
     await expect(pinReferrer(refereeId, code)).resolves.toBe(inviterId);
     await creditReferralForPaidOrder(refereeId, 1000, "order-1");
-    await expect(walletBalance(inviterId)).resolves.toBe(200);
-    await expect(walletBalance(refereeId)).resolves.toBe(50);
+    // Plain users earn days, not money.
+    await expect(bonusBalance(inviterId)).resolves.toBe(7);
+    await expect(bonusBalance(refereeId)).resolves.toBe(4);
+    await expect(walletBalance(inviterId)).resolves.toBe(0);
     // Second paid order credits nothing more.
-    await creditReferralForPaidOrder(refereeId, 1000, "order-1");
-    await expect(walletBalance(inviterId)).resolves.toBe(200);
+    await creditReferralForPaidOrder(refereeId, 1000, "order-2");
+    await expect(bonusBalance(inviterId)).resolves.toBe(7);
     await expect(getReferralSummary(inviterId)).resolves.toMatchObject({
       referrals: 1,
-      earned: 200,
-      balance: 200,
+      earned: 0,
+      balance: 0,
+      bonusDays: 7,
     });
   });
 
-  it("honors the per-user custom inviter reward", async () => {
+  it("honors the per-user custom inviter reward (legacy fixed money)", async () => {
     await prisma.user.update({
       where: { id: inviterId },
       data: { customInviterReward: 77 },
@@ -222,9 +249,9 @@ describe("settings + first-paid credit", () => {
       select: { id: true },
     });
     await creditReferralForPaidOrder(stranger.id, 1000, "order-1");
-    // 200 (prior) + 77 custom (invitee bonus also lands on the stranger).
-    await expect(walletBalance(inviterId)).resolves.toBe(277);
-    await expect(walletBalance(stranger.id)).resolves.toBe(50);
+    // 77 fixed money (invitee still gets days).
+    await expect(walletBalance(inviterId)).resolves.toBe(77);
+    await expect(bonusBalance(stranger.id)).resolves.toBe(4);
   });
 });
 
@@ -390,5 +417,164 @@ describe("withdrawals", () => {
     expect(pin.status).toBe(200);
     // Self-pin is a silent no-op.
     expect(await pin.json()).toEqual({ ok: true, pinned: false });
+  });
+});
+
+describe("sub-partner residuals (multi-level)", () => {
+  const A_TG = BigInt("920000311");
+  const B_TG = BigInt("920000312");
+  const C_TG = BigInt("920000313");
+  let aId = 0;
+  let bId = 0;
+  let cId = 0;
+
+  beforeAll(async () => {
+    for (const tg of [A_TG, B_TG, C_TG]) {
+      await prisma.user.deleteMany({ where: { telegramId: tg } });
+    }
+    // A: partner with a fixed 100/deal rate.
+    await prisma.adminUser.create({ data: { telegramId: A_TG, role: "partner" } });
+    const a = await prisma.user.create({
+      data: {
+        telegramId: A_TG,
+        customInviterKind: "fixed",
+        customInviterReward: 100,
+      },
+      select: { id: true },
+    });
+    const b = await prisma.user.create({ data: { telegramId: B_TG }, select: { id: true } });
+    const c = await prisma.user.create({ data: { telegramId: C_TG }, select: { id: true } });
+    aId = a.id;
+    bId = b.id;
+    cId = c.id;
+    const aCode = await ensureReferralCode(aId);
+    await pinReferrer(bId, aCode);
+    // A shares 60 fixed with the downline.
+    const { setSubRate } = await import("../../lib/referrals");
+    await setSubRate(aId, { kind: "fixed", value: 60 });
+  });
+
+  afterAll(async () => {
+    for (const tg of [A_TG, B_TG, C_TG]) {
+      const user = await prisma.user.findUnique({
+        where: { telegramId: tg },
+        select: { id: true },
+      });
+      if (user) {
+        await prisma.walletTx.deleteMany({ where: { userId: user.id } });
+      }
+      await prisma.user.deleteMany({ where: { telegramId: tg } });
+    }
+    await prisma.adminUser.deleteMany({ where: { telegramId: A_TG } });
+  });
+
+  it("splits 100/60: B gets 60, A nets 40", async () => {
+    const bCode = await ensureReferralCode(bId);
+    await pinReferrer(cId, bCode);
+    await creditReferralForPaidOrder(cId, 1000, "order-sub-1");
+    await expect(walletBalance(bId)).resolves.toBe(60);
+    await expect(walletBalance(aId)).resolves.toBe(40);
+  });
+
+  it("floors the residual at zero when the downline share exceeds it", async () => {
+    const { setSubRate } = await import("../../lib/referrals");
+    await setSubRate(aId, { kind: "fixed", value: 150 });
+    // Fresh buyer (first payment): B earns the 150 downline share, A's
+    // 100-entitlement minus 150 floors at zero — A stays at 40.
+    const c2 = await prisma.user.create({
+      data: { telegramId: BigInt("920000314") },
+      select: { id: true },
+    });
+    const bCode = await ensureReferralCode(bId);
+    await pinReferrer(c2.id, bCode);
+    await creditReferralForPaidOrder(c2.id, 1000, "order-sub-2");
+    await expect(walletBalance(bId)).resolves.toBe(210);
+    await expect(walletBalance(aId)).resolves.toBe(40);
+    const upline = await prisma.walletTx.findMany({
+      where: { userId: aId, reason: "referral_bonus" },
+      select: { amount: true },
+    });
+    expect(upline.map((row) => row.amount)).toEqual([40]);
+    await prisma.walletTx.deleteMany({ where: { userId: c2.id } });
+    await prisma.walletTx.deleteMany({
+      where: { userId: bId, OR: [{ refId: String(c2.id) }, { refId: { startsWith: `${c2.id}:` } }] },
+    });
+    await prisma.user.delete({ where: { id: c2.id } });
+  });
+});
+
+describe("bonus-day redemption", () => {
+  const R_TG = BigInt("920000321");
+  const KEY = "key-bonus-redeem";
+  let userId = 0;
+
+  beforeAll(async () => {
+    await prisma.user.deleteMany({ where: { telegramId: R_TG } });
+    const row = await prisma.user.create({
+      data: { telegramId: R_TG, bonusDays: 10 },
+      select: { id: true },
+    });
+    userId = row.id;
+    await prisma.keyCache.create({
+      data: {
+        userId,
+        keyId: KEY,
+        status: "ACTIVE",
+        isTrial: false,
+        deviceLimit: 2,
+        devices: 1,
+        expiresAt: new Date(Date.now() + 30 * 86_400_000),
+        customerRef: String(R_TG),
+      },
+    });
+  });
+
+  afterAll(async () => {
+    vi.restoreAllMocks();
+    const user = await prisma.user.findUnique({
+      where: { telegramId: R_TG },
+      select: { id: true },
+    });
+    if (user) await prisma.keyCache.deleteMany({ where: { userId: user.id } });
+    await prisma.user.deleteMany({ where: { telegramId: R_TG } });
+  });
+
+  it("extends the key and decrements the balance (provider spied)", async () => {
+    const { artemida } = await import("../../lib/artemida");
+    const { redeemBonusDays } = await import("../../lib/referrals");
+    const spy = vi.spyOn(artemida, "renewKey").mockImplementation(async (id, input) => ({
+      id,
+      name: "K",
+      status: "active",
+      isTrial: false,
+      expiresAt: new Date(Date.now() + (30 + input.days) * 86_400_000).toISOString(),
+      deviceLimit: input.devices,
+      devices: 1,
+      subscriptionUrl: "https://example.test/sub",
+      customerRef: String(R_TG),
+      trafficUsedBytes: 0,
+      trafficLimitBytes: null,
+    }));
+    try {
+      const result = await redeemBonusDays(userId, KEY, 4);
+      expect(result.ok).toBe(true);
+      await expect(bonusBalance(userId)).resolves.toBe(6);
+      expect(spy).toHaveBeenCalledWith(KEY, { days: 4, devices: 2 }, expect.anything());
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("rejects short balances without touching the provider", async () => {
+    const { artemida } = await import("../../lib/artemida");
+    const { redeemBonusDays } = await import("../../lib/referrals");
+    const spy = vi.spyOn(artemida, "renewKey");
+    try {
+      const result = await redeemBonusDays(userId, KEY, 999);
+      expect(result).toMatchObject({ ok: false, reason: "insufficient" });
+      expect(spy).not.toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

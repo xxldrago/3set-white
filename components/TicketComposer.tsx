@@ -23,9 +23,9 @@ const INPUT =
 const TEXTAREA = `${INPUT} min-h-28 resize-y py-3`;
 const FIELD_LABEL = 'text-sm text-muted';
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
+  'flex h-12 w-full items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-solid border-line px-4 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
+  'flex h-11 items-center justify-center rounded-lg border border-solid border-line px-4 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 
 export default function TicketComposer({ ticketId }: { ticketId: string }) {
   const router = useRouter();

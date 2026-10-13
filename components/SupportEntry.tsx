@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { t, tp } from '@/lib/i18n';
 
 const SECONDARY =
-  'flex h-12 items-center justify-center gap-2 rounded-full border border-solid border-line px-5 transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-12 items-center justify-center gap-2 rounded-lg border border-solid border-line px-5 transition-colors hover:bg-foreground/5 border-line ';
 const UNREAD_BADGE =
   'inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-foreground px-2 text-sm font-semibold tabular-nums text-lime';
 

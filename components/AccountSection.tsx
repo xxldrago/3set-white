@@ -27,7 +27,7 @@ function AccountSectionError() {
       <p className="text-muted">{t('common.errorLoad')}</p>
       <Link
         href="/"
-        className="flex h-12 items-center justify-center rounded-full border border-solid border-line px-5 transition-colors hover:bg-foreground/5 border-line "
+        className="flex h-12 items-center justify-center rounded-lg border border-solid border-line px-5 transition-colors hover:bg-foreground/5 border-line "
       >
         {t('common.retry')}
       </Link>

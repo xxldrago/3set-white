@@ -23,5 +23,5 @@ function label(status: BroadcastStatus): string {
 }
 export default function BroadcastStatusChip({ status }: { status: string }) {
   const kind = normalize(status);
-  return <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ${TINT[kind]}`}>{label(kind)}</span>;
+  return <span className={`inline-flex items-center rounded-lg px-3 py-1 text-sm font-semibold ${TINT[kind]}`}>{label(kind)}</span>;
 }

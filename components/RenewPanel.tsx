@@ -20,9 +20,9 @@ const DEBOUNCE_MS = 300;
 const CARD =
   'flex flex-col gap-4 rounded-2xl border border-line p-6 border-line';
 const TRIGGER =
-  'flex h-11 flex-1 items-center justify-center rounded-full border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-11 flex-1 items-center justify-center rounded-lg border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-full border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-11 items-center justify-center rounded-lg border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 
 const priceFormatter = new Intl.NumberFormat('ru-RU');
 
@@ -119,8 +119,8 @@ export default function RenewPanel({
                 onClick={() => setDays(value)}
                 className={
                   selected
-                    ? 'h-12 min-h-12 min-w-0 whitespace-nowrap rounded-full bg-foreground px-2 text-xs text-lime transition-colors disabled:opacity-50 sm:px-5 sm:text-sm'
-                    : 'h-12 min-h-12 min-w-0 whitespace-nowrap rounded-full border border-line px-2 text-xs transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line sm:px-5 sm:text-sm'
+                    ? 'h-12 min-h-12 min-w-0 whitespace-nowrap rounded-lg bg-foreground px-2 text-xs text-lime transition-colors disabled:opacity-50 sm:px-5 sm:text-sm'
+                    : 'h-12 min-h-12 min-w-0 whitespace-nowrap rounded-lg border border-line px-2 text-xs transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line sm:px-5 sm:text-sm'
                 }
               >
                 {label}

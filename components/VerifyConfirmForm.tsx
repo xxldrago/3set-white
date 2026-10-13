@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { t } from '@/lib/i18n';
 
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
+  'flex h-12 w-full items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const CARD = 'rounded-2xl border border-line p-6 border-line';
 
 type State = 'loading' | 'done' | 'invalid' | 'error';

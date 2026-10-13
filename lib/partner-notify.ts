@@ -47,6 +47,20 @@ export function notifyReferralPinned(inviterId: number): void {
   })();
 }
 
+/** Bonus days landed for bringing a buyer (same best-effort contract). */
+export function notifyReferralDays(inviterId: number, days: number): void {
+  void (async () => {
+    try {
+      const chat = await inviterChat(inviterId);
+      if (!chat) return;
+      await push(chat, t("bot.refBonusDays", { days }));
+      logger.info({ route: "partner-notify", outcome: "days_sent" });
+    } catch {
+      // Best-effort only.
+    }
+  })();
+}
+
 /** The referred account's first payment credited this inviter. */
 export function notifyReferralCredited(inviterId: number, amount: number): void {
   void (async () => {

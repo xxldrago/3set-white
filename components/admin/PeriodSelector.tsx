@@ -28,7 +28,7 @@ export default function PeriodSelector({ selected = 30 }: { selected?: number })
             type="button"
             aria-pressed={active}
             onClick={() => choose(days)}
-            className={active ? 'h-11 flex-1 rounded-full bg-foreground px-4 text-lime' : 'h-11 flex-1 rounded-full border border-line px-4 border-line'}
+            className={active ? 'h-11 flex-1 rounded-lg bg-foreground px-4 text-lime' : 'h-11 flex-1 rounded-lg border border-line px-4 border-line'}
           >
             {label}
           </button>

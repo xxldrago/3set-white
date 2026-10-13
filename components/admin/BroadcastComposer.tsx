@@ -30,7 +30,7 @@ export default function BroadcastComposer() {
         payload={{ body: trimmed }}
         onSuccess={onSuccess}
         disabled={!trimmed}
-        triggerClassName="flex h-11 items-center justify-center rounded-full bg-foreground px-5 text-lime disabled:opacity-50"
+        triggerClassName="flex h-11 items-center justify-center rounded-lg bg-foreground px-5 text-lime disabled:opacity-50"
       />
       {result && <div role="status" className="flex items-center gap-3"><BroadcastStatusChip status={result.status ?? 'unknown'} />{result.failed ? <button type="button" onClick={() => setResult(null)} className="text-sm underline">{t('common.retry')}</button> : null}</div>}
     </section>

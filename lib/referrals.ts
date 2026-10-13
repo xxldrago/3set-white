@@ -121,6 +121,10 @@ export interface ReferralSettings {
   inviterKind: "percent" | "fixed";
   inviterValue: number;
   inviteeValue: number;
+  /** Bonus days for a non-partner inviter per referred first payment. */
+  userDays: number;
+  /** Bonus days for the invited account (always days, first payment only). */
+  inviteeDays: number;
   minWithdraw: number;
 }
 
@@ -128,6 +132,8 @@ const DEFAULTS: ReferralSettings = {
   inviterKind: "percent",
   inviterValue: 10,
   inviteeValue: 0,
+  userDays: 5,
+  inviteeDays: 3,
   minWithdraw: 500,
 };
 
@@ -135,6 +141,8 @@ const SETTING_KEYS = [
   "referral.inviterKind",
   "referral.inviterValue",
   "referral.inviteeValue",
+  "referral.userDays",
+  "referral.inviteeDays",
   "referral.minWithdraw",
 ] as const;
 
@@ -155,6 +163,8 @@ export async function getReferralSettings(): Promise<ReferralSettings> {
     inviterKind: kind === "fixed" ? "fixed" : "percent",
     inviterValue: num("referral.inviterValue", DEFAULTS.inviterValue),
     inviteeValue: num("referral.inviteeValue", DEFAULTS.inviteeValue),
+    userDays: num("referral.userDays", DEFAULTS.userDays),
+    inviteeDays: num("referral.inviteeDays", DEFAULTS.inviteeDays),
     minWithdraw: num("referral.minWithdraw", DEFAULTS.minWithdraw),
   };
 }
@@ -172,6 +182,12 @@ export async function setReferralSettings(
   }
   if (input.inviteeValue !== undefined) {
     entries.push(["referral.inviteeValue", String(Math.max(0, Math.floor(input.inviteeValue)))]);
+  }
+  if (input.userDays !== undefined) {
+    entries.push(["referral.userDays", String(Math.max(0, Math.floor(input.userDays)))]);
+  }
+  if (input.inviteeDays !== undefined) {
+    entries.push(["referral.inviteeDays", String(Math.max(0, Math.floor(input.inviteeDays)))]);
   }
   if (input.minWithdraw !== undefined) {
     entries.push(["referral.minWithdraw", String(Math.max(0, Math.floor(input.minWithdraw)))]);
@@ -271,30 +287,154 @@ export async function walletBalance(userId: number): Promise<number> {
   return result._sum.amount ?? 0;
 }
 
+export interface RateView {
+  kind: string;
+  value: number;
+}
+
 export interface ReferralSummary {
   code: string;
   referrals: number;
   earned: number;
   balance: number;
+  bonusDays: number;
+  /** What this account earns per referred deal (resolved effective rate). */
+  myRate: RateView;
+  /** What this account shares with its own referrals (null = global). */
+  downline: RateView | null;
 }
 
 /** Cabinet + bot stats: code (ensured), referral count, lifetime earnings. */
 export async function getReferralSummary(userId: number): Promise<ReferralSummary> {
   const code = await ensureReferralCode(userId);
-  const [referrals, earned, balance] = await Promise.all([
+  const [referrals, earned, balance, me, settings] = await Promise.all([
     prisma.user.count({ where: { referredById: userId } }),
     prisma.walletTx.aggregate({
       where: { userId, reason: "referral_bonus" },
       _sum: { amount: true },
     }),
     walletBalance(userId),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        telegramId: true,
+        referredById: true,
+        bonusDays: true,
+        customInviterReward: true,
+        customInviterKind: true,
+        subRateKind: true,
+        subRateValue: true,
+      },
+    }),
+    getReferralSettings(),
   ]);
+  const partnerEarner = await isPartner(userId, me?.telegramId ?? null);
+  const myRate: RateView = me
+    ? await resolveEarnerRate(me, settings, partnerEarner).then((rate) => ({
+        kind: rate.kind,
+        value: rate.value,
+      }))
+    : { kind: "days", value: settings.userDays };
   return {
     code,
     referrals,
     earned: earned._sum.amount ?? 0,
     balance,
+    bonusDays: Math.max(0, me?.bonusDays ?? 0),
+    myRate,
+    downline:
+      me?.subRateKind && me.subRateValue !== null && me.subRateValue !== undefined
+        ? { kind: me.subRateKind, value: me.subRateValue }
+        : null,
   };
+}
+
+export type EarningRate =
+  | { kind: "percent" | "fixed"; value: number }
+  | { kind: "days"; value: number };
+
+export interface DownlineRate {
+  kind: "percent" | "fixed" | "days";
+  value: number;
+}
+
+function moneyOf(rate: EarningRate, finalAmount: number): number {
+  if (rate.kind === "fixed") return Math.max(0, rate.value);
+  if (rate.kind === "percent") {
+    return Math.floor((Math.max(0, finalAmount) * Math.min(100, Math.max(0, rate.value))) / 100);
+  }
+  return 0;
+}
+
+async function isPartner(userId: number, telegramId: bigint | null): Promise<boolean> {
+  if (telegramId === null) return false;
+  const row = await prisma.adminUser
+    .findUnique({ where: { telegramId }, select: { role: true } })
+    .catch(() => null);
+  return row?.role === "partner";
+}
+
+interface EarnerRow {
+  id: number;
+  telegramId: bigint | null;
+  referredById: number | null;
+  customInviterReward: number | null;
+  customInviterKind: string | null;
+}
+
+/**
+ * Effective earning rate of X for bringing a buyer:
+ * admin custom (percent/fixed/days) → inviter-set downline rate →
+ * partner global money → user bonus days. Legacy amount-only customs keep
+ * the fixed-RUB meaning.
+ */
+async function resolveEarnerRate(
+  earner: EarnerRow,
+  settings: ReferralSettings,
+  partnerEarner: boolean,
+): Promise<EarningRate> {
+  if (
+    earner.customInviterKind === "percent" ||
+    earner.customInviterKind === "fixed" ||
+    earner.customInviterKind === "days"
+  ) {
+    return {
+      kind: earner.customInviterKind,
+      value: Math.max(0, earner.customInviterReward ?? 0),
+    };
+  }
+  if (earner.customInviterReward !== null && earner.customInviterReward !== undefined) {
+    return { kind: "fixed", value: Math.max(0, earner.customInviterReward) };
+  }
+  if (partnerEarner) {
+    return { kind: settings.inviterKind, value: Math.max(0, settings.inviterValue) };
+  }
+  if (earner.referredById !== null) {
+    const up = await prisma.user.findUnique({
+      where: { id: earner.referredById },
+      select: { subRateKind: true, subRateValue: true },
+    });
+    if (
+      (up?.subRateKind === "percent" || up?.subRateKind === "fixed" || up?.subRateKind === "days") &&
+      up.subRateValue !== null &&
+      up.subRateValue !== undefined
+    ) {
+      return { kind: up.subRateKind, value: Math.max(0, up.subRateValue) };
+    }
+  }
+  return { kind: "days", value: Math.max(0, settings.userDays) };
+}
+
+async function creditDays(userId: number, days: number, refId: string): Promise<void> {
+  if (days <= 0) return;
+  await prisma.walletTx.create({
+    data: { userId, amount: 0, reason: "referral_days", refId },
+  });
+  await prisma.user.update({
+    where: { id: userId },
+    data: { bonusDays: { increment: days } },
+  });
 }
 
 /**
@@ -302,11 +442,18 @@ export async function getReferralSummary(userId: number): Promise<ReferralSummar
  * finalAmount, orderId) AFTER the pending→paid claim wins, so it runs once
  * per order.
  *
- * Regular inviters earn once — on the referred account's FIRST paid order
- * (the existence gate below). Partner inviters (staff role `partner`) earn
- * on EVERY paid order: their bonus refId is order-scoped, so each payment
- * lands separately. The wallet unique makes every path idempotent under
- * concurrent payments (P2002 → already credited).
+ * Direct leg (B earns for bringing C): B's effective rate (admin custom →
+ * inviter-set downline → partner-global money → user bonus days). Money
+ * lands in the wallet, days in `bonusDays`. Non-partner B earns once (first
+ * payment); partner B earns on every payment (order-scoped refId).
+ *
+ * Upline leg: when B itself was referred by a PARTNER A, A nets the
+ * residual — A's money entitlement minus B's money share, floored at zero —
+ * on every payment. Non-partner uplines earn nothing indirect. The invitee
+ * always gets `inviteeDays` bonus days, first payment only.
+ *
+ * Every insert is idempotent via the wallet unique (P2002 → already
+ * credited), so concurrent payments can never double-pay.
  */
 export async function creditReferralForPaidOrder(
   userId: number,
@@ -323,75 +470,105 @@ export async function creditReferralForPaidOrder(
   const settings = await getReferralSettings();
   const inviter = await prisma.user.findUnique({
     where: { id: inviterId },
-    select: { id: true, telegramId: true, customInviterReward: true, customInviterKind: true },
+    select: {
+      id: true,
+      telegramId: true,
+      referredById: true,
+      customInviterReward: true,
+      customInviterKind: true,
+    },
   });
   if (!inviter) return;
+  const inviterIsPartner = await isPartner(inviter.id, inviter.telegramId);
 
-  // Partner inviters earn on EVERY paid order; everyone else only on the
-  // first (a referral_bonus already pointing at this account means an
-  // earlier order credited both sides).
-  const isPartner =
-    inviter.telegramId !== null &&
-    (await prisma.adminUser.findUnique({
-      where: { telegramId: inviter.telegramId },
-      select: { role: true },
-    }).then(
-      (row) => row?.role === "partner",
-      () => false,
-    ));
-  const bonusRefId = isPartner ? `${userId}:${orderId}` : String(userId);
-  if (!isPartner) {
+  // First-payment gate for the non-partner direct leg: any marker pointing
+  // at this account means an earlier order already credited both sides.
+  const orderRef = `${userId}:${orderId}`;
+  if (!inviterIsPartner) {
     const existing = await prisma.walletTx.findFirst({
-      where: { reason: "referral_bonus", refId: String(userId) },
+      where: {
+        reason: { in: ["referral_bonus", "referral_days"] },
+        refId: String(userId),
+      },
       select: { id: true },
     });
     if (existing) return;
   }
 
-  // Per-user override (partner rate): an explicit kind wins; an amount
-  // without a kind keeps the legacy fixed-RUB meaning; otherwise global.
-  const kind =
-    inviter.customInviterKind === "percent" || inviter.customInviterKind === "fixed"
-      ? inviter.customInviterKind
-      : inviter.customInviterReward !== null && inviter.customInviterReward !== undefined
-        ? "fixed"
-        : settings.inviterKind;
-  const value = inviter.customInviterReward ?? settings.inviterValue;
-  const inviterAmount =
-    kind === "fixed"
-      ? Math.max(0, value)
-      : Math.floor((Math.max(0, finalAmount) * Math.min(100, Math.max(0, value))) / 100);
-
-  // The invitee signup bonus is always first-only (keyed by account).
-  const inviteeCredited = await prisma.walletTx.findFirst({
-    where: { userId, reason: "referral_bonus" },
-    select: { id: true },
-  });
+  const rate = await resolveEarnerRate(inviter, settings, inviterIsPartner);
+  const directRefId = inviterIsPartner ? orderRef : String(userId);
 
   try {
-    if (inviterAmount > 0) {
-      await prisma.walletTx.create({
-        data: {
-          userId: inviter.id,
-          amount: inviterAmount,
-          reason: "referral_bonus",
-          refId: bonusRefId,
+    let directMoneyShare = 0;
+    if (rate.kind === "days") {
+      await creditDays(inviter.id, rate.value, directRefId);
+      if (rate.value > 0) {
+        const { notifyReferralDays } = await import("./partner-notify");
+        notifyReferralDays(inviter.id, rate.value);
+      }
+    } else {
+      const amount = moneyOf(rate, finalAmount);
+      directMoneyShare = amount;
+      if (amount > 0) {
+        await prisma.walletTx.create({
+          data: {
+            userId: inviter.id,
+            amount,
+            reason: "referral_bonus",
+            refId: directRefId,
+          },
+        });
+        // Best-effort partner push — never awaited, never throws (see module).
+        const { notifyReferralCredited } = await import("./partner-notify");
+        notifyReferralCredited(inviter.id, amount);
+      }
+    }
+
+    // Upline leg: a partner above the direct inviter nets the residual.
+    if (inviter.referredById !== null) {
+      const up = await prisma.user.findUnique({
+        where: { id: inviter.referredById },
+        select: {
+          id: true,
+          telegramId: true,
+          referredById: true,
+          customInviterReward: true,
+          customInviterKind: true,
         },
       });
-      // Best-effort partner push — never awaited, never throws (see module).
-      const { notifyReferralCredited } = await import("./partner-notify");
-      notifyReferralCredited(inviter.id, inviterAmount);
+      if (up && (await isPartner(up.id, up.telegramId))) {
+        const upRate = await resolveEarnerRate(up, settings, true);
+        if (upRate.kind !== "days") {
+          const residual = Math.max(0, moneyOf(upRate, finalAmount) - directMoneyShare);
+          if (residual > 0) {
+            await prisma.walletTx.create({
+              data: {
+                userId: up.id,
+                amount: residual,
+                reason: "referral_bonus",
+                refId: `${orderRef}:up`,
+              },
+            });
+            const { notifyReferralCredited } = await import("./partner-notify");
+            notifyReferralCredited(up.id, residual);
+          }
+        }
+      }
     }
-    if (settings.inviteeValue > 0 && !inviteeCredited) {
-      await prisma.walletTx.create({
-        data: {
-          userId,
-          amount: settings.inviteeValue,
-          reason: "referral_bonus",
-          refId: String(userId),
-        },
-      });
+
+    // Invitee signup bonus: days, always first-only (keyed by account).
+    const inviteeCredited = await prisma.walletTx.findFirst({
+      where: {
+        userId,
+        reason: { in: ["referral_bonus", "referral_days"] },
+        refId: String(userId),
+      },
+      select: { id: true },
+    });
+    if (!inviteeCredited && settings.inviteeDays > 0) {
+      await creditDays(userId, settings.inviteeDays, String(userId));
     }
+
     logger.info({
       route: "referrals",
       outcome: "credited",
@@ -409,6 +586,165 @@ export async function creditReferralForPaidOrder(
     }
     throw err;
   }
+}
+
+/**
+ * Set (or clear with null) the caller's own downline rate — what THEIR
+ * referrals earn when those bring buyers. Anyone may narrow only their own
+ * share (the residual math floors at zero, so no money is ever created).
+ */
+export async function setSubRate(
+  userId: number,
+  rate: DownlineRate | null,
+): Promise<DownlineRate | null> {
+  if (rate !== null) {
+    if (rate.kind !== "percent" && rate.kind !== "fixed" && rate.kind !== "days") {
+      throw new Error("referral:bad_rate");
+    }
+    if (!Number.isSafeInteger(rate.value) || rate.value < 0 || rate.value > 1_000_000) {
+      throw new Error("referral:bad_rate");
+    }
+  }
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      subRateKind: rate?.kind ?? null,
+      subRateValue: rate ? Math.floor(rate.value) : null,
+    },
+  });
+  return rate;
+}
+
+/** Spendable bonus-day balance (SUM-free counter, single row read). */
+export async function bonusBalance(userId: number): Promise<number> {
+  const row = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { bonusDays: true },
+  });
+  return Math.max(0, row?.bonusDays ?? 0);
+}
+
+export type RedeemOutcome =
+  | { ok: true; days: number; expiresAt: string | null }
+  | { ok: false; reason: "not_found" | "trial" | "insufficient" | "provider" };
+
+/**
+ * Extend one owned, non-trial key by bonus days. Provider renew goes first
+ * (a provider failure spends nothing); the balance decrements only after a
+ * successful renew + cache upsert. Ownership resolves through the
+ * (userId, keyId) join — foreign keys read as `not_found`.
+ */
+export async function redeemBonusDays(
+  userId: number,
+  keyId: string,
+  days: number,
+): Promise<RedeemOutcome> {
+  if (!Number.isSafeInteger(days) || days < 1 || days > 3650) {
+    return { ok: false, reason: "insufficient" };
+  }
+  const key = await prisma.keyCache.findFirst({
+    where: { userId, keyId },
+    select: { deviceLimit: true, devices: true, isTrial: true },
+  });
+  if (!key) return { ok: false, reason: "not_found" };
+  if (key.isTrial) return { ok: false, reason: "trial" };
+  const claimed = await prisma.user.updateMany({
+    where: { id: userId, bonusDays: { gte: days } },
+    data: { bonusDays: { decrement: days } },
+  });
+  if (claimed.count === 0) return { ok: false, reason: "insufficient" };
+
+  try {
+    const { artemida } = await import("./artemida");
+    const { upsertCachedKey } = await import("./keys-service");
+    const renewed = await artemida.renewKey(
+      keyId,
+      { days, devices: Math.max(2, Math.min(10, key.deviceLimit ?? key.devices ?? 2)) },
+      { idempotencyKey: `bonus:${userId}:${keyId}:${days}:${Date.now()}` },
+    );
+    await upsertCachedKey(userId, renewed);
+    return { ok: true, days, expiresAt: renewed.expiresAt };
+  } catch {
+    // Provider failed after the debit — refund the days (append-only
+    // discipline would double-spend here; a straight increment restores).
+    await prisma.user
+      .update({ where: { id: userId }, data: { bonusDays: { increment: days } } })
+      .catch(() => undefined);
+    return { ok: false, reason: "provider" };
+  }
+}
+
+export interface DownlineRow {
+  userId: number;
+  displayName: string | null;
+  email: string | null;
+  createdAt: Date;
+  downline: number;
+  purchases: number;
+  revenue: number;
+  earnedFromThem: number;
+}
+
+/**
+ * Extended per-referral stats for the inviter's dashboard: each direct
+ * referral with THEIR downline size, attributed purchases/revenue (paid
+ * orders of their referrals), and what this inviter earned off them
+ * (bonus rows pointing at them, any order scope).
+ */
+export async function listDownlineDetails(ownerId: number): Promise<DownlineRow[]> {
+  const referrals = await prisma.user.findMany({
+    where: { referredById: ownerId },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      username: true,
+      createdAt: true,
+    },
+  });
+  return Promise.all(
+    referrals.map(async (row) => {
+      const full = [row.firstName, row.lastName]
+        .map((part) => part?.trim() ?? "")
+        .filter((part) => part.length > 0)
+        .join(" ")
+        .trim();
+      const [downline, orders, earned] = await Promise.all([
+        prisma.user.count({ where: { referredById: row.id } }),
+        prisma.order.findMany({
+          where: {
+            user: { referredById: row.id },
+            status: { in: ["paid", "provisioning", "provisioned"] },
+          },
+          select: { finalAmount: true, balanceUsed: true },
+        }),
+        prisma.walletTx.aggregate({
+          where: {
+            userId: ownerId,
+            reason: { in: ["referral_bonus", "referral_days"] },
+            OR: [{ refId: String(row.id) }, { refId: { startsWith: `${row.id}:` } }],
+          },
+          _sum: { amount: true },
+        }),
+      ]);
+      return {
+        userId: row.id,
+        displayName: full.length > 0 ? full : (row.username ?? null),
+        email: row.email,
+        createdAt: row.createdAt,
+        downline,
+        purchases: orders.length,
+        revenue: orders.reduce(
+          (sum, order) => sum + Math.max(0, order.finalAmount - order.balanceUsed),
+          0,
+        ),
+        earnedFromThem: earned._sum.amount ?? 0,
+      };
+    }),
+  );
 }
 
 export interface WithdrawalRequest {

@@ -73,7 +73,7 @@ export default function LoginButton() {
           <button
             type="button"
             onClick={loginFromBot}
-            className="flex h-12 items-center justify-center rounded-full bg-foreground px-5 text-lime transition-colors hover:opacity-90"
+            className="flex h-12 items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:opacity-90"
           >
             {t('home.loginCta')}
           </button>

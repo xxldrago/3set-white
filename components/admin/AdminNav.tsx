@@ -28,7 +28,7 @@ const ITEMS: { section: NavSection; href: string }[] = [
   { section: 'roles', href: '/admin/roles' },
 ];
 
-const ITEM_BASE = 'flex h-11 items-center justify-center rounded-full px-4 text-sm transition-colors';
+const ITEM_BASE = 'flex h-11 items-center justify-center rounded-lg px-4 text-sm transition-colors';
 const ACTIVE = `${ITEM_BASE} bg-foreground text-lime`;
 const INACTIVE = `${ITEM_BASE} border border-solid border-line hover:bg-foreground/5 border-line `;
 

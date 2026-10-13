@@ -15,6 +15,10 @@ const PRIMARY =
   'flex h-12 w-full items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50';
 const SMALL =
   'flex h-9 items-center justify-center rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50';
+const SEG_ACTIVE =
+  'flex h-11 flex-1 items-center justify-center rounded-lg bg-foreground px-4 text-sm text-lime transition-colors disabled:opacity-50';
+const SEG_IDLE =
+  'flex h-11 flex-1 items-center justify-center rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50';
 const FIELD_LABEL = 'text-sm text-muted';
 
 interface WithdrawalRow {
@@ -35,6 +39,7 @@ export default function ReferralAdminForm({
 }) {
   const router = useRouter();
   const [kind, setKind] = useState<'percent' | 'fixed'>(initialSettings.inviterKind);
+  const [userMode, setUserMode] = useState<'days' | 'money'>(initialSettings.userMode);
   const [inviterValue, setInviterValue] = useState(String(initialSettings.inviterValue));
   const [inviteeValue, setInviteeValue] = useState(String(initialSettings.inviteeValue));
   const [userDays, setUserDays] = useState(String(initialSettings.userDays));
@@ -79,6 +84,7 @@ export default function ReferralAdminForm({
           inviterKind: kind,
           inviterValue: a,
           inviteeValue: b,
+          userMode,
           userDays: d,
           inviteeDays: e,
           minWithdraw: c,
@@ -96,7 +102,7 @@ export default function ReferralAdminForm({
     } finally {
       setSaving(false);
     }
-  }, [saving, kind, inviterValue, inviteeValue, userDays, inviteeDays, minWithdraw, router]);
+  }, [saving, kind, userMode, inviterValue, inviteeValue, userDays, inviteeDays, minWithdraw, router]);
 
   const decide = useCallback(
     async (id: string, approve: boolean) => {
@@ -128,86 +134,119 @@ export default function ReferralAdminForm({
           void save();
         }}
       >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-2">
-            <label htmlFor="ref-kind" className={FIELD_LABEL}>
-              {t('admin.refInviterKind')}
-            </label>
-            <select
-              id="ref-kind"
-              value={kind}
-              onChange={(event) => setKind(event.target.value as 'percent' | 'fixed')}
-              disabled={saving}
-              className={INPUT}
-            >
-              <option value="percent">{t('admin.refKindPercent')}</option>
-              <option value="fixed">{t('admin.refKindFixed')}</option>
-            </select>
+        <div className="flex flex-col gap-2">
+          <span className={FIELD_LABEL}>{t('admin.refUserMode')}</span>
+          <div className="flex gap-2" role="group" aria-label={t('admin.refUserMode')}>
+            {(
+              [
+                ['money', t('admin.refModeMoney')],
+                ['days', t('admin.refModeDays')],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setUserMode(value)}
+                aria-pressed={userMode === value}
+                disabled={saving}
+                className={userMode === value ? SEG_ACTIVE : SEG_IDLE}
+              >
+                {label}
+              </button>
+            ))}
           </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="ref-inviter-value" className={FIELD_LABEL}>
-              {t('admin.refInviterValue')}
-            </label>
-            <input
-              id="ref-inviter-value"
-              value={inviterValue}
-              onChange={(event) => setInviterValue(event.target.value.replace(/[^0-9]/g, ''))}
-              inputMode="numeric"
-              disabled={saving}
-              className={INPUT}
-            />
+          <p className="text-xs text-muted">{t('admin.refUserModeHint')}</p>
+        </div>
+
+        <div className="flex flex-col gap-2 rounded-2xl border border-line p-4">
+          <h4 className="text-base font-semibold text-foreground">{t('admin.refMoneyGroup')}</h4>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="ref-kind" className={FIELD_LABEL}>
+                {t('admin.refInviterKind')}
+              </label>
+              <select
+                id="ref-kind"
+                value={kind}
+                onChange={(event) => setKind(event.target.value as 'percent' | 'fixed')}
+                disabled={saving}
+                className={INPUT}
+              >
+                <option value="percent">{t('admin.refKindPercent')}</option>
+                <option value="fixed">{t('admin.refKindFixed')}</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="ref-inviter-value" className={FIELD_LABEL}>
+                {t('admin.refInviterValue')}
+              </label>
+              <input
+                id="ref-inviter-value"
+                value={inviterValue}
+                onChange={(event) => setInviterValue(event.target.value.replace(/[^0-9]/g, ''))}
+                inputMode="numeric"
+                disabled={saving}
+                className={INPUT}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="ref-invitee-value" className={FIELD_LABEL}>
+                {t('admin.refInviteeValue')}
+              </label>
+              <input
+                id="ref-invitee-value"
+                value={inviteeValue}
+                onChange={(event) => setInviteeValue(event.target.value.replace(/[^0-9]/g, ''))}
+                inputMode="numeric"
+                disabled={saving}
+                className={INPUT}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="ref-min-withdraw" className={FIELD_LABEL}>
+                {t('admin.refMinWithdraw')}
+              </label>
+              <input
+                id="ref-min-withdraw"
+                value={minWithdraw}
+                onChange={(event) => setMinWithdraw(event.target.value.replace(/[^0-9]/g, ''))}
+                inputMode="numeric"
+                disabled={saving}
+                className={INPUT}
+              />
+            </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="ref-invitee-value" className={FIELD_LABEL}>
-              {t('admin.refInviteeValue')}
-            </label>
-            <input
-              id="ref-invitee-value"
-              value={inviteeValue}
-              onChange={(event) => setInviteeValue(event.target.value.replace(/[^0-9]/g, ''))}
-              inputMode="numeric"
-              disabled={saving}
-              className={INPUT}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="ref-user-days" className={FIELD_LABEL}>
-              {t('admin.refUserDays')}
-            </label>
-            <input
-              id="ref-user-days"
-              value={userDays}
-              onChange={(event) => setUserDays(event.target.value.replace(/[^0-9]/g, ''))}
-              inputMode="numeric"
-              disabled={saving}
-              className={INPUT}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="ref-invitee-days" className={FIELD_LABEL}>
-              {t('admin.refInviteeDays')}
-            </label>
-            <input
-              id="ref-invitee-days"
-              value={inviteeDays}
-              onChange={(event) => setInviteeDays(event.target.value.replace(/[^0-9]/g, ''))}
-              inputMode="numeric"
-              disabled={saving}
-              className={INPUT}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="ref-min-withdraw" className={FIELD_LABEL}>
-              {t('admin.refMinWithdraw')}
-            </label>
-            <input
-              id="ref-min-withdraw"
-              value={minWithdraw}
-              onChange={(event) => setMinWithdraw(event.target.value.replace(/[^0-9]/g, ''))}
-              inputMode="numeric"
-              disabled={saving}
-              className={INPUT}
-            />
+        </div>
+
+        <div className="flex flex-col gap-2 rounded-2xl border border-line p-4">
+          <h4 className="text-base font-semibold text-foreground">{t('admin.refDaysGroup')}</h4>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="ref-user-days" className={FIELD_LABEL}>
+                {t('admin.refUserDays')}
+              </label>
+              <input
+                id="ref-user-days"
+                value={userDays}
+                onChange={(event) => setUserDays(event.target.value.replace(/[^0-9]/g, ''))}
+                inputMode="numeric"
+                disabled={saving}
+                className={INPUT}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="ref-invitee-days" className={FIELD_LABEL}>
+                {t('admin.refInviteeDays')}
+              </label>
+              <input
+                id="ref-invitee-days"
+                value={inviteeDays}
+                onChange={(event) => setInviteeDays(event.target.value.replace(/[^0-9]/g, ''))}
+                inputMode="numeric"
+                disabled={saving}
+                className={INPUT}
+              />
+            </div>
           </div>
         </div>
 

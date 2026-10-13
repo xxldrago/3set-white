@@ -30,6 +30,8 @@ interface WalletSummary {
   bonusDays: number;
   myRate: RateView;
   downline: RateView | null;
+  isPartner: boolean;
+  userMode: 'days' | 'money';
 }
 
 function rateText(rate: RateView): string {
@@ -229,7 +231,11 @@ export default function ReferralSection() {
         <h2 className="text-xl font-semibold text-foreground">
           {t('auth.refSectionTitle')}
         </h2>
-        <p className="text-sm text-muted">{t('auth.refSectionIntro')}</p>
+        <p className="text-sm text-muted">
+          {summary.isPartner || summary.userMode === 'money'
+            ? t('auth.refSectionIntro')
+            : t('auth.refSectionIntroDays')}
+        </p>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -265,27 +271,32 @@ export default function ReferralSection() {
           </dd>
         </div>
         <div className="flex flex-col gap-1 rounded-2xl bg-panel p-3">
-          <dt className="text-xs text-muted">{t('auth.refStatsEarned')}</dt>
-          <dd className="truncate text-lg sm:text-xl font-semibold tabular-nums text-foreground">
-            {summary.earned} ₽
-          </dd>
-        </div>
-        <div className="flex flex-col gap-1 rounded-2xl bg-panel p-3">
-          <dt className="text-xs text-muted">{t('auth.refStatsBalance')}</dt>
-          <dd className="truncate text-lg sm:text-xl font-semibold tabular-nums text-foreground">
-            {summary.balance} ₽
-          </dd>
-        </div>
-        <div className="flex flex-col gap-1 rounded-2xl bg-panel p-3">
           <dt className="text-xs text-muted">{t('auth.refStatsDays')}</dt>
           <dd className="truncate text-lg sm:text-xl font-semibold tabular-nums text-foreground">
             {summary.bonusDays}
           </dd>
         </div>
+        {(summary.isPartner || summary.userMode === 'money') && (
+          <>
+            <div className="flex flex-col gap-1 rounded-2xl bg-panel p-3">
+              <dt className="text-xs text-muted">{t('auth.refStatsEarned')}</dt>
+              <dd className="truncate text-lg sm:text-xl font-semibold tabular-nums text-foreground">
+                {summary.earned} ₽
+              </dd>
+            </div>
+            <div className="flex flex-col gap-1 rounded-2xl bg-panel p-3">
+              <dt className="text-xs text-muted">{t('auth.refStatsBalance')}</dt>
+              <dd className="truncate text-lg sm:text-xl font-semibold tabular-nums text-foreground">
+                {summary.balance} ₽
+              </dd>
+            </div>
+          </>
+        )}
       </dl>
 
       <DownlineEditor initial={summary.downline} />
 
+      {(summary.isPartner || summary.userMode === 'money') && (
       <form
         className="flex flex-col gap-3 border-t border-line pt-4"
         onSubmit={(event) => {
@@ -338,6 +349,7 @@ export default function ReferralSection() {
           {t('auth.refWithdrawCta')}
         </button>
       </form>
+      )}
     </section>
   );
 }

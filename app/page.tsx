@@ -23,7 +23,7 @@ export const dynamic = 'force-dynamic';
 
 const CARD = 'flex flex-col gap-4 rounded-2xl border border-line bg-panel p-6';
 const PRIMARY =
-  'flex h-12 items-center justify-center rounded-lg bg-foreground px-5 font-display text-sm font-medium tracking-wide text-lime transition-colors hover:opacity-90';
+  'flex h-12 items-center justify-center rounded-lg bg-foreground px-5 text-sm font-medium tracking-wide text-lime transition-colors hover:opacity-90';
 const SECONDARY =
   'flex h-12 items-center justify-center rounded-lg border border-line px-5 transition-colors hover:bg-foreground/5';
 

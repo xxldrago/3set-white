@@ -271,40 +271,52 @@ export default function InstallClient({
           </button>
         </div>
 
-        <ol className="flex flex-col gap-3">
-          {steps.map((step, i) => (
-            <li key={i} className="flex gap-3">
-              <span className="font-mono text-xs text-green">{`0${i + 1}`}</span>
-              <p className="text-sm text-muted">{step}</p>
-            </li>
-          ))}
+        {/* Step-by-step: each step is immediately followed by its action. */}
+        <ol className="flex list-none flex-col gap-4 pl-0">
+          <li className="flex flex-col gap-2">
+            <p className="text-sm text-muted">
+              <span className="font-mono font-semibold text-foreground">01 · </span>
+              {steps[0]}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {downloads.map((d, i) => (
+                <a
+                  key={d.label}
+                  href={d.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={
+                    i === 0
+                      ? 'flex h-11 items-center justify-center gap-2 rounded-lg bg-foreground px-4 text-sm font-medium tracking-wide text-lime transition-colors hover:opacity-90'
+                      : 'flex h-11 items-center justify-center gap-2 rounded-lg border border-line px-4 text-sm text-muted transition-colors hover:bg-foreground/5'
+                  }
+                >
+                  {d.label}
+                </a>
+              ))}
+            </div>
+          </li>
+          <li className="flex flex-col gap-2">
+            <p className="text-sm text-muted">
+              <span className="font-mono font-semibold text-foreground">02 · </span>
+              {steps[1]}
+            </p>
+            {subUrl ? (
+              <a
+                href={guideApp.importLink(subUrl)}
+                className="flex h-11 items-center justify-center gap-2 rounded-lg border border-green px-4 text-sm text-green transition-colors hover:bg-lime/15"
+              >
+                ＋ Добавить подписку
+              </a>
+            ) : null}
+          </li>
+          <li className="flex flex-col gap-2">
+            <p className="text-sm text-muted">
+              <span className="font-mono font-semibold text-foreground">03 · </span>
+              {steps[2]}
+            </p>
+          </li>
         </ol>
-
-        <div className="flex flex-wrap gap-3">
-          {downloads.map((d, i) => (
-            <a
-              key={d.label}
-              href={d.url}
-              target="_blank"
-              rel="noreferrer"
-              className={
-                i === 0
-                  ? 'flex h-11 items-center justify-center gap-2 rounded-lg bg-foreground px-4 font-display text-sm font-medium tracking-wide text-lime transition-colors hover:opacity-90'
-                  : 'flex h-11 items-center justify-center gap-2 rounded-lg border border-line px-4 text-sm text-muted transition-colors hover:bg-foreground/5'
-              }
-            >
-              {d.label}
-            </a>
-          ))}
-          {subUrl ? (
-            <a
-              href={guideApp.importLink(subUrl)}
-              className="flex h-11 items-center justify-center gap-2 rounded-lg border border-green px-4 text-sm text-green transition-colors hover:bg-lime/15"
-            >
-              ＋ Добавить подписку
-            </a>
-          ) : null}
-        </div>
 
         <div className="flex flex-col gap-2 rounded-xl border border-line bg-panel-2 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>

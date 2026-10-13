@@ -207,6 +207,7 @@ describe("settings + first-paid credit", () => {
       inviterKind: "percent",
       inviterValue: 20,
       inviteeValue: 50,
+      userMode: "days",
       userDays: 7,
       inviteeDays: 4,
       minWithdraw: 100,
@@ -214,6 +215,7 @@ describe("settings + first-paid credit", () => {
     expect(saved).toMatchObject({
       inviterKind: "percent",
       inviterValue: 20,
+      userMode: "days",
       userDays: 7,
       inviteeDays: 4,
       minWithdraw: 100,

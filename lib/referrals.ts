@@ -121,6 +121,8 @@ export interface ReferralSettings {
   inviterKind: "percent" | "fixed";
   inviterValue: number;
   inviteeValue: number;
+  /** What regular (non-partner) users earn: bonus days or money. */
+  userMode: "days" | "money";
   /** Bonus days for a non-partner inviter per referred first payment. */
   userDays: number;
   /** Bonus days for the invited account (always days, first payment only). */
@@ -132,6 +134,7 @@ const DEFAULTS: ReferralSettings = {
   inviterKind: "percent",
   inviterValue: 10,
   inviteeValue: 0,
+  userMode: "money",
   userDays: 5,
   inviteeDays: 3,
   minWithdraw: 500,
@@ -141,6 +144,7 @@ const SETTING_KEYS = [
   "referral.inviterKind",
   "referral.inviterValue",
   "referral.inviteeValue",
+  "referral.userMode",
   "referral.userDays",
   "referral.inviteeDays",
   "referral.minWithdraw",
@@ -159,10 +163,12 @@ export async function getReferralSettings(): Promise<ReferralSettings> {
     const parsed = Number(raw);
     return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : fallback;
   };
+  const mode = byKey.get("referral.userMode");
   return {
     inviterKind: kind === "fixed" ? "fixed" : "percent",
     inviterValue: num("referral.inviterValue", DEFAULTS.inviterValue),
     inviteeValue: num("referral.inviteeValue", DEFAULTS.inviteeValue),
+    userMode: mode === "days" ? "days" : "money",
     userDays: num("referral.userDays", DEFAULTS.userDays),
     inviteeDays: num("referral.inviteeDays", DEFAULTS.inviteeDays),
     minWithdraw: num("referral.minWithdraw", DEFAULTS.minWithdraw),
@@ -182,6 +188,9 @@ export async function setReferralSettings(
   }
   if (input.inviteeValue !== undefined) {
     entries.push(["referral.inviteeValue", String(Math.max(0, Math.floor(input.inviteeValue)))]);
+  }
+  if (input.userMode === "days" || input.userMode === "money") {
+    entries.push(["referral.userMode", input.userMode]);
   }
   if (input.userDays !== undefined) {
     entries.push(["referral.userDays", String(Math.max(0, Math.floor(input.userDays)))]);
@@ -302,6 +311,8 @@ export interface ReferralSummary {
   myRate: RateView;
   /** What this account shares with its own referrals (null = global). */
   downline: RateView | null;
+  isPartner: boolean;
+  userMode: "days" | "money";
 }
 
 /** Cabinet + bot stats: code (ensured), referral count, lifetime earnings. */
@@ -347,6 +358,8 @@ export async function getReferralSummary(userId: number): Promise<ReferralSummar
       me?.subRateKind && me.subRateValue !== null && me.subRateValue !== undefined
         ? { kind: me.subRateKind, value: me.subRateValue }
         : null,
+    isPartner: partnerEarner,
+    userMode: settings.userMode,
   };
 }
 
@@ -386,8 +399,8 @@ interface EarnerRow {
 /**
  * Effective earning rate of X for bringing a buyer:
  * admin custom (percent/fixed/days) → inviter-set downline rate →
- * partner global money → user bonus days. Legacy amount-only customs keep
- * the fixed-RUB meaning.
+ * partner global money → user mode (bonus days or global money).
+ * Legacy amount-only customs keep the fixed-RUB meaning.
  */
 async function resolveEarnerRate(
   earner: EarnerRow,
@@ -423,7 +436,10 @@ async function resolveEarnerRate(
       return { kind: up.subRateKind, value: Math.max(0, up.subRateValue) };
     }
   }
-  return { kind: "days", value: Math.max(0, settings.userDays) };
+  if (settings.userMode === "days") {
+    return { kind: "days", value: Math.max(0, settings.userDays) };
+  }
+  return { kind: settings.inviterKind, value: Math.max(0, settings.inviterValue) };
 }
 
 async function creditDays(userId: number, days: number, refId: string): Promise<void> {
@@ -450,7 +466,8 @@ async function creditDays(userId: number, days: number, refId: string): Promise<
  * Upline leg: when B itself was referred by a PARTNER A, A nets the
  * residual — A's money entitlement minus B's money share, floored at zero —
  * on every payment. Non-partner uplines earn nothing indirect. The invitee
- * always gets `inviteeDays` bonus days, first payment only.
+ * gets `inviteeDays` bonus days (days-mode) or the fixed money bonus
+ * (money-mode), first payment only.
  *
  * Every insert is idempotent via the wallet unique (P2002 → already
  * credited), so concurrent payments can never double-pay.
@@ -556,7 +573,8 @@ export async function creditReferralForPaidOrder(
       }
     }
 
-    // Invitee signup bonus: days, always first-only (keyed by account).
+    // Invitee signup bonus, always first-only (keyed by account): bonus
+    // days in days-mode, the fixed money bonus in money-mode.
     const inviteeCredited = await prisma.walletTx.findFirst({
       where: {
         userId,
@@ -565,8 +583,21 @@ export async function creditReferralForPaidOrder(
       },
       select: { id: true },
     });
-    if (!inviteeCredited && settings.inviteeDays > 0) {
-      await creditDays(userId, settings.inviteeDays, String(userId));
+    if (!inviteeCredited) {
+      if (settings.userMode === "days") {
+        if (settings.inviteeDays > 0) {
+          await creditDays(userId, settings.inviteeDays, String(userId));
+        }
+      } else if (settings.inviteeValue > 0) {
+        await prisma.walletTx.create({
+          data: {
+            userId,
+            amount: settings.inviteeValue,
+            reason: "referral_bonus",
+            refId: String(userId),
+          },
+        });
+      }
     }
 
     logger.info({

@@ -56,6 +56,14 @@ export const envSchema = z.object({
   // Optional: when unset the request route falls back to a cached `getMe()`.
   // Server-only (the client receives only the built t.me URL, never this var).
   TELEGRAM_BOT_USERNAME: z.string().min(1).optional(),
+  // Bot API base URL. Default is Telegram's own endpoint; when the host
+  // blocks api.telegram.org egress, point this at a Cloudflare Worker
+  // forwarder (see workers/telegram-forwarder.js), e.g.
+  // https://xxx.workers.dev. No trailing slash. Server-only.
+  TELEGRAM_API_ROOT: z
+    .string()
+    .url()
+    .default("https://api.telegram.org"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });

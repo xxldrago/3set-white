@@ -46,7 +46,9 @@ export const WEBHOOK_SECRET = env.WEBHOOK_SECRET;
 // Polling (dev) selects the TEST token; every other mode uses prod.
 const token = env.BOT_MODE === "polling" ? env.BOT_TEST_TOKEN : env.BOT_TOKEN;
 
-export const bot = new Telegraf(token);
+export const bot = new Telegraf(token, {
+  telegram: { apiRoot: env.TELEGRAM_API_ROOT },
+});
 
 // /start skeleton (D-15): upsert telegram id + chat id into the shared
 // users row (fan-out anchor for Phase 4), RU greeting + menu buttons.

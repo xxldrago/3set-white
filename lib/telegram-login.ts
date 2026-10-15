@@ -131,8 +131,9 @@ export async function resolveBotUsername(fetchImpl: typeof fetch = fetch): Promi
   if (env.TELEGRAM_BOT_USERNAME) return env.TELEGRAM_BOT_USERNAME;
   if (cachedBotUsername) return cachedBotUsername;
   const token = env.BOT_MODE === "polling" ? env.BOT_TEST_TOKEN : env.BOT_TOKEN;
+  const apiRoot = env.TELEGRAM_API_ROOT.replace(/\/+$/, "");
   try {
-    const res = await fetchImpl(`https://api.telegram.org/bot${token}/getMe`);
+    const res = await fetchImpl(`${apiRoot}/bot${token}/getMe`);
     if (!res.ok) return null;
     const body = (await res.json()) as { ok?: unknown; result?: { username?: unknown } };
     const username =

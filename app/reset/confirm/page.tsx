@@ -1,7 +1,5 @@
-import { redirect } from 'next/navigation';
 import ResetConfirmForm from '@/components/ResetConfirmForm';
 import { t } from '@/lib/i18n';
-import { SessionError, requireSession } from '@/lib/session';
 
 export const metadata = {
   title: `${t('auth.resetConfirmTitle')} — ${t('app.name')}`,
@@ -9,18 +7,15 @@ export const metadata = {
 
 // The token is read server-side from the URL and passed as a prop — it is
 // only ever POSTed back in the confirm body, never rendered (D-88).
+// Deliberately NO signed-in redirect (a logged-in click used to bounce to
+// the cabinet with zero explanation): the token proves mailbox ownership
+// either way, and confirm bumps the credential watermark, so any live
+// session dies and the user signs in again with the new password.
 export default async function ResetConfirmPage({
   searchParams,
 }: {
   searchParams: Promise<{ token?: string }>;
 }) {
-  try {
-    await requireSession();
-    redirect('/');
-  } catch (err) {
-    if (!(err instanceof SessionError)) throw err;
-  }
-
   const { token } = await searchParams;
 
   return (

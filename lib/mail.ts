@@ -32,6 +32,8 @@ export interface MailMessage {
   to: string;
   subject: string;
   text: string;
+  /** Stats tag for the provider dashboard (reset/welcome/verify). */
+  tag?: string;
 }
 
 /** Injectable transport seam: SMTP in prod, fake capture in tests. */
@@ -56,7 +58,48 @@ function toDomain(to: string): string {
 }
 
 function isConfigured(): boolean {
-  return !!env.SMTP_HOST && !!env.SMTP_FROM;
+  return !!env.SMTP_FROM && (!!env.SMTPBZ_API_KEY || !!env.SMTP_HOST);
+}
+
+function isSmtpBzConfigured(): boolean {
+  return !!env.SMTPBZ_API_KEY && !!env.SMTP_FROM;
+}
+
+/** Minimal HTML wrapper — the smtp.bz API requires an `html` part. */
+function textToHtml(text: string): string {
+  const escaped = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  return `<html><head></head><body><p>${escaped.replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br>")}</p></body></html>`;
+}
+
+/**
+ * smtp.bz HTTP delivery (`POST {base}/smtp/send`, multipart/form-data,
+ * `Authorization: <key>` — no Bearer prefix per the provider contract).
+ * Non-2xx and network failures both surface as `MailError` (the caller maps
+ * it to a generic copy; provider text never leaks).
+ */
+async function sendViaSmtpBz(msg: MailMessage): Promise<void> {
+  const form = new FormData();
+  form.append("from", env.SMTP_FROM!);
+  form.append("to", msg.to);
+  form.append("subject", msg.subject);
+  form.append("html", textToHtml(msg.text));
+  form.append("text", msg.text);
+  if (msg.tag) form.append("tag", msg.tag);
+  const base = (env.SMTPBZ_API_BASE ?? "https://api.smtp.bz/v1").replace(/\/+$/, "");
+  let res: Response;
+  try {
+    res = await fetch(`${base}/smtp/send`, {
+      method: "POST",
+      headers: { Authorization: env.SMTPBZ_API_KEY! },
+      body: form,
+    });
+  } catch {
+    throw new MailError();
+  }
+  if (!res.ok) throw new MailError();
 }
 
 /**
@@ -79,6 +122,18 @@ export async function sendMail(msg: MailMessage): Promise<MailResult> {
   if (!isConfigured()) {
     logger.warn({ route: "mail", outcome: "skipped_unconfigured", toDomain: toDomainOnly });
     return { sent: false };
+  }
+  // smtp.bz HTTP API wins when its key is present (no SMTP ports needed —
+  // matters on hosts with filtered egress); otherwise the classic relay.
+  if (isSmtpBzConfigured()) {
+    try {
+      await sendViaSmtpBz(msg);
+    } catch {
+      logger.error({ route: "mail", outcome: "failed", toDomain: toDomainOnly });
+      throw new MailError();
+    }
+    logger.info({ route: "mail", outcome: "sent", toDomain: toDomainOnly });
+    return { sent: true };
   }
   try {
     const transporter = nodemailer.createTransport({
@@ -113,6 +168,7 @@ export function resetLinkFor(token: string): string {
 export async function sendResetMail(to: string, token: string): Promise<MailResult> {
   return sendMail({
     to,
+    tag: "reset",
     subject: "Сброс пароля — 3set",
     text: [
       "Вы запросили сброс пароля 3set.",
@@ -133,6 +189,7 @@ export function verifyLinkFor(token: string): string {
 export async function sendVerifyMail(to: string, token: string): Promise<MailResult> {
   return sendMail({
     to,
+    tag: "verify",
     subject: "Подтвердите email — 3set",
     text: [
       "Подтвердите адрес, чтобы получить пробный период 3set.",
@@ -148,6 +205,7 @@ export async function sendVerifyMail(to: string, token: string): Promise<MailRes
 export async function sendWelcomeMail(to: string): Promise<MailResult> {
   return sendMail({
     to,
+    tag: "welcome",
     subject: "Добро пожаловать в 3set",
     text: [
       "Регистрация прошла успешно — добро пожаловать в 3set.",

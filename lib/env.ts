@@ -33,6 +33,12 @@ export const envSchema = z.object({
   SMTP_PASS: z.string().min(1, "SMTP_PASS is required (relay auth password)").optional(),
   SMTP_FROM: z.string().email("SMTP_FROM must be an email address").optional(),
   SMTP_SECURE: z.stringbool().default(false),
+  // smtp.bz HTTP API (preferred over the SMTP relay when set — no SMTP ports
+  // needed). Key from the smtp.bz panel (profile → API access); the sender
+  // domain of SMTP_FROM must be added + verified there (SPF/DKIM per their
+  // instructions). Optional base override for tests/stubs.
+  SMTPBZ_API_KEY: z.string().min(1, "SMTPBZ_API_KEY must not be empty").optional(),
+  SMTPBZ_API_BASE: z.string().url().default("https://api.smtp.bz/v1"),
   // White Label subscription host (D-72/D-74, OPS-02). The provider returns
   // subscription links on this host; `lib/whitelabel.ts` verifies the returned
   // URL against it and falls back to the provider URL on mismatch — the host is

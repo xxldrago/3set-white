@@ -201,7 +201,7 @@ describe("settings + first-paid credit", () => {
       inviterKind: "percent",
       inviterValue: 10,
       userDays: 5,
-      inviteeDays: 3,
+      inviteeDays: 5,
     });
     const saved = await setReferralSettings({
       inviterKind: "percent",

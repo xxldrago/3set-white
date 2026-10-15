@@ -98,7 +98,6 @@ export default function PromoField({
             setValue(event.target.value.toUpperCase());
             setInvalid(false);
           }}
-          placeholder="SALE10"
           autoComplete="off"
           disabled={checking}
           className={INPUT}

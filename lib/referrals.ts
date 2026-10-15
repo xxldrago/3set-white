@@ -136,7 +136,7 @@ const DEFAULTS: ReferralSettings = {
   inviteeValue: 0,
   userMode: "money",
   userDays: 5,
-  inviteeDays: 3,
+  inviteeDays: 5,
   minWithdraw: 500,
 };
 

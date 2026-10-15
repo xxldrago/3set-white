@@ -24,7 +24,12 @@ export async function GET(): Promise<Response> {
       getReferralSummary(userId),
       getReferralSettings(),
     ]);
-    return Response.json({ ...summary, minWithdraw: settings.minWithdraw });
+    return Response.json({
+      ...summary,
+      minWithdraw: settings.minWithdraw,
+      userDays: settings.userDays,
+      inviteeDays: settings.inviteeDays,
+    });
   } catch {
     logger.error({ route: "wallet", outcome: "summary_error" });
     return Response.json({ error: "internal" }, { status: 500 });

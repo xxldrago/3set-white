@@ -13,6 +13,7 @@ import { ArtemidaError } from '@/lib/artemida';
 import { t, tp } from '@/lib/i18n';
 import { listKeys, listKeysByUserId, manageableDeviceCounts, revalidateKeys, revalidateKeysByUserId, type RenderedKey } from '@/lib/keys-service';
 import { logger } from '@/lib/logger';
+import { getReferralSettings } from '@/lib/referrals';
 import { getSessionUser, requireSession, requireTelegramSession, SessionError } from '@/lib/session';
 import { listTicketsForUser } from '@/lib/tickets-service';
 import { env } from '@/lib/env';
@@ -203,6 +204,16 @@ export default async function Home({
     redirect(target);
   }
 
+  // Teaser amounts follow the live settings (a settings failure falls back
+  // to the documented 5/5 economics, never a blank teaser).
+  let refDays = { user: 5, invitee: 5 };
+  try {
+    const settings = await getReferralSettings();
+    refDays = { user: settings.userDays, invitee: settings.inviteeDays };
+  } catch {
+    // Fall through to the fallback above.
+  }
+
   // Absolute referral link for the home teaser (signed-in only — guests get
   // the login CTA). The code is ensured lazily; a failure hides the box,
   // never the page.
@@ -282,10 +293,22 @@ export default async function Home({
             </Link>
           </section>
         )}
-        {/* Referral program teaser — sits after the tariffs for every visitor. */}
+        {/* Referral program teaser — sits after the tariffs for every visitor.
+            Day amounts come from the live referral settings (not hardcoded)
+            so the copy always matches the actual economics. */}
         <section className={CARD}>
-          <h2 className="text-xl font-semibold text-foreground">{t('home.refTitle')}</h2>
-          <p className="text-muted">{t('home.refText')}</p>
+          <h2 className="text-xl font-semibold text-foreground">
+            {t('home.refTitle', {
+              n: refDays.user,
+              days: tp('home.refDay', refDays.user),
+            })}
+          </h2>
+          <p className="text-muted">
+            {t('home.refText', {
+              m: refDays.invitee,
+              friendDays: tp('home.refDay', refDays.invitee),
+            })}
+          </p>
           <ol className="flex flex-col gap-2 text-sm text-muted">
             <li>1. {t('home.refStep1')}</li>
             <li>2. {t('home.refStep2')}</li>

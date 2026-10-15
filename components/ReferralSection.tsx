@@ -5,7 +5,7 @@
 // with a transient status line. Amounts render from server integers — never
 // recomputed here.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { t } from '@/lib/i18n';
+import { t, tp } from '@/lib/i18n';
 
 const CARD = 'flex flex-col gap-4 rounded-2xl border border-line p-6 border-line';
 const INPUT =
@@ -32,6 +32,8 @@ interface WalletSummary {
   downline: RateView | null;
   isPartner: boolean;
   userMode: 'days' | 'money';
+  userDays: number;
+  inviteeDays: number;
 }
 
 function rateText(rate: RateView): string {
@@ -234,7 +236,12 @@ export default function ReferralSection() {
         <p className="text-sm text-muted">
           {summary.isPartner || summary.userMode === 'money'
             ? t('auth.refSectionIntro')
-            : t('auth.refSectionIntroDays')}
+            : t('auth.refSectionIntroDays', {
+                n: summary.userDays,
+                days: tp('home.refDay', summary.userDays),
+                m: summary.inviteeDays,
+                friendDays: tp('home.refDay', summary.inviteeDays),
+              })}
         </p>
       </div>
 

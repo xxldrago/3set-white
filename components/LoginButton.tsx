@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { Send } from 'lucide-react';
 import TelegramWidgetInjector from './TelegramWidgetInjector';
 import { t } from '@/lib/i18n';
 
@@ -73,8 +74,9 @@ export default function LoginButton() {
           <button
             type="button"
             onClick={loginFromBot}
-            className="flex h-12 items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:opacity-90"
+            className="flex h-12 items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-lime transition-colors hover:opacity-90"
           >
+            <Send className="h-4 w-4 shrink-0" aria-hidden />
             {t('home.loginCta')}
           </button>
           <p className="text-sm text-muted">{t('login.webappNote')}</p>

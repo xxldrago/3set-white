@@ -11,6 +11,7 @@
 // multipart boundary (D-53/D-55). No raw provider/DB error is ever shown.
 import { useCallback, useRef, useState, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { Paperclip, RotateCcw, Send, X } from 'lucide-react';
 import { t } from '@/lib/i18n';
 
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
@@ -24,9 +25,9 @@ const INPUT =
 const TEXTAREA = `${INPUT} min-h-28 resize-y py-3`;
 const FIELD_LABEL = 'text-sm text-muted';
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
+  'flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-lg text-sm font-bold border border-solid border-line px-4 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
+  'flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-solid border-line px-4 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 
 export default function CreateTicketForm() {
   const router = useRouter();
@@ -143,11 +144,13 @@ export default function CreateTicketForm() {
               disabled={loading}
               className={SECONDARY}
             >
+              <X className="h-4 w-4 shrink-0" aria-hidden />
               {t('ticket.attachRemove')}
             </button>
           </div>
         ) : (
           <label htmlFor="ticket-attachment" className={`${SECONDARY} w-fit cursor-pointer`}>
+            <Paperclip className="h-4 w-4 shrink-0" aria-hidden />
             {t('ticket.attachCta')}
           </label>
         )}
@@ -173,12 +176,14 @@ export default function CreateTicketForm() {
             disabled={!canSubmit}
             className={SECONDARY}
           >
+            <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
             {t('common.retry')}
           </button>
         </div>
       )}
 
       <button type="submit" disabled={!canSubmit} className={PRIMARY}>
+        <Send className="h-4 w-4 shrink-0" aria-hidden />
         {loading ? t('ticket.submitLoading') : t('ticket.submit')}
       </button>
     </form>

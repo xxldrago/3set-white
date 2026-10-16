@@ -10,12 +10,13 @@
 // the field shows the generic copy (codes are public strings — no oracle
 // discipline needed here, unlike credentials).
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { BadgePercent } from 'lucide-react';
 import { t } from '@/lib/i18n';
 
 const INPUT =
   'h-12 w-full min-w-0 flex-1 rounded-2xl border border-line bg-panel px-4 text-base text-foreground placeholder:text-dim disabled:opacity-50';
 const APPLY =
-  'flex h-12 shrink-0 items-center justify-center rounded-lg border border-solid border-line px-5 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50';
+  'flex h-12 shrink-0 items-center justify-center gap-2 rounded-lg border border-solid border-line px-5 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50';
 
 interface PromoPreview {
   price: number;
@@ -108,6 +109,7 @@ export default function PromoField({
           disabled={value.trim().length === 0 || checking}
           className={APPLY}
         >
+          <BadgePercent className="h-4 w-4 shrink-0" aria-hidden />
           {t('admin.promoCheck')}
         </button>
       </div>

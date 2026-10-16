@@ -12,6 +12,7 @@
 // email row + change-password form replace this form.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { MailPlus } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import PasswordField from './PasswordField';
 
@@ -20,7 +21,7 @@ const INPUT =
 const INPUT_INVALID = 'border-red-600/50';
 const FIELD_LABEL = 'text-sm text-muted';
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
+  'flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 
 const EMAIL_SHAPE = /[^@\s]+@[^@\s]+\.[^@\s]+/;
 
@@ -173,6 +174,7 @@ export default function AddEmailForm() {
         )}
 
         <button type="submit" disabled={!canSubmit} className={PRIMARY}>
+          <MailPlus className="h-4 w-4 shrink-0" aria-hidden />
           {loading ? t('auth.addEmailLoading') : t('auth.addEmailCta')}
         </button>
       </form>

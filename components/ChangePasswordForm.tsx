@@ -7,13 +7,14 @@
 // enumeration surface). Unexpected failures reuse the shared load-error copy
 // + retry — the contract keys no other failure string for this form.
 import { useCallback, useState } from 'react';
+import { KeyRound, RotateCcw } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import PasswordField from './PasswordField';
 
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
+  'flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-lg text-sm font-bold border border-solid border-line px-4 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
+  'flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-solid border-line px-4 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 
 export default function ChangePasswordForm() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -126,12 +127,14 @@ export default function ChangePasswordForm() {
               disabled={!canSubmit}
               className={SECONDARY}
             >
+              <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
               {t('common.retry')}
             </button>
           </div>
         )}
 
         <button type="submit" disabled={!canSubmit} className={PRIMARY}>
+          <KeyRound className="h-4 w-4 shrink-0" aria-hidden />
           {loading ? t('auth.changePasswordLoading') : t('auth.changePasswordCta')}
         </button>
       </form>

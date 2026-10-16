@@ -8,6 +8,7 @@
 // first quote lands and a failed quote clears the last-good price, matching
 // `TariffPicker`. The browser sends no price (T-03-amount/T-03-upgrade-amount).
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Minus, Plus, RotateCcw, X } from 'lucide-react';
 import PayCta from './PayCta';
 import PromoField from './PromoField';
 import { t } from '@/lib/i18n';
@@ -18,9 +19,9 @@ const DEBOUNCE_MS = 300;
 const CARD =
   'flex flex-col gap-4 rounded-2xl border border-line p-6 border-line';
 const TRIGGER =
-  'flex h-11 flex-1 items-center justify-center rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-11 flex-1 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 const STEP =
   'flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-line text-xl transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 
@@ -87,6 +88,7 @@ export default function UpgradePanel({
   if (!open) {
     return (
       <button type="button" onClick={() => setOpen(true)} className={TRIGGER}>
+        <Plus className="h-4 w-4 shrink-0" aria-hidden />
         {t('upgrade.cta')}
       </button>
     );
@@ -111,7 +113,7 @@ export default function UpgradePanel({
             onClick={() => setAddDevices((current) => Math.max(1, current - 1))}
             className={STEP}
           >
-            −
+            <Minus className="h-4 w-4 shrink-0" aria-hidden />
           </button>
           <span className="min-w-11 text-center text-xl font-semibold tabular-nums">
             {addDevices}
@@ -123,7 +125,7 @@ export default function UpgradePanel({
             onClick={() => setAddDevices((current) => Math.min(maxAdd, current + 1))}
             className={STEP}
           >
-            +
+            <Plus className="h-4 w-4 shrink-0" aria-hidden />
           </button>
         </div>
       </div>
@@ -147,6 +149,7 @@ export default function UpgradePanel({
             onClick={() => void fetchPrice(addDevices)}
             className={SECONDARY}
           >
+            <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
             {t('common.retry')}
           </button>
         </div>
@@ -167,6 +170,7 @@ export default function UpgradePanel({
       />
 
       <button type="button" onClick={() => setOpen(false)} className={SECONDARY}>
+        <X className="h-4 w-4 shrink-0" aria-hidden />
         {t('common.cancel')}
       </button>
     </section>

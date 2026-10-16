@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import InstallPrompt from '@/components/InstallPrompt';
 import { t } from '@/lib/i18n';
 
@@ -34,8 +35,9 @@ export default function GuidesPage() {
         <nav>
           <Link
             href="/"
-            className="flex h-12 items-center justify-center rounded-lg text-sm font-bold border border-solid border-line px-5 transition-colors hover:bg-foreground/5 border-line "
+            className="flex h-12 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-solid border-line px-5 transition-colors hover:bg-foreground/5 border-line "
           >
+            <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
             {t('guides.back')}
           </Link>
         </nav>

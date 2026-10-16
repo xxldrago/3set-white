@@ -8,6 +8,7 @@
 // transport failure → generic copy + retry with the email retained. 429 reuses
 // the shared rate-limit copy with the server-provided wait (06-03 note).
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { ArrowLeft, Mail, RotateCcw, UserPlus } from 'lucide-react';
 import { t } from '@/lib/i18n';
 
 const INPUT =
@@ -15,9 +16,9 @@ const INPUT =
 const INPUT_INVALID = 'border-red-600/50';
 const FIELD_LABEL = 'text-sm text-muted';
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
+  'flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-lg text-sm font-bold border border-solid border-line px-4 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
+  'flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-solid border-line px-4 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 
 const CARD = 'rounded-2xl border border-line p-6 border-line';
 const EMAIL_SHAPE = /[^@\s]+@[^@\s]+\.[^@\s]+/;
@@ -98,6 +99,7 @@ export default function ResetRequestForm() {
           {t('auth.resetSent')}
         </div>
         <a href="/login" className={SECONDARY}>
+          <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
           {t('auth.backToLogin')}
         </a>
       </div>
@@ -112,9 +114,11 @@ export default function ResetRequestForm() {
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <a href="/login?mode=register" className={`${SECONDARY} flex-1`}>
+            <UserPlus className="h-4 w-4 shrink-0" aria-hidden />
             {t('auth.modeRegister')}
           </a>
           <a href="/login" className={`${SECONDARY} flex-1`}>
+            <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
             {t('auth.backToLogin')}
           </a>
         </div>
@@ -172,12 +176,14 @@ export default function ResetRequestForm() {
               disabled={!canSubmit}
               className={SECONDARY}
             >
+              <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
               {t('common.retry')}
             </button>
           </div>
         )}
 
         <button type="submit" disabled={!canSubmit} className={PRIMARY}>
+          <Mail className="h-4 w-4 shrink-0" aria-hidden />
           {state === 'loading' ? t('auth.resetRequestLoading') : t('auth.resetRequestCta')}
         </button>
       </form>

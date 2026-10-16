@@ -7,14 +7,15 @@
 // label so a double tap cannot submit twice. A repeat trial (409) renders the
 // clean "already used" copy + a «Купить подписку» CTA — never raw API text.
 import { useCallback, useEffect, useState } from 'react';
+import { Mail, RotateCcw, ShoppingCart, Zap } from 'lucide-react';
 import { t } from '@/lib/i18n';
 
 type TrialState = 'idle' | 'loading' | 'used' | 'unverified' | 'error';
 
 const PRIMARY =
-  'flex h-12 items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
+  'flex h-12 items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 
 export default function TrialButton() {
   const [state, setState] = useState<TrialState>('idle');
@@ -90,6 +91,7 @@ export default function TrialButton() {
           <h2 className="text-xl font-semibold">{t('trial.usedHeading')}</h2>
           <p className="text-muted">{t('trial.usedBody')}</p>
           <a href="#tariff" className={PRIMARY}>
+            <ShoppingCart className="h-4 w-4 shrink-0" aria-hidden />
             {t('key.buyCta')}
           </a>
         </div>
@@ -108,6 +110,7 @@ export default function TrialButton() {
               disabled={resending}
               className={SECONDARY}
             >
+              <Mail className="h-4 w-4 shrink-0" aria-hidden />
               {t('trial.verifyResend')}
             </button>
           )}
@@ -119,6 +122,7 @@ export default function TrialButton() {
           disabled={state === 'loading'}
           className={PRIMARY}
         >
+          <Zap className="h-4 w-4 shrink-0" aria-hidden />
           {state === 'loading' ? t('trial.ctaLoading') : t('trial.cta')}
         </button>
       )}
@@ -127,6 +131,7 @@ export default function TrialButton() {
         <div className="flex flex-col gap-2" role="alert">
           <p className="text-sm text-red-600">{t('trial.error')}</p>
           <button type="button" onClick={() => void requestTrial()} className={SECONDARY}>
+            <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
             {t('common.retry')}
           </button>
         </div>

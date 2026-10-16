@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { BookOpen, LogIn, RotateCcw, Send, UserRound } from 'lucide-react';
 import { after } from 'next/server';
 import InstallPrompt from '@/components/InstallPrompt';
 import Nav from '@/components/Nav';
@@ -24,9 +25,9 @@ export const dynamic = 'force-dynamic';
 
 const CARD = 'flex flex-col gap-4 rounded-2xl border border-line bg-panel p-6';
 const PRIMARY =
-  'flex h-12 items-center justify-center rounded-lg bg-foreground px-5 text-sm font-bold tracking-wide text-lime transition-colors hover:opacity-90';
+  'flex h-12 items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-sm font-bold tracking-wide text-lime transition-colors hover:opacity-90';
 const SECONDARY =
-  'flex h-12 items-center justify-center rounded-lg text-sm font-bold border border-line px-5 transition-colors hover:bg-foreground/5';
+  'flex h-12 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-5 transition-colors hover:bg-foreground/5';
 
 /** Loading fallback while the cache read resolves (UI-SPEC loading state). */
 function SkeletonRows() {
@@ -55,6 +56,7 @@ function SubscriptionsError({ error }: { error: unknown }) {
     <section className={CARD} role="alert">
       <p className="text-muted">{message}</p>
       <Link href="/" className={SECONDARY}>
+        <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
         {t('common.retry')}
       </Link>
     </section>
@@ -276,9 +278,11 @@ export default async function Home({
             <p className="text-muted">{t('home.loginText')}</p>
             <nav className="flex flex-col gap-2 sm:flex-row">
               <Link href="/login" className={PRIMARY}>
+                <LogIn className="h-4 w-4 shrink-0" aria-hidden />
                 {t('home.loginCta')}
               </Link>
               <Link href="/guides" className={SECONDARY}>
+                <BookOpen className="h-4 w-4 shrink-0" aria-hidden />
                 {t('home.guidesCta')}
               </Link>
             </nav>
@@ -289,6 +293,7 @@ export default async function Home({
           <section className={CARD}>
             <p className="text-muted">{t('auth.linkBanner')}</p>
             <Link href="/profile" className={PRIMARY}>
+              <Send className="h-4 w-4 shrink-0" aria-hidden />
               {t('auth.linkCta')}
             </Link>
           </section>
@@ -322,6 +327,11 @@ export default async function Home({
                 href={navUser ? '/profile#referrals' : '/login'}
                 className={PRIMARY}
               >
+                {navUser ? (
+                  <UserRound className="h-4 w-4 shrink-0" aria-hidden />
+                ) : (
+                  <LogIn className="h-4 w-4 shrink-0" aria-hidden />
+                )}
                 {navUser ? t('home.refCtaAuthed') : t('home.refCtaGuest')}
               </Link>
             </nav>

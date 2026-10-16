@@ -8,6 +8,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Check, Copy } from 'lucide-react';
 import { t } from '@/lib/i18n';
 
 export default function CopyButton({ value }: { value: string }) {
@@ -28,8 +29,13 @@ export default function CopyButton({ value }: { value: string }) {
       type="button"
       onClick={onCopy}
       aria-live="polite"
-      className="flex h-11 min-h-11 shrink-0 items-center justify-center rounded-lg border border-solid border-line px-5 text-sm font-bold transition-colors hover:bg-foreground/5 border-line "
+      className="flex h-11 min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-solid border-line px-5 text-sm font-bold transition-colors hover:bg-foreground/5 border-line "
     >
+      {copied ? (
+        <Check className="h-4 w-4 shrink-0" aria-hidden />
+      ) : (
+        <Copy className="h-4 w-4 shrink-0" aria-hidden />
+      )}
       {copied ? t('key.copied') : t('key.copy')}
     </button>
   );

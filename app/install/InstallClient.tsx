@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { Copy, Download, Plus } from 'lucide-react';
 import { APPS, PLATFORMS, PLATFORM_ORDER } from './install-data';
 
 export interface InstallKey {
@@ -265,8 +266,9 @@ export default function InstallClient({
             type="button"
             onClick={() => void copy()}
             disabled={!subUrl}
-            className="flex h-10 shrink-0 items-center justify-center rounded-lg border border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-40"
+            className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-40"
           >
+            <Copy className="h-4 w-4 shrink-0" aria-hidden />
             {copied ? 'Скопировано' : 'Скопировать'}
           </button>
         </div>
@@ -287,10 +289,11 @@ export default function InstallClient({
                   rel="noreferrer"
                   className={
                     i === 0
-                      ? 'flex h-11 items-center justify-center gap-2 rounded-lg bg-foreground px-4 text-sm font-bold tracking-wide text-lime transition-colors hover:opacity-90'
+                      ? 'flex h-11 items-center justify-center gap-2 rounded-lg bg-foreground px-4 text-sm font-medium tracking-wide text-lime transition-colors hover:opacity-90'
                       : 'flex h-11 items-center justify-center gap-2 rounded-lg border border-line px-4 text-sm text-muted transition-colors hover:bg-foreground/5'
                   }
                 >
+                  <Download className="h-4 w-4 shrink-0" aria-hidden />
                   {d.label}
                 </a>
               ))}
@@ -306,7 +309,8 @@ export default function InstallClient({
                 href={guideApp.importLink(subUrl)}
                 className="flex h-11 items-center justify-center gap-2 rounded-lg border border-green px-4 text-sm text-green transition-colors hover:bg-lime/15"
               >
-                ＋ Добавить подписку
+                <Plus className="h-4 w-4 shrink-0" aria-hidden />
+                Добавить подписку
               </a>
             ) : null}
           </li>

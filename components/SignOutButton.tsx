@@ -2,9 +2,10 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { LogOut } from 'lucide-react';
 
 const SECONDARY =
-  'flex h-12 w-full items-center justify-center rounded-lg text-sm font-bold border border-solid border-line px-5 transition-colors hover:bg-foreground/5 disabled:opacity-50';
+  'flex h-12 w-full items-center justify-center gap-2 rounded-lg text-sm font-bold border border-solid border-line px-5 transition-colors hover:bg-foreground/5 disabled:opacity-50';
 
 export default function SignOutButton() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function SignOutButton() {
 
   return (
     <button type="button" onClick={() => void signOut()} disabled={loading} className={SECONDARY}>
+      <LogOut className="h-4 w-4 shrink-0" aria-hidden />
       {loading ? 'Выходим…' : 'Выйти'}
     </button>
   );

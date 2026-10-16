@@ -11,12 +11,13 @@
 // value via `title` (UI-SPEC long-text backstop). A row with no key reference
 // still renders amount+status+date and omits the key link (partial rule).
 import Link from 'next/link';
+import { ShoppingCart } from 'lucide-react';
 import PaymentStatusChip from './PaymentStatusChip';
 import { t, tp } from '@/lib/i18n';
 import type { OrderHistoryRow } from '@/lib/orders-service';
 
 const PRIMARY =
-  'flex h-12 items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:opacity-90';
+  'flex h-12 items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-lime transition-colors hover:opacity-90';
 
 const priceFormatter = new Intl.NumberFormat('ru-RU');
 
@@ -54,6 +55,7 @@ export default function PaymentHistoryList({ rows }: { rows: OrderHistoryRow[] }
       <section className="flex flex-col gap-4 rounded-2xl border border-line p-6 border-line">
         <p className="text-muted">{t('pay.historyEmpty')}</p>
         <Link href="/#tariff" className={PRIMARY}>
+          <ShoppingCart className="h-4 w-4 shrink-0" aria-hidden />
           {t('key.buyCta')}
         </Link>
       </section>

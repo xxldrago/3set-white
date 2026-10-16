@@ -9,6 +9,7 @@
 // never held in state (T-03-url-state). A failure renders `pay.createError` +
 // `common.retry` and re-enables the CTA — never a raw provider string.
 import { useCallback, useEffect, useState } from 'react';
+import { CreditCard, RotateCcw } from 'lucide-react';
 import { t } from '@/lib/i18n';
 
 type PayKind = 'new' | 'renew' | 'upgrade';
@@ -29,9 +30,9 @@ interface PayCtaProps {
 }
 
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
+  'flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SECONDARY =
-  'flex h-11 w-full items-center justify-center rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-11 w-full items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 
 export default function PayCta({
   kind,
@@ -132,6 +133,7 @@ export default function PayCta({
         disabled={disabled || state === 'loading'}
         className={PRIMARY}
       >
+        <CreditCard className="h-4 w-4 shrink-0" aria-hidden />
         {state === 'loading' ? t('pay.ctaLoading') : (label ?? t('pay.cta'))}
       </button>
 
@@ -145,6 +147,7 @@ export default function PayCta({
         <div className="flex flex-col gap-2" role="alert">
           <p className="text-sm text-red-600">{t('pay.createError')}</p>
           <button type="button" onClick={() => void createOrder()} className={SECONDARY}>
+            <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
             {t('common.retry')}
           </button>
         </div>

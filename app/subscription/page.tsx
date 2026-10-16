@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { after } from 'next/server';
 import { redirect } from 'next/navigation';
+import { LifeBuoy, PlugZap, RotateCcw, ShoppingCart } from 'lucide-react';
 import Nav from '@/components/Nav';
 import SubscriptionCard from '@/components/SubscriptionCard';
 import TariffPicker from '@/components/TariffPicker';
@@ -43,6 +44,7 @@ function KeysError({ error }: { error: unknown }) {
     <section className="flex flex-col gap-4 rounded-2xl border border-line bg-panel p-6" role="alert">
       <p className="text-muted">{message}</p>
       <Link href="/subscription" className={SECONDARY}>
+        <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
         {t('common.retry')}
       </Link>
     </section>
@@ -67,6 +69,7 @@ function KeysGrid({
           Купите подписку — ключ и персональная ссылка появятся здесь автоматически.
         </p>
         <Link href="/#tariff" className={PRIMARY}>
+          <ShoppingCart className="h-4 w-4 shrink-0" aria-hidden />
           Купить подписку
         </Link>
       </div>
@@ -148,6 +151,7 @@ export default async function SubscriptionPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <Link href="/guides" className={PRIMARY}>
+              <PlugZap className="h-4 w-4 shrink-0" aria-hidden />
               Подключить
             </Link>
           </div>
@@ -189,6 +193,7 @@ export default async function SubscriptionPage() {
             </p>
           </div>
           <Link href="/support" className={SECONDARY}>
+            <LifeBuoy className="h-4 w-4 shrink-0" aria-hidden />
             Открыть поддержку
           </Link>
         </section>

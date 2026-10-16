@@ -13,6 +13,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { CreditCard, History, Key, RotateCcw } from 'lucide-react';
 import CopyButton from './CopyButton';
 import DeviceGuide from './DeviceGuide';
 import PaymentStatusChip from './PaymentStatusChip';
@@ -23,9 +24,9 @@ import type { OrderHistoryRow, OrderStatus } from '@/lib/orders-service';
 const CARD =
   'relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-line p-6 border-line';
 const PRIMARY =
-  'flex h-12 items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:opacity-90';
+  'flex h-12 items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-lime transition-colors hover:opacity-90';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 
 const POLL_MS = 3000;
 const CAP_MS = 120_000;
@@ -142,6 +143,7 @@ export default function OrderStatusPanel({
 
       {status === 'pending' && (
         <Link href="/#tariff" className={SECONDARY}>
+          <CreditCard className="h-4 w-4 shrink-0" aria-hidden />
           {t('pay.cta')}
         </Link>
       )}
@@ -149,9 +151,11 @@ export default function OrderStatusPanel({
       {status === 'failed' && (
         <div className="flex flex-col gap-2 sm:flex-row">
           <Link href="/#tariff" className={SECONDARY}>
+            <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
             {t('common.retry')}
           </Link>
           <Link href="/payments" className={SECONDARY}>
+            <History className="h-4 w-4 shrink-0" aria-hidden />
             {t('pay.toHistory')}
           </Link>
         </div>
@@ -159,12 +163,14 @@ export default function OrderStatusPanel({
 
       {status === 'canceled' && (
         <Link href="/#tariff" className={SECONDARY}>
+          <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
           {t('pay.retry')}
         </Link>
       )}
 
       {status === 'refunded' && (
         <Link href="/payments" className={SECONDARY}>
+          <History className="h-4 w-4 shrink-0" aria-hidden />
           {t('pay.toHistory')}
         </Link>
       )}
@@ -197,6 +203,7 @@ export default function OrderStatusPanel({
           )}
 
           <Link href={`/keys/${encodeURIComponent(delivered.keyId)}`} className={PRIMARY}>
+            <Key className="h-4 w-4 shrink-0" aria-hidden />
             {t('pay.toKey')}
           </Link>
 

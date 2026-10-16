@@ -5,15 +5,16 @@
 // with a transient status line. Amounts render from server integers — never
 // recomputed here.
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Check, Copy, Wallet } from 'lucide-react';
 import { t, tp } from '@/lib/i18n';
 
 const CARD = 'flex flex-col gap-4 rounded-2xl border border-line p-6 border-line';
 const INPUT =
   'h-12 w-full rounded-2xl border border-line bg-panel px-4 text-base text-foreground placeholder:text-dim disabled:opacity-50';
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50';
+  'flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50';
+  'flex h-11 items-center justify-center gap-2 rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50';
 const FIELD_LABEL = 'text-sm text-muted';
 
 interface RateView {
@@ -128,6 +129,7 @@ function DownlineEditor({ initial }: { initial: RateView | null }) {
           className={INPUT}
         />
         <button type="button" onClick={() => void save()} disabled={saving} className={SECONDARY}>
+          <Check className="h-4 w-4 shrink-0" aria-hidden />
           {t('admin.refCustomSave')}
         </button>
       </div>
@@ -256,6 +258,7 @@ export default function ReferralSection() {
             onFocus={(event) => event.target.select()}
           />
           <button type="button" onClick={() => void copy()} className={SECONDARY}>
+            <Copy className="h-4 w-4 shrink-0" aria-hidden />
             {t('auth.refCopy')}
           </button>
         </div>
@@ -353,6 +356,7 @@ export default function ReferralSection() {
           </p>
         )}
         <button type="submit" disabled={withdrawing || amount.length === 0} className={PRIMARY}>
+          <Wallet className="h-4 w-4 shrink-0" aria-hidden />
           {t('auth.refWithdrawCta')}
         </button>
       </form>

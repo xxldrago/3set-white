@@ -9,6 +9,7 @@
 // and a duplicate email on register (D-89 reserves the honest answer for the
 // reset-request surface only) — all render the identical generic copy.
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { LogIn, UserPlus } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import PasswordField from './PasswordField';
 
@@ -17,7 +18,7 @@ const INPUT =
 const INPUT_INVALID = 'border-red-600/50';
 const FIELD_LABEL = 'text-sm text-muted';
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
+  'flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SEGMENT_ACTIVE =
   'flex h-11 flex-1 items-center justify-center rounded-lg bg-foreground px-4 text-sm text-lime transition-colors';
 const SEGMENT_IDLE =
@@ -215,6 +216,11 @@ export default function EmailAuthCard({
         </div>
 
         <button type="submit" disabled={!canSubmit} className={PRIMARY}>
+          {mode === 'login' ? (
+            <LogIn className="h-4 w-4 shrink-0" aria-hidden />
+          ) : (
+            <UserPlus className="h-4 w-4 shrink-0" aria-hidden />
+          )}
           {mode === 'login'
             ? loading
               ? t('auth.loginCtaLoading')

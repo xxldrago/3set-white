@@ -4,12 +4,13 @@
 // signed-in visitors (the server resolves their code); guests see the login
 // CTA instead. Absolute URL — copy-paste ready for any messenger.
 import { useCallback, useState } from 'react';
+import { Copy } from 'lucide-react';
 import { t } from '@/lib/i18n';
 
 const INPUT =
   'h-12 w-full rounded-2xl border border-line bg-panel px-4 text-base text-foreground disabled:opacity-50';
 const SECONDARY =
-  'flex h-12 shrink-0 items-center justify-center rounded-lg border border-solid border-line px-5 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50';
+  'flex h-12 shrink-0 items-center justify-center gap-2 rounded-lg border border-solid border-line px-5 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50';
 
 export default function ReferralLinkBox({ link }: { link: string }) {
   const [copied, setCopied] = useState(false);
@@ -35,6 +36,7 @@ export default function ReferralLinkBox({ link }: { link: string }) {
           onFocus={(event) => event.target.select()}
         />
         <button type="button" onClick={() => void copy()} className={SECONDARY}>
+          <Copy className="h-4 w-4 shrink-0" aria-hidden />
           {t('auth.refCopy')}
         </button>
       </div>

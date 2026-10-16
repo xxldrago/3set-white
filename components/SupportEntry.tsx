@@ -3,6 +3,7 @@
 // (hidden entirely at 0 — never a "0" badge). The badge mirrors the ticket-row
 // badge and exposes the RU plural count through `aria-label={tp(...)}`.
 import Link from 'next/link';
+import { MessageCircle } from 'lucide-react';
 import { t, tp } from '@/lib/i18n';
 
 const SECONDARY =
@@ -18,6 +19,7 @@ function unreadDisplay(count: number): string {
 export default function SupportEntry({ unreadCount }: { unreadCount: number }) {
   return (
     <Link href="/support" className={SECONDARY}>
+      <MessageCircle className="h-4 w-4 shrink-0" aria-hidden />
       <span>{t('ticket.toSupport')}</span>
       {unreadCount > 0 && (
         <span aria-label={tp('ticket.unread', unreadCount)} className={UNREAD_BADGE}>

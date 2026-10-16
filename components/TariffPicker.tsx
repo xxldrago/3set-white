@@ -4,6 +4,7 @@
 // `/api/pricing`; the ARTEMIDA key never reaches the browser. The rendered
 // price is the number ARTEMIDA returned, verbatim — never recomputed.
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Minus, Plus, RotateCcw } from 'lucide-react';
 import PayCta from './PayCta';
 import PromoField from './PromoField';
 import { t } from '@/lib/i18n';
@@ -141,9 +142,9 @@ export default function TariffPicker() {
               aria-label={t('pricing.devicesLabel')}
               disabled={controlsDisabled || devices <= MIN_DEVICES}
               onClick={() => stepDevices(-1)}
-              className="flex h-11 w-11 items-center justify-center rounded-lg border border-line text-xl transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line "
+              className="flex h-11 w-11 items-center justify-center rounded-lg border border-line text-muted transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line "
             >
-              −
+              <Minus className="h-4 w-4 shrink-0" aria-hidden />
             </button>
             <span className="min-w-11 text-center text-xl font-semibold tabular-nums text-foreground">
               {devices}
@@ -153,9 +154,9 @@ export default function TariffPicker() {
               aria-label={t('pricing.devicesLabel')}
               disabled={controlsDisabled || devices >= MAX_DEVICES}
               onClick={() => stepDevices(1)}
-              className="flex h-11 w-11 items-center justify-center rounded-lg border border-line text-xl transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line "
+              className="flex h-11 w-11 items-center justify-center rounded-lg border border-line text-muted transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line "
             >
-              +
+              <Plus className="h-4 w-4 shrink-0" aria-hidden />
             </button>
           </div>
         </div>
@@ -191,8 +192,9 @@ export default function TariffPicker() {
           <button
             type="button"
             onClick={() => void fetchPrice(days, devices)}
-            className="flex h-11 items-center justify-center rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line "
+            className="flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line "
           >
+            <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
             {t('common.retry')}
           </button>
         </div>

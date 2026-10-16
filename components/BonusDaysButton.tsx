@@ -6,10 +6,11 @@
 // this out of trial cards.
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { CalendarPlus } from 'lucide-react';
 import { t } from '@/lib/i18n';
 
 const SECONDARY =
-  'flex h-11 items-center justify-center gap-2 rounded-lg border border-line px-4 text-sm text-muted transition-colors hover:bg-foreground/5 disabled:opacity-50';
+  'flex h-11 items-center justify-center gap-2 rounded-lg border border-line px-4 text-sm font-bold text-muted transition-colors hover:bg-foreground/5 disabled:opacity-50';
 
 export default function BonusDaysButton({ keyId }: { keyId: string }) {
   const router = useRouter();
@@ -84,6 +85,7 @@ export default function BonusDaysButton({ keyId }: { keyId: string }) {
           disabled={busy || days.length === 0}
           className={SECONDARY}
         >
+          <CalendarPlus className="h-4 w-4 shrink-0" aria-hidden />
           {t('auth.bonusCta')}
         </button>
       </div>

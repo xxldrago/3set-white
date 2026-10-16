@@ -13,6 +13,7 @@
 // authorizing Telegram chat — additionally binds the *authorizer* (CR-01 /
 // T-06-09-01).
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Check, RotateCcw, Send } from 'lucide-react';
 import { t } from '@/lib/i18n';
 
 const REQUEST_ENDPOINT = '/api/auth/telegram-bot/request';
@@ -24,9 +25,9 @@ const CODE_LENGTH = 6;
 type BotLoginState = 'idle' | 'waiting' | 'ready' | 'expired' | 'error';
 
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
+  'flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SECONDARY =
-  'flex h-12 w-full items-center justify-center rounded-lg text-sm font-bold border border-solid border-line px-5 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
+  'flex h-12 w-full items-center justify-center gap-2 rounded-lg text-sm font-bold border border-solid border-line px-5 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 const CODE_INPUT =
   'h-12 w-full rounded-lg border border-solid border-line bg-transparent px-5 text-center text-lg tracking-[0.5em] outline-none focus:border-line/40 disabled:opacity-50 border-line';
 
@@ -212,6 +213,7 @@ export default function TelegramBotLoginButton() {
     <div className="flex min-h-[11rem] w-full flex-col gap-3">
       {state === 'idle' && (
         <button type="button" onClick={() => void issue()} disabled={busy} className={PRIMARY}>
+          <Send className="h-4 w-4 shrink-0" aria-hidden />
           {t('auth.loginViaBot')}
         </button>
       )}
@@ -224,6 +226,7 @@ export default function TelegramBotLoginButton() {
           rel="noopener noreferrer"
           className={PRIMARY}
         >
+          <Send className="h-4 w-4 shrink-0" aria-hidden />
           {t('auth.botLoginWaiting')}
         </a>
       )}
@@ -266,6 +269,7 @@ export default function TelegramBotLoginButton() {
             </p>
           )}
           <button type="submit" disabled={busy || code.length !== CODE_LENGTH} className={PRIMARY}>
+            <Check className="h-4 w-4 shrink-0" aria-hidden />
             {t('auth.botLoginCodeSubmit')}
           </button>
         </form>
@@ -277,6 +281,7 @@ export default function TelegramBotLoginButton() {
             {t('auth.botLoginExpired')}
           </p>
           <button type="button" onClick={() => void issue()} disabled={busy} className={PRIMARY}>
+            <Send className="h-4 w-4 shrink-0" aria-hidden />
             {t('auth.loginViaBot')}
           </button>
         </>
@@ -288,6 +293,7 @@ export default function TelegramBotLoginButton() {
             {t('login.error')}
           </p>
           <button type="button" onClick={() => void issue()} disabled={busy} className={SECONDARY}>
+            <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
             {t('common.retry')}
           </button>
         </>

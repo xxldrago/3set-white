@@ -10,12 +10,13 @@
 // the route's own `confirmation_required` 400, so the warning renders BEFORE
 // any mutation.
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { RotateCcw, Unlink, X } from 'lucide-react';
 import { t } from '@/lib/i18n';
 
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
+  'flex h-11 items-center justify-center gap-2 rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 const DESTRUCTIVE =
-  'flex h-11 items-center justify-center rounded-lg bg-red-600 px-4 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50';
+  'flex h-11 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50';
 
 interface UnlinkConfirmPanelProps {
   onClose: () => void;
@@ -112,6 +113,7 @@ export default function UnlinkConfirmPanel({ onClose, onDone }: UnlinkConfirmPan
           </p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <button type="button" onClick={onClose} className={`${SECONDARY} flex-1`}>
+              <X className="h-4 w-4 shrink-0" aria-hidden />
               {t('common.cancel')}
             </button>
             <button
@@ -119,6 +121,7 @@ export default function UnlinkConfirmPanel({ onClose, onDone }: UnlinkConfirmPan
               onClick={() => void loadHint()}
               className={`${SECONDARY} flex-1`}
             >
+              <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
               {t('common.retry')}
             </button>
           </div>
@@ -143,6 +146,7 @@ export default function UnlinkConfirmPanel({ onClose, onDone }: UnlinkConfirmPan
               disabled={pending}
               className={`${SECONDARY} flex-1`}
             >
+              <X className="h-4 w-4 shrink-0" aria-hidden />
               {t('common.cancel')}
             </button>
             <button
@@ -152,6 +156,7 @@ export default function UnlinkConfirmPanel({ onClose, onDone }: UnlinkConfirmPan
               disabled={pending}
               className={`${DESTRUCTIVE} flex-1`}
             >
+              <Unlink className="h-4 w-4 shrink-0" aria-hidden />
               {lastMethod ? t('auth.unlinkLastConfirm') : t('auth.unlinkConfirm')}
             </button>
           </div>

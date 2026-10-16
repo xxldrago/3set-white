@@ -6,10 +6,11 @@
 // success links into the cabinet — the trial is now unlocked.
 import { useCallback, useState } from 'react';
 import Link from 'next/link';
+import { ArrowLeft, ArrowRight, BadgeCheck, RotateCcw } from 'lucide-react';
 import { t } from '@/lib/i18n';
 
 const PRIMARY =
-  'flex h-12 w-full items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
+  'flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const CARD = 'rounded-2xl border border-line p-6 border-line';
 
 type State = 'loading' | 'done' | 'invalid' | 'error';
@@ -39,6 +40,7 @@ export default function VerifyConfirmForm({ token }: { token: string | null }) {
         <h2 className="text-xl font-semibold text-foreground">{t('auth.verifyInvalid')}</h2>
         <p className="text-sm text-muted">{t('auth.verifyInvalidBody')}</p>
         <Link href="/login" className={PRIMARY}>
+          <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
           {t('auth.backToLogin')}
         </Link>
       </div>
@@ -51,6 +53,7 @@ export default function VerifyConfirmForm({ token }: { token: string | null }) {
         <>
           <p className="text-muted">{t('auth.verifyIntro')}</p>
           <button type="button" onClick={() => void confirm(token)} className={PRIMARY}>
+            <BadgeCheck className="h-4 w-4 shrink-0" aria-hidden />
             {t('auth.verifyCta')}
           </button>
         </>
@@ -59,6 +62,7 @@ export default function VerifyConfirmForm({ token }: { token: string | null }) {
         <>
           <h2 className="text-xl font-semibold text-foreground">{t('auth.verifyDone')}</h2>
           <Link href="/" className={PRIMARY}>
+            <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
             {t('auth.verifyToCabinet')}
           </Link>
         </>
@@ -68,6 +72,7 @@ export default function VerifyConfirmForm({ token }: { token: string | null }) {
           <h2 className="text-xl font-semibold text-foreground">{t('auth.verifyInvalid')}</h2>
           <p className="text-sm text-muted">{t('auth.verifyInvalidBody')}</p>
           <Link href="/login" className={PRIMARY}>
+            <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
             {t('auth.backToLogin')}
           </Link>
         </>
@@ -79,6 +84,7 @@ export default function VerifyConfirmForm({ token }: { token: string | null }) {
           </p>
           {token && (
             <button type="button" onClick={() => void confirm(token)} className={PRIMARY}>
+              <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
               {t('common.retry')}
             </button>
           )}

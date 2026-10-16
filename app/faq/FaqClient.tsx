@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import { Plus } from 'lucide-react';
 import { FAQ_CATEGORIES, FAQ_ITEMS } from './faq-data';
 
 const QUICK_START: { n: string; icon: string; title: string; body: string }[] = [
@@ -212,12 +213,12 @@ export default function FaqClient() {
                         <span className="font-semibold text-foreground">{item.title}</span>
                       </span>
                       <span
-                        className={`font-mono text-lg text-green transition-transform ${
+                        className={`text-green transition-transform ${
                           isOpen ? 'rotate-45' : ''
                         }`}
                         aria-hidden
                       >
-                        +
+                        <Plus className="h-5 w-5 shrink-0" aria-hidden />
                       </span>
                     </button>
                     {isOpen && (

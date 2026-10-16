@@ -8,6 +8,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { ArrowLeft, Plus, RotateCcw } from 'lucide-react';
 import Nav from '@/components/Nav';
 import TicketList from '@/components/TicketList';
 import { t, tp } from '@/lib/i18n';
@@ -23,9 +24,9 @@ export const metadata = {
 
 const CARD = 'flex flex-col gap-4 rounded-2xl border border-line bg-panel p-6';
 const PRIMARY =
-  'flex h-12 items-center justify-center rounded-lg bg-foreground px-5 text-sm font-bold tracking-wide text-lime transition-colors hover:opacity-90';
+  'flex h-12 items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-sm font-bold tracking-wide text-lime transition-colors hover:opacity-90';
 const SECONDARY =
-  'flex h-12 items-center justify-center rounded-lg text-sm font-bold border border-line px-5 transition-colors hover:bg-foreground/5';
+  'flex h-12 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-5 transition-colors hover:bg-foreground/5';
 
 /** Loading fallback while the DB read resolves (UI-SPEC loading state). */
 function SkeletonRows() {
@@ -51,6 +52,7 @@ async function TicketsSection({ userId }: { userId: number }) {
       <section className={CARD} role="alert">
         <p className="text-muted">{t('common.errorLoad')}</p>
         <Link href="/support" className={SECONDARY}>
+          <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
           {t('common.retry')}
         </Link>
       </section>
@@ -64,6 +66,7 @@ async function TicketsSection({ userId }: { userId: number }) {
           {rows.length >= 2 ? tp('ticket.count', rows.length) : ''}
         </span>
         <Link href="/support/new" className={`${PRIMARY} shrink-0`}>
+          <Plus className="h-4 w-4 shrink-0" aria-hidden />
           {t('ticket.cta')}
         </Link>
       </div>
@@ -75,6 +78,7 @@ async function TicketsSection({ userId }: { userId: number }) {
           </h2>
           <p className="text-muted">{t('ticket.emptyBody')}</p>
           <Link href="/support/new" className={PRIMARY}>
+            <Plus className="h-4 w-4 shrink-0" aria-hidden />
             {t('ticket.cta')}
           </Link>
         </div>
@@ -112,6 +116,7 @@ export default async function SupportPage() {
 
         <nav className="flex flex-col gap-2 sm:flex-row">
           <Link href="/" className={SECONDARY}>
+            <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
             {t('guides.back')}
           </Link>
         </nav>

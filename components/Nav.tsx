@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { CircleHelp, Key, LifeBuoy, ShieldCheck, type LucideIcon } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { t } from '@/lib/i18n';
 
@@ -19,6 +20,7 @@ interface NavItem {
   href: string;
   label: string;
   exact?: boolean;
+  icon: LucideIcon;
 }
 
 // Cabinet nav — shown to every signed-in identity (email-only included).
@@ -26,9 +28,9 @@ interface NavItem {
 // item; the logo links home. Payments history lives on /payments (reached
 // from the payments page itself, not the header).
 const NAV_ITEMS: NavItem[] = [
-  { href: '/subscription', label: 'Мои ключи' },
-  { href: '/faq', label: 'FAQ' },
-  { href: '/support', label: 'Поддержка' },
+  { href: '/subscription', label: 'Мои ключи', icon: Key },
+  { href: '/faq', label: 'FAQ', icon: CircleHelp },
+  { href: '/support', label: 'Поддержка', icon: LifeBuoy },
 ];
 
 const STAFF_ROLES = new Set(['administrator', 'support', 'manager', 'partner']);
@@ -77,8 +79,9 @@ export default function Nav({ user }: { user: NavUser | null }) {
             {staff && (
               <Link
                 href="/admin"
-                className="whitespace-nowrap rounded-lg bg-foreground px-3 py-1.5 text-sm font-bold text-lime transition-colors"
+                className="flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-foreground px-3 py-1.5 text-sm font-bold text-lime transition-colors"
               >
+                <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden />
                 {t('admin.title')}
               </Link>
             )}
@@ -98,16 +101,18 @@ export default function Nav({ user }: { user: NavUser | null }) {
             const active = item.exact
               ? pathname === item.href
               : pathname.startsWith(item.href);
+            const ItemIcon = item.icon;
             return (
               <li key={item.href} className="shrink-0">
                 <Link
                   href={item.href}
-                  className={`block whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-bold transition-colors ${
+                  className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-bold transition-colors ${
                     active
                       ? 'bg-foreground text-lime'
                       : 'text-muted hover:bg-foreground/5 hover:text-foreground'
                   }`}
                 >
+                  <ItemIcon className="h-4 w-4 shrink-0" aria-hidden />
                   {item.label}
                 </Link>
               </li>
@@ -118,8 +123,9 @@ export default function Nav({ user }: { user: NavUser | null }) {
             <li className="hidden shrink-0 md:list-item">
               <Link
                 href="/admin"
-                className="block whitespace-nowrap rounded-lg bg-foreground px-3 py-1.5 text-sm font-bold text-lime transition-colors"
+                className="flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-foreground px-3 py-1.5 text-sm font-bold text-lime transition-colors"
               >
+                <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden />
                 {t('admin.title')}
               </Link>
             </li>

@@ -9,6 +9,7 @@
 // `key.linkUnavailable`; a fetch failure renders `key.linkError` + retry.
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import { ArrowLeft, BookOpen, RotateCcw } from 'lucide-react';
 import ConfirmPanel from '@/components/ConfirmPanel';
 import CopyButton from '@/components/CopyButton';
 import InstallPrompt from '@/components/InstallPrompt';
@@ -35,9 +36,9 @@ export const metadata = {
 
 const CARD = 'flex flex-col gap-3 rounded-2xl border border-line p-6 border-line';
 const PRIMARY =
-  'flex h-12 items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:opacity-90';
+  'flex h-12 items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-lime transition-colors hover:opacity-90';
 const SECONDARY =
-  'flex h-12 items-center justify-center rounded-lg text-sm font-bold border border-solid border-line px-5 transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-12 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-solid border-line px-5 transition-colors hover:bg-foreground/5 border-line ';
 
 /** Humanize bytes to GB (one decimal) or MB (UI-SPEC formatting rules). */
 function humanizeBytes(bytes: number): string {
@@ -137,6 +138,7 @@ export default async function KeyDetailPage({
                 {t('key.linkError')}
               </p>
               <Link href={`/keys/${encodeURIComponent(id)}`} className={SECONDARY}>
+                <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
                 {t('common.retry')}
               </Link>
             </>
@@ -217,9 +219,11 @@ export default async function KeyDetailPage({
 
         <nav className="flex flex-col gap-2 sm:flex-row">
           <Link href="/guides" className={PRIMARY}>
+            <BookOpen className="h-4 w-4 shrink-0" aria-hidden />
             {t('key.guidesCta')}
           </Link>
           <Link href="/" className={SECONDARY}>
+            <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
             {t('guides.back')}
           </Link>
         </nav>

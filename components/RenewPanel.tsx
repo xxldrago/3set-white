@@ -9,6 +9,7 @@
 // adds only days); the browser sends no price — the server re-quotes
 // (T-03-amount).
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { RefreshCw, RotateCcw, X } from 'lucide-react';
 import AutoRenewToggle from './AutoRenewToggle';
 import PayCta from './PayCta';
 import PromoField from './PromoField';
@@ -20,9 +21,9 @@ const DEBOUNCE_MS = 300;
 const CARD =
   'flex flex-col gap-4 rounded-2xl border border-line p-6 border-line';
 const TRIGGER =
-  'flex h-12 flex-1 items-center justify-center rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-12 flex-1 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 
 const priceFormatter = new Intl.NumberFormat('ru-RU');
 
@@ -85,6 +86,7 @@ export default function RenewPanel({
   if (!open) {
     return (
       <button type="button" onClick={() => setOpen(true)} className={TRIGGER}>
+        <RefreshCw className="h-4 w-4 shrink-0" aria-hidden />
         {t('renew.cta')}
       </button>
     );
@@ -149,6 +151,7 @@ export default function RenewPanel({
             onClick={() => void fetchPrice(days)}
             className={SECONDARY}
           >
+            <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
             {t('common.retry')}
           </button>
         </div>
@@ -162,6 +165,7 @@ export default function RenewPanel({
       <PayCta kind="renew" days={days} keyId={keyId} disabled={price === null} promoCode={promoCode} />
 
       <button type="button" onClick={() => setOpen(false)} className={SECONDARY}>
+        <X className="h-4 w-4 shrink-0" aria-hidden />
         {t('common.cancel')}
       </button>
     </section>

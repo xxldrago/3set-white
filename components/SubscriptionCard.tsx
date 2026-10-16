@@ -3,6 +3,7 @@
 // copy, actions) in 3set branding. No data fetching: the server page passes a
 // `RenderedKey` whose `statusKind` was derived from `expiresAt`.
 import Link from 'next/link';
+import { PlugZap, ShoppingCart } from 'lucide-react';
 import BonusDaysButton from './BonusDaysButton';
 import CopyButton from './CopyButton';
 import DeviceListModal from './DeviceListModal';
@@ -119,10 +120,12 @@ export default function SubscriptionCard({
       {/* Actions */}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         <Link href={`/install?key=${encodeURIComponent(item.id)}`} className={PRIMARY}>
+          <PlugZap className="h-4 w-4 shrink-0" aria-hidden />
           {t('key.connectCta')}
         </Link>
         {item.isTrial ? (
           <Link href="/#tariff" className={SECONDARY}>
+            <ShoppingCart className="h-4 w-4 shrink-0" aria-hidden />
             {t('key.buyCta')}
           </Link>
         ) : (

@@ -5,6 +5,7 @@
 // keeps the project's two-tap ConfirmPanel, and "clear" wipes all rows. All
 // reads and mutations stay on the existing ownership-scoped BFF device routes.
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { RotateCcw, Smartphone, X } from 'lucide-react';
 import type { Device } from '@/lib/artemida';
 import { t } from '@/lib/i18n';
 import ConfirmPanel from './ConfirmPanel';
@@ -95,6 +96,7 @@ export default function DeviceListModal({ keyId, deviceLimit }: DeviceListModalP
         onClick={openModal}
         className="flex h-12 items-center justify-center gap-2 rounded-lg border border-line px-4 text-sm font-bold text-muted transition-colors hover:bg-foreground/5"
       >
+        <Smartphone className="h-4 w-4 shrink-0" aria-hidden />
         {t('key.devicesTitle')}
       </button>
 
@@ -128,9 +130,9 @@ export default function DeviceListModal({ keyId, deviceLimit }: DeviceListModalP
                 type="button"
                 onClick={closeModal}
                 aria-label={t('common.cancel')}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-line text-lg text-muted transition-colors hover:bg-foreground/5"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-line text-muted transition-colors hover:bg-foreground/5"
               >
-                ×
+                <X className="h-4 w-4 shrink-0" aria-hidden />
               </button>
             </div>
 
@@ -152,8 +154,9 @@ export default function DeviceListModal({ keyId, deviceLimit }: DeviceListModalP
                   <button
                     type="button"
                     onClick={() => void loadDevices()}
-                    className="flex h-11 items-center justify-center rounded-lg border border-line px-4 text-sm transition-colors hover:bg-foreground/5"
+                    className="flex h-11 items-center justify-center gap-2 rounded-lg border border-line px-4 text-sm transition-colors hover:bg-foreground/5"
                   >
+                    <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
                     {t('common.retry')}
                   </button>
                 </>

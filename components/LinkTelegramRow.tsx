@@ -7,13 +7,14 @@
 // only drives request → open bot → poll status → consume → refresh.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { RotateCcw, Send, Unlink } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import UnlinkConfirmPanel from './UnlinkConfirmPanel';
 
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
+  'flex h-11 items-center justify-center gap-2 rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 const PRIMARY =
-  'flex h-11 items-center justify-center rounded-lg bg-foreground px-4 text-sm text-lime transition-colors hover:bg-[#383838] disabled:opacity-50';
+  'flex h-11 items-center justify-center gap-2 rounded-lg bg-foreground px-4 text-sm text-lime transition-colors hover:bg-[#383838] disabled:opacity-50';
 
 type LinkState = 'idle' | 'requesting' | 'waiting' | 'expired' | 'error';
 
@@ -114,11 +115,13 @@ function LinkViaBot({ onDone }: { onDone: () => void }) {
     <div className="flex flex-col gap-2">
       {state === 'idle' && (
         <button type="button" onClick={() => void request()} className={PRIMARY}>
+          <Send className="h-4 w-4 shrink-0" aria-hidden />
           {t('auth.linkCta')}
         </button>
       )}
       {(state === 'error' || state === 'expired') && (
         <button type="button" onClick={() => void request()} className={SECONDARY}>
+          <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
           {t('common.retry')}
         </button>
       )}
@@ -128,6 +131,7 @@ function LinkViaBot({ onDone }: { onDone: () => void }) {
       {state === 'waiting' && botUrl && (
         <>
           <a href={botUrl} target="_blank" rel="noopener noreferrer" className={PRIMARY}>
+            <Send className="h-4 w-4 shrink-0" aria-hidden />
             {t('auth.linkOpenBot')}
           </a>
           <p role="status" className="text-sm text-muted">
@@ -171,6 +175,7 @@ export default function LinkTelegramRow({ linked, telegramId }: LinkTelegramRowP
         </div>
         {linked && !unlinkOpen && (
           <button type="button" onClick={() => setUnlinkOpen(true)} className={SECONDARY}>
+            <Unlink className="h-4 w-4 shrink-0" aria-hidden />
             {t('auth.unlinkCta')}
           </button>
         )}

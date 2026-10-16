@@ -6,6 +6,7 @@
 // /install (same apps, links, deep-link imports) but renders inline — no
 // navigation needed right after payment.
 import { useState } from 'react';
+import { Download, Plus } from 'lucide-react';
 import CopyButton from './CopyButton';
 import { t } from '@/lib/i18n';
 import { APPS, PLATFORMS, PLATFORM_ORDER } from '@/app/install/install-data';
@@ -97,8 +98,9 @@ export default function DeviceGuide({ subscriptionUrl }: { subscriptionUrl: stri
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-12 items-center justify-center rounded-lg border border-line px-5 text-sm transition-colors hover:bg-foreground/5"
+              className="flex h-12 items-center justify-center gap-2 rounded-lg border border-line px-5 text-sm transition-colors hover:bg-foreground/5"
             >
+              <Download className="h-4 w-4 shrink-0" aria-hidden />
               {item.label}
             </a>
           ))}
@@ -110,8 +112,9 @@ export default function DeviceGuide({ subscriptionUrl }: { subscriptionUrl: stri
           </p>
           <a
             href={importUrl}
-            className="flex h-12 items-center justify-center rounded-lg bg-foreground px-5 text-sm text-lime transition-colors hover:opacity-90"
+            className="flex h-12 items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-sm text-lime transition-colors hover:opacity-90"
           >
+            <Plus className="h-4 w-4 shrink-0" aria-hidden />
             {t('guides.importCta', { app: guideApp.name })}
           </a>
           <div className="flex items-center gap-2">

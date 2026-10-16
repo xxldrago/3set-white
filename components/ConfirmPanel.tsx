@@ -9,6 +9,7 @@
 // raw provider/API message (D-19).
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Check, Trash2, Unplug, X } from 'lucide-react';
 import { t } from '@/lib/i18n';
 
 export type ConfirmKind = 'delete' | 'clear';
@@ -26,11 +27,11 @@ interface ConfirmPanelProps {
 }
 
 const TRIGGER =
-  'flex h-11 shrink-0 items-center justify-center rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line ';
 const SECONDARY =
-  'flex h-11 items-center justify-center rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
+  'flex h-11 items-center justify-center gap-2 rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 const DESTRUCTIVE =
-  'flex h-11 items-center justify-center rounded-lg bg-red-600 px-4 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50';
+  'flex h-11 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50';
 
 export default function ConfirmPanel({
   kind,
@@ -104,6 +105,11 @@ export default function ConfirmPanel({
   if (!open) {
     return (
       <button type="button" onClick={() => setOpen(true)} className={TRIGGER}>
+        {isDelete ? (
+          <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
+        ) : (
+          <Unplug className="h-4 w-4 shrink-0" aria-hidden />
+        )}
         {triggerLabel}
       </button>
     );
@@ -137,6 +143,7 @@ export default function ConfirmPanel({
           disabled={pending}
           className={`${SECONDARY} flex-1`}
         >
+          <X className="h-4 w-4 shrink-0" aria-hidden />
           {t('common.cancel')}
         </button>
         <button
@@ -146,6 +153,7 @@ export default function ConfirmPanel({
           disabled={pending}
           className={`${DESTRUCTIVE} flex-1`}
         >
+          <Check className="h-4 w-4 shrink-0" aria-hidden />
           {confirmLabel}
         </button>
       </div>

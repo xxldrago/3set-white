@@ -8,6 +8,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { ArrowLeft, RotateCcw } from 'lucide-react';
 import Nav from '@/components/Nav';
 import PaymentHistoryList from '@/components/PaymentHistoryList';
 import { t } from '@/lib/i18n';
@@ -20,7 +21,7 @@ export const dynamic = 'force-dynamic';
 const CARD =
   'flex flex-col gap-4 rounded-2xl border border-line bg-panel p-6';
 const SECONDARY =
-  'flex h-12 items-center justify-center rounded-lg text-sm font-bold border border-line px-5 transition-colors hover:bg-foreground/5';
+  'flex h-12 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-5 transition-colors hover:bg-foreground/5';
 
 /** Loading fallback while the DB read resolves (UI-SPEC loading state). */
 function SkeletonRows() {
@@ -46,6 +47,7 @@ async function HistorySection({ userId }: { userId: number }) {
       <section className={CARD} role="alert">
         <p className="text-muted">{t('common.errorLoad')}</p>
         <Link href="/payments" className={SECONDARY}>
+          <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
           {t('common.retry')}
         </Link>
       </section>
@@ -81,6 +83,7 @@ export default async function PaymentsHistoryPage() {
 
         <nav className="flex flex-col gap-2 sm:flex-row">
           <Link href="/" className={SECONDARY}>
+            <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
             {t('guides.back')}
           </Link>
         </nav>

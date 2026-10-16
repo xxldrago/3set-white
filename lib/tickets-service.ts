@@ -99,7 +99,7 @@ async function createTicketForOwner(
 ): Promise<CreateTicketResult> {
   const user = await prisma.user.findFirst({
     where: ownerWhere,
-    select: { id: true },
+    select: { id: true, email: true },
   });
   if (!user) return { kind: "no_user" };
 
@@ -131,6 +131,13 @@ async function createTicketForOwner(
   // Best-effort admin push — never awaited, never fails creation (see module).
   const { notifyAdminsNewTicket } = await import("./admin-notify");
   notifyAdminsNewTicket(id, input.subject);
+
+  // Best-effort user email — same discipline: skipped for Telegram-only
+  // accounts, swallowed failures, never blocks creation.
+  if (user.email) {
+    const { sendTicketCreatedMail } = await import("./mail");
+    void sendTicketCreatedMail(user.email, id, input.subject).catch(() => undefined);
+  }
 
   return { kind: "created", id };
 }
@@ -341,7 +348,7 @@ export async function addSupportMessage(
 ): Promise<{ id: string } | null> {
   const exists = await prisma.ticket.findUnique({
     where: { id: ticketId },
-    select: { id: true },
+    select: { id: true, subject: true, user: { select: { email: true } } },
   });
   if (!exists) return null;
 
@@ -360,6 +367,15 @@ export async function addSupportMessage(
     });
     return created;
   });
+
+  // Best-effort user email — skipped for Telegram-only accounts, swallowed
+  // failures, never fails the reply.
+  if (exists.user?.email) {
+    const { sendTicketReplyMail } = await import("./mail");
+    void sendTicketReplyMail(exists.user.email, ticketId, exists.subject, body).catch(
+      () => undefined,
+    );
+  }
 
   return { id: message.id };
 }

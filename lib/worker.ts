@@ -110,7 +110,7 @@ function isRetryable(code: ArtemidaError["code"]): boolean {
 export async function processFulfillOrder(orderId: string): Promise<FulfillOutcome> {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    include: { user: { select: { telegramId: true } } },
+    include: { user: { select: { telegramId: true, email: true } } },
   });
   if (!order) return { outcome: "skipped" };
 
@@ -146,8 +146,25 @@ export async function processFulfillOrder(orderId: string): Promise<FulfillOutco
           : `email:${order.userId}`,
     });
     await upsertCachedKey(order.userId, key);
-    await markProvisioned(order.id, key.id);
+    // The transition result is the send gate: only the first writer that
+    // actually flips provisioning→provisioned triggers the receipt email,
+    // so worker retries can never double-send.
+    const firstProvision = await markProvisioned(order.id, key.id);
     await enqueueNotifyProvisioned(order.id);
+    if (firstProvision && order.user.email) {
+      const { sendPurchaseMail } = await import("./mail");
+      void sendPurchaseMail(order.user.email, {
+        kind: order.kind,
+        keyId: key.id,
+        devices: key.deviceLimit ?? key.devices,
+        days: order.days,
+        amount: order.finalAmount > 0 ? order.finalAmount : order.amount,
+        currency: order.currency,
+        subscriptionUrl: key.subscriptionUrl,
+        expiresAt: key.expiresAt,
+        orderId: order.id,
+      }).catch(() => undefined);
+    }
     logger.info({ route: "worker", outcome: "provisioned", orderId: order.id, kind: order.kind });
     return { outcome: "provisioned" };
   } catch (err) {

@@ -201,6 +201,120 @@ export async function sendVerifyMail(to: string, token: string): Promise<MailRes
   });
 }
 
+/** Ticket created — confirms receipt, links to the thread. No PII beyond the user's own subject. */
+export async function sendTicketCreatedMail(
+  to: string,
+  ticketId: string,
+  subject: string,
+): Promise<MailResult> {
+  return sendMail({
+    to,
+    tag: "ticket-created",
+    subject: `Обращение принято — 3set (#${ticketId.slice(0, 8)})`,
+    text: [
+      `Ваше обращение «${subject}» принято.`,
+      "",
+      "Мы ответим здесь и в Telegram-боте. Следить за статусом можно в кабинете:",
+      `${env.APP_BASE_URL}/support/${ticketId}`,
+    ].join("\n"),
+  });
+}
+
+/** Support replied — nudges the user back to the thread with a short preview. */
+export async function sendTicketReplyMail(
+  to: string,
+  ticketId: string,
+  subject: string,
+  preview: string,
+): Promise<MailResult> {
+  const short = preview.length > 300 ? `${preview.slice(0, 300)}…` : preview;
+  return sendMail({
+    to,
+    tag: "ticket-reply",
+    subject: `Ответ поддержки — 3set (#${ticketId.slice(0, 8)})`,
+    text: [
+      `По обращению «${subject}» пришёл ответ:`,
+      "",
+      short,
+      "",
+      `Продолжить диалог: ${env.APP_BASE_URL}/support/${ticketId}`,
+    ].join("\n"),
+  });
+}
+
+/** Key expiring soon — mirrors the bot reminder push (same 3-day horizon). */
+export async function sendExpiryReminderMail(
+  to: string,
+  keyLabel: string,
+  expiresAt: string,
+  isTrial: boolean,
+): Promise<MailResult> {
+  let date = expiresAt;
+  try {
+    date = new Date(expiresAt).toLocaleDateString("ru-RU");
+  } catch {
+    // Keep the raw value — never fail the send on a date quirk.
+  }
+  return sendMail({
+    to,
+    tag: "expiry",
+    subject: isTrial ? "Пробный период заканчивается — 3set" : "Подписка заканчивается — 3set",
+    text: [
+      isTrial
+        ? `Пробный доступ «${keyLabel}» заканчивается ${date}.`
+        : `Подписка «${keyLabel}» заканчивается ${date}.`,
+      "",
+      `Продлить без потери доступа: ${env.APP_BASE_URL}/subscription`,
+    ].join("\n"),
+  });
+}
+
+export interface PurchaseMailInput {
+  kind: string;
+  keyId: string;
+  devices: number | null;
+  days: number | null;
+  amount: number;
+  currency: string;
+  subscriptionUrl: string | null;
+  expiresAt: string | null;
+  orderId: string;
+}
+
+/** Order fulfilled — receipt with the subscription data. Sent only on the
+ * first successful provisioning transition (no resend on worker retries). */
+export async function sendPurchaseMail(to: string, input: PurchaseMailInput): Promise<MailResult> {
+  const kindLabel =
+    input.kind === "renew" ? "Продление подписки" : input.kind === "upgrade" ? "Апгрейд" : "Новая подписка";
+  let expiry = "—";
+  if (input.expiresAt) {
+    try {
+      expiry = new Date(input.expiresAt).toLocaleDateString("ru-RU");
+    } catch {
+      expiry = input.expiresAt;
+    }
+  }
+  const lines = [
+    `${kindLabel} оформлена и активирована.`,
+    "",
+    `Ключ: ${input.keyId}`,
+    `Устройства: ${input.devices ?? "—"}`,
+    input.days !== null ? `Срок: ${input.days} дн.` : null,
+    `Оплачено: ${input.amount} ${input.currency}`,
+    `Действует до: ${expiry}`,
+  ].filter((line): line is string => line !== null);
+  if (input.subscriptionUrl) {
+    lines.push("", `Ссылка подписки: ${input.subscriptionUrl}`);
+  }
+  lines.push("", `Детали заказа: ${env.APP_BASE_URL}/payments/${input.orderId}`);
+  return sendMail({
+    to,
+    tag: "purchase",
+    subject: `${kindLabel} — 3set`,
+    text: lines.join("\n"),
+  });
+}
+
 /** D-90 template 2/2: registration greeting, no credentials inside. */
 export async function sendWelcomeMail(to: string): Promise<MailResult> {
   return sendMail({

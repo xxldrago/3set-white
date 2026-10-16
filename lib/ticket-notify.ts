@@ -151,9 +151,10 @@ export async function dispatchReminder(
     },
     select: {
       keyId: true,
+      name: true,
       isTrial: true,
       expiresAt: true,
-      user: { select: { telegramId: true, chatId: true } },
+      user: { select: { telegramId: true, chatId: true, email: true } },
     },
   });
   if (!key?.expiresAt) return { outcome: "skipped" };
@@ -164,6 +165,19 @@ export async function dispatchReminder(
     isTrial: key.isTrial,
     expiresAt: key.expiresAt,
   });
+
+  // Best-effort mirror email — same exactly-once-per-day property as the
+  // push (it rides the deduped Notification row). Skipped for Telegram-only
+  // accounts; never affects the push outcome.
+  if (key.user.email && key.expiresAt) {
+    const { sendExpiryReminderMail } = await import("./mail");
+    void sendExpiryReminderMail(
+      key.user.email,
+      key.name ?? key.keyId,
+      key.expiresAt.toISOString(),
+      key.isTrial,
+    ).catch(() => undefined);
+  }
 
   try {
     await send.sendMessage(chatId, push.text, { reply_markup: push.keyboard });

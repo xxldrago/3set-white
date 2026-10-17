@@ -1,0 +1,854 @@
+<!DOCTYPE html><html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Настройка VPN на macOS — Пошаговая инструкция (3set.online)</title>
+<meta name="description" content="Как подключить VPN 3set на Mac: установка клиента INCY или Happ из App Store, импорт подписки, разрешение системного расширения, включение TUN/VPN. Гайд для macOS 12+ и Apple Silicon.">
+<meta property="og:title" content="Настройка VPN на macOS — 3set.online">
+<meta property="og:description" content="Пошаговая инструкция: установка клиента, импорт подписки, разрешение System Extension, включение TUN-режима. Работает на Intel и Apple Silicon.">
+<meta property="og:type" content="article">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e1512'/%3E%3Cpath d='M16 5l9 4v7c0 6-4 9.5-9 11-5-1.5-9-5-9-11V9l9-4z' fill='none' stroke='%23b7ff45' stroke-width='2.4'/%3E%3Cpath d='M11.5 16l3 3 6-6' fill='none' stroke='%23b7ff45' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/800.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/600.css">
+<style>
+:root{
+    --bg:#f6f4ee; --bg2:#eeebe1; --panel:#ffffff; --panel2:#fbfaf5;
+    --line:#e4dfd1; --line2:#cec7b4;
+    --ink:#0e1512; --mut:#5b645e; --dim:#8f968f;
+    --lime:#b7ff45; --lime-dk:#8fd41f; --lime-soft:rgba(143,212,31,.14);
+    --green:#0c4f36; --green-soft:rgba(12,79,54,.08);
+    --cyan:#0d8a96; --amber:#d99a2b; --red:#d84a3f;
+    --disp:'Unbounded',sans-serif; --body:'Manrope',sans-serif; --mono:'JetBrains Mono',monospace;
+    --shadow:0 24px 60px -28px rgba(24,30,24,.22);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;overflow-x:hidden}
+body::after{content:"";position:fixed;inset:0;z-index:99;pointer-events:none;opacity:.035;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");}
+::selection{background:var(--ink);color:var(--lime)}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+h1,h2,h3{font-family:var(--disp);font-weight:700;line-height:1.15;color:var(--ink)}
+.mono{font-family:var(--mono)}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--green);display:inline-flex;align-items:center;gap:8px;margin-bottom:16px}
+.kicker::before{content:"//";color:var(--dim)}
+h2{font-size:clamp(1.35rem,3.4vw,2.2rem);margin-bottom:14px}
+.sub{color:var(--mut);max-width:640px}
+section{padding:clamp(70px,9vw,110px) 0;position:relative}
+
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:500;font-size:13px;letter-spacing:.04em;padding:16px 26px;border-radius:8px;transition:transform .25s,box-shadow .25s,background .25s,color .25s;white-space:nowrap}
+.btn-solid{background:var(--ink);color:var(--lime);box-shadow:0 18px 40px -14px rgba(14,21,18,.45)}
+.btn-solid:hover{transform:translateY(-3px);box-shadow:0 24px 50px -14px rgba(14,21,18,.55)}
+.btn-lime{background:var(--lime);color:var(--ink);box-shadow:0 14px 34px -12px rgba(143,212,31,.55)}
+.btn-lime:hover{transform:translateY(-3px);box-shadow:0 20px 44px -12px rgba(143,212,31,.7)}
+.btn-ghost{border:1px solid var(--line2);color:var(--ink);background:rgba(255,255,255,.5)}
+.btn-ghost:hover{border-color:var(--green);color:var(--green);transform:translateY(-3px)}
+
+
+/* ---------- top ticker ---------- */
+.topline{background:var(--ink);color:#c9d2c9;border-bottom:1px solid var(--ink);font-family:var(--mono);font-size:11px;letter-spacing:.1em;overflow:hidden;padding:8px 0}
+.topline .dotg{color:var(--lime)}
+.tick-wrap{overflow:hidden}
+.tick-track{display:flex;gap:44px;width:max-content;animation:tick 30s linear infinite}
+.tick-track:hover{animation-play-state:paused}
+@keyframes tick{to{transform:translateX(-50%)}}
+.tick-track span{display:flex;gap:44px;white-space:nowrap}
+.tick-track b{color:var(--lime);font-weight:600}
+
+
+/* ---------- header ---------- */
+#hdr{position:sticky;top:0;z-index:60;transition:background .3s,box-shadow .3s}
+#hdr.scrolled{background:rgba(246,244,238,.88);backdrop-filter:blur(14px);box-shadow:0 1px 0 var(--line),0 14px 34px -22px rgba(24,30,24,.25)}
+.hdr-in{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 0}
+.logo{display:flex;align-items:center;gap:11px;font-family:var(--disp);font-weight:700;font-size:17px;color:var(--ink)}
+.logo svg{width:30px;height:30px}
+.logo em{font-style:normal;color:var(--green)}
+.logo .tld{font-family:var(--mono);font-size:11px;color:var(--dim);font-weight:400;margin-left:2px}
+nav.desk{display:flex;gap:26px;font-size:14px;font-weight:600;color:var(--mut)}
+nav.desk a{position:relative;padding:4px 0;transition:color .2s}
+nav.desk a:hover{color:var(--green)}
+nav.desk a::after{content:"";position:absolute;left:0;bottom:0;height:1px;width:0;background:var(--green);transition:width .25s}
+nav.desk a:hover::after{width:100%}
+.hdr-cta{display:flex;align-items:center;gap:14px}
+.hdr-cta .btn{padding:11px 18px;font-size:11px}
+#burger{display:none;flex-direction:column;gap:5px;padding:8px}
+#burger i{width:22px;height:2px;background:var(--ink);transition:.3s}
+#mnav{position:fixed;inset:0;z-index:70;background:rgba(246,244,238,.98);backdrop-filter:blur(10px);display:flex;flex-direction:column;justify-content:center;padding:40px 30px;gap:6px;transform:translateX(100%);transition:transform .4s cubic-bezier(.7,0,.3,1)}
+#mnav.open{transform:none}
+#mnav a{font-family:var(--disp);font-size:22px;padding:10px 0;border-bottom:1px solid var(--line);color:var(--ink)}
+#mnav a:hover{color:var(--green)}
+#mnav .btn{margin-top:24px;justify-content:center}
+#mclose{position:absolute;top:22px;right:26px;font-size:26px;color:var(--mut)}
+
+
+/* ---------- breadcrumb ---------- */
+.bread{padding:22px 0 0;font-family:var(--mono);font-size:12px;color:var(--dim);letter-spacing:.04em}
+.bread a{color:var(--mut);transition:color .2s}
+.bread a:hover{color:var(--green)}
+.bread span{margin:0 10px;opacity:.5}
+
+
+/* ---------- hero ---------- */
+.hero{padding:clamp(40px,6vw,70px) 0 clamp(60px,7vw,90px);overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;
+    background-image:linear-gradient(rgba(14,21,18,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(14,21,18,.05) 1px,transparent 1px);
+    background-size:46px 46px;mask-image:radial-gradient(ellipse 80% 70% at 60% 30%,#000 0%,transparent 70%)}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(30px,4vw,60px);align-items:center;position:relative}
+.hero-badge{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--green);border:1px solid rgba(12,79,54,.35);background:var(--lime-soft);padding:7px 14px;border-radius:100px;margin-bottom:26px}
+.pulse-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(12,79,54,.5);animation:pulse 2s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 9px rgba(12,79,54,0)}100%{box-shadow:0 0 0 0 rgba(12,79,54,0)}}
+h1{font-size:clamp(1.5rem,4.4vw,2.8rem);margin-bottom:22px}
+h1 .l2{color:var(--green);display:block;position:relative}
+h1 .l2::after{content:"";position:absolute;left:0;right:0;bottom:4px;height:.34em;background:var(--lime);z-index:-1;border-radius:2px;transform:skewX(-8deg)}
+h1 .l3{display:block;font-family:var(--body);font-weight:600;font-size:clamp(.95rem,1.6vw,1.15rem);color:var(--mut);margin-top:16px;line-height:1.55}
+.hero-p{color:var(--mut);max-width:520px;margin-bottom:32px;font-size:16.5px}
+.hero-p b{color:var(--ink)}
+.hero-actions{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:34px}
+.hero-stats{display:flex;gap:clamp(18px,3vw,40px);margin-top:38px;padding-top:26px;border-top:1px solid var(--line);flex-wrap:wrap}
+.hstat b{font-family:var(--disp);font-size:clamp(1.2rem,2.4vw,1.7rem);color:var(--ink);display:block}
+.hstat b i{font-style:normal;color:var(--green)}
+.hstat span{font-size:12px;color:var(--dim);font-family:var(--mono);letter-spacing:.06em}
+
+
+/* macbook mockup */
+.mac{position:relative;margin:0 auto;max-width:520px}
+.mac-screen{border:1px solid var(--line2);border-radius:14px 14px 0 0;background:var(--ink);padding:10px 10px 0;box-shadow:0 40px 90px -30px rgba(14,21,18,.45);position:relative}
+.mac-screen::before{content:"";position:absolute;top:6px;left:50%;transform:translateX(-50%);width:6px;height:6px;border-radius:50%;background:#1d2822;z-index:3}
+.mac-display{background:linear-gradient(180deg,#111a16,#0c1210);border-radius:6px 6px 0 0;overflow:hidden;aspect-ratio:16/10;position:relative;color:#e6efe4}
+.mac-menu{display:flex;align-items:center;gap:14px;padding:8px 14px;background:rgba(255,255,255,.04);border-bottom:1px solid #1d2822;font-family:var(--mono);font-size:9px;color:#6d7a71;letter-spacing:.06em}
+.mac-menu .apple{font-size:12px;color:#b6c3b7}
+.mac-menu .app{color:var(--lime);font-weight:600}
+.mac-menu .right{margin-left:auto;display:flex;gap:10px;align-items:center}
+.mac-menu .vpn-ic{width:14px;height:14px;border:1.2px solid var(--lime);border-radius:50%;position:relative;display:inline-block}
+.mac-menu .vpn-ic::after{content:"";position:absolute;top:50%;left:50%;width:6px;height:1.5px;background:var(--lime);transform:translate(-50%,-50%) rotate(-45deg)}
+.mac-app{padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.mac-app-hd{display:flex;align-items:center;gap:12px}
+.mac-app-logo{width:42px;height:42px;border-radius:10px;background:var(--lime);color:var(--ink);display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:700;font-size:15px}
+.mac-app-name{font-family:var(--disp);font-weight:700;font-size:15px;color:#fff}
+.mac-app-sub{font-family:var(--mono);font-size:9px;color:#6d7a71;letter-spacing:.08em}
+.mac-status{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9px;color:var(--lime);border:1px solid rgba(183,255,69,.3);background:rgba(183,255,69,.08);padding:5px 10px;border-radius:100px;width:max-content}
+.mac-status .pulse-dot{width:5px;height:5px;background:var(--lime);box-shadow:0 0 0 0 rgba(183,255,69,.5)}
+.mac-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mac-metric{border:1px solid #1d2822;border-radius:8px;padding:9px;background:rgba(255,255,255,.03)}
+.mac-metric span{display:block;font-family:var(--mono);font-size:8px;color:#5d6b62;letter-spacing:.1em;margin-bottom:3px}
+.mac-metric b{font-family:var(--mono);font-size:12px;color:var(--lime);font-weight:600}
+.mac-metric b.cy{color:#5fd6e8}
+.mac-btn{background:var(--lime);color:var(--ink);font-family:var(--disp);font-weight:700;font-size:11px;letter-spacing:.06em;padding:10px;border-radius:8px;text-align:center;margin-top:2px}
+.mac-base{height:14px;background:linear-gradient(180deg,#d8d4c7,#b8b3a4);border-radius:0 0 10px 10px;margin:0 -4px;position:relative}
+.mac-base::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:80px;height:4px;background:#9e9989;border-radius:0 0 6px 6px}
+
+
+/* ---------- steps ---------- */
+.steps-list{display:grid;gap:22px;margin-top:44px}
+.step{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:clamp(26px,4vw,40px);position:relative;overflow:hidden;transition:border-color .3s,box-shadow .3s;display:grid;grid-template-columns:auto 1fr;gap:clamp(20px,3vw,36px);align-items:start}
+.step:hover{border-color:var(--line2);box-shadow:var(--shadow)}
+.step .num{font-family:var(--disp);font-size:clamp(40px,6vw,64px);color:transparent;-webkit-text-stroke:1.5px var(--line2);line-height:1;flex:none;min-width:70px}
+.step h3{font-size:clamp(16px,2vw,19px);margin-bottom:12px;color:var(--green)}
+.step p{color:var(--mut);font-size:14.5px;max-width:620px;margin-bottom:14px}
+.step .payrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.step .pay{font-family:var(--mono);font-size:11px;color:var(--ink);border:1px solid var(--line2);padding:6px 12px;border-radius:6px;background:var(--panel2);transition:.2s}
+.step .pay:hover{border-color:var(--green);color:var(--green);background:var(--lime-soft)}
+.step .pay.primary{background:var(--ink);color:var(--lime);border-color:var(--ink)}
+.step .pay.primary:hover{background:var(--green);color:var(--lime)}
+
+
+/* ---------- clients grid ---------- */
+.clients{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px}
+.client{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:28px;position:relative;transition:transform .3s,border-color .3s,box-shadow .3s;display:flex;flex-direction:column;gap:14px;overflow:hidden}
+.client:hover{transform:translateY(-5px);border-color:rgba(12,79,54,.4);box-shadow:var(--shadow)}
+.client .path{font-family:var(--mono);font-size:10.5px;color:var(--dim);letter-spacing:.06em}
+.client .client-ic{width:56px;height:56px;border-radius:14px;background:var(--ink);color:var(--lime);display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:700;font-size:20px}
+.client.hot{border-color:var(--ink);background:var(--ink);color:#e6efe4}
+.client.hot h3{color:#fff}
+.client.hot p{color:#b6c3b7}
+.client.hot .client-ic{background:var(--lime);color:var(--ink)}
+.client.hot .path{color:#6d7a71}
+.client.hot .pop-tag{position:absolute;top:14px;right:14px;font-family:var(--mono);font-size:9px;color:var(--ink);background:var(--lime);padding:4px 10px;border-radius:100px;letter-spacing:.1em;font-weight:600}
+.client h3{font-size:17px}
+.client p{font-size:13.5px;color:var(--mut);flex:1}
+.client .go{font-family:var(--mono);font-size:11.5px;color:var(--green);letter-spacing:.08em;display:inline-flex;align-items:center;gap:6px;transition:gap .2s}
+.client:hover .go{gap:10px}
+.client.hot .go{color:var(--lime)}
+
+
+/* ---------- warning / tip ---------- */
+.alerts{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:44px}
+.alert{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:28px;position:relative;overflow:hidden;transition:transform .3s,box-shadow .3s}
+.alert:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+.alert.warn{border-color:rgba(217,154,43,.4);background:linear-gradient(180deg,rgba(217,154,43,.06),transparent)}
+.alert.tip{border-color:rgba(12,79,54,.3);background:linear-gradient(180deg,var(--lime-soft),transparent)}
+.alert.info{border-color:rgba(13,138,150,.3);background:linear-gradient(180deg,rgba(13,138,150,.06),transparent)}
+.alert .tag{font-family:var(--mono);font-size:10px;letter-spacing:.14em;display:inline-flex;align-items:center;gap:8px;margin-bottom:14px;padding:5px 12px;border-radius:100px}
+.alert.warn .tag{color:var(--amber);background:rgba(217,154,43,.12)}
+.alert.tip .tag{color:var(--green);background:var(--lime-soft)}
+.alert.info .tag{color:var(--cyan);background:rgba(13,138,150,.12)}
+.alert h3{font-size:16px;margin-bottom:10px}
+.alert p{color:var(--mut);font-size:14px}
+.alert ul{list-style:none;margin-top:14px;display:grid;gap:9px}
+.alert ul li{font-size:13.5px;color:var(--mut);display:flex;gap:10px;align-items:flex-start}
+.alert.warn ul li::before{content:"⚠";color:var(--amber);font-family:var(--mono);font-weight:600;flex:none}
+.alert.tip ul li::before{content:"✓";color:var(--green);font-family:var(--mono);font-weight:600;flex:none}
+.alert.info ul li::before{content:"ℹ";color:var(--cyan);font-family:var(--mono);font-weight:600;flex:none}
+
+
+/* ---------- silicon block ---------- */
+.silicon-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:clamp(30px,5vw,60px);align-items:start;margin-top:44px}
+.silicon-visual{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:34px;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:20px}
+.chip-ic{width:140px;height:140px;border-radius:28px;background:linear-gradient(135deg,var(--ink),#1d2822);display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 20px 50px -20px rgba(14,21,18,.4)}
+.chip-ic::before{content:"";position:absolute;inset:8px;border:1.5px solid var(--lime);border-radius:22px;opacity:.4}
+.chip-ic svg{width:60px;height:60px}
+.chip-label{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.1em;text-align:center}
+.chip-label b{color:var(--green);display:block;font-size:14px;margin-top:4px;font-family:var(--disp)}
+.silicon-cards{display:grid;gap:14px}
+.sil-card{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:18px 22px;display:flex;gap:16px;align-items:flex-start;transition:border-color .3s}
+.sil-card:hover{border-color:var(--green)}
+.sil-card .n{font-family:var(--disp);font-size:18px;color:var(--green);font-weight:700;flex:none;width:30px}
+.sil-card h4{font-family:var(--disp);font-size:14px;margin-bottom:6px}
+.sil-card p{font-size:13px;color:var(--mut);line-height:1.5}
+
+
+/* ---------- faq ---------- */
+.faq-wrap{max-width:820px;margin:44px auto 0}
+.acc-item{border:1px solid var(--line);border-radius:12px;background:var(--panel);margin-bottom:12px;overflow:hidden;transition:border-color .3s,box-shadow .3s}
+.acc-item.open{border-color:rgba(12,79,54,.4);box-shadow:var(--shadow)}
+.acc-q{width:100%;display:flex;justify-content:space-between;align-items:center;gap:16px;text-align:left;padding:22px 26px;font-family:var(--body);font-weight:800;font-size:15px;color:var(--ink)}
+.acc-q .ic{font-family:var(--mono);color:var(--green);font-size:18px;transition:transform .3s;flex:none}
+.acc-item.open .ic{transform:rotate(45deg)}
+.acc-a{max-height:0;overflow:hidden;transition:max-height .45s cubic-bezier(.3,.8,.3,1)}
+.acc-a p{padding:0 26px 24px;color:var(--mut);font-size:14px}
+
+
+/* ---------- cta ---------- */
+.cta-band{background:var(--ink);color:#e6efe4;border-radius:20px;padding:clamp(40px,6vw,70px);position:relative;overflow:hidden}
+.cta-band::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(183,255,69,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(183,255,69,.07) 1px,transparent 1px);background-size:34px 34px}
+.cta-band h2{font-size:clamp(1.5rem,4vw,2.6rem);max-width:640px;position:relative;color:#fff}
+.cta-band p{font-weight:600;max-width:560px;margin:16px 0 30px;position:relative;color:#b6c3b7}
+.cta-actions{display:flex;gap:16px;flex-wrap:wrap;position:relative}
+.cta-band .btn-ghost{border-color:rgba(230,239,228,.3);color:#e6efe4;background:transparent}
+.cta-band .btn-ghost:hover{border-color:var(--lime);color:var(--lime)}
+.cta-guar{display:flex;gap:22px;flex-wrap:wrap;margin-top:30px;font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:.06em;position:relative;color:var(--lime)}
+
+
+/* ---------- footer ---------- */
+footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
+.f-grid{display:grid;grid-template-columns:1.3fr repeat(4,1fr);gap:34px;margin-bottom:50px}
+.f-grid h4{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:#5d6b62;text-transform:uppercase;margin-bottom:18px}
+.f-grid a{display:block;font-size:13.5px;color:#9aa89c;padding:5px 0;transition:color .2s}
+.f-grid a:hover{color:var(--lime)}
+.f-about p{font-size:13px;color:#7c8a7e;margin-top:14px;max-width:260px}
+.f-bot{border-top:1px solid #1d2822;padding-top:24px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:#5d6b62}
+
+
+/* ---------- chat ---------- */
+#chatBtn{position:fixed;right:22px;bottom:22px;z-index:80;width:58px;height:58px;border-radius:50%;background:var(--ink);color:var(--lime);display:flex;align-items:center;justify-content:center;box-shadow:0 16px 40px -10px rgba(14,21,18,.5);transition:transform .3s}
+#chatBtn:hover{transform:translateY(-4px) scale(1.05)}
+#chatBtn svg{width:26px;height:26px}
+#chatPanel{position:fixed;right:22px;bottom:92px;z-index:80;width:min(340px,calc(100vw - 44px));height:440px;max-height:60vh;border:1px solid var(--line);border-radius:16px;background:var(--panel);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 30px 80px -20px rgba(14,21,18,.35);transform:translateY(16px) scale(.97);opacity:0;pointer-events:none;transition:.35s cubic-bezier(.3,.8,.3,1)}
+#chatPanel.open{transform:none;opacity:1;pointer-events:auto}
+.chat-hd{background:var(--ink);color:#e6efe4;padding:14px 18px;display:flex;align-items:center;gap:12px;font-weight:800;font-size:14px}
+.chat-hd .av{width:34px;height:34px;border-radius:50%;background:var(--lime);color:var(--ink);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600}
+.chat-hd small{display:block;font-weight:600;font-size:10.5px;color:var(--lime);opacity:.9}
+#chatMsgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;background:var(--panel2)}
+.msg{max-width:85%;padding:11px 15px;border-radius:12px;font-size:13px;line-height:1.5;animation:fadeUp .3s ease}
+.msg.bot{background:var(--panel);border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:4px;color:var(--ink)}
+.msg.usr{background:var(--ink);color:var(--lime);align-self:flex-end;border-bottom-right-radius:4px;font-weight:600}
+.msg.typing i{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--dim);margin-right:4px;animation:blink 1s infinite}
+.msg.typing i:nth-child(2){animation-delay:.2s}.msg.typing i:nth-child(3){animation-delay:.4s}
+.chat-chips{display:flex;gap:8px;padding:10px 18px;flex-wrap:wrap;background:var(--panel)}
+.chat-chips button{font-family:var(--mono);font-size:10.5px;color:var(--green);border:1px solid rgba(12,79,54,.3);border-radius:100px;padding:6px 12px;transition:.2s}
+.chat-chips button:hover{background:var(--lime-soft)}
+.chat-in{display:flex;gap:10px;padding:12px 14px;border-top:1px solid var(--line);background:var(--panel)}
+.chat-in input{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:11px 14px;color:var(--ink);font-family:var(--body);font-size:13px;outline:none}
+.chat-in input:focus{border-color:var(--green)}
+.chat-in button{background:var(--ink);color:var(--lime);border-radius:8px;width:42px;display:flex;align-items:center;justify-content:center;font-size:16px}
+
+
+/* ---------- reveal ---------- */
+.rv{opacity:0;transform:translateY(26px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)}
+.rv.in{opacity:1;transform:none}
+.d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}}
+@keyframes blink{50%{opacity:0}}
+
+
+/* ---------- responsive ---------- */
+@media(max-width:1020px){
+    .hero-grid{grid-template-columns:1fr}
+    .mac{max-width:420px;margin-top:20px}
+    .clients{grid-template-columns:1fr}
+    .alerts{grid-template-columns:1fr}
+    .silicon-grid{grid-template-columns:1fr}
+    .f-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:860px){nav.desk{display:none}#burger{display:flex}.hdr-cta .btn{display:none}}
+@media(max-width:640px){
+    .step{grid-template-columns:1fr;gap:14px}
+    .step .num{font-size:42px}
+    .mac-metrics{grid-template-columns:repeat(2,1fr)}
+    .f-grid{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+    .rv{opacity:1;transform:none}
+    .tick-track{animation:none}
+}
+</style>
+</head>
+<body>
+
+
+<!-- ═══════════ LIVE TICKER ═══════════ -->
+<div class="topline" aria-hidden="true">
+    <div class="tick-wrap"><div class="tick-track" id="tickTrack">
+        <span><i class="dotg">●</i> ИНСТРУКЦИЯ ДЛЯ macOS &nbsp;·&nbsp; <b>MACBOOK · IMAC · MAC MINI</b> · macOS 12+ &nbsp;·&nbsp; <b>APPLE SILICON M1/M2/M3/M4</b> · INTEL &nbsp;·&nbsp; INCY / HAPP / V2RAYU &nbsp;·&nbsp; ПОДКЛЮЧЕНИЕ ЗА 3 МИНУТЫ &nbsp;·&nbsp; <b>VLESS REALITY</b> · ОБХОД DPI &nbsp;·&nbsp; ОПЛАТА: МИР / СБП / CRYPTO &nbsp;·&nbsp;</span>
+        <span><i class="dotg">●</i> ИНСТРУКЦИЯ ДЛЯ macOS &nbsp;·&nbsp; <b>MACBOOK · IMAC · MAC MINI</b> · macOS 12+ &nbsp;·&nbsp; <b>APPLE SILICON M1/M2/M3/M4</b> · INTEL &nbsp;·&nbsp; INCY / HAPP / V2RAYU &nbsp;·&nbsp; ПОДКЛЮЧЕНИЕ ЗА 3 МИНУТЫ &nbsp;·&nbsp; <b>VLESS REALITY</b> · ОБХОД DPI &nbsp;·&nbsp; ОПЛАТА: МИР / СБП / CRYPTO &nbsp;·&nbsp;</span>
+        <span><i class="dotg">●</i> ИНСТРУКЦИЯ ДЛЯ macOS &nbsp;·&nbsp; <b>MACBOOK · IMAC · MAC MINI</b> · macOS 12+ &nbsp;·&nbsp; <b>APPLE SILICON M1/M2/M3/M4</b> · INTEL &nbsp;·&nbsp; INCY / HAPP / V2RAYU &nbsp;·&nbsp; ПОДКЛЮЧЕНИЕ ЗА 3 МИНУТЫ &nbsp;·&nbsp; <b>VLESS REALITY</b> · ОБХОД DPI &nbsp;·&nbsp; ОПЛАТА: МИР / СБП / CRYPTO &nbsp;·&nbsp;</span>
+    </div></div>
+</div>
+
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header id="hdr">
+    <div class="wrap hdr-in">
+        <a class="logo" href="/" aria-label="3set.online — на главную">
+            <svg viewBox="0 0 32 32" fill="none"><path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" fill="#0e1512"></path><path d="M11 16l3.5 3.5L21 13" stroke="#b7ff45" stroke-width="2.4" stroke-linecap="round"></path></svg>
+            <span>3<em>set</em><span class="tld">.online</span></span>
+        </a>
+        <nav class="desk" aria-label="Основная навигация">
+            <a href="/#pricing">Тарифы</a>
+            <a href="/#devices">Устройства</a>
+            <a href="/#protocols">Технологии</a>
+            <a href="/#locations">Серверы</a>
+            <a href="/#faq">FAQ</a>
+        </nav>
+        <div class="hdr-cta">
+            <a class="btn btn-solid" href="https://panel.3set.online" target="_blank" rel="noopener">Купить VPN</a>
+            <button id="burger" aria-label="Открыть меню"><i></i><i></i><i></i></button>
+        </div>
+    </div>
+</header>
+<div id="mnav" aria-hidden="true">
+    <button id="mclose" aria-label="Закрыть меню">✕</button>
+    <a href="/#pricing">Тарифы</a>
+    <a href="/#devices">Устройства</a>
+    <a href="/#protocols">Технологии</a>
+    <a href="/#locations">Серверы</a>
+    <a href="/#faq">FAQ</a>
+    <a class="btn btn-solid" href="https://panel.3set.online" target="_blank" rel="noopener">Купить VPN</a>
+</div>
+
+
+<!-- ═══════════ BREADCRUMB ═══════════ -->
+<div class="wrap">
+    <nav class="bread" aria-label="Хлебные крошки">
+        <a href="/">Главная</a><span>/</span>
+        <a href="/#devices">Устройства</a><span>/</span>
+        <span style="color:var(--green)">macOS</span>
+    </nav>
+</div>
+
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero">
+    <div class="wrap hero-grid">
+        <div>
+            <div class="hero-badge"><span class="pulse-dot"></span> macOS 12+ · INTEL И APPLE SILICON · ПОДКЛЮЧЕНИЕ ЗА 3 МИНУТЫ</div>
+            <h1>
+                <span class="l1" data-scr="" data-orig="Настройка VPN">Настройка VPN</span>
+                <span class="l2" data-scr="" data-orig="на Mac">на Mac</span>
+                <span class="l3">Пошаговая инструкция: выбор клиента, установка из App Store или официального релиза, импорт подписки, разрешение системного расширения и включение TUN/VPN. Работает на MacBook, iMac и Mac Mini — как на Intel, так и на Apple Silicon M1/M2/M3/M4.</span>
+            </h1>
+            <p class="hero-p">Подключение занимает <b>3 минуты</b>: выбираете клиент на личной странице подписки, устанавливаете его, импортируете ключ и разрешаете системное VPN-расширение. Протокол <b>VLESS Reality</b> обходит DPI и работает даже при активных блокировках.</p>
+            <div class="hero-actions">
+                <a class="btn btn-solid" href="https://panel.3set.online" target="_blank" rel="noopener">Купить подписку →</a>
+                <a class="btn btn-ghost" href="#steps">Перейти к инструкции</a>
+            </div>
+            <div class="hero-stats">
+                <div class="hstat"><b><i>~</i>3 мин</b><span>время настройки</span></div>
+                <div class="hstat"><b>34</b><span>сервера на выбор</span></div>
+                <div class="hstat"><b>99.98<i>%</i></b><span>аптайм сети</span></div>
+            </div>
+        </div>
+        <div class="mac rv in">
+            <div class="mac-screen">
+                <div class="mac-display">
+                    <div class="mac-menu">
+                        <span class="apple"></span>
+                        <span class="app">INCY VPN</span>
+                        <span>Файл</span>
+                        <span>Профиль</span>
+                        <span>Серверы</span>
+                        <span>Окно</span>
+                        <span class="right">
+                            <span class="vpn-ic"></span>
+                            <span>🔋 100%</span>
+                            <span>Пн 14:32</span>
+                        </span>
+                    </div>
+                    <div class="mac-app">
+                        <div class="mac-app-hd">
+                            <div class="mac-app-logo">IN</div>
+                            <div>
+                                <div class="mac-app-name">INCY VPN</div>
+                                <div class="mac-app-sub">3SET · VLESS REALITY · TUN MODE</div>
+                            </div>
+                        </div>
+                        <div class="mac-status"><span class="pulse-dot"></span>CONNECTED · NL / AMS · 914 Мбит/с</div>
+                        <div class="mac-metrics">
+                            <div class="mac-metric"><span>СКОРОСТЬ</span><b>914 Мбит/с</b></div>
+                            <div class="mac-metric"><span>ПИНГ</span><b class="cy">24 мс</b></div>
+                            <div class="mac-metric"><span>ТРАФИК</span><b>2.4 ГБ</b></div>
+                            <div class="mac-metric"><span>СЕССИЯ</span><b class="cy">01:42:18</b></div>
+                        </div>
+                        <div class="mac-btn">ОТКЛЮЧИТЬ</div>
+                    </div>
+                </div>
+            </div>
+            <div class="mac-base"></div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ STEP 1: BUY ═══════════ -->
+<section id="buy">
+    <div class="wrap">
+        <div class="rv in"><span class="kicker">01 · подписка</span>
+            <h2 data-scr="" data-orig="Шаг 1. Купите подписку" class="in">Шаг 1. Купите подписку</h2>
+            <p class="sub">Оформите доступ на сайте или через Telegram-бота. Ключ выдаётся автоматически в течение минуты после оплаты.</p>
+        </div>
+        <div class="steps-list">
+            <div class="step rv in">
+                <span class="num">01</span>
+                <div>
+                    <h3>Выберите удобный способ оформления</h3>
+                    <p>Купите подписку на сайте или в Telegram-боте — оба способа равноценны. После оплаты вы получите персональный ключ <span class="mono" style="color:var(--green)">vless://…</span> и доступ к личной странице, где можно выбрать клиент для macOS.</p>
+                    <div class="payrow">
+                        <a class="pay primary" href="https://panel.3set.online" target="_blank" rel="noopener">→ САЙТ · PANEL.3SET.ONLINE</a>
+                        <a class="pay primary" href="https://t.me/3set_online_bot" target="_blank" rel="noopener">→ TELEGRAM · @3SET_ONLINE_BOT</a>
+                    </div>
+                    <div class="payrow" style="margin-top:10px">
+                        <span class="pay">МИР</span>
+                        <span class="pay">VISA / MC (РФ)</span>
+                        <span class="pay">СБП</span>
+                        <span class="pay">USDT TRC-20</span>
+                        <span class="pay">TON</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ STEP 2: CLIENTS ═══════════ -->
+<section id="clients" style="padding-top:0">
+    <div class="wrap">
+        <div class="rv in"><span class="kicker">02 · клиент</span>
+            <h2 data-scr="" data-orig="Шаг 2. Выберите клиент для macOS" class="in">Шаг 2. Выберите клиент для macOS</h2>
+            <p class="sub">На личной странице подписки выберите клиент для macOS. INCY и Happ доступны в App Store, V2rayU — как официальный релиз на GitHub. Все три поддерживают VLESS Reality и работают на Intel и Apple Silicon.</p>
+        </div>
+        <div class="clients">
+            <a class="client hot rv in" href="https://apps.apple.com/app/incy-vpn/id6503016832" target="_blank" rel="noopener">
+                <span class="pop-tag">РЕКОМЕНДУЕМ</span>
+                <span class="path">App Store → INCY для Mac</span>
+                <div class="client-ic">IN</div>
+                <h3>INCY VPN</h3>
+                <p>Нативный macOS-клиент с чистой интерфейсной логикой. Поддерживает VLESS Reality, TUN-режим и автоматический импорт подписки. Лучший выбор для Apple Silicon.</p>
+                <span class="go">ОТКРЫТЬ В APP STORE →</span>
+            </a>
+            <a class="client rv d1 in" href="https://apps.apple.com/app/happ/id6504285230" target="_blank" rel="noopener">
+                <span class="path">App Store → Happ</span>
+                <div class="client-ic">H</div>
+                <h3>Happ</h3>
+                <p>Лёгкий клиент с минимальным потреблением ресурсов. Поддерживает VLESS, Shadowsocks и WireGuard. Отлично подходит для старых MacBook и Intel-машин.</p>
+                <span class="go">ОТКРЫТЬ В APP STORE →</span>
+            </a>
+            <a class="client rv d2 in" href="https://github.com/Qv2ray/Qv2ray" target="_blank" rel="noopener">
+                <span class="path">Официальный релиз → V2rayU</span>
+                <div class="client-ic">V</div>
+                <h3>V2rayU</h3>
+                <p>Open-source клиент с гибкой настройкой. Поддерживает все протоколы 3set, PAC-скрипты и split-tunneling. Устанавливается из официального релиза на GitHub.</p>
+                <span class="go">СКАЧАТЬ РЕЛИЗ →</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ STEP 3: INSTALL ═══════════ -->
+<section id="install" style="padding-top:0">
+    <div class="wrap">
+        <div class="rv in"><span class="kicker">03 · установка</span>
+            <h2 data-scr="" data-orig="Шаг 3. Установите клиент" class="in">Шаг 3. Установите клиент</h2>
+            <p class="sub">INCY и Happ устанавливаются из App Store одним кликом. V2rayU — через официальный релиз: скачайте .dmg, перетащите в Applications, разрешите запуск в Системных настройках.</p>
+        </div>
+        <div class="steps-list">
+            <div class="step rv in">
+                <span class="num">03</span>
+                <div>
+                    <h3>App Store или официальный релиз</h3>
+                    <p>Для INCY и Happ достаточно нажать «Установить» в App Store — приложение появится в Launchpad. Для V2rayU откройте скачанный .dmg, перетащите иконку в папку Applications. При первом запуске macOS может попросить разрешение: «Системные настройки → Конфиденциальность и безопасность → Разрешить».</p>
+                    <div class="payrow">
+                        <span class="pay">APP STORE · ОДИН КЛИК</span>
+                        <span class="pay">.DMG → APPLICATIONS</span>
+                        <span class="pay">GATEKEEPER APPROVAL</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ STEP 4: IMPORT ═══════════ -->
+<section id="steps" style="padding-top:0">
+    <div class="wrap">
+        <div class="rv in"><span class="kicker">04 · импорт и разрешение</span>
+            <h2 data-scr="" data-orig="Шаг 4. Импортируйте подписку и разрешите расширение" class="in">Шаг 4. Импортируйте подписку и разрешите расширение</h2>
+            <p class="sub">На личной странице подписки нажмите кнопку добавления — ключ скопируется в буфер или откроется deep-link в клиент. После этого macOS запросит разрешение на установку системного VPN-расширения.</p>
+        </div>
+        <div class="steps-list">
+            <div class="step rv in">
+                <span class="num">04</span>
+                <div>
+                    <h3>Импортируйте подписку</h3>
+                    <p>На личной странице подписки нажмите «Добавить в приложение» — клиент откроется автоматически и импортирует ключ. Если deep-link не сработал — скопируйте URL <span class="mono" style="color:var(--green)">vless://…</span> вручную и вставьте в клиент через меню «Импорт из буфера».</p>
+                    <div class="payrow">
+                        <span class="pay">DEEP-LINK · АВТОИМПОРТ</span>
+                        <span class="pay">КОПИРОВАТЬ URL</span>
+                        <span class="pay">ИМПОРТ ИЗ БУФЕРА</span>
+                    </div>
+                </div>
+            </div>
+            <div class="step rv d1 in">
+                <span class="num">05</span>
+                <div>
+                    <h3>Разрешите системное VPN-расширение</h3>
+                    <p>При первом подключении macOS покажет системное окно: «INCY хочет добавить VPN-конфигурации». Нажмите «Разрешить» — потребуется пароль администратора или Touch ID. Это стандартная процедура Apple, без неё VPN-туннель не поднимется. Разрешение запрашивается один раз.</p>
+                    <div class="payrow">
+                        <span class="pay">SYSTEM EXTENSION</span>
+                        <span class="pay">TOUCH ID / ПАРОЛЬ</span>
+                        <span class="pay">ONE-TIME APPROVAL</span>
+                    </div>
+                </div>
+            </div>
+            <div class="step rv d2 in">
+                <span class="num">06</span>
+                <div>
+                    <h3>Обновите профиль и включите TUN/VPN</h3>
+                    <p>В клиенте откройте список профилей и нажмите «Обновить» — подтянутся актуальные серверы. Выберите ближайший (Финляндия, Германия, Нидерланды дают минимальный пинг из России). Включите TUN-режим (или «Full Tunnel») — он пропускает через VPN весь трафик, а не только браузер. Нажмите «Connect».</p>
+                    <div class="payrow">
+                        <span class="pay">FI · 22 МС</span>
+                        <span class="pay">DE · 34 МС</span>
+                        <span class="pay">NL · 38 МС</span>
+                        <span class="pay">TUN MODE · ON</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ APPLE SILICON ═══════════ -->
+<section id="silicon" style="padding-top:0">
+    <div class="wrap">
+        <div class="rv in"><span class="kicker">apple silicon · m1/m2/m3/m4</span>
+            <h2 data-scr="" data-orig="Apple Silicon: iPhone-приложения на Mac" class="in">Apple Silicon: iPhone-приложения на Mac</h2>
+            <p class="sub">На MacBook с чипами M1/M2/M3/M4 можно запускать многие iPhone-приложения напрямую — включая мобильные версии INCY и Happ. Но нативная macOS-версия обычно удобнее.</p>
+        </div>
+        <div class="silicon-grid">
+            <div class="silicon-visual rv in">
+                <div class="chip-ic">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#b7ff45" stroke-width="1.6">
+                        <rect x="4" y="4" width="16" height="16" rx="3"></rect>
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M4 8h2M4 12h2M4 16h2M18 8h2M18 12h2M18 16h2M8 4v2M12 4v2M16 4v2M8 18v2M12 18v2M16 18v2"></path>
+                    </svg>
+                </div>
+                <div class="chip-label">АРХИТЕКТУРА<b>APPLE SILICON · ARM64</b></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+                    <span class="pay" style="font-size:10px">M1</span>
+                    <span class="pay" style="font-size:10px">M2</span>
+                    <span class="pay" style="font-size:10px">M3</span>
+                    <span class="pay" style="font-size:10px">M4</span>
+                    <span class="pay" style="font-size:10px">PRO / MAX / ULTRA</span>
+                </div>
+            </div>
+            <div class="silicon-cards">
+                <div class="sil-card rv in">
+                    <span class="n">01</span>
+                    <div>
+                        <h4>iPhone-приложения на Mac</h4>
+                        <p>Если разработчик не запретил — мобильный INCY или Happ можно установить из App Store прямо на Mac. Они запускаются в окне, работают через Rosetta 2 или нативно (ARM64). Удобно, если привыкли к мобильному интерфейсу.</p>
+                    </div>
+                </div>
+                <div class="sil-card rv d1 in">
+                    <span class="n">02</span>
+                    <div>
+                        <h4>Почему нативная версия удобнее</h4>
+                        <p>Нативный macOS-клиент поддерживает TUN-режим, системное расширение, интеграцию с меню-баром и автоматический запуск при старте системы. Мобильная версия в окне — это компромисс: нет системного VPN, только прокси внутри приложения.</p>
+                    </div>
+                </div>
+                <div class="sil-card rv d2 in">
+                    <span class="n">03</span>
+                    <div>
+                        <h4>Intel-маки</h4>
+                        <p>На MacBook и iMac с Intel-процессором iPhone-приложения недоступны — только нативные macOS-версии клиентов. INCY, Happ и V2rayU работают одинаково хорошо на всех Mac с macOS 12 и выше.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ ALERTS ═══════════ -->
+<section id="alerts" style="padding-top:0">
+    <div class="wrap">
+        <div class="rv in"><span class="kicker">важно · macos-специфика</span>
+            <h2 data-scr="" data-orig="Три момента, которые стоит знать про macOS" class="in">Три момента, которые стоит знать про macOS</h2>
+            <p class="sub">Системные расширения, TUN-режим и Gatekeeper — то, что отличает macOS от мобильных платформ и что нужно понимать, чтобы всё работало стабильно.</p>
+        </div>
+        <div class="alerts">
+            <div class="alert warn rv in">
+                <span class="tag">⚠ SYSTEM EXTENSION</span>
+                <h3>Разрешите системное VPN-расширение</h3>
+                <p>macOS требует явного разрешения на установку системного расширения для VPN-клиента. Без него клиент не сможет создать туннель. Разрешение запрашивается один раз — потребуется пароль администратора или Touch ID.</p>
+                <ul>
+                    <li>Системные настройки → Конфиденциальность и безопасность</li>
+                    <li>Нажмите «Разрешить» рядом с именем клиента</li>
+                    <li>После разрешения окно больше не появится</li>
+                </ul>
+            </div>
+            <div class="alert info rv d1 in">
+                <span class="tag">ℹ TUN VS ПРОКСИ</span>
+                <h3>Включайте TUN-режим для полного покрытия</h3>
+                <p>TUN-режим (или «Full Tunnel») пропускает через VPN весь трафик системы — браузер, приложения, обновления. Без TUN работает только прокси-режим: VPN видит только трафик клиента или браузера с настройками прокси.</p>
+                <ul>
+                    <li>В INCY: настройки → «TUN Mode» → включить</li>
+                    <li>В Happ: «Full Tunnel» → включить</li>
+                    <li>В V2rayU: «System Proxy» → off, «TUN» → on</li>
+                </ul>
+            </div>
+            <div class="alert tip rv d2 in">
+                <span class="tag">✓ GATEKEEPER</span>
+                <h3>Если macOS блокирует запуск клиента</h3>
+                <p>Для клиентов, установленных не из App Store (V2rayU), macOS может показать «Невозможно открыть, так как разработчик не проверен». Это нормально — разрешите запуск через Системные настройки.</p>
+                <ul>
+                    <li>Правый клик по приложению → «Открыть»</li>
+                    <li>Или: Системные настройки → Конфиденциальность и безопасность → «Разрешить»</li>
+                    <li>Скачивайте .dmg только с официального сайта клиента</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ FAQ ═══════════ -->
+<section id="faq">
+    <div class="wrap">
+        <div class="rv in" style="text-align:center"><span class="kicker">faq · macos</span><h2 data-scr="" data-orig="Частые вопросы по настройке на Mac" class="in">Частые вопросы по настройке на Mac</h2></div>
+        <div class="faq-wrap">
+            <div class="acc-item rv in"><button class="acc-q">Какой клиент выбрать для Mac?<span class="ic">+</span></button><div class="acc-a"><p>Для большинства пользователей рекомендуем INCY — нативная macOS-версия с чистой логикой, TUN-режимом и интеграцией в меню-бар. Happ подойдёт для старых Intel-маков. V2rayU — если нужна гибкая настройка и open-source решение.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">macOS просит разрешение на системное расширение — это нормально?<span class="ic">+</span></button><div class="acc-a"><p>Да, абсолютно нормально. Это стандартная процедура Apple: любое приложение, создающее VPN-туннель, обязано получить явное разрешение через системное расширение. Потребуется пароль администратора или Touch ID. Подтверждение запрашивается один раз.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Что такое TUN-режим и зачем он нужен?<span class="ic">+</span></button><div class="acc-a"><p>TUN-режим (или «Full Tunnel») пропускает через VPN весь трафик системы — браузер, приложения, обновления. Без TUN работает только прокси-режим: VPN видит только трафик клиента или браузера с настройками прокси. Для полной приватности включайте TUN.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Можно ли запустить iPhone-версию INCY на Mac?<span class="ic">+</span></button><div class="acc-a"><p>Да, на MacBook с Apple Silicon (M1/M2/M3/M4) можно установить мобильную версию INCY из App Store — она запустится в окне. Но нативная macOS-версия удобнее: поддерживает TUN-режим, системное расширение и интеграцию с меню-баром.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">macOS блокирует запуск V2rayU. Что делать?<span class="ic">+</span></button><div class="acc-a"><p>Это работа Gatekeeper — защиты от непроверенных приложений. Правый клик по приложению → «Открыть». Или: Системные настройки → Конфиденциальность и безопасность → «Разрешить». Скачивайте .dmg только с официального GitHub-репозитория клиента.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Работает ли VPN на Mac Mini и iMac?<span class="ic">+</span></button><div class="acc-a"><p>Да, полностью. Инструкция универсальна для всех Mac: MacBook (Air/Pro), iMac, Mac Mini, Mac Studio, Mac Pro. Не важно — Intel или Apple Silicon. INCY, Happ и V2rayU работают одинаково на всех моделях с macOS 12 и выше.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Как сделать, чтобы VPN запускался автоматически при старте?<span class="ic">+</span></button><div class="acc-a"><p>В INCY/Happ откройте настройки → включите «Запуск при старте системы». Клиент будет автоматически подключаться при загрузке macOS. Для V2rayU добавьте приложение в «Системные настройки → Основные → Объекты входа».</p></div></div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ CTA ═══════════ -->
+<section id="cta">
+    <div class="wrap">
+        <div class="cta-band rv in">
+            <h2>Готовы подключиться? Это займёт 3 минуты</h2>
+            <p>Покупка подписки → выбор клиента → установка из App Store или релиза → импорт ключа → разрешение системного расширения → вы в приватной сети. Работает на всех Mac с macOS 12 и выше.</p>
+            <div class="cta-actions">
+                <a class="btn btn-lime" href="https://panel.3set.online" target="_blank" rel="noopener">Купить подписку →</a>
+                <a class="btn btn-ghost" href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-бот @3set_online_bot</a>
+            </div>
+            <div class="cta-guar"><span>✓ 7 ДНЕЙ ГАРАНТИЯ</span><span>✓ БЕЗ ЛОГОВ</span><span>✓ МИР / СБП / CRYPTO</span><span>✓ ПОДДЕРЖКА 24/7</span></div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer>
+    <div class="wrap">
+        <div class="f-grid">
+            <div class="f-about">
+                <a class="logo" href="/" style="color:#fff"><svg viewBox="0 0 32 32" fill="none" width="28" height="28"><path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" stroke="#b7ff45" stroke-width="2.2"></path><path d="M11 16l3.5 3.5L21 13" stroke="#b7ff45" stroke-width="2.4" stroke-linecap="round"></path></svg><span>3<em style="color:var(--lime)">set</em><span class="tld" style="color:#5d6b62">.online</span></span></a>
+                <p>Виртуальная частная сеть нового поколения. Приватный и стабильный доступ в обход блокировок. Используйте VPN только в законных целях.</p>
+            </div>
+            <div><h4>Продукт</h4><a href="/#pricing">Тарифы и цены</a><a href="/#status">Статус серверов</a><a href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-бот</a><a href="https://panel.3set.online" target="_blank" rel="noopener">Купить доступ</a></div>
+            <div><h4>Устройства</h4><a href="/ios/">VPN для iOS</a><a href="/android/">VPN для Android</a><a href="/windows/">VPN для Windows</a><a href="/mac/">VPN для macOS</a><a href="/router/">VPN на роутер</a><a href="/smart-tv/">VPN для Smart TV</a></div>
+            <div><h4>Технологии</h4><a href="/vless-reality/">VLESS Reality</a><a href="/shadowsocks/">Shadowsocks</a><a href="/wireguard/">WireGuard</a><a href="/#blog">База знаний</a></div>
+            <div><h4>Поддержка</h4><a href="/setup/">Инструкции /setup</a><a href="/#faq">FAQ</a><a href="mailto:support@3set.online">support@3set.online</a><a href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-чат</a></div>
+        </div>
+        <div class="f-bot"><span>© <span id="yearNow">2026</span> 3set.online · Инструкция для macOS</span><span>Политика конфиденциальности · Оферта</span></div>
+    </div>
+</footer>
+
+
+<!-- ═══════════ CHAT ═══════════ -->
+<button id="chatBtn" aria-label="Открыть чат поддержки"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12c0 4.4-4 8-9 8-1.1 0-2.2-.2-3.1-.5L4 21l1.3-3.6C4.5 16 4 14.1 4 12c0-4.4 4-8 8-8s9 3.6 9 8z" fill="currentColor" stroke="none"></path></svg></button>
+<div id="chatPanel" role="dialog" aria-label="Чат поддержки">
+    <div class="chat-hd"><span class="av">А</span><div>Аня · поддержка 3set<small>онлайн · отвечает ~5 мин</small></div></div>
+    <div id="chatMsgs"></div>
+    <div class="chat-chips"><button data-q="Какой клиент для Mac?">Какой клиент?</button><button data-q="System Extension">Системное расширение</button><button data-q="Где купить подписку?">Купить подписку</button></div>
+    <div class="chat-in"><input id="chatInput" type="text" placeholder="Напишите сообщение…" aria-label="Сообщение"><button id="chatSend" aria-label="Отправить">➤</button></div>
+</div>
+
+
+<script>
+(function(){
+    "use strict";
+    var RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+
+    document.getElementById('yearNow').textContent = new Date().getFullYear();
+
+
+    var hdr = document.getElementById('hdr');
+    window.addEventListener('scroll', function(){ hdr.classList.toggle('scrolled', window.scrollY > 10); }, {passive:true});
+
+
+    var mnav = document.getElementById('mnav');
+    document.getElementById('burger').addEventListener('click', function(){ mnav.classList.add('open'); });
+    document.getElementById('mclose').addEventListener('click', function(){ mnav.classList.remove('open'); });
+    mnav.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', function(){ mnav.classList.remove('open'); }); });
+
+
+    var tick = document.getElementById('tickTrack');
+    tick.innerHTML += tick.innerHTML;
+
+
+    var CH = '!<>-_/\\[]{}=+*^?#01';
+    function scrambleEl(el, dur){
+        var target = el.dataset.orig || el.textContent;
+        el.dataset.orig = target;
+        if(RM){ el.textContent = target; return; }
+        dur = dur || 800;
+        var start = performance.now();
+        (function fr(now){
+            var p = Math.min(1, (now - start) / dur);
+            var solved = Math.floor(p * target.length), out = '';
+            for(var i=0;i<target.length;i++){
+                out += i < solved ? target[i] : (target[i] === ' ' ? ' ' : CH[(Math.random()*CH.length)|0]);
+            }
+            el.textContent = out;
+            if(p < 1) requestAnimationFrame(fr); else el.textContent = target;
+        })(start);
+    }
+    var scrSpans = document.querySelectorAll('h1 [data-scr]');
+    scrSpans.forEach(function(s, i){ setTimeout(function(){ scrambleEl(s, 900); }, 200 + i*350); });
+
+
+    var io = new IntersectionObserver(function(es){
+        es.forEach(function(e){
+            if(!e.isIntersecting) return;
+            e.target.classList.add('in');
+            var sc = e.target.querySelector('[data-scr]');
+            if(sc && !sc.dataset.done){ sc.dataset.done = 1; scrambleEl(sc, 700); }
+            if(e.target.hasAttribute('data-scr') && !e.target.dataset.done){ e.target.dataset.done = 1; scrambleEl(e.target, 700); }
+            io.unobserve(e.target);
+        });
+    },{threshold:.15});
+    document.querySelectorAll('.rv, h2[data-scr]').forEach(function(el){ io.observe(el); });
+
+
+    document.querySelectorAll('.acc-q').forEach(function(q){
+        q.addEventListener('click', function(){
+            var item = q.parentElement, body = item.querySelector('.acc-a');
+            var accs = document.querySelectorAll('.acc-item');
+            for(var i=0;i<accs.length;i++){
+                if(accs[i] !== item){ accs[i].classList.remove('open'); accs[i].querySelector('.acc-a').style.maxHeight = '0'; }
+            }
+            var open = item.classList.toggle('open');
+            body.style.maxHeight = open ? body.scrollHeight + 'px' : '0';
+        });
+    });
+
+
+    var chatBtn = document.getElementById('chatBtn'),
+        chatPanel = document.getElementById('chatPanel'),
+        chatMsgs = document.getElementById('chatMsgs'),
+        chatInput = document.getElementById('chatInput'),
+        chatOpened = false;
+    function addMsg(txt, who){
+        var m = document.createElement('div');
+        m.className = 'msg ' + who;
+        m.textContent = txt;
+        chatMsgs.appendChild(m);
+        chatMsgs.scrollTop = chatMsgs.scrollHeight;
+        return m;
+    }
+    function botReply(q){
+        var t = q.toLowerCase(), r;
+        if(/клиент|incy|happ|v2rayu|приложен|установ/.test(t)) r = 'Для Mac рекомендуем INCY — нативная версия с TUN-режимом и интеграцией в меню-бар. Happ подойдёт для старых Intel-машин. V2rayU — open-source решение с гибкой настройкой.';
+        if(/расширен|system extension|разреш|touch id|пароль/.test(t)) r = 'Системное расширение — стандартная процедура Apple. Потребуется пароль администратора или Touch ID. Разрешение запрашивается один раз. Без него VPN-туннель не поднимется.';
+        if(/tun|прокси|full tunnel|режим/.test(t)) r = 'TUN-режим пропускает через VPN весь трафик системы. Без него работает только прокси-режим. В INCY: настройки → TUN Mode → включить. В Happ: Full Tunnel → on.';
+        if(/apple silicon|m1|m2|m3|m4|iphone|мобильн/.test(t)) r = 'На Apple Silicon можно запустить iPhone-версию INCY/Happ из App Store. Но нативная macOS-версия удобнее: поддерживает TUN-режим, системное расширение и меню-бар.';
+        if(/gatekeeper|блокир|запуск|не открыв|разработчик/.test(t)) r = 'Это работа Gatekeeper. Правый клик по приложению → «Открыть». Или: Системные настройки → Конфиденциальность и безопасность → «Разрешить». Скачивайте .dmg только с официального источника.';
+        if(/куп|подписк|оплат|тариф|цен/.test(t)) r = 'Купить подписку можно на panel.3set.online или в Telegram-боте @3set_online_bot. Оплата картой МИР, СБП или криптой. Ключ приходит за 1 минуту ⚡';
+        if(/ключ|импорт|vless|обнов|профил/.test(t)) r = 'На личной странице подписки нажмите «Добавить в приложение» → клиент импортирует ключ автоматически. Если deep-link не сработал — скопируйте URL vless://… и вставьте вручную.';
+        if(/автозапуск|старт|стартовать|при загрузке/.test(t)) r = 'В INCY/Happ: настройки → «Запуск при старте системы». Для V2rayU: Системные настройки → Основные → Объекты входа → добавить клиент.';
+        if(/intel|imac|mac mini|macbook|mac pro/.test(t)) r = 'Да, инструкция работает на всех Mac: MacBook (Air/Pro), iMac, Mac Mini, Mac Studio, Mac Pro. Intel или Apple Silicon — не важно. macOS 12+.';
+        if(/работ|блок|росси|dpi/.test(t)) r = 'Да, работает стабильно. Протокол VLESS Reality маскирует трафик под обычный HTTPS, DPI-фильтры нас не видят.';
+        if(/привет|здравств|добр/.test(t)) r = 'Привет! 👋 Подсказать по настройке на Mac, клиентам или подписке?';
+        if(!r) r = 'Хороший вопрос! Быстрее всего ответит оператор в Telegram: @3set_online_bot. Или уточните: клиент, TUN, системное расширение, подписка?';
+        var ty = addMsg('', 'bot typing');
+        ty.innerHTML = '<i></i><i></i><i></i>';
+        setTimeout(function(){
+            ty.remove();
+            addMsg(r, 'bot');
+        }, RM ? 0 : 700 + Math.min(900, r.length * 4));
+    }
+    function openChat(){
+        chatOpened = true;
+        chatPanel.classList.add('open');
+        if(!chatMsgs.children.length){
+            addMsg('Привет! Я Аня из поддержки 3set ⚡ Помочь с настройке на Mac?', 'bot');
+        }
+    }
+    chatBtn.addEventListener('click', function(){ chatPanel.classList.contains('open') ? chatPanel.classList.remove('open') : openChat(); });
+    function sendChat(){
+        var v = chatInput.value.trim();
+        if(!v) return;
+        addMsg(v, 'usr');
+        chatInput.value = '';
+        botReply(v);
+    }
+    document.getElementById('chatSend').addEventListener('click', sendChat);
+    chatInput.addEventListener('keydown', function(e){ if(e.key === 'Enter') sendChat(); });
+    document.querySelectorAll('.chat-chips button').forEach(function(c){
+        c.addEventListener('click', function(){
+            if(!chatOpened) openChat();
+            addMsg(c.dataset.q, 'usr'); botReply(c.dataset.q);
+        });
+    });
+})();
+</script>
+
+
+</body>
+</html>

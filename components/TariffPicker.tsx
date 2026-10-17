@@ -192,7 +192,7 @@ export default function TariffPicker() {
           <button
             type="button"
             onClick={() => void fetchPrice(days, devices)}
-            className="flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line "
+            className="flex h-12 min-h-12 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line "
           >
             <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
             {t('common.retry')}

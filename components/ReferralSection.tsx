@@ -14,7 +14,7 @@ const INPUT =
 const PRIMARY =
   'flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50';
 const SECONDARY =
-  'flex h-11 items-center justify-center gap-2 rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50';
+  'flex h-12 min-h-12 items-center justify-center gap-2 rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50';
 const FIELD_LABEL = 'text-sm text-muted';
 
 interface RateView {

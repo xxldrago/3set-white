@@ -27,11 +27,11 @@ interface ConfirmPanelProps {
 }
 
 const TRIGGER =
-  'flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-12 shrink-0 min-h-12 items-center justify-center gap-2 rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line ';
 const SECONDARY =
-  'flex h-11 items-center justify-center gap-2 rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
+  'flex h-12 min-h-12 items-center justify-center gap-2 rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 const DESTRUCTIVE =
-  'flex h-11 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50';
+  'flex h-12 min-h-12 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50';
 
 export default function ConfirmPanel({
   kind,

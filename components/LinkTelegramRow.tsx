@@ -12,9 +12,9 @@ import { t } from '@/lib/i18n';
 import UnlinkConfirmPanel from './UnlinkConfirmPanel';
 
 const SECONDARY =
-  'flex h-11 items-center justify-center gap-2 rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
+  'flex h-12 min-h-12 items-center justify-center gap-2 rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 const PRIMARY =
-  'flex h-11 items-center justify-center gap-2 rounded-lg bg-foreground px-4 text-sm text-lime transition-colors hover:bg-[#383838] disabled:opacity-50';
+  'flex h-12 min-h-12 items-center justify-center gap-2 rounded-lg bg-foreground px-4 text-sm text-lime transition-colors hover:bg-[#383838] disabled:opacity-50';
 
 type LinkState = 'idle' | 'requesting' | 'waiting' | 'expired' | 'error';
 

@@ -16,7 +16,7 @@ import PasswordField from './PasswordField';
 const PRIMARY =
   'flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
 const SECONDARY =
-  'flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-solid border-line px-4 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
+  'flex h-12 min-h-12 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-solid border-line px-4 transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 
 const CARD = 'rounded-2xl border border-line p-6 border-line';
 

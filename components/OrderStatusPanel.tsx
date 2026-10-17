@@ -26,7 +26,7 @@ const CARD =
 const PRIMARY =
   'flex h-12 items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-lime transition-colors hover:opacity-90';
 const SECONDARY =
-  'flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-12 min-h-12 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 
 const POLL_MS = 3000;
 const CAP_MS = 120_000;

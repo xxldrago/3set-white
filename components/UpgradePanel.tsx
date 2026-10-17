@@ -19,9 +19,9 @@ const DEBOUNCE_MS = 300;
 const CARD =
   'flex flex-col gap-4 rounded-2xl border border-line p-6 border-line';
 const TRIGGER =
-  'flex h-11 flex-1 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-12 flex-1 min-h-12 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 const SECONDARY =
-  'flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-12 min-h-12 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 const STEP =
   'flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-line text-xl transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line ';
 

@@ -89,7 +89,7 @@ export default function Nav({ user }: { user: NavUser | null }) {
               href="/profile"
               aria-label="Профиль"
               title={user?.email ?? user?.username ?? 'Профиль'}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-panel-2 text-xs font-semibold text-foreground transition-colors hover:bg-foreground/5"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-panel-2 text-xs font-semibold text-foreground transition-colors hover:bg-foreground/5"
             >
               {displayName(user)}
             </Link>
@@ -136,7 +136,7 @@ export default function Nav({ user }: { user: NavUser | null }) {
               href="/profile"
               aria-label="Профиль"
               title={user?.email ?? user?.username ?? 'Профиль'}
-              className="ml-1 flex h-9 w-9 items-center justify-center rounded-full border border-line bg-panel-2 text-xs font-semibold text-foreground transition-colors hover:bg-foreground/5"
+              className="ml-1 flex h-11 w-11 items-center justify-center rounded-full border border-line bg-panel-2 text-xs font-semibold text-foreground transition-colors hover:bg-foreground/5"
             >
               {displayName(user)}
             </Link>

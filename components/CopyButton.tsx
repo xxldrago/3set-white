@@ -29,7 +29,7 @@ export default function CopyButton({ value }: { value: string }) {
       type="button"
       onClick={onCopy}
       aria-live="polite"
-      className="flex h-11 min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-solid border-line px-5 text-sm font-bold transition-colors hover:bg-foreground/5 border-line "
+      className="flex h-12 min-h-12 shrink-0 items-center justify-center gap-2 rounded-lg border border-solid border-line px-5 text-sm font-bold transition-colors hover:bg-foreground/5 border-line "
     >
       {copied ? (
         <Check className="h-4 w-4 shrink-0" aria-hidden />

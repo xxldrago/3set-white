@@ -10,7 +10,7 @@ import { CalendarPlus } from 'lucide-react';
 import { t } from '@/lib/i18n';
 
 const SECONDARY =
-  'flex h-11 items-center justify-center gap-2 rounded-lg border border-line px-4 text-sm font-bold text-muted transition-colors hover:bg-foreground/5 disabled:opacity-50';
+  'flex h-12 items-center justify-center gap-2 rounded-lg border border-line px-4 text-sm font-bold text-muted transition-colors hover:bg-foreground/5 disabled:opacity-50';
 
 export default function BonusDaysButton({ keyId }: { keyId: string }) {
   const router = useRouter();

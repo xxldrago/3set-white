@@ -266,7 +266,7 @@ export default function InstallClient({
             type="button"
             onClick={() => void copy()}
             disabled={!subUrl}
-            className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-40"
+            className="flex h-12 shrink-0 min-h-12 items-center justify-center gap-2 rounded-lg border border-line px-4 text-sm transition-colors hover:bg-foreground/5 disabled:opacity-40"
           >
             <Copy className="h-4 w-4 shrink-0" aria-hidden />
             {copied ? 'Скопировано' : 'Скопировать'}
@@ -289,8 +289,8 @@ export default function InstallClient({
                   rel="noreferrer"
                   className={
                     i === 0
-                      ? 'flex h-11 items-center justify-center gap-2 rounded-lg bg-foreground px-4 text-sm font-medium tracking-wide text-lime transition-colors hover:opacity-90'
-                      : 'flex h-11 items-center justify-center gap-2 rounded-lg border border-line px-4 text-sm text-muted transition-colors hover:bg-foreground/5'
+                      ? 'flex h-12 min-h-12 items-center justify-center gap-2 rounded-lg bg-foreground px-4 text-sm font-medium tracking-wide text-lime transition-colors hover:opacity-90'
+                      : 'flex h-12 min-h-12 items-center justify-center gap-2 rounded-lg border border-line px-4 text-sm text-muted transition-colors hover:bg-foreground/5'
                   }
                 >
                   <Download className="h-4 w-4 shrink-0" aria-hidden />
@@ -307,7 +307,7 @@ export default function InstallClient({
             {subUrl ? (
               <a
                 href={guideApp.importLink(subUrl)}
-                className="flex h-11 items-center justify-center gap-2 rounded-lg border border-green px-4 text-sm text-green transition-colors hover:bg-lime/15"
+                className="flex h-12 min-h-12 items-center justify-center gap-2 rounded-lg border border-green px-4 text-sm text-green transition-colors hover:bg-lime/15"
               >
                 <Plus className="h-4 w-4 shrink-0" aria-hidden />
                 Добавить подписку

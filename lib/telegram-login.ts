@@ -130,7 +130,10 @@ let cachedBotUsername: string | null = null;
 export async function resolveBotUsername(fetchImpl: typeof fetch = fetch): Promise<string | null> {
   if (env.TELEGRAM_BOT_USERNAME) return env.TELEGRAM_BOT_USERNAME;
   if (cachedBotUsername) return cachedBotUsername;
-  const token = env.BOT_MODE === "polling" ? env.BOT_TEST_TOKEN : env.BOT_TOKEN;
+  const token =
+    env.BOT_MODE === "polling" && process.env.NODE_ENV !== "production"
+      ? env.BOT_TEST_TOKEN
+      : env.BOT_TOKEN;
   const apiRoot = env.TELEGRAM_API_ROOT.replace(/\/+$/, "");
   try {
     const res = await fetchImpl(`${apiRoot}/bot${token}/getMe`);

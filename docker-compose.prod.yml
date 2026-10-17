@@ -24,7 +24,11 @@ services:
       # ADMIN_TELEGRAM_IDS, WHITELABEL_HOST, ARTEMIDA_LOW_BALANCE_RUB, ...)
       # comes verbatim from `.env`.
       DATABASE_URL: postgresql://setwhite:${DB_PASSWORD}@db:5432/setwhite
-      BOT_MODE: webhook
+      # Delivery mode comes from `.env` so a single flag flip is enough (the
+      # hardcoded value here silently overrode .env once). Default stays
+      # webhook for a safe restart; production currently runs `polling` —
+      # Telegram cannot deliver inbound webhooks to this host's IP.
+      BOT_MODE: ${BOT_MODE:-webhook}
       NODE_ENV: production
       UPLOAD_DIR: /data/uploads
       APP_BASE_URL: https://panel.3set.online

@@ -85,13 +85,23 @@ Migrations run in the image entrypoint (`prisma migrate deploy`, forward-only �
 never `migrate dev` in prod). First boot also runs `prisma generate` in the
 builder, so the generated Prisma 7 client is present.
 
-## 6. Webhooks (must be HTTPS on panel.3set.online)
+## 6. Webhooks + Telegram delivery (must be HTTPS on panel.3set.online)
 
-- **Telegram:** `setWebhook` to
-  `https://panel.3set.online/api/telegram/webhook/{WEBHOOK_SECRET}` with
-  `secret_token={WEBHOOK_SECRET}` (the route checks both path and header).
+- **Telegram uses LONG POLLING (`BOT_MODE=polling`), not a webhook.** Telegram
+  never delivers inbound webhook POSTs to this host's IP: no SYN from
+  `149.154.0.0/16` or `91.108.4.0/22` ever reaches it (verified with tcpdump
+  while `getWebhookInfo` reported `Connection timed out`); port 443 itself is
+  reachable from the internet. The old host `64.188.97.106` did receive
+  deliveries (`200`) until the 2026-10-08 migration, so this is a change in the
+  delivery path, not a defect in the app. Polling only needs OUTBOUND calls,
+  which work (they go through the Cloudflare worker `TELEGRAM_API_ROOT`).
+  - Before switching back to webhook mode, confirm with `tcpdump` that Telegram
+    ranges actually reach the box, and revert `BOT_MODE` in `.env`.
+  - `deleteWebhook` must be issued when switching to polling — `getUpdates`
+    fails with a conflict while a webhook is registered.
 - **Platega:** set the callback URL in the Platega LK to
   `https://panel.3set.online/api/platega/callback` (header-verified, no signature).
+  Platega reaches us fine — only Telegram's inbound path is affected.
 
 ## 7. Backup schedule + restore (D-78)
 

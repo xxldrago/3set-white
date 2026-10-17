@@ -43,8 +43,15 @@ import { validatePromo } from "./promo";
 
 export const WEBHOOK_SECRET = env.WEBHOOK_SECRET;
 
-// Polling (dev) selects the TEST token; every other mode uses prod.
-const token = env.BOT_MODE === "polling" ? env.BOT_TEST_TOKEN : env.BOT_TOKEN;
+// Polling OUTSIDE production selects the TEST token so a local run never
+// steals the production bot's updates. In production there is exactly one bot,
+// so polling must use the real token: Telegram cannot deliver webhooks to this
+// host's IP (inbound SYN from 149.154.0.0/16 / 91.108.4.0/22 never arrives), so
+// polling is the only delivery path. See docs/DEPLOY.md § Telegram.
+const token =
+  env.BOT_MODE === "polling" && process.env.NODE_ENV !== "production"
+    ? env.BOT_TEST_TOKEN
+    : env.BOT_TOKEN;
 
 export const bot = new Telegraf(token, {
   telegram: { apiRoot: env.TELEGRAM_API_ROOT },

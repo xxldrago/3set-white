@@ -1,0 +1,1053 @@
+<!DOCTYPE html><html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VLESS Reality — Невидимый для DPI протокол (3set.online)</title>
+<meta name="description" content="VLESS Reality: самый скрытный VPN-протокол для России. Маскирует трафик под обычный HTTPS к доверенному сайту. DPI не может отличить от легитимного трафика.">
+<meta property="og:title" content="VLESS Reality — Невидимый для DPI протокол · 3set.online">
+<meta property="og:description" content="VLESS + Reality: трафик неотличим от обычного HTTPS. Обход DPI в России, Иране, Китае. TLS 1.3, X25519, маскировка под cloudflare.com.">
+<meta property="og:type" content="article">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e1512'/%3E%3Cpath d='M16 5l9 4v7c0 6-4 9.5-9 11-5-1.5-9-5-9-11V9l9-4z' fill='none' stroke='%23b7ff45' stroke-width='2.4'/%3E%3Cpath d='M11.5 16l3 3 6-6' fill='none' stroke='%23b7ff45' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/800.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/600.css">
+<style>
+:root{
+    --bg:#f6f4ee; --bg2:#eeebe1; --panel:#ffffff; --panel2:#fbfaf5;
+    --line:#e4dfd1; --line2:#cec7b4;
+    --ink:#0e1512; --mut:#5b645e; --dim:#8f968f;
+    --lime:#b7ff45; --lime-dk:#8fd41f; --lime-soft:rgba(143,212,31,.14);
+    --green:#0c4f36; --green-soft:rgba(12,79,54,.08);
+    --cyan:#0d8a96; --amber:#d99a2b; --red:#d84a3f;
+    --disp:'Unbounded',sans-serif; --body:'Manrope',sans-serif; --mono:'JetBrains Mono',monospace;
+    --shadow:0 24px 60px -28px rgba(24,30,24,.22);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;overflow-x:hidden}
+body::after{content:"";position:fixed;inset:0;z-index:99;pointer-events:none;opacity:.035;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");}
+::selection{background:var(--ink);color:var(--lime)}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+h1,h2,h3{font-family:var(--disp);font-weight:700;line-height:1.15;color:var(--ink)}
+.mono{font-family:var(--mono)}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--green);display:inline-flex;align-items:center;gap:8px;margin-bottom:16px}
+.kicker::before{content:"//";color:var(--dim)}
+h2{font-size:clamp(1.35rem,3.4vw,2.2rem);margin-bottom:14px}
+.sub{color:var(--mut);max-width:640px}
+section{padding:clamp(70px,9vw,110px) 0;position:relative}
+
+
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:500;font-size:13px;letter-spacing:.04em;padding:16px 26px;border-radius:8px;transition:transform .25s,box-shadow .25s,background .25s,color .25s;white-space:nowrap}
+.btn-solid{background:var(--ink);color:var(--lime);box-shadow:0 18px 40px -14px rgba(14,21,18,.45)}
+.btn-solid:hover{transform:translateY(-3px);box-shadow:0 24px 50px -14px rgba(14,21,18,.55)}
+.btn-lime{background:var(--lime);color:var(--ink);box-shadow:0 14px 34px -12px rgba(143,212,31,.55)}
+.btn-lime:hover{transform:translateY(-3px);box-shadow:0 20px 44px -12px rgba(143,212,31,.7)}
+.btn-ghost{border:1px solid var(--line2);color:var(--ink);background:rgba(255,255,255,.5)}
+.btn-ghost:hover{border-color:var(--green);color:var(--green);transform:translateY(-3px)}
+
+
+.topline{background:var(--ink);color:#c9d2c9;border-bottom:1px solid var(--ink);font-family:var(--mono);font-size:11px;letter-spacing:.1em;overflow:hidden;padding:8px 0}
+.topline .dotg{color:var(--lime)}
+.tick-wrap{overflow:hidden}
+.tick-track{display:flex;gap:44px;width:max-content;animation:tick 30s linear infinite}
+.tick-track:hover{animation-play-state:paused}
+@keyframes tick{to{transform:translateX(-50%)}}
+.tick-track span{display:flex;gap:44px;white-space:nowrap}
+.tick-track b{color:var(--lime);font-weight:600}
+
+
+#hdr{position:sticky;top:0;z-index:60;transition:background .3s,box-shadow .3s}
+#hdr.scrolled{background:rgba(246,244,238,.88);backdrop-filter:blur(14px);box-shadow:0 1px 0 var(--line),0 14px 34px -22px rgba(24,30,24,.25)}
+.hdr-in{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 0}
+.logo{display:flex;align-items:center;gap:11px;font-family:var(--disp);font-weight:700;font-size:17px;color:var(--ink)}
+.logo svg{width:30px;height:30px}
+.logo em{font-style:normal;color:var(--green)}
+.logo .tld{font-family:var(--mono);font-size:11px;color:var(--dim);font-weight:400;margin-left:2px}
+nav.desk{display:flex;gap:26px;font-size:14px;font-weight:600;color:var(--mut)}
+nav.desk a{position:relative;padding:4px 0;transition:color .2s}
+nav.desk a:hover{color:var(--green)}
+nav.desk a::after{content:"";position:absolute;left:0;bottom:0;height:1px;width:0;background:var(--green);transition:width .25s}
+nav.desk a:hover::after{width:100%}
+.hdr-cta{display:flex;align-items:center;gap:14px}
+.hdr-cta .btn{padding:11px 18px;font-size:11px}
+#burger{display:none;flex-direction:column;gap:5px;padding:8px}
+#burger i{width:22px;height:2px;background:var(--ink);transition:.3s}
+#mnav{position:fixed;inset:0;z-index:70;background:rgba(246,244,238,.98);backdrop-filter:blur(10px);display:flex;flex-direction:column;justify-content:center;padding:40px 30px;gap:6px;transform:translateX(100%);transition:transform .4s cubic-bezier(.7,0,.3,1)}
+#mnav.open{transform:none}
+#mnav a{font-family:var(--disp);font-size:22px;padding:10px 0;border-bottom:1px solid var(--line);color:var(--ink)}
+#mnav a:hover{color:var(--green)}
+#mnav .btn{margin-top:24px;justify-content:center}
+#mclose{position:absolute;top:22px;right:26px;font-size:26px;color:var(--mut)}
+
+
+.bread{padding:22px 0 0;font-family:var(--mono);font-size:12px;color:var(--dim);letter-spacing:.04em}
+.bread a{color:var(--mut);transition:color .2s}
+.bread a:hover{color:var(--green)}
+.bread span{margin:0 10px;opacity:.5}
+
+
+.hero{padding:clamp(40px,6vw,70px) 0 clamp(60px,7vw,90px);overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;
+    background-image:linear-gradient(rgba(14,21,18,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(14,21,18,.05) 1px,transparent 1px);
+    background-size:46px 46px;mask-image:radial-gradient(ellipse 80% 70% at 60% 30%,#000 0%,transparent 70%)}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(30px,4vw,60px);align-items:center;position:relative}
+.hero-badge{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--green);border:1px solid rgba(12,79,54,.35);background:var(--lime-soft);padding:7px 14px;border-radius:100px;margin-bottom:26px}
+.pulse-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(12,79,54,.5);animation:pulse 2s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 9px rgba(12,79,54,0)}100%{box-shadow:0 0 0 0 rgba(12,79,54,0)}}
+h1{font-size:clamp(1.5rem,4.4vw,2.8rem);margin-bottom:22px}
+h1 .l2{color:var(--green);display:block;position:relative}
+h1 .l2::after{content:"";position:absolute;left:0;right:0;bottom:4px;height:.34em;background:var(--lime);z-index:-1;border-radius:2px;transform:skewX(-8deg)}
+h1 .l3{display:block;font-family:var(--body);font-weight:600;font-size:clamp(.95rem,1.6vw,1.15rem);color:var(--mut);margin-top:16px;line-height:1.55}
+.hero-p{color:var(--mut);max-width:520px;margin-bottom:32px;font-size:16.5px}
+.hero-p b{color:var(--ink)}
+.hero-actions{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:34px}
+.hero-stats{display:flex;gap:clamp(18px,3vw,40px);margin-top:38px;padding-top:26px;border-top:1px solid var(--line);flex-wrap:wrap}
+.hstat b{font-family:var(--disp);font-size:clamp(1.2rem,2.4vw,1.7rem);color:var(--ink);display:block}
+.hstat b i{font-style:normal;color:var(--green)}
+.hstat span{font-size:12px;color:var(--dim);font-family:var(--mono);letter-spacing:.06em}
+
+
+/* DPI flow visualization */
+.dpi-flow{position:relative;border:1px solid #1c2620;border-radius:14px;background:linear-gradient(180deg,#111a16,#0c1210);padding:26px 18px;box-shadow:0 40px 90px -30px rgba(14,21,18,.45);overflow:hidden;min-height:380px}
+.dpi-flow::before,.dpi-flow::after{content:"";position:absolute;width:16px;height:16px;border:2px solid var(--lime);z-index:3}
+.dpi-flow::before{top:-2px;left:-2px;border-right:none;border-bottom:none;border-radius:14px 0 0 0}
+.dpi-flow::after{bottom:-2px;right:-2px;border-left:none;border-top:none;border-radius:0 0 14px 0}
+.dpi-flow-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;position:relative;z-index:2}
+.dpi-flow-title{font-family:var(--mono);font-size:11px;color:#6d7a71;letter-spacing:.1em}
+.dpi-flow-title b{color:var(--lime);font-weight:600}
+.dpi-flow-live{font-family:var(--mono);font-size:10px;color:var(--lime);display:flex;align-items:center;gap:6px;letter-spacing:.14em}
+.dpi-flow-live .pulse-dot{background:var(--lime);box-shadow:0 0 0 0 rgba(183,255,69,.5)}
+
+
+.dpi-layers{display:grid;grid-template-columns:1fr;gap:14px;position:relative;z-index:2}
+.dpi-layer{display:grid;grid-template-columns:100px minmax(0,1fr) 100px;gap:12px;align-items:center;padding:14px 16px;border:1px solid #1d2822;border-radius:10px;background:rgba(255,255,255,.03)}
+.dpi-layer .lbl{font-family:var(--mono);font-size:10px;color:#5d6b62;letter-spacing:.12em;text-align:center}
+.dpi-layer .lbl b{color:var(--lime);display:block;font-size:12px;margin-top:2px;letter-spacing:.04em}
+.dpi-layer .stream{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-family:var(--mono);font-size:11px;min-width:0;justify-content:center}
+.dpi-layer .stream .chunk{padding:5px 10px;border-radius:6px;white-space:nowrap;flex:none}
+.dpi-layer.real .stream .chunk{background:rgba(95,214,232,.1);color:#5fd6e8;border:1px solid rgba(95,214,232,.3)}
+.dpi-layer.mask .stream .chunk{background:rgba(183,255,69,.1);color:var(--lime);border:1px solid rgba(183,255,69,.3)}
+.dpi-layer.dpi .stream .chunk{background:rgba(217,154,43,.1);color:var(--amber);border:1px solid rgba(217,154,43,.3)}
+.dpi-layer .arrow{color:#5d6b62;font-size:14px;flex:none}
+
+
+.dpi-verdict{margin-top:18px;padding:16px 20px;border:1px solid rgba(183,255,69,.3);border-radius:10px;background:rgba(183,255,69,.05);display:flex;align-items:center;gap:14px;position:relative;z-index:2}
+.dpi-verdict .v-ic{width:42px;height:42px;border-radius:50%;background:var(--lime);color:var(--ink);display:flex;align-items:center;justify-content:center;font-size:20px;flex:none}
+.dpi-verdict b{font-family:var(--disp);font-size:14px;color:#fff;display:block;margin-bottom:3px}
+.dpi-verdict span{font-family:var(--mono);font-size:11px;color:#6d7a71;letter-spacing:.06em}
+
+
+.dpi-foot{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid #1d2822;position:relative;z-index:2;font-family:var(--mono);font-size:10px}
+.dpi-foot span{display:block;color:#5d6b62;letter-spacing:.1em;margin-bottom:4px;font-size:9px}
+.dpi-foot b{color:var(--lime);font-weight:600;font-size:12px}
+.dpi-foot b.cy{color:#5fd6e8}
+.dpi-foot b.am{color:var(--amber)}
+
+
+/* bento */
+.bento{display:grid;grid-template-columns:repeat(12,1fr);gap:18px;margin-top:44px}
+.bcard{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:28px;position:relative;overflow:hidden;transition:transform .3s,border-color .3s,box-shadow .3s}
+.bcard:hover{transform:translateY(-5px);border-color:var(--line2);box-shadow:var(--shadow)}
+.bcard h3{font-size:16px;margin-bottom:10px}
+.bcard p{color:var(--mut);font-size:14px}
+.bcard .tag{font-family:var(--mono);font-size:10px;color:var(--green);letter-spacing:.14em;display:block;margin-bottom:14px}
+.b7{grid-column:span 7}.b5{grid-column:span 5}.b4{grid-column:span 4}.b6{grid-column:span 6}.b8{grid-column:span 8}
+
+
+.chiprow{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.chip{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--cyan);border:1px solid rgba(13,138,150,.3);background:rgba(13,138,150,.07);padding:5px 11px;border-radius:100px}
+.chip.lm{color:var(--green);border-color:rgba(12,79,54,.3);background:var(--lime-soft)}
+
+
+/* dest cards */
+.dest-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:44px}
+.dest{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:22px;text-align:center;transition:transform .3s,border-color .3s,box-shadow .3s;position:relative;overflow:hidden}
+.dest:hover{transform:translateY(-4px);border-color:var(--green);box-shadow:var(--shadow)}
+.dest .dest-logo{width:52px;height:52px;border-radius:12px;background:var(--ink);color:var(--lime);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-family:var(--disp);font-weight:700;font-size:14px}
+.dest h4{font-family:var(--disp);font-size:14px;margin-bottom:6px}
+.dest p{font-size:12px;color:var(--mut);line-height:1.5}
+.dest .sni{font-family:var(--mono);font-size:10px;color:var(--green);letter-spacing:.06em;margin-top:10px;display:block;word-break:break-all}
+
+
+/* comparison table */
+.cmp-wrap{margin-top:44px;border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden}
+.cmp-row{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:10px;align-items:center;padding:16px 24px;border-bottom:1px solid var(--line);font-size:13.5px}
+.cmp-row:last-child{border-bottom:none}
+.cmp-row.hd{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;background:var(--panel2)}
+.cmp-row.hd .col-vr{color:var(--green);font-weight:600}
+.cmp-row .param{font-weight:600;color:var(--ink);display:flex;align-items:center;gap:10px}
+.cmp-row .val{font-family:var(--mono);font-size:12px;color:var(--mut)}
+.cmp-row .val b{color:var(--green);font-weight:600}
+.cmp-row .val.hl{color:var(--ink);font-weight:600}
+.cmp-row .val.hl b{color:var(--green)}
+.cmp-row .val.dim{opacity:.55}
+.cmp-row .val .bar-mini{display:inline-block;width:60px;height:4px;background:var(--bg2);border-radius:100px;overflow:hidden;vertical-align:middle;margin-left:6px}
+.cmp-row .val .bar-mini i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--lime-dk));border-radius:100px}
+
+
+/* scenarios */
+.scenarios{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:44px}
+.scen{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:28px;position:relative;transition:transform .3s,border-color .3s,box-shadow .3s;display:flex;gap:20px;align-items:flex-start}
+.scen:hover{transform:translateY(-4px);border-color:rgba(12,79,54,.4);box-shadow:var(--shadow)}
+.scen-ic{width:52px;height:52px;border-radius:12px;background:var(--ink);color:var(--lime);display:flex;align-items:center;justify-content:center;flex:none}
+.scen-ic svg{width:26px;height:26px}
+.scen h3{font-size:15px;margin-bottom:8px}
+.scen p{font-size:13.5px;color:var(--mut);margin-bottom:12px}
+.scen .verdict{font-family:var(--mono);font-size:11px;letter-spacing:.08em;display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:100px}
+.scen .verdict.good{color:var(--green);background:var(--lime-soft)}
+.scen .verdict.mid{color:var(--amber);background:rgba(217,154,43,.1)}
+.scen .verdict.bad{color:var(--red);background:rgba(216,74,63,.1)}
+
+
+/* alerts */
+.alerts{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:44px}
+.alert{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:28px;position:relative;overflow:hidden;transition:transform .3s,border-color .3s,box-shadow .3s}
+.alert:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+.alert.warn{border-color:rgba(217,154,43,.4);background:linear-gradient(180deg,rgba(217,154,43,.06),transparent)}
+.alert.tip{border-color:rgba(12,79,54,.3);background:linear-gradient(180deg,var(--lime-soft),transparent)}
+.alert.info{border-color:rgba(13,138,150,.3);background:linear-gradient(180deg,rgba(13,138,150,.06),transparent)}
+.alert .tag{font-family:var(--mono);font-size:10px;letter-spacing:.14em;display:inline-flex;align-items:center;gap:8px;margin-bottom:14px;padding:5px 12px;border-radius:100px}
+.alert.warn .tag{color:var(--amber);background:rgba(217,154,43,.12)}
+.alert.tip .tag{color:var(--green);background:var(--lime-soft)}
+.alert.info .tag{color:var(--cyan);background:rgba(13,138,150,.12)}
+.alert h3{font-size:16px;margin-bottom:10px}
+.alert p{color:var(--mut);font-size:14px}
+.alert ul{list-style:none;margin-top:14px;display:grid;gap:9px}
+.alert ul li{font-size:13.5px;color:var(--mut);display:flex;gap:10px;align-items:flex-start}
+.alert.warn ul li::before{content:"⚠";color:var(--amber);font-family:var(--mono);font-weight:600;flex:none}
+.alert.tip ul li::before{content:"✓";color:var(--green);font-family:var(--mono);font-weight:600;flex:none}
+.alert.info ul li::before{content:"ℹ";color:var(--cyan);font-family:var(--mono);font-weight:600;flex:none}
+
+
+/* setup links */
+.setup-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:44px}
+.setup{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:22px;display:flex;align-items:center;gap:16px;transition:transform .3s,border-color .3s,box-shadow .3s}
+.setup:hover{transform:translateY(-4px);border-color:var(--green);box-shadow:var(--shadow)}
+.setup-ic{width:44px;height:44px;border-radius:10px;background:var(--ink);color:var(--lime);display:flex;align-items:center;justify-content:center;flex:none}
+.setup-ic svg{width:22px;height:22px}
+.setup b{display:block;font-family:var(--disp);font-size:14px;margin-bottom:3px}
+.setup span{font-family:var(--mono);font-size:10.5px;color:var(--green);letter-spacing:.06em}
+
+
+/* console */
+.console{position:relative;border:1px solid #1c2620;border-radius:14px;background:linear-gradient(180deg,#111a16,#0c1210);color:#e6efe4;box-shadow:0 40px 90px -30px rgba(14,21,18,.45);overflow:hidden;margin-top:44px}
+.console::before,.console::after{content:"";position:absolute;width:16px;height:16px;border:2px solid var(--lime);z-index:3}
+.console::before{top:-2px;left:-2px;border-right:none;border-bottom:none;border-radius:14px 0 0 0}
+.console::after{bottom:-2px;right:-2px;border-left:none;border-top:none;border-radius:0 0 14px 0}
+.console-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid #1d2822;background:rgba(255,255,255,.03)}
+.console-bar i{width:10px;height:10px;border-radius:50%;background:#2a3a33}
+.console-bar i:first-child{background:#e2604f}
+.console-bar i:nth-child(2){background:#d99a2b}
+.console-bar i:nth-child(3){background:var(--lime)}
+.console-bar .ttl{font-family:var(--mono);font-size:11px;color:#6d7a71;margin-left:8px}
+.console-body{padding:22px;font-family:var(--mono);font-size:12.5px;line-height:2.05;min-height:280px}
+.console-body .tl.cmd{color:#eaf2e6}
+.console-body .tl.cmd::first-letter{color:var(--lime)}
+.console-body .tl.ok{color:var(--lime)}
+.console-body .tl.dim{color:#5d6b62}
+.console-body .tl.live{color:#5fd6e8}
+.console-body .tl.warn{color:var(--amber)}
+.console-body .tl.mask{color:var(--lime);background:rgba(183,255,69,.06);padding:2px 8px;border-radius:4px;margin:2px 0;display:inline-block}
+.console-body .caret{display:inline-block;width:8px;height:14px;background:var(--lime);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.console-foot{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #1d2822;background:rgba(255,255,255,.03)}
+.cfoot{padding:14px 18px;border-right:1px solid #1d2822}
+.cfoot:last-child{border-right:none}
+.cfoot span{display:block;font-family:var(--mono);font-size:10px;color:#5d6b62;letter-spacing:.1em;margin-bottom:4px}
+.cfoot b{font-family:var(--mono);font-size:15px;color:var(--lime);font-weight:600}
+.cfoot b.cy{color:#5fd6e8}
+
+
+/* faq */
+.faq-wrap{max-width:820px;margin:44px auto 0}
+.acc-item{border:1px solid var(--line);border-radius:12px;background:var(--panel);margin-bottom:12px;overflow:hidden;transition:border-color .3s,box-shadow .3s}
+.acc-item.open{border-color:rgba(12,79,54,.4);box-shadow:var(--shadow)}
+.acc-q{width:100%;display:flex;justify-content:space-between;align-items:center;gap:16px;text-align:left;padding:22px 26px;font-family:var(--body);font-weight:800;font-size:15px;color:var(--ink)}
+.acc-q .ic{font-family:var(--mono);color:var(--green);font-size:18px;transition:transform .3s;flex:none}
+.acc-item.open .ic{transform:rotate(45deg)}
+.acc-a{max-height:0;overflow:hidden;transition:max-height .45s cubic-bezier(.3,.8,.3,1)}
+.acc-a p{padding:0 26px 24px;color:var(--mut);font-size:14px}
+
+
+.cta-band{background:var(--ink);color:#e6efe4;border-radius:20px;padding:clamp(40px,6vw,70px);position:relative;overflow:hidden}
+.cta-band::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(183,255,69,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(183,255,69,.07) 1px,transparent 1px);background-size:34px 34px}
+.cta-band h2{font-size:clamp(1.5rem,4vw,2.6rem);max-width:640px;position:relative;color:#fff}
+.cta-band p{font-weight:600;max-width:560px;margin:16px 0 30px;position:relative;color:#b6c3b7}
+.cta-actions{display:flex;gap:16px;flex-wrap:wrap;position:relative}
+.cta-band .btn-ghost{border-color:rgba(230,239,228,.3);color:#e6efe4;background:transparent}
+.cta-band .btn-ghost:hover{border-color:var(--lime);color:var(--lime)}
+.cta-guar{display:flex;gap:22px;flex-wrap:wrap;margin-top:30px;font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:.06em;position:relative;color:var(--lime)}
+
+
+footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
+.f-grid{display:grid;grid-template-columns:1.3fr repeat(4,1fr);gap:34px;margin-bottom:50px}
+.f-grid h4{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:#5d6b62;text-transform:uppercase;margin-bottom:18px}
+.f-grid a{display:block;font-size:13.5px;color:#9aa89c;padding:5px 0;transition:color .2s}
+.f-grid a:hover{color:var(--lime)}
+.f-about p{font-size:13px;color:#7c8a7e;margin-top:14px;max-width:260px}
+.f-bot{border-top:1px solid #1d2822;padding-top:24px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:#5d6b62}
+
+
+#chatBtn{position:fixed;right:22px;bottom:22px;z-index:80;width:58px;height:58px;border-radius:50%;background:var(--ink);color:var(--lime);display:flex;align-items:center;justify-content:center;box-shadow:0 16px 40px -10px rgba(14,21,18,.5);transition:transform .3s}
+#chatBtn:hover{transform:translateY(-4px) scale(1.05)}
+#chatBtn svg{width:26px;height:26px}
+#chatPanel{position:fixed;right:22px;bottom:92px;z-index:80;width:min(340px,calc(100vw - 44px));height:440px;max-height:60vh;border:1px solid var(--line);border-radius:16px;background:var(--panel);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 30px 80px -20px rgba(14,21,18,.35);transform:translateY(16px) scale(.97);opacity:0;pointer-events:none;transition:.35s cubic-bezier(.3,.8,.3,1)}
+#chatPanel.open{transform:none;opacity:1;pointer-events:auto}
+.chat-hd{background:var(--ink);color:#e6efe4;padding:14px 18px;display:flex;align-items:center;gap:12px;font-weight:800;font-size:14px}
+.chat-hd .av{width:34px;height:34px;border-radius:50%;background:var(--lime);color:var(--ink);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600}
+.chat-hd small{display:block;font-weight:600;font-size:10.5px;color:var(--lime);opacity:.9}
+#chatMsgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;background:var(--panel2)}
+.msg{max-width:85%;padding:11px 15px;border-radius:12px;font-size:13px;line-height:1.5;animation:fadeUp .3s ease}
+.msg.bot{background:var(--panel);border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:4px;color:var(--ink)}
+.msg.usr{background:var(--ink);color:var(--lime);align-self:flex-end;border-bottom-right-radius:4px;font-weight:600}
+.msg.typing i{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--dim);margin-right:4px;animation:blink 1s infinite}
+.msg.typing i:nth-child(2){animation-delay:.2s}.msg.typing i:nth-child(3){animation-delay:.4s}
+.chat-chips{display:flex;gap:8px;padding:10px 18px;flex-wrap:wrap;background:var(--panel)}
+.chat-chips button{font-family:var(--mono);font-size:10.5px;color:var(--green);border:1px solid rgba(12,79,54,.3);border-radius:100px;padding:6px 12px;transition:.2s}
+.chat-chips button:hover{background:var(--lime-soft)}
+.chat-in{display:flex;gap:10px;padding:12px 14px;border-top:1px solid var(--line);background:var(--panel)}
+.chat-in input{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:11px 14px;color:var(--ink);font-family:var(--body);font-size:13px;outline:none}
+.chat-in input:focus{border-color:var(--green)}
+.chat-in button{background:var(--ink);color:var(--lime);border-radius:8px;width:42px;display:flex;align-items:center;justify-content:center;font-size:16px}
+
+
+.rv{opacity:0;transform:translateY(26px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)}
+.rv.in{opacity:1;transform:none}
+.d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}}
+
+
+@media(max-width:1180px){
+    .dpi-layer{grid-template-columns:1fr;gap:8px;text-align:center}
+    .dpi-layer .stream{justify-content:center}
+}
+
+@media(max-width:1020px){
+    .hero-grid{grid-template-columns:1fr}
+    .dpi-flow{margin-top:20px}
+    .dpi-layer{grid-template-columns:1fr;gap:8px;text-align:center}
+    .b7,.b5,.b4,.b6,.b8{grid-column:span 12}
+    .dest-grid{grid-template-columns:repeat(2,1fr)}
+    .scenarios{grid-template-columns:1fr}
+    .alerts{grid-template-columns:1fr}
+    .setup-grid{grid-template-columns:1fr}
+    .cmp-row{grid-template-columns:1.4fr 1fr 1fr 1fr;font-size:12px;padding:14px 16px}
+    .dpi-foot{grid-template-columns:repeat(2,1fr)}
+    .f-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:860px){nav.desk{display:none}#burger{display:flex}.hdr-cta .btn{display:none}}
+@media(max-width:640px){
+    .dest-grid{grid-template-columns:1fr}
+    .cmp-row{grid-template-columns:1fr 1fr;gap:8px}
+    .cmp-row .param{grid-column:span 2}
+    .cmp-row.hd{display:none}
+    .dpi-foot{grid-template-columns:1fr}
+    .f-grid{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+    .rv{opacity:1;transform:none}
+    .tick-track{animation:none}
+}
+</style>
+</head>
+<body>
+
+
+<!-- ═══════════ LIVE TICKER ═══════════ -->
+<div class="topline" aria-hidden="true">
+    <div class="tick-wrap"><div class="tick-track" id="tickTrack">
+        <span><i class="dotg">●</i> ТЕХНОЛОГИЯ · VLESS REALITY &nbsp;·&nbsp; <b>РЕКОМЕНДОВАН ДЛЯ РОССИИ</b> · МАСКИРОВКА ПОД HTTPS · TLS 1.3 · X25519 &nbsp;·&nbsp; <b>DPI НЕ ОТЛИЧАЕТ ОТ ОБЫЧНОГО ТРАФИКА</b> · 98% СКРЫТНОСТЬ &nbsp;·&nbsp; DEST: CLOUDFLARE.COM · MICROSOFT.COM &nbsp;·&nbsp;</span>
+        <span><i class="dotg">●</i> ТЕХНОЛОГИЯ · VLESS REALITY &nbsp;·&nbsp; <b>РЕКОМЕНДОВАН ДЛЯ РОССИИ</b> · МАСКИРОВКА ПОД HTTPS · TLS 1.3 · X25519 &nbsp;·&nbsp; <b>DPI НЕ ОТЛИЧАЕТ ОТ ОБЫЧНОГО ТРАФИКА</b> · 98% СКРЫТНОСТЬ &nbsp;·&nbsp; DEST: CLOUDFLARE.COM · MICROSOFT.COM &nbsp;·&nbsp;</span>
+        <span><i class="dotg">●</i> ТЕХНОЛОГИЯ · VLESS REALITY &nbsp;·&nbsp; <b>РЕКОМЕНДОВАН ДЛЯ РОССИИ</b> · МАСКИРОВКА ПОД HTTPS · TLS 1.3 · X25519 &nbsp;·&nbsp; <b>DPI НЕ ОТЛИЧАЕТ ОТ ОБЫЧНОГО ТРАФИКА</b> · 98% СКРЫТНОСТЬ &nbsp;·&nbsp; DEST: CLOUDFLARE.COM · MICROSOFT.COM &nbsp;·&nbsp;</span>
+    </div></div>
+</div>
+
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header id="hdr">
+    <div class="wrap hdr-in">
+        <a class="logo" href="/" aria-label="3set.online — на главную">
+            <svg viewBox="0 0 32 32" fill="none"><path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" fill="#0e1512"></path><path d="M11 16l3.5 3.5L21 13" stroke="#b7ff45" stroke-width="2.4" stroke-linecap="round"></path></svg>
+            <span>3<em>set</em><span class="tld">.online</span></span>
+        </a>
+        <nav class="desk" aria-label="Основная навигация">
+            <a href="/#pricing">Тарифы</a>
+            <a href="/#devices">Устройства</a>
+            <a href="/#protocols">Технологии</a>
+            <a href="/#locations">Серверы</a>
+            <a href="/#faq">FAQ</a>
+        </nav>
+        <div class="hdr-cta">
+            <a class="btn btn-solid" href="https://panel.3set.online" target="_blank" rel="noopener">Купить VPN</a>
+            <button id="burger" aria-label="Открыть меню"><i></i><i></i><i></i></button>
+        </div>
+    </div>
+</header>
+<div id="mnav" aria-hidden="true">
+    <button id="mclose" aria-label="Закрыть меню">✕</button>
+    <a href="/#pricing">Тарифы</a>
+    <a href="/#devices">Устройства</a>
+    <a href="/#protocols">Технологии</a>
+    <a href="/#locations">Серверы</a>
+    <a href="/#faq">FAQ</a>
+    <a class="btn btn-solid" href="https://panel.3set.online" target="_blank" rel="noopener">Купить VPN</a>
+</div>
+
+
+<!-- ═══════════ BREADCRUMB ═══════════ -->
+<div class="wrap">
+    <nav class="bread" aria-label="Хлебные крошки">
+        <a href="/">Главная</a><span>/</span>
+        <a href="/#protocols">Технологии</a><span>/</span>
+        <span style="color:var(--green)">VLESS Reality</span>
+    </nav>
+</div>
+
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero">
+    <div class="wrap hero-grid">
+        <div>
+            <div class="hero-badge"><span class="pulse-dot"></span> РЕКОМЕНДОВАН ДЛЯ РОССИИ · ОБХОД DPI · TLS 1.3 · X25519</div>
+            <h1>
+                <span class="l1" data-scr="" data-orig="Протокол">Протокол</span>
+                <span class="l2" data-scr="" data-orig="VLESS Reality">VLESS Reality</span>
+                <span class="l3">Самый скрытный VPN-протокол для стран с агрессивной DPI-фильтрацией. Маскирует трафик под обычный HTTPS к доверенному сайту (Cloudflare, Microsoft). Для DPI-фильтра ваше соединение неотличимо от посещения cloudflare.com.</span>
+            </h1>
+            <p class="hero-p">VLESS Reality — это <b>не просто шифрование</b>, это маскировка. DPI видит валидный TLS-handshake, настоящий SNI и сертификат доверенного сайта. Заблокировать его — значит заблокировать сам Cloudflare. В 3set это основной протокол для России.</p>
+            <div class="hero-actions">
+                <a class="btn btn-solid" href="https://panel.3set.online" target="_blank" rel="noopener">Попробовать VLESS Reality →</a>
+                <a class="btn btn-ghost" href="#how">Как это работает</a>
+            </div>
+            <div class="hero-stats">
+                <div class="hstat"><b>98<i>%</i></b><span>скрытность от DPI</span></div>
+                <div class="hstat"><b>96<i>%</i></b><span>стабильность в РФ</span></div>
+                <div class="hstat"><b>TLS 1.3</b><span>валидный сертификат</span></div>
+            </div>
+        </div>
+        <div class="dpi-flow rv in">
+            <div class="dpi-flow-head">
+                <span class="dpi-flow-title"><b>VLESS REALITY</b> · DPI EVASION FLOW</span>
+                <span class="dpi-flow-live"><span class="pulse-dot"></span>LIVE</span>
+            </div>
+            <div class="dpi-layers">
+                <div class="dpi-layer real">
+                    <div class="lbl">РЕАЛЬНЫЙ ЗАПРОС<b>instagram.com</b></div>
+                    <div class="stream">
+                        <span class="chunk">GET /</span>
+                        <span class="arrow">→</span>
+                        <span class="chunk">Host: instagram.com</span>
+                        <span class="arrow">→</span>
+                        <span class="chunk">157.240.22.174</span>
+                    </div>
+                    <div class="lbl">ВАШ ЗАПРОС<b>ПЛАТФОРМА</b></div>
+                </div>
+                <div class="dpi-layer mask">
+                    <div class="lbl">МАСКИРОВКА REALITY<b>TLS + VLESS</b></div>
+                    <div class="stream">
+                        <span class="chunk">ClientHello</span>
+                        <span class="arrow">→</span>
+                        <span class="chunk">SNI: cloudflare.com</span>
+                        <span class="arrow">→</span>
+                        <span class="chunk">ALPN: h2, http/1.1</span>
+                    </div>
+                    <div class="lbl">ВИДИТ ВНЕШНИЙ НАБЛЮДАТЕЛЬ<b>TLS 1.3 HANDSHAKE</b></div>
+                </div>
+                <div class="dpi-layer dpi">
+                    <div class="lbl">DPI-ФИЛЬТР<b>ВЕРДИКТ</b></div>
+                    <div class="stream">
+                        <span class="chunk">✓ валидный TLS</span>
+                        <span class="arrow">→</span>
+                        <span class="chunk">✓ SNI: cloudflare.com</span>
+                        <span class="arrow">→</span>
+                        <span class="chunk">✓ легитимный трафик</span>
+                    </div>
+                    <div class="lbl">РЕШЕНИЕ DPI<b>PASS · НЕ БЛОКИРОВАТЬ</b></div>
+                </div>
+            </div>
+            <div class="dpi-verdict">
+                <div class="v-ic">✓</div>
+                <div>
+                    <b>DPI verdict: «legitimate HTTPS traffic to cloudflare.com»</b>
+                    <span>Блокировка невозможна без блокировки самого Cloudflare</span>
+                </div>
+            </div>
+            <div class="dpi-foot">
+                <div><span>ПРОТОКОЛ</span><b>VLESS + REALITY</b></div>
+                <div><span>DEST</span><b class="cy">cloudflare.com</b></div>
+                <div><span>SNI</span><b>cloudflare.com</b></div>
+                <div><span>DPI VERDICT</span><b class="am">PASS ✓</b></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ WHAT IS ═══════════ -->
+<section id="about">
+    <div class="wrap">
+        <div class="rv in"><span class="kicker">01 · что это</span>
+            <h2 data-scr="" data-orig="Что такое VLESS Reality" class="in">Что такое VLESS Reality</h2>
+            <p class="sub">Две технологии в одной: VLESS — современный транспортный протокол (эволюция VMess), Reality — механизм маскировки трафика под легитимный TLS-сайт. Вместе они дают максимальную скрытность от DPI.</p>
+        </div>
+        <div class="bento">
+            <div class="bcard b7 rv in">
+                <span class="tag">ПРИНЦИП РАБОТЫ</span>
+                <h3>Маскировка под легитимный HTTPS-сайт</h3>
+                <p>Когда вы подключаетесь к серверу 3set по VLESS Reality, ваш клиент устанавливает TLS-соединение с <b style="color:var(--green)">валидным сертификатом</b> доверенного сайта (Cloudflare, Microsoft, Apple). DPI-фильтр видит настоящий TLS-handshake, настоящий SNI и настоящий сертификат — он не может отличить ваше соединение от обычного посещения cloudflare.com. Заблокировать VLESS Reality — значит заблокировать сам Cloudflare.</p>
+                <div class="chiprow">
+                    <span class="chip lm">TLS 1.3</span>
+                    <span class="chip lm">REALITY MASKING</span>
+                    <span class="chip">VALID CERTIFICATE</span>
+                    <span class="chip">SNI SPOOFING</span>
+                </div>
+            </div>
+            <div class="bcard b5 rv d1 in">
+                <span class="tag">ОТЛИЧИЕ ОТ ОБЫЧНОГО VLESS</span>
+                <h3>Не нужен домен и сертификат</h3>
+                <p>Классический VLESS + XTLS-Vision требует реального домена и TLS-сертификата (Let's Encrypt). Reality «одалживает» сертификат у чужого доверенного сайта — вам не нужно покупать домен, настраивать DNS и обновлять сертификаты. Всё работает «из коробки».</p>
+                <div class="chiprow">
+                    <span class="chip">NO DOMAIN NEEDED</span>
+                    <span class="chip lm">ZERO CONFIG</span>
+                </div>
+            </div>
+            <div class="bcard b4 rv in">
+                <span class="tag">ЭВОЛЮЦИЯ</span>
+                <h3>VLESS → VMess → V2Ray</h3>
+                <p>VLESS — наследник VMess, но без избыточного шифрования и с поддержкой новых транспортных протоколов. Reality — дополнение к VLESS, делающее его невидимым для DPI.</p>
+            </div>
+            <div class="bcard b4 rv d1 in">
+                <span class="tag">АВТОР</span>
+                <h3>RPRX и проект XTLS</h3>
+                <p>Reality разработан RPRX (автором Xray-core) в 2023 году. Открытый исходный код, активное сообщество, регулярные обновления. Используется в Xray, v2rayN, v2rayNG, Hiddify, Nekobox.</p>
+            </div>
+            <div class="bcard b4 rv d2 in">
+                <span class="tag">ГДЕ РАБОТАЕТ</span>
+                <h3>Россия, Иран, Китай</h3>
+                <p>Там, где обычный VPN режут первым, VLESS Reality остаётся стабильным. DPI не может его детектировать без массовой блокировки Cloudflare, Microsoft и других крупных сервисов.</p>
+                <div class="chiprow">
+                    <span class="chip lm">РФ · 96%</span>
+                    <span class="chip lm">ИРАН · 94%</span>
+                    <span class="chip lm">КИТАЙ · 92%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ DEST SITES ═══════════ -->
+<section id="dest" style="padding-top:0">
+    <div class="wrap">
+        <div class="rv in"><span class="kicker">02 · маскировка</span>
+            <h2 data-scr="" data-orig="Под какие сайты маскируется трафик" class="in">Под какие сайты маскируется трафик</h2>
+            <p class="sub">Reality «одалживает» TLS-сертификат у крупного доверенного сайта. DPI видит именно этот SNI и сертификат — и не может отличить ваше соединение от обычного посещения.</p>
+        </div>
+        <div class="dest-grid">
+            <div class="dest rv in">
+                <div class="dest-logo">CF</div>
+                <h4>Cloudflare</h4>
+                <p>Крупнейший CDN-провайдер. За ним стоят миллионы сайтов. Блокировка Cloudflare = блокировка интернета.</p>
+                <span class="sni">SNI: cloudflare.com</span>
+            </div>
+            <div class="dest rv d1 in">
+                <div class="dest-logo">MS</div>
+                <h4>Microsoft</h4>
+                <p>Azure, Office 365, LinkedIn. Корпоративный трафик, который DPI не трогает принципиально.</p>
+                <span class="sni">SNI: microsoft.com</span>
+            </div>
+            <div class="dest rv d2 in">
+                <div class="dest-logo">AP</div>
+                <h4>Apple</h4>
+                <p>iCloud, App Store, Apple Music. Трафик Apple-устройств — приоритетный для провайдеров.</p>
+                <span class="sni">SNI: apple.com</span>
+            </div>
+            <div class="dest rv d3 in">
+                <div class="dest-logo">GG</div>
+                <h4>Google / AWS</h4>
+                <p>Google Cloud, AWS, YouTube. Крупнейшие облачные провайдеры с валидными TLS-сертификатами.</p>
+                <span class="sni">SNI: google.com</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ HOW IT WORKS ═══════════ -->
+<section id="how" style="padding-top:0">
+    <div class="wrap">
+        <div class="rv in"><span class="kicker">03 · как работает</span>
+        <h2 data-scr="" data-orig="Путь трафика через VLESS Reality" class="in">Путь трафика через VLESS Reality</h2>
+        <p class="sub">Четыре шага: от вашего запроса до целевого сайта. На каждом шаге DPI видит только легитимный TLS-трафик к доверенному сайту.</p>
+    </div>
+
+
+    <div class="console rv in">
+        <div class="console-bar"><i></i><i></i><i></i><span class="ttl">vless-reality · packet flow · tls 1.3 · reality masking</span></div>
+        <div class="console-body" id="term">
+            <div class="tl cmd">$ xray -c config.json -v</div>
+            <div class="tl ok">→ VLESS + REALITY · X25519 · TLS 1.3</div>
+            <div class="tl ok">→ dest: cloudflare.com:443 · serverName: cloudflare.com</div>
+            <div class="tl ok">→ shortId: 8 characters · spiderX: /</div>
+            <div class="tl cmd">$ curl -x socks5h://127.0.0.1:10808 https://instagram.com</div>
+            <div class="tl dim">[1] client → TLS ClientHello → SNI: cloudflare.com</div>
+            <div class="tl mask">[DPI sees] → ClientHello · SNI=cloudflare.com · ALPN=h2 · valid TLS 1.3</div>
+            <div class="tl ok">[2] server → ServerHello · Certificate (cloudflare.com) · Finished</div>
+            <div class="tl mask">[DPI sees] → valid Let's Encrypt certificate · chain verified</div>
+            <div class="tl ok">[3] handshake complete · VLESS tunnel established</div>
+            <div class="tl dim">[4] client → VLESS payload → instagram.com request (encrypted inside TLS)</div>
+            <div class="tl live">[5] server → instagram.com · 157.240.22.174 · response → client</div>
+            <div class="tl ok">→ 200 OK · 142 KB · 248 ms · tunnel stable</div>
+            <div class="tl mask">[DPI final verdict] → «legitimate HTTPS to cloudflare.com» · PASS ✓</div>
+            <div class="tl warn">→ blocking VLESS Reality = blocking cloudflare.com · NOT FEASIBLE</div>
+            <div class="tl cmd">$ <span class="caret"></span></div>
+        </div>
+        <div class="console-foot">
+            <div class="cfoot"><span>ПРОТОКОЛ</span><b>VLESS + REALITY</b></div>
+            <div class="cfoot"><span>DEST</span><b class="cy">CLOUDFLARE.COM</b></div>
+            <div class="cfoot"><span>DPI VERDICT</span><b>PASS ✓</b></div>
+        </div>
+    </div>
+</div>
+</section>
+
+
+<!-- ═══════════ COMPARISON ═══════════ -->
+<section id="compare" style="padding-top:0">
+    <div class="wrap">
+        <div class="rv in"><span class="kicker">04 · сравнение</span>
+        <h2 data-scr="" data-orig="VLESS Reality vs WireGuard vs Shadowsocks" class="in">VLESS Reality vs WireGuard vs Shadowsocks</h2>
+        <p class="sub">Три протокола — три сценария. VLESS Reality — король скрытности, но не скорости. Выбирайте под свою задачу.</p>
+    </div>
+    <div class="cmp-wrap rv in">
+        <div class="cmp-row hd">
+            <span>Параметр</span>
+            <span class="col-vr">VLESS REALITY</span>
+            <span>WIREGUARD</span>
+            <span>SHADOWSOCKS 2022</span>
+        </div>
+        <div class="cmp-row">
+            <span class="param">Скорость</span>
+            <span class="val"><b>92%</b><span class="bar-mini"><i style="width:92%"></i></span></span>
+            <span class="val hl"><b>99%</b><span class="bar-mini"><i style="width:99%"></i></span></span>
+            <span class="val"><b>80%</b><span class="bar-mini"><i style="width:80%"></i></span></span>
+        </div>
+        <div class="cmp-row">
+            <span class="param">Скрытность от DPI</span>
+            <span class="val hl"><b>98%</b><span class="bar-mini"><i style="width:98%"></i></span></span>
+            <span class="val dim"><b>62%</b><span class="bar-mini"><i style="width:62%"></i></span></span>
+            <span class="val"><b>88%</b><span class="bar-mini"><i style="width:88%"></i></span></span>
+        </div>
+        <div class="cmp-row">
+            <span class="param">Стабильность в РФ</span>
+            <span class="val hl"><b>96%</b><span class="bar-mini"><i style="width:96%"></i></span></span>
+            <span class="val dim"><b>70%</b><span class="bar-mini"><i style="width:70%"></i></span></span>
+            <span class="val"><b>85%</b><span class="bar-mini"><i style="width:85%"></i></span></span>
+        </div>
+        <div class="cmp-row">
+            <span class="param">Шифрование</span>
+            <span class="val">AES-256-GCM · TLS 1.3</span>
+            <span class="val">ChaCha20-Poly1305</span>
+            <span class="val">AES-256-GCM · ChaCha20</span>
+        </div>
+        <div class="cmp-row">
+            <span class="param">Маскировка под HTTPS</span>
+            <span class="val hl">Полная · с валидным TLS</span>
+            <span class="val dim">Нет</span>
+            <span class="val">Частичная</span>
+        </div>
+        <div class="cmp-row">
+            <span class="param">Накладные расходы CPU</span>
+            <span class="val">~1.2%</span>
+            <span class="val hl">~0.3%</span>
+            <span class="val">~0.5%</span>
+        </div>
+        <div class="cmp-row">
+            <span class="param">Транспорт</span>
+            <span class="val">TCP + UDP</span>
+            <span class="val">UDP-only</span>
+            <span class="val">TCP + UDP</span>
+        </div>
+        <div class="cmp-row">
+            <span class="param">Нужен ли домен</span>
+            <span class="val hl">Нет · Reality маскирует</span>
+            <span class="val">Нет</span>
+            <span class="val">Нет</span>
+        </div>
+        <div class="cmp-row">
+            <span class="param">Лучше всего для</span>
+            <span class="val hl">Россия · агрессивный DPI</span>
+            <span class="val hl">Игры · стриминг · торренты</span>
+            <span class="val hl">Мобильные сети · 4G/5G</span>
+        </div>
+    </div>
+</div>
+</section>
+
+
+<!-- ═══════════ SCENARIOS ═══════════ -->
+<section id="scenarios" style="padding-top:0">
+    <div class="wrap">
+        <div class="rv in"><span class="kicker">05 · сценарии</span>
+        <h2 data-scr="" data-orig="Когда выбирать VLESS Reality" class="in">Когда выбирать VLESS Reality</h2>
+        <p class="sub">VLESS Reality — не самый быстрый, но самый скрытный. Честно разбираем, где он показывает себя лучше всего, а где лучше взять WireGuard.</p>
+    </div>
+    <div class="scenarios">
+        <div class="scen rv in">
+            <div class="scen-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2L4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4z"/></svg>
+            </div>
+            <div>
+                <h3>Россия и страны с агрессивным DPI</h3>
+                <p>Там, где WireGuard и Shadowsocks блокируют, VLESS Reality остаётся стабильным. DPI не может его детектировать без массовой блокировки Cloudflare и Microsoft — а это невозможно.</p>
+                <span class="verdict good">✓ ИДЕАЛЬНЫЙ ВЫБОР</span>
+            </div>
+        </div>
+        <div class="scen rv d1 in">
+            <div class="scen-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/></svg>
+            </div>
+            <div>
+                <h3>Мобильные операторы с DPI</h3>
+                <p>МТС, Билайн, Мегафон, Tele2 — все используют DPI-фильтры. VLESS Reality проходит через них стабильно, в отличие от WireGuard, который часто блокируется в мобильных сетях.</p>
+                <span class="verdict good">✓ ИДЕАЛЬНЫЙ ВЫБОР</span>
+            </div>
+        </div>
+        <div class="scen rv in">
+            <div class="scen-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="18" cy="18" r="2"/></svg>
+            </div>
+            <div>
+                <h3>Публичные Wi-Fi (кафе, аэропорты)</h3>
+                <p>В публичных сетях часто стоит DPI и мониторинг трафика. VLESS Reality выглядит как обычное посещение cloudflare.com — ни администратор сети, ни DPI не заподозрят VPN.</p>
+                <span class="verdict good">✓ ИДЕАЛЬНЫЙ ВЫБОР</span>
+            </div>
+        </div>
+        <div class="scen rv d1 in">
+            <div class="scen-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            </div>
+            <div>
+                <h3>Максимальная анонимность</h3>
+                <p>Для журналистов, активистов, пользователей из стран с жёсткой цензурой. VLESS Reality даёт максимальную скрытность — трафик неотличим от легитимного HTTPS.</p>
+                <span class="verdict good">✓ ИДЕАЛЬНЫЙ ВЫБОР</span>
+            </div>
+        </div>
+        <div class="scen rv in">
+            <div class="scen-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="12" rx="1.5"/><path d="M9 21h6m-3-4v4"/></svg>
+            </div>
+            <div>
+                <h3>Онлайн-игры с минимальным пингом</h3>
+                <p>Для игр, где критичен каждый миллисекунд пинга, лучше WireGuard — у него минимальные накладные расходы. VLESS Reality добавляет ~5–10 мс на TLS-handshake и маскировку.</p>
+                <span class="verdict mid">~ ЛУЧШЕ WIREGUARD</span>
+            </div>
+        </div>
+        <div class="scen rv d1 in">
+            <div class="scen-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div>
+                <h3>Домашний Wi-Fi без DPI</h3>
+                <p>Если у вас домашний Wi-Fi без DPI-фильтрации (большинство провайдеров в РФ) — VLESS Reality избыточен. WireGuard даст больше скорости при той же приватности.</p>
+                <span class="verdict mid">~ ЛУЧШЕ WIREGUARD</span>
+            </div>
+        </div>
+    </div>
+</div>
+</section>
+
+
+<!-- ═══════════ ALERTS ═══════════ -->
+<section id="alerts" style="padding-top:0">
+    <div class="wrap">
+        <div class="rv in"><span class="kicker">важно · особенности</span>
+        <h2 data-scr="" data-orig="Четыре момента про VLESS Reality в 2026 году" class="in">Четыре момента про VLESS Reality в 2026 году</h2>
+        <p class="sub">Протоколу 3 года, он стал стандартом для обхода DPI — но есть нюансы, которые нужно учитывать.</p>
+    </div>
+    <div class="alerts">
+        <div class="alert tip rv in">
+            <span class="tag">✓ СИЛЬНАЯ СТОРОНА</span>
+            <h3>Невозможно заблокировать точечно</h3>
+            <p>DPI не может отличить VLESS Reality от обычного HTTPS к Cloudflare. Заблокировать его — значит заблокировать сам Cloudflare, Microsoft, Apple. Это невозможно без массовой блокировки легитимного интернета.</p>
+            <ul>
+                <li>DPI видит валидный TLS-сертификат</li>
+                <li>SNI указывает на реальный доверенный сайт</li>
+                <li>Блокировка = блокировка cloudflare.com</li>
+            </ul>
+        </div>
+        <div class="alert warn rv d1 in">
+            <span class="tag">⚠ НЮАНС · СКОРОСТЬ</span>
+            <h3>На 5–10% медленнее WireGuard</h3>
+            <p>TLS-handshake и маскировка добавляют накладные расходы. На гигабитном канале VLESS Reality выдаёт ~920 Мбит/с против 980+ Мбит/с у WireGuard. Для большинства задач разница незаметна, но для игр и 8K-стриминга — может быть критична.</p>
+            <ul>
+                <li>TLS 1.3 handshake: +1 RTT (~25 мс)</li>
+                <li>CPU overhead: ~1.2% vs 0.3% у WireGuard</li>
+                <li>Для игр — лучше WireGuard</li>
+            </ul>
+        </div>
+        <div class="alert info rv d2 in">
+            <span class="tag">ℹ В 3SET</span>
+            <h3>Основной протокол для России</h3>
+            <p>На всех 34 серверах 3set VLESS Reality настроен по умолчанию. В качестве dest используются Cloudflare, Microsoft и Apple — самые «безопасные» для маскировки сайты. Серверы автоматически ротируются, если один из них попадает под блокировку.</p>
+            <ul>
+                <li>Dest: cloudflare.com, microsoft.com, apple.com</li>
+                <li>Автоматическая ротация серверов</li>
+                <li>Ключ выдаётся за 1 минуту после оплаты</li>
+            </ul>
+        </div>
+        <div class="alert tip rv d3 in">
+            <span class="tag">✓ ГИБКОСТЬ</span>
+            <h3>Переключение между протоколами в один тап</h3>
+            <p>В клиентах INCY, Happ и FlClashX можно добавить несколько профилей: VLESS Reality как основной, WireGuard для игр, Shadowsocks для мобильных сетей. Переключение — в один тап, без переустановки ключа.</p>
+            <ul>
+                <li>Все три протокола на всех серверах</li>
+                <li>Авто-переключение при блокировке</li>
+                <li>Один ключ — все протоколы</li>
+            </ul>
+        </div>
+    </div>
+</div>
+</section>
+
+
+<!-- ═══════════ SETUP ═══════════ -->
+<section id="setup" style="padding-top:0">
+    <div class="wrap">
+        <div class="rv in"><span class="kicker">06 · настройка</span>
+        <h2 data-scr="" data-orig="Настройка VLESS Reality на ваших устройствах" class="in">Настройка VLESS Reality на ваших устройствах</h2>
+        <p class="sub">Ключ VLESS Reality работает во всех клиентах 3set — на любой платформе. Выберите устройство и следуйте инструкции.</p>
+    </div>
+    <div class="setup-grid">
+        <a class="setup rv in" href="/ios/">
+            <div class="setup-ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 12.54c-.03-2.9 2.37-4.3 2.48-4.37-1.35-1.97-3.45-2.24-4.2-2.27-1.79-.18-3.49 1.05-4.4 1.05-.9 0-2.3-1.03-3.79-1-1.95.03-3.74 1.13-4.74 2.87-2.02 3.5-.52 8.69 1.45 11.54.96 1.4 2.11 2.96 3.62 2.9 1.45-.06 2-.94 3.76-.94s2.25.94 3.79.91c1.57-.03 2.56-1.42 3.52-2.83 1.1-1.62 1.56-3.19 1.58-3.27-.03-.02-3.04-1.17-3.07-4.59z"/></svg></div>
+            <div><b>iPhone и iPad</b><span>ИНСТРУКЦИЯ →</span></div>
+        </a>
+        <a class="setup rv d1 in" href="/android/">
+            <div class="setup-ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.2 8.6h9.6c.5 0 .9.4.9.9v9.3c0 .5-.4.9-.9.9H7.2c-.5 0-.9-.4-.9-.9V9.5c0-.5.4-.9.9-.9zm-3 1c.5 0 .9.4.9.9v5c0 .5-.4.9-.9.9s-.9-.4-.9-.9v-5c0-.5.4-.9.9-.9zm15.6 0c.5 0 .9.4.9.9v5c0 .5-.4.9-.9.9s-.9-.4-.9-.9v-5c0-.5.4-.9.9-.9z"/></svg></div>
+            <div><b>Android</b><span>ИНСТРУКЦИЯ →</span></div>
+        </a>
+        <a class="setup rv d2 in" href="/windows/">
+            <div class="setup-ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5l8-1.1v7.1H3V5.5zm0 13l8 1.1v-7.1H3v6zM12 4.2L21 3v8.5h-9V4.2zm0 15.6L21 21v-8.5h-9v7.3z"/></svg></div>
+            <div><b>Windows</b><span>ИНСТРУКЦИЯ →</span></div>
+        </a>
+        <a class="setup rv in" href="/mac/">
+            <div class="setup-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="11" rx="1.5"/><path d="M2 18h20"/></svg></div>
+            <div><b>macOS</b><span>ИНСТРУКЦИЯ →</span></div>
+        </a>
+        <a class="setup rv d1 in" href="/smart-tv/">
+            <div class="setup-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="12" rx="1.5"/><path d="M9 21h6m-3-4v4"/></svg></div>
+            <div><b>Smart TV</b><span>ИНСТРУКЦИЯ →</span></div>
+        </a>
+        <a class="setup rv d2 in" href="/router/">
+            <div class="setup-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="12" width="18" height="7" rx="1.5"/><path d="M7 12V8m10 4V6"/></svg></div>
+            <div><b>Роутер · OpenWrt</b><span>ИНСТРУКЦИЯ →</span></div>
+        </a>
+    </div>
+</div>
+</section>
+
+
+<!-- ═══════════ FAQ ═══════════ -->
+<section id="faq">
+    <div class="wrap">
+        <div class="rv in" style="text-align:center"><span class="kicker">faq · vless reality</span><h2 data-scr="" data-orig="Частные вопросы про VLESS Reality" class="in">Частные вопросы про VLESS Reality</h2></div>
+        <div class="faq-wrap">
+            <div class="acc-item rv in"><button class="acc-q">Что такое Reality и чем он отличается от обычного VLESS?<span class="ic">+</span></button><div class="acc-a"><p>VLESS — это транспортный протокол (эволюция VMess). Reality — дополнение к VLESS, которое маскирует трафик под легитимный HTTPS-сайт. Без Reality VLESS просто шифрует трафик, и DPI может его детектировать. С Reality — трафик неотличим от обычного посещения cloudflare.com, и DPI не может его заблокировать без массовой блокировки Cloudflare.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Почему VLESS Reality работает там, где другие протоколы блокируют?<span class="ic">+</span></button><div class="acc-a"><p>Потому что DPI видит валидный TLS-handshake с настоящим сертификатом доверенного сайта (Cloudflare, Microsoft, Apple). Для DPI ваше соединение выглядит как обычное посещение cloudflare.com. Заблокировать VLESS Reality — значит заблокировать сам Cloudflare, а это невозможно без массовой блокировки легитимного интернета.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Нужен ли мне домен и сертификат для VLESS Reality?<span class="ic">+</span></button><div class="acc-a"><p>Нет. Это главное отличие Reality от классического VLESS + XTLS-Vision. Reality «одалживает» TLS-сертификат у чужого доверенного сайта (Cloudflare, Microsoft). Вам не нужно покупать домен, настраивать DNS и обновлять сертификаты. В 3set всё настроено автоматически — вы получаете готовый ключ.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">VLESS Reality медленнее WireGuard?<span class="ic">+</span></button><div class="acc-a"><p>Да, на 5–10%. TLS-handshake и маскировка добавляют накладные расходы: ~1.2% CPU против 0.3% у WireGuard, +25 мс на рукопожатие. На гигабитном канале VLESS Reality выдаёт ~920 Мбит/с против 980+ Мбит/с у WireGuard. Для большинства задач разница незаметна, но для игр и 8K-стриминга может быть критична.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Что такое dest и shortId в настройках VLESS Reality?<span class="ic">+</span></button><div class="acc-a"><p>dest (destination) — доверенный сайт, под который маскируется трафик (cloudflare.com, microsoft.com). shortId — короткий идентификатор, который помогает серверу отличить ваш трафик от обычного трафика к dest-сайту. Оба параметра уже настроены в ключе, который вы получаете от 3set — вам не нужно их менять.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Может ли провайдер узнать, что я использую VPN?<span class="ic">+</span></button><div class="acc-a"><p>При использовании VLESS Reality — практически нет. Провайдер видит только TLS-соединение с cloudflare.com. Он не может отличить ваш трафик от обычного посещения Cloudflare. Если бы мог — ему пришлось бы блокировать сам Cloudflare, что невозможно. В 3set также не ведём логов — даже мы не знаем, какие сайты вы посещаете.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">VLESS Reality работает в Китае и Иране?<span class="ic">+</span></button><div class="acc-a"><p>Да. VLESS Reality стабильно работает в Китае (Great Firewall), Иране и других странах с агрессивной DPI-фильтрацией. Стабильность: ~92% в Китае, ~94% в Иране, ~96% в России. Это самый надёжный протокол для стран с жёсткой цензурой.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Можно ли переключаться между протоколами на лету?<span class="ic">+</span></button><div class="acc-a"><p>Да. В клиентах INCY, Happ и FlClashX можно добавить несколько профилей: VLESS Reality как основной, WireGuard для игр, Shadowsocks для мобильных сетей. Переключение — в один тап, без переустановки ключа. Если VLESS Reality вдруг заблокируют (что крайне маловероятно) — сразу переходите на другой протокол.</p></div></div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ CTA ═══════════ -->
+<section id="cta">
+    <div class="wrap">
+        <div class="cta-band rv in">
+            <h2>Попробуйте VLESS Reality на всех серверах 3set</h2>
+            <p>Все 34 сервера 3set работают с VLESS Reality «из коробки». Подключение за 1 минуту — картой РФ или криптой. 7 дней гарантии возврата.</p>
+            <div class="cta-actions">
+                <a class="btn btn-lime" href="https://panel.3set.online" target="_blank" rel="noopener">Купить подписку →</a>
+                <a class="btn btn-ghost" href="/#protocols">Все технологии 3set</a>
+            </div>
+            <div class="cta-guar"><span>✓ 7 ДНЕЙ ГАРАНТИЯ</span><span>✓ БЕЗ ЛОГОВ</span><span>✓ МИР / СБП / CRYPTO</span><span>✓ ПОДДЕРЖКА 24/7</span></div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer>
+    <div class="wrap">
+        <div class="f-grid">
+            <div class="f-about">
+                <a class="logo" href="/" style="color:#fff"><svg viewBox="0 0 32 32" fill="none" width="28" height="28"><path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" stroke="#b7ff45" stroke-width="2.2"></path><path d="M11 16l3.5 3.5L21 13" stroke="#b7ff45" stroke-width="2.4" stroke-linecap="round"></path></svg><span>3<em style="color:var(--lime)">set</em><span class="tld" style="color:#5d6b62">.online</span></span></a>
+                <p>Виртуальная частная сеть нового поколения. Приватный и стабильный доступ в обход блокировок. Используйте VPN только в законных целях.</p>
+            </div>
+            <div><h4>Продукт</h4><a href="/#pricing">Тарифы и цены</a><a href="/#status">Статус серверов</a><a href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-бот</a><a href="https://panel.3set.online" target="_blank" rel="noopener">Купить доступ</a></div>
+            <div><h4>Устройства</h4><a href="/ios/">VPN для iOS</a><a href="/android/">VPN для Android</a><a href="/windows/">VPN для Windows</a><a href="/mac/">VPN для macOS</a><a href="/router/">VPN на роутер</a><a href="/smart-tv/">VPN для Smart TV</a></div>
+            <div><h4>Технологии</h4><a href="/vless-reality/">VLESS Reality</a><a href="/shadowsocks/">Shadowsocks</a><a href="/wireguard/">WireGuard</a><a href="/#blog">База знаний</a></div>
+            <div><h4>Поддержка</h4><a href="/setup/">Инструкции /setup</a><a href="/#faq">FAQ</a><a href="mailto:support@3set.online">support@3set.online</a><a href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-чат</a></div>
+        </div>
+        <div class="f-bot"><span>© <span id="yearNow">2026</span> 3set.online · VLESS Reality Technology Overview</span><span>Политика конфиденциальности · Оферта</span></div>
+    </div>
+</footer>
+
+
+<!-- ═══════════ CHAT ═══════════ -->
+<button id="chatBtn" aria-label="Открыть чат поддержки"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12c0 4.4-4 8-9 8-1.1 0-2.2-.2-3.1-.5L4 21l1.3-3.6C4.5 16 4 14.1 4 12c0-4.4 4-8 8-8s9 3.6 9 8z" fill="currentColor" stroke="none"></path></svg></button>
+<div id="chatPanel" role="dialog" aria-label="Чат поддержки">
+    <div class="chat-hd"><span class="av">А</span><div>Аня · поддержка 3set<small>онлайн · отвечает ~5 мин</small></div></div>
+    <div id="chatMsgs"></div>
+    <div class="chat-chips"><button data-q="VLESS Reality или WireGuard?">Что выбрать?</button><button data-q="Работает в РФ?">Работает в РФ?</button><button data-q="Где купить подписку?">Купить подписку</button></div>
+    <div class="chat-in"><input id="chatInput" type="text" placeholder="Напишите сообщение…" aria-label="Сообщение"><button id="chatSend" aria-label="Отправить">➤</button></div>
+</div>
+
+
+<script>
+(function(){
+    "use strict";
+    var RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+
+    document.getElementById('yearNow').textContent = new Date().getFullYear();
+
+
+    var hdr = document.getElementById('hdr');
+    window.addEventListener('scroll', function(){ hdr.classList.toggle('scrolled', window.scrollY > 10); }, {passive:true});
+
+
+    var mnav = document.getElementById('mnav');
+    document.getElementById('burger').addEventListener('click', function(){ mnav.classList.add('open'); });
+    document.getElementById('mclose').addEventListener('click', function(){ mnav.classList.remove('open'); });
+    mnav.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', function(){ mnav.classList.remove('open'); }); });
+
+
+    var tick = document.getElementById('tickTrack');
+    tick.innerHTML += tick.innerHTML;
+
+
+    var CH = '!<>-_/\\[]{}=+*^?#01';
+    function scrambleEl(el, dur){
+        var target = el.dataset.orig || el.textContent;
+        el.dataset.orig = target;
+        if(RM){ el.textContent = target; return; }
+        dur = dur || 800;
+        var start = performance.now();
+        (function fr(now){
+            var p = Math.min(1, (now - start) / dur);
+            var solved = Math.floor(p * target.length), out = '';
+            for(var i=0;i<target.length;i++){
+                out += i < solved ? target[i] : (target[i] === ' ' ? ' ' : CH[(Math.random()*CH.length)|0]);
+            }
+            el.textContent = out;
+            if(p < 1) requestAnimationFrame(fr); else el.textContent = target;
+        })(start);
+    }
+    var scrSpans = document.querySelectorAll('h1 [data-scr]');
+    scrSpans.forEach(function(s, i){ setTimeout(function(){ scrambleEl(s, 900); }, 200 + i*350); });
+
+
+    var io = new IntersectionObserver(function(es){
+        es.forEach(function(e){
+            if(!e.isIntersecting) return;
+            e.target.classList.add('in');
+            var sc = e.target.querySelector('[data-scr]');
+            if(sc && !sc.dataset.done){ sc.dataset.done = 1; scrambleEl(sc, 700); }
+            if(e.target.hasAttribute('data-scr') && !e.target.dataset.done){ e.target.dataset.done = 1; scrambleEl(e.target, 700); }
+            io.unobserve(e.target);
+        });
+    },{threshold:.15});
+    document.querySelectorAll('.rv, h2[data-scr]').forEach(function(el){ io.observe(el); });
+
+
+    document.querySelectorAll('.acc-q').forEach(function(q){
+        q.addEventListener('click', function(){
+            var item = q.parentElement, body = item.querySelector('.acc-a');
+            var accs = document.querySelectorAll('.acc-item');
+            for(var i=0;i<accs.length;i++){
+                if(accs[i] !== item){ accs[i].classList.remove('open'); accs[i].querySelector('.acc-a').style.maxHeight = '0'; }
+            }
+            var open = item.classList.toggle('open');
+            body.style.maxHeight = open ? body.scrollHeight + 'px' : '0';
+        });
+    });
+
+
+    var chatBtn = document.getElementById('chatBtn'),
+        chatPanel = document.getElementById('chatPanel'),
+        chatMsgs = document.getElementById('chatMsgs'),
+        chatInput = document.getElementById('chatInput'),
+        chatOpened = false;
+    function addMsg(txt, who){
+        var m = document.createElement('div');
+        m.className = 'msg ' + who;
+        m.textContent = txt;
+        chatMsgs.appendChild(m);
+        chatMsgs.scrollTop = chatMsgs.scrollHeight;
+        return m;
+    }
+    function botReply(q){
+        var t = q.toLowerCase(), r;
+        if(/vless|reality|маскир|dpi|обход|скрыт/.test(t)) r = 'VLESS Reality — самый скрытный протокол. Маскирует трафик под обычный HTTPS к Cloudflare/Microsoft. DPI не может отличить от легитимного трафика. Рекомендован для России, Ирана, Китая ✅';
+        if(/wireguard|wg|скорость|пинг|игра|стрим|торрент/.test(t)) r = 'WireGuard — самый быстрый протокол. 980+ Мбит/с, пинг 18–25 мс. Идеален для игр и стриминга. Но легко детектируется DPI. Для РФ — используйте VLESS Reality как основной.';
+        if(/shadowsocks|\bss\b|мобильн|4g|5g/.test(t)) r = 'Shadowsocks 2022 — лёгкий протокол для мобильных сетей. Отлично работает при переключении Wi-Fi ↔ LTE. В 3set используем шифр 2022-blake3-aes-256-gcm.';
+        if(/выбор|что лучше|какой протокол|что выбрать| или /.test(t)) r = 'Для России — VLESS Reality (маскирует под HTTPS, DPI почти не видит). Для игр и стриминга — WireGuard (максимальная скорость). Для мобильных сетей — Shadowsocks. В 3set все три доступны на всех серверах, переключение в один тап.';
+        if(/работ|блок|росси|dpi|great firewall|китай|иран/.test(t)) r = 'VLESS Reality стабильно работает в РФ (96%), Иране (94%), Китае (92%). DPI не может его детектировать без блокировки Cloudflare/Microsoft. WireGuard в РФ работает нестабильно — его легко детектирует DPI.';
+        if(/dest|sni|shortid|cloudflare|microsoft/.test(t)) r = 'dest — доверенный сайт, под который маскируется трафик (cloudflare.com, microsoft.com). SNI — имя сайта, которое видит DPI. shortId — идентификатор для отличия вашего трафика от обычного. В 3set всё настроено автоматически в ключе.';
+        if(/домен|сертификат|let's encrypt/.test(t)) r = 'Для VLESS Reality НЕ нужен домен и сертификат. Reality «одалживает» TLS-сертификат у Cloudflare/Microsoft. В классическом VLESS + XTLS-Vision нужен свой домен и сертификат — в Reality нет.';
+        if(/куп|подписк|оплат|тариф|цен/.test(t)) r = 'Купить подписку можно на panel.3set.online или в Telegram-боте @3set_online_bot. Оплата картой МИР, СБП или криптой. Ключ приходит за 1 минуту ⚡';
+        if(/привет|здравств|добр/.test(t)) r = 'Привет! 👋 Подсказать по VLESS Reality, выбору протокола или подписке?';
+        if(!r) r = 'Хороший вопрос! Быстрее всего ответит оператор в Telegram: @3set_online_bot. Или уточните: VLESS Reality, WireGuard, выбор протокола, подписка?';
+        var ty = addMsg('', 'bot typing');
+        ty.innerHTML = '<i></i><i></i><i></i>';
+        setTimeout(function(){
+            ty.remove();
+            addMsg(r, 'bot');
+        }, RM ? 0 : 700 + Math.min(900, r.length * 4));
+    }
+    function openChat(){
+        chatOpened = true;
+        chatPanel.classList.add('open');
+        if(!chatMsgs.children.length){
+            addMsg('Привет! Я Аня из поддержки 3set ⚡ Рассказать про VLESS Reality или помочь с выбором протокола?', 'bot');
+        }
+    }
+    chatBtn.addEventListener('click', function(){ chatPanel.classList.contains('open') ? chatPanel.classList.remove('open') : openChat(); });
+    function sendChat(){
+        var v = chatInput.value.trim();
+        if(!v) return;
+        addMsg(v, 'usr');
+        chatInput.value = '';
+        botReply(v);
+    }
+    document.getElementById('chatSend').addEventListener('click', sendChat);
+    chatInput.addEventListener('keydown', function(e){ if(e.key === 'Enter') sendChat(); });
+    document.querySelectorAll('.chat-chips button').forEach(function(c){
+        c.addEventListener('click', function(){
+            if(!chatOpened) openChat();
+            addMsg(c.dataset.q, 'usr'); botReply(c.dataset.q);
+        });
+    });
+})();
+</script>
+
+
+</body>
+</html>

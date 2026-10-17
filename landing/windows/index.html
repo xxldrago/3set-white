@@ -1,0 +1,922 @@
+<!DOCTYPE html><html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Настройка VPN на Windows — Пошаговая инструкция (3set.online)</title>
+<meta name="description" content="Как подключить VPN 3set на Windows: установка Happ, INCY или FlClashX, разрешение брандмауэра, импорт подписки по URL, включение TUN-режима. Гайд для Windows 10/11.">
+<meta property="og:title" content="Настройка VPN на Windows — 3set.online">
+<meta property="og:description" content="Пошаговая инструкция: установка клиента, разрешение брандмауэра, импорт подписки, TUN vs System Proxy. Работает на Windows 10 и 11.">
+<meta property="og:type" content="article">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e1512'/%3E%3Cpath d='M16 5l9 4v7c0 6-4 9.5-9 11-5-1.5-9-5-9-11V9l9-4z' fill='none' stroke='%23b7ff45' stroke-width='2.4'/%3E%3Cpath d='M11.5 16l3 3 6-6' fill='none' stroke='%23b7ff45' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/800.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/600.css">
+<style>
+:root{
+    --bg:#f6f4ee; --bg2:#eeebe1; --panel:#ffffff; --panel2:#fbfaf5;
+    --line:#e4dfd1; --line2:#cec7b4;
+    --ink:#0e1512; --mut:#5b645e; --dim:#8f968f;
+    --lime:#b7ff45; --lime-dk:#8fd41f; --lime-soft:rgba(143,212,31,.14);
+    --green:#0c4f36; --green-soft:rgba(12,79,54,.08);
+    --cyan:#0d8a96; --amber:#d99a2b; --red:#d84a3f;
+    --disp:'Unbounded',sans-serif; --body:'Manrope',sans-serif; --mono:'JetBrains Mono',monospace;
+    --shadow:0 24px 60px -28px rgba(24,30,24,.22);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;overflow-x:hidden}
+body::after{content:"";position:fixed;inset:0;z-index:99;pointer-events:none;opacity:.035;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");}
+::selection{background:var(--ink);color:var(--lime)}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+h1,h2,h3{font-family:var(--disp);font-weight:700;line-height:1.15;color:var(--ink)}
+.mono{font-family:var(--mono)}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--green);display:inline-flex;align-items:center;gap:8px;margin-bottom:16px}
+.kicker::before{content:"//";color:var(--dim)}
+h2{font-size:clamp(1.35rem,3.4vw,2.2rem);margin-bottom:14px}
+.sub{color:var(--mut);max-width:640px}
+section{padding:clamp(70px,9vw,110px) 0;position:relative}
+
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:500;font-size:13px;letter-spacing:.04em;padding:16px 26px;border-radius:8px;transition:transform .25s,box-shadow .25s,background .25s,color .25s;white-space:nowrap}
+.btn-solid{background:var(--ink);color:var(--lime);box-shadow:0 18px 40px -14px rgba(14,21,18,.45)}
+.btn-solid:hover{transform:translateY(-3px);box-shadow:0 24px 50px -14px rgba(14,21,18,.55)}
+.btn-lime{background:var(--lime);color:var(--ink);box-shadow:0 14px 34px -12px rgba(143,212,31,.55)}
+.btn-lime:hover{transform:translateY(-3px);box-shadow:0 20px 44px -12px rgba(143,212,31,.7)}
+.btn-ghost{border:1px solid var(--line2);color:var(--ink);background:rgba(255,255,255,.5)}
+.btn-ghost:hover{border-color:var(--green);color:var(--green);transform:translateY(-3px)}
+
+
+/* ---------- top ticker ---------- */
+.topline{background:var(--ink);color:#c9d2c9;border-bottom:1px solid var(--ink);font-family:var(--mono);font-size:11px;letter-spacing:.1em;overflow:hidden;padding:8px 0}
+.topline .dotg{color:var(--lime)}
+.tick-wrap{overflow:hidden}
+.tick-track{display:flex;gap:44px;width:max-content;animation:tick 30s linear infinite}
+.tick-track:hover{animation-play-state:paused}
+@keyframes tick{to{transform:translateX(-50%)}}
+.tick-track span{display:flex;gap:44px;white-space:nowrap}
+.tick-track b{color:var(--lime);font-weight:600}
+
+
+/* ---------- header ---------- */
+#hdr{position:sticky;top:0;z-index:60;transition:background .3s,box-shadow .3s}
+#hdr.scrolled{background:rgba(246,244,238,.88);backdrop-filter:blur(14px);box-shadow:0 1px 0 var(--line),0 14px 34px -22px rgba(24,30,24,.25)}
+.hdr-in{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 0}
+.logo{display:flex;align-items:center;gap:11px;font-family:var(--disp);font-weight:700;font-size:17px;color:var(--ink)}
+.logo svg{width:30px;height:30px}
+.logo em{font-style:normal;color:var(--green)}
+.logo .tld{font-family:var(--mono);font-size:11px;color:var(--dim);font-weight:400;margin-left:2px}
+nav.desk{display:flex;gap:26px;font-size:14px;font-weight:600;color:var(--mut)}
+nav.desk a{position:relative;padding:4px 0;transition:color .2s}
+nav.desk a:hover{color:var(--green)}
+nav.desk a::after{content:"";position:absolute;left:0;bottom:0;height:1px;width:0;background:var(--green);transition:width .25s}
+nav.desk a:hover::after{width:100%}
+.hdr-cta{display:flex;align-items:center;gap:14px}
+.hdr-cta .btn{padding:11px 18px;font-size:11px}
+#burger{display:none;flex-direction:column;gap:5px;padding:8px}
+#burger i{width:22px;height:2px;background:var(--ink);transition:.3s}
+#mnav{position:fixed;inset:0;z-index:70;background:rgba(246,244,238,.98);backdrop-filter:blur(10px);display:flex;flex-direction:column;justify-content:center;padding:40px 30px;gap:6px;transform:translateX(100%);transition:transform .4s cubic-bezier(.7,0,.3,1)}
+#mnav.open{transform:none}
+#mnav a{font-family:var(--disp);font-size:22px;padding:10px 0;border-bottom:1px solid var(--line);color:var(--ink)}
+#mnav a:hover{color:var(--green)}
+#mnav .btn{margin-top:24px;justify-content:center}
+#mclose{position:absolute;top:22px;right:26px;font-size:26px;color:var(--mut)}
+
+
+/* ---------- breadcrumb ---------- */
+.bread{padding:22px 0 0;font-family:var(--mono);font-size:12px;color:var(--dim);letter-spacing:.04em}
+.bread a{color:var(--mut);transition:color .2s}
+.bread a:hover{color:var(--green)}
+.bread span{margin:0 10px;opacity:.5}
+
+
+/* ---------- hero ---------- */
+.hero{padding:clamp(40px,6vw,70px) 0 clamp(60px,7vw,90px);overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;
+    background-image:linear-gradient(rgba(14,21,18,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(14,21,18,.05) 1px,transparent 1px);
+    background-size:46px 46px;mask-image:radial-gradient(ellipse 80% 70% at 60% 30%,#000 0%,transparent 70%)}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(30px,4vw,60px);align-items:center;position:relative}
+.hero-badge{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--green);border:1px solid rgba(12,79,54,.35);background:var(--lime-soft);padding:7px 14px;border-radius:100px;margin-bottom:26px}
+.pulse-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(12,79,54,.5);animation:pulse 2s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 9px rgba(12,79,54,0)}100%{box-shadow:0 0 0 0 rgba(12,79,54,0)}}
+h1{font-size:clamp(1.5rem,4.4vw,2.8rem);margin-bottom:22px}
+h1 .l2{color:var(--green);display:block;position:relative}
+h1 .l2::after{content:"";position:absolute;left:0;right:0;bottom:4px;height:.34em;background:var(--lime);z-index:-1;border-radius:2px;transform:skewX(-8deg)}
+h1 .l3{display:block;font-family:var(--body);font-weight:600;font-size:clamp(.95rem,1.6vw,1.15rem);color:var(--mut);margin-top:16px;line-height:1.55}
+.hero-p{color:var(--mut);max-width:520px;margin-bottom:32px;font-size:16.5px}
+.hero-p b{color:var(--ink)}
+.hero-actions{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:34px}
+.hero-stats{display:flex;gap:clamp(18px,3vw,40px);margin-top:38px;padding-top:26px;border-top:1px solid var(--line);flex-wrap:wrap}
+.hstat b{font-family:var(--disp);font-size:clamp(1.2rem,2.4vw,1.7rem);color:var(--ink);display:block}
+.hstat b i{font-style:normal;color:var(--green)}
+.hstat span{font-size:12px;color:var(--dim);font-family:var(--mono);letter-spacing:.06em}
+
+
+/* windows mockup */
+.win{position:relative;margin:0 auto;max-width:540px}
+.win-frame{border:1px solid var(--line2);border-radius:10px;background:var(--ink);overflow:hidden;box-shadow:0 40px 90px -30px rgba(14,21,18,.45)}
+.win-title{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#0a120e;border-bottom:1px solid #1d2822;font-family:var(--mono);font-size:10px;color:#6d7a71}
+.win-title .win-ic{width:16px;height:16px;display:flex;align-items:center;justify-content:center}
+.win-title .win-ic svg{width:14px;height:14px}
+.win-title .win-name{color:#b6c3b7;font-weight:600}
+.win-title .win-ctrls{margin-left:auto;display:flex;gap:2px}
+.win-title .win-ctrls span{width:26px;height:20px;display:inline-flex;align-items:center;justify-content:center;color:#6d7a71;font-size:11px;transition:.2s;cursor:default}
+.win-title .win-ctrls span:hover{background:rgba(255,255,255,.08);color:#b6c3b7}
+.win-title .win-ctrls .close:hover{background:#d84a3f;color:#fff}
+.win-body{background:linear-gradient(180deg,#111a16,#0c1210);padding:18px;color:#e6efe4;min-height:320px}
+.win-app-hd{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.win-app-logo{width:42px;height:42px;border-radius:10px;background:var(--lime);color:var(--ink);display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:700;font-size:15px}
+.win-app-name{font-family:var(--disp);font-weight:700;font-size:15px;color:#fff}
+.win-app-sub{font-family:var(--mono);font-size:9px;color:#6d7a71;letter-spacing:.08em}
+.win-status{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9px;color:var(--lime);border:1px solid rgba(183,255,69,.3);background:rgba(183,255,69,.08);padding:5px 10px;border-radius:100px;width:max-content;margin-bottom:12px}
+.win-status .pulse-dot{width:5px;height:5px;background:var(--lime);box-shadow:0 0 0 0 rgba(183,255,69,.5)}
+.win-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.win-metric{border:1px solid #1d2822;border-radius:8px;padding:9px;background:rgba(255,255,255,.03)}
+.win-metric span{display:block;font-family:var(--mono);font-size:8px;color:#5d6b62;letter-spacing:.1em;margin-bottom:3px}
+.win-metric b{font-family:var(--mono);font-size:12px;color:var(--lime);font-weight:600}
+.win-metric b.cy{color:#5fd6e8}
+.win-mode{display:flex;gap:6px;margin-bottom:12px}
+.win-mode span{font-family:var(--mono);font-size:9px;padding:5px 10px;border-radius:6px;border:1px solid #1d2822;color:#6d7a71}
+.win-mode span.on{background:var(--lime);color:var(--ink);border-color:var(--lime);font-weight:600}
+.win-btn{background:var(--lime);color:var(--ink);font-family:var(--disp);font-weight:700;font-size:11px;letter-spacing:.06em;padding:10px;border-radius:8px;text-align:center}
+.win-taskbar{display:flex;align-items:center;gap:10px;padding:8px 14px;background:#0a120e;border-top:1px solid #1d2822;font-family:var(--mono);font-size:10px;color:#6d7a71}
+.win-taskbar .start{width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.win-taskbar .start svg{width:14px;height:14px}
+.win-taskbar .tb-apps{display:flex;gap:6px}
+.win-taskbar .tb-apps span{width:22px;height:22px;border-radius:4px;background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;font-size:10px}
+.win-taskbar .tb-right{margin-left:auto;display:flex;gap:10px;align-items:center}
+.win-taskbar .vpn-ic{color:var(--lime);font-size:11px}
+
+
+/* ---------- steps ---------- */
+.steps-list{display:grid;gap:22px;margin-top:44px}
+.step{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:clamp(26px,4vw,40px);position:relative;overflow:hidden;transition:border-color .3s,box-shadow .3s;display:grid;grid-template-columns:auto 1fr;gap:clamp(20px,3vw,36px);align-items:start}
+.step:hover{border-color:var(--line2);box-shadow:var(--shadow)}
+.step .num{font-family:var(--disp);font-size:clamp(40px,6vw,64px);color:transparent;-webkit-text-stroke:1.5px var(--line2);line-height:1;flex:none;min-width:70px}
+.step h3{font-size:clamp(16px,2vw,19px);margin-bottom:12px;color:var(--green)}
+.step p{color:var(--mut);font-size:14.5px;max-width:620px;margin-bottom:14px}
+.step .payrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.step .pay{font-family:var(--mono);font-size:11px;color:var(--ink);border:1px solid var(--line2);padding:6px 12px;border-radius:6px;background:var(--panel2);transition:.2s}
+.step .pay:hover{border-color:var(--green);color:var(--green);background:var(--lime-soft)}
+.step .pay.primary{background:var(--ink);color:var(--lime);border-color:var(--ink)}
+.step .pay.primary:hover{background:var(--green);color:var(--lime)}
+
+
+/* ---------- clients grid ---------- */
+.clients{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px}
+.client{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:28px;position:relative;transition:transform .3s,border-color .3s,box-shadow .3s;display:flex;flex-direction:column;gap:14px;overflow:hidden}
+.client:hover{transform:translateY(-5px);border-color:rgba(12,79,54,.4);box-shadow:var(--shadow)}
+.client .path{font-family:var(--mono);font-size:10.5px;color:var(--dim);letter-spacing:.06em}
+.client .client-ic{width:56px;height:56px;border-radius:14px;background:var(--ink);color:var(--lime);display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:700;font-size:20px}
+.client.hot{border-color:var(--ink);background:var(--ink);color:#e6efe4}
+.client.hot h3{color:#fff}
+.client.hot p{color:#b6c3b7}
+.client.hot .client-ic{background:var(--lime);color:var(--ink)}
+.client.hot .path{color:#6d7a71}
+.client.hot .pop-tag{position:absolute;top:14px;right:14px;font-family:var(--mono);font-size:9px;color:var(--ink);background:var(--lime);padding:4px 10px;border-radius:100px;letter-spacing:.1em;font-weight:600}
+.client h3{font-size:17px}
+.client p{font-size:13.5px;color:var(--mut);flex:1}
+.client .go{font-family:var(--mono);font-size:11.5px;color:var(--green);letter-spacing:.08em;display:inline-flex;align-items:center;gap:6px;transition:gap .2s}
+.client:hover .go{gap:10px}
+.client.hot .go{color:var(--lime)}
+
+
+/* ---------- warning / tip ---------- */
+.alerts{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:44px}
+.alert{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:28px;position:relative;overflow:hidden;transition:transform .3s,box-shadow .3s}
+.alert:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+.alert.warn{border-color:rgba(217,154,43,.4);background:linear-gradient(180deg,rgba(217,154,43,.06),transparent)}
+.alert.tip{border-color:rgba(12,79,54,.3);background:linear-gradient(180deg,var(--lime-soft),transparent)}
+.alert.info{border-color:rgba(13,138,150,.3);background:linear-gradient(180deg,rgba(13,138,150,.06),transparent)}
+.alert .tag{font-family:var(--mono);font-size:10px;letter-spacing:.14em;display:inline-flex;align-items:center;gap:8px;margin-bottom:14px;padding:5px 12px;border-radius:100px}
+.alert.warn .tag{color:var(--amber);background:rgba(217,154,43,.12)}
+.alert.tip .tag{color:var(--green);background:var(--lime-soft)}
+.alert.info .tag{color:var(--cyan);background:rgba(13,138,150,.12)}
+.alert h3{font-size:16px;margin-bottom:10px}
+.alert p{color:var(--mut);font-size:14px}
+.alert ul{list-style:none;margin-top:14px;display:grid;gap:9px}
+.alert ul li{font-size:13.5px;color:var(--mut);display:flex;gap:10px;align-items:flex-start}
+.alert.warn ul li::before{content:"⚠";color:var(--amber);font-family:var(--mono);font-weight:600;flex:none}
+.alert.tip ul li::before{content:"✓";color:var(--green);font-family:var(--mono);font-weight:600;flex:none}
+.alert.info ul li::before{content:"ℹ";color:var(--cyan);font-family:var(--mono);font-weight:600;flex:none}
+
+
+/* ---------- tun vs proxy ---------- */
+.tun-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:44px}
+.tun-card{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:30px;position:relative;overflow:hidden;transition:transform .3s,box-shadow .3s}
+.tun-card:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+.tun-card.hot{border-color:var(--ink);background:var(--ink);color:#e6efe4}
+.tun-card.hot h3{color:#fff}
+.tun-card.hot .tun-tag{color:var(--ink);background:var(--lime)}
+.tun-card.hot p{color:#b6c3b7}
+.tun-card.hot ul li{color:#b6c3b7}
+.tun-card.hot ul li::before{color:var(--lime)}
+.tun-tag{font-family:var(--mono);font-size:10px;letter-spacing:.14em;display:inline-flex;align-items:center;gap:8px;margin-bottom:14px;padding:5px 12px;border-radius:100px;color:var(--green);background:var(--lime-soft)}
+.tun-card h3{font-size:18px;margin-bottom:10px}
+.tun-card p{color:var(--mut);font-size:14px;margin-bottom:14px}
+.tun-card ul{list-style:none;display:grid;gap:9px}
+.tun-card ul li{font-size:13.5px;color:var(--mut);display:flex;gap:10px;align-items:flex-start}
+.tun-card ul li::before{content:"→";color:var(--green);font-family:var(--mono);flex:none}
+.tun-card.hot ul li::before{color:var(--lime)}
+
+
+/* ---------- faq ---------- */
+.faq-wrap{max-width:820px;margin:44px auto 0}
+.acc-item{border:1px solid var(--line);border-radius:12px;background:var(--panel);margin-bottom:12px;overflow:hidden;transition:border-color .3s,box-shadow .3s}
+.acc-item.open{border-color:rgba(12,79,54,.4);box-shadow:var(--shadow)}
+.acc-q{width:100%;display:flex;justify-content:space-between;align-items:center;gap:16px;text-align:left;padding:22px 26px;font-family:var(--body);font-weight:800;font-size:15px;color:var(--ink)}
+.acc-q .ic{font-family:var(--mono);color:var(--green);font-size:18px;transition:transform .3s;flex:none}
+.acc-item.open .ic{transform:rotate(45deg)}
+.acc-a{max-height:0;overflow:hidden;transition:max-height .45s cubic-bezier(.3,.8,.3,1)}
+.acc-a p{padding:0 26px 24px;color:var(--mut);font-size:14px}
+
+
+/* ---------- cta ---------- */
+.cta-band{background:var(--ink);color:#e6efe4;border-radius:20px;padding:clamp(40px,6vw,70px);position:relative;overflow:hidden}
+.cta-band::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(183,255,69,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(183,255,69,.07) 1px,transparent 1px);background-size:34px 34px}
+.cta-band h2{font-size:clamp(1.5rem,4vw,2.6rem);max-width:640px;position:relative;color:#fff}
+.cta-band p{font-weight:600;max-width:560px;margin:16px 0 30px;position:relative;color:#b6c3b7}
+.cta-actions{display:flex;gap:16px;flex-wrap:wrap;position:relative}
+.cta-band .btn-ghost{border-color:rgba(230,239,228,.3);color:#e6efe4;background:transparent}
+.cta-band .btn-ghost:hover{border-color:var(--lime);color:var(--lime)}
+.cta-guar{display:flex;gap:22px;flex-wrap:wrap;margin-top:30px;font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:.06em;position:relative;color:var(--lime)}
+
+
+/* ---------- footer ---------- */
+footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
+.f-grid{display:grid;grid-template-columns:1.3fr repeat(4,1fr);gap:34px;margin-bottom:50px}
+.f-grid h4{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:#5d6b62;text-transform:uppercase;margin-bottom:18px}
+.f-grid a{display:block;font-size:13.5px;color:#9aa89c;padding:5px 0;transition:color .2s}
+.f-grid a:hover{color:var(--lime)}
+.f-about p{font-size:13px;color:#7c8a7e;margin-top:14px;max-width:260px}
+.f-bot{border-top:1px solid #1d2822;padding-top:24px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:#5d6b62}
+
+
+/* ---------- chat ---------- */
+#chatBtn{position:fixed;right:22px;bottom:22px;z-index:80;width:58px;height:58px;border-radius:50%;background:var(--ink);color:var(--lime);display:flex;align-items:center;justify-content:center;box-shadow:0 16px 40px -10px rgba(14,21,18,.5);transition:transform .3s}
+#chatBtn:hover{transform:translateY(-4px) scale(1.05)}
+#chatBtn svg{width:26px;height:26px}
+#chatPanel{position:fixed;right:22px;bottom:92px;z-index:80;width:min(340px,calc(100vw - 44px));height:440px;max-height:60vh;border:1px solid var(--line);border-radius:16px;background:var(--panel);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 30px 80px -20px rgba(14,21,18,.35);transform:translateY(16px) scale(.97);opacity:0;pointer-events:none;transition:.35s cubic-bezier(.3,.8,.3,1)}
+#chatPanel.open{transform:none;opacity:1;pointer-events:auto}
+.chat-hd{background:var(--ink);color:#e6efe4;padding:14px 18px;display:flex;align-items:center;gap:12px;font-weight:800;font-size:14px}
+.chat-hd .av{width:34px;height:34px;border-radius:50%;background:var(--lime);color:var(--ink);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600}
+.chat-hd small{display:block;font-weight:600;font-size:10.5px;color:var(--lime);opacity:.9}
+#chatMsgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;background:var(--panel2)}
+.msg{max-width:85%;padding:11px 15px;border-radius:12px;font-size:13px;line-height:1.5;animation:fadeUp .3s ease}
+.msg.bot{background:var(--panel);border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:4px;color:var(--ink)}
+.msg.usr{background:var(--ink);color:var(--lime);align-self:flex-end;border-bottom-right-radius:4px;font-weight:600}
+.msg.typing i{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--dim);margin-right:4px;animation:blink 1s infinite}
+.msg.typing i:nth-child(2){animation-delay:.2s}.msg.typing i:nth-child(3){animation-delay:.4s}
+.chat-chips{display:flex;gap:8px;padding:10px 18px;flex-wrap:wrap;background:var(--panel)}
+.chat-chips button{font-family:var(--mono);font-size:10.5px;color:var(--green);border:1px solid rgba(12,79,54,.3);border-radius:100px;padding:6px 12px;transition:.2s}
+.chat-chips button:hover{background:var(--lime-soft)}
+.chat-in{display:flex;gap:10px;padding:12px 14px;border-top:1px solid var(--line);background:var(--panel)}
+.chat-in input{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:11px 14px;color:var(--ink);font-family:var(--body);font-size:13px;outline:none}
+.chat-in input:focus{border-color:var(--green)}
+.chat-in button{background:var(--ink);color:var(--lime);border-radius:8px;width:42px;display:flex;align-items:center;justify-content:center;font-size:16px}
+
+
+/* ---------- reveal ---------- */
+.rv{opacity:0;transform:translateY(26px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)}
+.rv.in{opacity:1;transform:none}
+.d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}}
+@keyframes blink{50%{opacity:0}}
+
+
+/* ---------- responsive ---------- */
+@media(max-width:1020px){
+    .hero-grid{grid-template-columns:1fr}
+    .win{max-width:440px;margin-top:20px}
+    .clients{grid-template-columns:1fr}
+    .alerts{grid-template-columns:1fr}
+    .tun-grid{grid-template-columns:1fr}
+    .f-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:860px){nav.desk{display:none}#burger{display:flex}.hdr-cta .btn{display:none}}
+@media(max-width:640px){
+    .step{grid-template-columns:1fr;gap:14px}
+    .step .num{font-size:42px}
+    .win-metrics{grid-template-columns:repeat(2,1fr)}
+    .f-grid{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+    .rv{opacity:1;transform:none}
+    .tick-track{animation:none}
+}
+</style>
+</head>
+<body>
+
+
+<!-- ═══════════ LIVE TICKER ═══════════ -->
+<div class="topline" aria-hidden="true">
+    <div class="tick-wrap"><div class="tick-track" id="tickTrack">
+        <span><i class="dotg">●</i> ИНСТРУКЦИЯ ДЛЯ WINDOWS &nbsp;·&nbsp; <b>WINDOWS 10 / 11</b> · X64 / ARM64 &nbsp;·&nbsp; <b>HAPP · INCY · FLCLASHX</b> · TUN-РЕЖИМ &nbsp;·&nbsp; РАЗРЕШЕНИЕ БРАНДМАУЭРА &nbsp;·&nbsp; ПОДКЛЮЧЕНИЕ ЗА 3 МИНУТЫ &nbsp;·&nbsp; <b>VLESS REALITY</b> · ОБХОД DPI &nbsp;·&nbsp; ОПЛАТА: МИР / СБП / CRYPTO &nbsp;·&nbsp;</span>
+        <span><i class="dotg">●</i> ИНСТРУКЦИЯ ДЛЯ WINDOWS &nbsp;·&nbsp; <b>WINDOWS 10 / 11</b> · X64 / ARM64 &nbsp;·&nbsp; <b>HAPP · INCY · FLCLASHX</b> · TUN-РЕЖИМ &nbsp;·&nbsp; РАЗРЕШЕНИЕ БРАНДМАУЭРА &nbsp;·&nbsp; ПОДКЛЮЧЕНИЕ ЗА 3 МИНУТЫ &nbsp;·&nbsp; <b>VLESS REALITY</b> · ОБХОД DPI &nbsp;·&nbsp; ОПЛАТА: МИР / СБП / CRYPTO &nbsp;·&nbsp;</span>
+        <span><i class="dotg">●</i> ИНСТРУКЦИЯ ДЛЯ WINDOWS &nbsp;·&nbsp; <b>WINDOWS 10 / 11</b> · X64 / ARM64 &nbsp;·&nbsp; <b>HAPP · INCY · FLCLASHX</b> · TUN-РЕЖИМ &nbsp;·&nbsp; РАЗРЕШЕНИЕ БРАНДМАУЭРА &nbsp;·&nbsp; ПОДКЛЮЧЕНИЕ ЗА 3 МИНУТЫ &nbsp;·&nbsp; <b>VLESS REALITY</b> · ОБХОД DPI &nbsp;·&nbsp; ОПЛАТА: МИР / СБП / CRYPTO &nbsp;·&nbsp;</span>
+    </div></div>
+</div>
+
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header id="hdr">
+    <div class="wrap hdr-in">
+        <a class="logo" href="/" aria-label="3set.online — на главную">
+            <svg viewBox="0 0 32 32" fill="none"><path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" fill="#0e1512"></path><path d="M11 16l3.5 3.5L21 13" stroke="#b7ff45" stroke-width="2.4" stroke-linecap="round"></path></svg>
+            <span>3<em>set</em><span class="tld">.online</span></span>
+        </a>
+        <nav class="desk" aria-label="Основная навигация">
+            <a href="/#pricing">Тарифы</a>
+            <a href="/#devices">Устройства</a>
+            <a href="/#protocols">Технологии</a>
+            <a href="/#locations">Серверы</a>
+            <a href="/#faq">FAQ</a>
+        </nav>
+        <div class="hdr-cta">
+            <a class="btn btn-solid" href="https://panel.3set.online" target="_blank" rel="noopener">Купить VPN</a>
+            <button id="burger" aria-label="Открыть меню"><i></i><i></i><i></i></button>
+        </div>
+    </div>
+</header>
+<div id="mnav" aria-hidden="true">
+    <button id="mclose" aria-label="Закрыть меню">✕</button>
+    <a href="/#pricing">Тарифы</a>
+    <a href="/#devices">Устройства</a>
+    <a href="/#protocols">Технологии</a>
+    <a href="/#locations">Серверы</a>
+    <a href="/#faq">FAQ</a>
+    <a class="btn btn-solid" href="https://panel.3set.online" target="_blank" rel="noopener">Купить VPN</a>
+</div>
+
+
+<!-- ═══════════ BREADCRUMB ═══════════ -->
+<div class="wrap">
+    <nav class="bread" aria-label="Хлебные крошки">
+        <a href="/">Главная</a><span>/</span>
+        <a href="/#devices">Устройства</a><span>/</span>
+        <span style="color:var(--green)">Windows</span>
+    </nav>
+</div>
+
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero">
+    <div class="wrap hero-grid">
+        <div>
+            <div class="hero-badge"><span class="pulse-dot"></span> WINDOWS 10 / 11 · X64 И ARM64 · ПОДКЛЮЧЕНИЕ ЗА 3 МИНУТЫ</div>
+            <h1>
+                <span class="l1" data-scr="" data-orig="Настройка VPN">Настройка VPN</span>
+                <span class="l2" data-scr="" data-orig="на Windows">на Windows</span>
+                <span class="l3">Пошаговая инструкция: выбор клиента Happ, INCY или FlClashX, установка, разрешение брандмауэра, импорт подписки по URL и включение TUN-режима. Работает на всех ПК и ноутбуках с Windows 10 и 11.</span>
+            </h1>
+            <p class="hero-p">Подключение занимает <b>3 минуты</b>: скачиваете клиент с личной страницы, разрешаете запуск в брандмауэре, добавляете подписку по URL и включаете TUN-режим для полного покрытия трафика. Протокол <b>VLESS Reality</b> обходит DPI и работает даже при активных блокировках.</p>
+            <div class="hero-actions">
+                <a class="btn btn-solid" href="https://panel.3set.online" target="_blank" rel="noopener">Купить подписку →</a>
+                <a class="btn btn-ghost" href="#steps">Перейти к инструкции</a>
+            </div>
+            <div class="hero-stats">
+                <div class="hstat"><b><i>~</i>3 мин</b><span>время настройки</span></div>
+                <div class="hstat"><b>34</b><span>сервера на выбор</span></div>
+                <div class="hstat"><b>99.98<i>%</i></b><span>аптайм сети</span></div>
+            </div>
+        </div>
+        <div class="win rv in">
+            <div class="win-frame">
+                <div class="win-title">
+                    <span class="win-ic"><svg viewBox="0 0 24 24" fill="#b7ff45"><path d="M3 5.5l8-1.1v7.1H3V5.5zm0 13l8 1.1v-7.1H3v6zM12 4.2L21 3v8.5h-9V4.2zm0 15.6L21 21v-8.5h-9v7.3z"></path></svg></span>
+                    <span class="win-name">FlClashX — 3set · VLESS Reality</span>
+                    <span class="win-ctrls"><span>─</span><span>▢</span><span class="close">✕</span></span>
+                </div>
+                <div class="win-body">
+                    <div class="win-app-hd">
+                        <div class="win-app-logo">FC</div>
+                        <div>
+                            <div class="win-app-name">FlClashX</div>
+                            <div class="win-app-sub">3SET · VLESS REALITY · TUN MODE</div>
+                        </div>
+                    </div>
+                    <div class="win-status"><span class="pulse-dot"></span>CONNECTED · NL / AMS · 914 Мбит/с</div>
+                    <div class="win-metrics">
+                        <div class="win-metric"><span>СКОРОСТЬ</span><b>914 Мбит/с</b></div>
+                        <div class="win-metric"><span>ПИНГ</span><b class="cy">24 мс</b></div>
+                        <div class="win-metric"><span>ТРАФИК</span><b>2.4 ГБ</b></div>
+                        <div class="win-metric"><span>СЕССИЯ</span><b class="cy">01:42:18</b></div>
+                    </div>
+                    <div class="win-mode">
+                        <span class="on">TUN</span>
+                        <span>SYSTEM PROXY</span>
+                        <span>DIRECT</span>
+                    </div>
+                    <div class="win-btn">ОТКЛЮЧИТЬ</div>
+                </div>
+                <div class="win-taskbar">
+                    <span class="start"><svg viewBox="0 0 24 24" fill="#b6c3b7"><path d="M3 5.5l8-1.1v7.1H3V5.5zm0 13l8 1.1v-7.1H3v6zM12 4.2L21 3v8.5h-9V4.2zm0 15.6L21 21v-8.5h-9v7.3z"></path></svg></span>
+                    <span class="tb-apps">
+                        <span>📁</span>
+                        <span>🌐</span>
+                        <span style="background:rgba(183,255,69,.15);color:var(--lime)">🛡</span>
+                    </span>
+                    <span class="tb-right">
+                        <span class="vpn-ic">🛡</span>
+                        <span>🔊</span>
+                        <span>📶</span>
+                        <span>14:32</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ STEP 1: BUY ═══════════ -->
+<section id="buy">
+    <div class="wrap">
+        <div class="rv in"><span class="kicker">01 · подписка</span>
+            <h2 data-scr="" data-orig="Шаг 1. Купите подписку" class="in">Шаг 1. Купите подписку</h2>
+            <p class="sub">Оформите доступ на сайте или через Telegram-бота. Ключ выдаётся автоматически в течение минуты после оплаты.</p>
+        </div>
+        <div class="steps-list">
+            <div class="step rv in">
+                <span class="num">01</span>
+                <div>
+                    <h3>Выберите удобный способ оформления</h3>
+                    <p>Купите подписку на сайте или в Telegram-боте — оба способа равноценны. После оплаты вы получите персональный ключ <span class="mono" style="color:var(--green)">vless://…</span> и доступ к личной странице, где можно скачать клиент для Windows.</p>
+                    <div class="payrow">
+                        <a class="pay primary" href="https://panel.3set.online" target="_blank" rel="noopener">→ САЙТ · PANEL.3SET.ONLINE</a>
+                        <a class="pay primary" href="https://t.me/3set_online_bot" target="_blank" rel="noopener">→ TELEGRAM · @3SET_ONLINE_BOT</a>
+                    </div>
+                    <div class="payrow" style="margin-top:10px">
+                        <span class="pay">МИР</span>
+                        <span class="pay">VISA / MC (РФ)</span>
+                        <span class="pay">СБП</span>
+                        <span class="pay">USDT TRC-20</span>
+                        <span class="pay">TON</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ STEP 2: CLIENTS ═══════════ -->
+<section id="clients" style="padding-top:0">
+    <div class="wrap">
+        <div class="rv in"><span class="kicker">02 · клиент</span>
+            <h2 data-scr="" data-orig="Шаг 2. Скачайте клиент для Windows" class="in">Шаг 2. Скачайте клиент для Windows</h2>
+            <p class="sub">На личной странице подписки выберите клиент: Happ, INCY или FlClashX. Все три поддерживают VLESS Reality, TUN-режим и работают на Windows 10/11 (x64 и ARM64).</p>
+        </div>
+        <div class="clients">
+            <a class="client hot rv in" href="https://github.com/chen08209/FlClash" target="_blank" rel="noopener">
+                <span class="pop-tag">РЕКОМЕНДУЕМ</span>
+                <span class="path">Официальный релиз → FlClashX</span>
+                <div class="client-ic">FC</div>
+                <h3>FlClashX</h3>
+                <p>Современный multi-platform клиент на базе Clash Meta. Поддерживает все протоколы 3set, TUN-режим, правила маршрутизации и гибкую настройку. Лучший выбор для Windows.</p>
+                <span class="go">СКАЧАТЬ РЕЛИЗ →</span>
+            </a>
+            <a class="client rv d1 in" href="https://github.com/libnyanya/happ" target="_blank" rel="noopener">
+                <span class="path">Официальный релиз → Happ</span>
+                <div class="client-ic">H</div>
+                <h3>Happ</h3>
+                <p>Лёгкий клиент с минимальным потреблением ресурсов. Поддерживает VLESS, Shadowsocks и WireGuard. Отлично подходит для слабых ПК и ноутбуков.</p>
+                <span class="go">СКАЧАТЬ РЕЛИЗ →</span>
+            </a>
+            <a class="client rv d2 in" href="https://github.com/INCYVPN/INCY-Windows" target="_blank" rel="noopener">
+                <span class="path">Официальный релиз → INCY</span>
+                <div class="client-ic">IN</div>
+                <h3>INCY</h3>
+                <p>Нативный Windows-клиент с чистой интерфейсной логикой. Поддерживает VLESS Reality, TUN-режим и автоматический импорт подписки. Простая установка одним кликом.</p>
+                <span class="go">СКАЧАТЬ РЕЛИЗ →</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ STEP 3: INSTALL ═══════════ -->
+<section id="install" style="padding-top:0">
+    <div class="wrap">
+        <div class="rv in"><span class="kicker">03 · установка</span>
+            <h2 data-scr="" data-orig="Шаг 3. Установите приложение и разрешите брандмауэр" class="in">Шаг 3. Установите приложение и разрешите брандмауэр</h2>
+            <p class="sub">Запустите скачанный установщик (.exe или .msi). При первом запуске Windows может запросить разрешение брандмауэра на сетевой доступ — обязательно разрешите для всех сетей.</p>
+        </div>
+        <div class="steps-list">
+            <div class="step rv in">
+                <span class="num">03</span>
+                <div>
+                    <h3>Запустите установщик</h3>
+                    <p>Откройте скачанный файл (FlClashX-Setup.exe, Happ-Setup.exe или INCY-Setup.exe). Следуйте стандартному мастеру установки: «Далее» → «Установить» → «Готово». При желании добавьте клиент в автозагрузку — это удобно, чтобы VPN поднимался сразу после старта Windows.</p>
+                    <div class="payrow">
+                        <span class="pay">.EXE / .MSI УСТАНОВЩИК</span>
+                        <span class="pay">СТАНДАРТНЫЙ МАСТЕР</span>
+                        <span class="pay">АВТОЗАГРУЗКА · ПО ЖЕЛАНИЮ</span>
+                    </div>
+                </div>
+            </div>
+            <div class="step rv d1 in">
+                <span class="num">04</span>
+                <div>
+                    <h3>Разрешите запуск в брандмауэре Windows</h3>
+                    <p>При первом запуске клиента Windows Defender Firewall покажет окно: «Разрешить приложению связываться с сетью». Выберите <b style="color:var(--green)">«Разрешить для всех сетей»</b> (частные и публичные). Если окно пропустили — откройте «Брандмауэр Windows → Разрешённые приложения» и добавьте клиент вручную. Без этого разрешения TUN-режим не поднимется.</p>
+                    <div class="payrow">
+                        <span class="pay">WINDOWS DEFENDER FIREWALL</span>
+                        <span class="pay primary">РАЗРЕШИТЬ ДЛЯ ВСЕХ СЕТЕЙ</span>
+                        <span class="pay">ЧАСТНЫЕ + ПУБЛИЧНЫЕ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ STEP 4: IMPORT ═══════════ -->
+<section id="steps" style="padding-top:0">
+    <div class="wrap">
+        <div class="rv in"><span class="kicker">04 · импорт подписки</span>
+            <h2 data-scr="" data-orig="Шаг 4. Добавьте подписку по URL и обновите её" class="in">Шаг 4. Добавьте подписку по URL и обновите её</h2>
+            <p class="sub">Скопируйте URL подписки с личной страницы и вставьте в клиент. После добавления обязательно нажмите «Обновить» — подтянутся актуальные серверы и конфигурации.</p>
+        </div>
+        <div class="steps-list">
+            <div class="step rv in">
+                <span class="num">05</span>
+                <div>
+                    <h3>Скопируйте URL подписки</h3>
+                    <p>На личной странице подписки нажмите «Копировать URL» — в буфер попадёт ссылка вида <span class="mono" style="color:var(--green)">https://panel.3set.online/api/sub/…</span>. Эта ссылка содержит все ваши серверы и ключи. Храните её в секрете — по ней можно получить доступ к подписке.</p>
+                    <div class="payrow">
+                        <span class="pay">HTTPS SUBSCRIPTION URL</span>
+                        <span class="pay">БУФЕР ОБМЕНА</span>
+                        <span class="pay">ХРАНИТЕ В СЕКРЕТЕ</span>
+                    </div>
+                </div>
+            </div>
+            <div class="step rv d1 in">
+                <span class="num">06</span>
+                <div>
+                    <h3>Добавьте подписку в клиент</h3>
+                    <p>В FlClashX: «Профили» → «Новый» → «URL» → вставьте ссылку. В Happ: «Config» → «Import from URL». В INCY: «Подписки» → «Добавить» → вставьте URL. Нажмите «Сохранить».</p>
+                    <div class="payrow">
+                        <span class="pay">FLCLASHX · ПРОФИЛИ → НОВЫЙ → URL</span>
+                        <span class="pay">HAPP · CONFIG → IMPORT</span>
+                        <span class="pay">INCY · ПОДПИСКИ → ДОБАВИТЬ</span>
+                    </div>
+                </div>
+            </div>
+            <div class="step rv d2 in">
+                <span class="num">07</span>
+                <div>
+                    <h3>Обновите подписку</h3>
+                    <p>После добавления нажмите «Обновить» рядом с профилем — клиент подтянет актуальные серверы, ключи и конфигурации. Если сервер перестал отвечать или ключ устарел — обновление решает проблему за 2–3 секунды без ручной переустановки.</p>
+                    <div class="payrow">
+                        <span class="pay">ОБНОВЛЕНИЕ · 2–3 СЕК</span>
+                        <span class="pay">АКТУАЛЬНЫЕ СЕРВЕРЫ</span>
+                        <span class="pay">АВТООБНОВЛЕНИЕ · ПО ЖЕЛАНИЮ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ TUN VS PROXY ═══════════ -->
+<section id="tun" style="padding-top:0">
+    <div class="wrap">
+        <div class="rv in"><span class="kicker">tun vs system proxy · важно</span>
+            <h2 data-scr="" data-orig="TUN или System Proxy — в чём разница?" class="in">TUN или System Proxy — в чём разница?</h2>
+            <p class="sub">На Windows есть два режима работы VPN. Для большинства программ нужен TUN — он пропускает через VPN весь трафик системы. System Proxy подходит только приложениям, которые его учитывают.</p>
+        </div>
+        <div class="tun-grid">
+            <div class="tun-card hot rv in">
+                <span class="tun-tag">✓ РЕКОМЕНДУЕМ</span>
+                <h3>TUN-режим (Full Tunnel)</h3>
+                <p>Создаёт виртуальный сетевой адаптер и пропускает через VPN <b style="color:var(--lime)">весь трафик системы</b> — браузер, мессенджеры, игры, обновления, торренты. Работает для всех программ без исключения.</p>
+                <ul>
+                    <li>Полное покрытие: все приложения в VPN</li>
+                    <li>Защита от утечек DNS и IP</li>
+                    <li>Работает с играми и торрентами</li>
+                    <li>Требует прав администратора при первом включении</li>
+                    <li>Включите в настройках клиента: «TUN Mode» → ON</li>
+                </ul>
+            </div>
+            <div class="tun-card rv d1 in">
+                <span class="tun-tag">ℹ ОГРАНИЧЕННЫЙ РЕЖИМ</span>
+                <h3>System Proxy (системный прокси)</h3>
+                <p>Настраивает системные прокси-настройки Windows. Через VPN идёт только трафик программ, которые <b>учитывают</b> эти настройки — в основном браузеры и некоторые мессенджеры.</p>
+                <ul>
+                    <li>Работает только с браузерами и «умными» приложениями</li>
+                    <li>Игры, торренты, Discord, Steam — часто НЕ видят прокси</li>
+                    <li>Возможны утечки DNS при неправильной настройке</li>
+                    <li>Не требует прав администратора</li>
+                    <li>Подходит, если TUN по какой-то причине недоступен</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ STEP 5: CONNECT ═══════════ -->
+<section id="connect" style="padding-top:0">
+    <div class="wrap">
+        <div class="rv in"><span class="kicker">05 · подключение</span>
+            <h2 data-scr="" data-orig="Шаг 5. Выберите сервер и проверьте сайты" class="in">Шаг 5. Выберите сервер и проверьте сайты</h2>
+            <p class="sub">Включите TUN-режим, выберите ближайший сервер и нажмите «Подключиться». После этого откройте браузер и проверьте, что заблокированные сайты работают.</p>
+        </div>
+        <div class="steps-list">
+            <div class="step rv in">
+                <span class="num">08</span>
+                <div>
+                    <h3>Включите TUN-режим</h3>
+                    <p>В настройках клиента найдите переключатель «TUN Mode» (или «System TUN») и включите его. При первом включении Windows запросит права администратора — подтвердите. После этого в системном трее появится иконка VPN-адаптера.</p>
+                    <div class="payrow">
+                        <span class="pay primary">TUN MODE · ON</span>
+                        <span class="pay">ADMIN RIGHTS · ONE-TIME</span>
+                        <span class="pay">VIRTUAL ADAPTER</span>
+                    </div>
+                </div>
+            </div>
+            <div class="step rv d1 in">
+                <span class="num">09</span>
+                <div>
+                    <h3>Выберите сервер</h3>
+                    <p>В списке серверов выберите ближайший — он даст минимальный пинг. Из России лучше всего работают Финляндия (22 мс), Германия (34 мс), Нидерланды (38 мс) и Турция (45 мс). Если один сервер не отвечает — переключитесь на другой из той же локации.</p>
+                    <div class="payrow">
+                        <span class="pay">FI · 22 МС</span>
+                        <span class="pay">DE · 34 МС</span>
+                        <span class="pay">NL · 38 МС</span>
+                        <span class="pay">TR · 45 МС</span>
+                        <span class="pay">KZ · 39 МС</span>
+                    </div>
+                </div>
+            </div>
+            <div class="step rv d2 in">
+                <span class="num">10</span>
+                <div>
+                    <h3>Проверьте открытие сайтов</h3>
+                    <p>Нажмите «Подключиться» в клиенте. После установки соединения откройте браузер и проверьте сайты, которые раньше не работали: Instagram, YouTube, LinkedIn, Discord. Если что-то не открывается — попробуйте другой сервер или обновите подписку.</p>
+                    <div class="payrow">
+                        <span class="pay primary">✓ CONNECTED</span>
+                        <span class="pay">VLESS-REALITY</span>
+                        <span class="pay">AES-256-GCM</span>
+                        <span class="pay">ПРОВЕРКА · 2IP.RU</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ ALERTS ═══════════ -->
+<section id="alerts" style="padding-top:0">
+    <div class="wrap">
+        <div class="rv in"><span class="kicker">важно · windows-специфика</span>
+            <h2 data-scr="" data-orig="Три момента, которые стоит знать про Windows" class="in">Три момента, которые стоит знать про Windows</h2>
+            <p class="sub">Брандмауэр, TUN-режим и антивирусы — то, что отличает Windows от мобильных платформ и что нужно понимать, чтобы всё работало стабильно.</p>
+        </div>
+        <div class="alerts">
+            <div class="alert warn rv in">
+                <span class="tag">⚠ БРАНДМАУЭР</span>
+                <h3>Разрешите клиенту сетевой доступ</h3>
+                <p>Windows Defender Firewall по умолчанию блокирует сетевую активность новых приложений. Если клиент не может подключиться или TUN-режим не поднимается — дело почти наверняка в брандмауэре.</p>
+                <ul>
+                    <li>Параметры → Конфиденциальность и безопасность → Брандмауэр</li>
+                    <li>«Разрешённые приложения» → добавьте клиент</li>
+                    <li>Отметьте галочки «Частные» и «Публичные» сети</li>
+                </ul>
+            </div>
+            <div class="alert info rv d1 in">
+                <span class="tag">ℹ TUN VS PROXY</span>
+                <h3>Для большинства программ нужен TUN</h3>
+                <p>System Proxy работает только с браузерами и приложениями, которые учитывают системные прокси-настройки. Игры, Discord, Steam, торренты и многие мессенджеры через System Proxy не идут — только через TUN.</p>
+                <ul>
+                    <li>TUN — весь трафик системы через VPN</li>
+                    <li>System Proxy — только «умные» приложения</li>
+                    <li>Для полной приватности всегда включайте TUN</li>
+                </ul>
+            </div>
+            <div class="alert tip rv d2 in">
+                <span class="tag">✓ АНТИВИРУСЫ</span>
+                <h3>Если антивирус блокирует TUN-адаптер</h3>
+                <p>Некоторые антивирусы (Касперский, ESET, Avast) могут блокировать создание виртуального сетевого адаптера для TUN-режима. Если TUN не включается — добавьте клиент в исключения антивируса.</p>
+                <ul>
+                    <li>Добавьте папку клиента в исключения антивируса</li>
+                    <li>Разрешите создание TUN-адаптера (Wintun / tun2socks)</li>
+                    <li>Если проблема осталась — попробуйте System Proxy как временное решение</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ FAQ ═══════════ -->
+<section id="faq">
+    <div class="wrap">
+        <div class="rv in" style="text-align:center"><span class="kicker">faq · windows</span><h2 data-scr="" data-orig="Частые вопросы по настройке на Windows" class="in">Частые вопросы по настройке на Windows</h2></div>
+        <div class="faq-wrap">
+            <div class="acc-item rv in"><button class="acc-q">Какой клиент выбрать для Windows?<span class="ic">+</span></button><div class="acc-a"><p>Для большинства пользователей рекомендуем FlClashX — современный multi-platform клиент с полной поддержкой TUN-режима, правил маршрутизации и всех протоколов 3set. Happ подойдёт для слабых ПК, INCY — если нужна максимальная простота.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Windows заблокировал запуск клиента. Что делать?<span class="ic">+</span></button><div class="acc-a"><p>Это работа SmartScreen или антивируса. Если скачали клиент с личной страницы подписки — нажмите «Подробнее» → «Выполнить в любом случае». Если блокирует антивирус — добавьте клиент в исключения. Всегда скачивайте установщик только с официальной страницы.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Что такое TUN-режим и зачем он нужен?<span class="ic">+</span></button><div class="acc-a"><p>TUN-режим создаёт виртуальный сетевой адаптер и пропускает через VPN весь трафик системы — браузер, игры, Discord, торренты, обновления. Без TUN работает только System Proxy: VPN видят только браузеры и «умные» приложения. Для полной приватности всегда включайте TUN.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">System Proxy не работает с Discord / играми. Почему?<span class="ic">+</span></button><div class="acc-a"><p>System Proxy настраивает только системные прокси-настройки Windows. Discord, Steam, Epic Games, торренты и многие игры игнорируют эти настройки. Для них нужен TUN-режим — он пропускает весь трафик через виртуальный адаптер.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Брандмауэр блокирует подключение. Как разрешить?<span class="ic">+</span></button><div class="acc-a"><p>Параметры → Конфиденциальность и безопасность → Безопасность Windows → Брандмауэр и защита сети → Разрешённые приложения. Найдите клиент в списке и отметьте галочки «Частные» и «Публичные». Если клиента нет — «Добавить другое приложение» → укажите .exe файл клиента.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Антивирус блокирует TUN-адаптер. Что делать?<span class="ic">+</span></button><div class="acc-a"><p>Добавьте папку клиента в исключения антивируса (Касперский, ESET, Avast, Dr.Web). Разрешите создание виртуального сетевого адаптера (Wintun / tun2socks). Если проблема осталась — временно отключите антивирус для диагностики или используйте System Proxy как временное решение.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Как сделать, чтобы VPN запускался автоматически при старте Windows?<span class="ic">+</span></button><div class="acc-a"><p>В FlClashX / Happ / INCY откройте настройки → включите «Запуск при старте системы» и «Подключаться автоматически». Клиент будет запускаться в трее при загрузке Windows и сразу поднимать VPN-соединение.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Работает ли VPN на Windows ARM64 (Snapdragon)?<span class="ic">+</span></button><div class="acc-a"><p>Да. FlClashX, Happ и INCY имеют нативные ARM64-сборки для Windows on Snapdragon (Surface Pro X, Lenovo ThinkPad X13s и др.). Скачивайте версию с пометкой «ARM64» — она работает быстрее, чем через эмуляцию x64.</p></div></div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ CTA ═══════════ -->
+<section id="cta">
+    <div class="wrap">
+        <div class="cta-band rv in">
+            <h2>Готовы подключиться? Это займёт 3 минуты</h2>
+            <p>Покупка подписки → скачивание клиента → разрешение брандмауэра → импорт URL → включение TUN → вы в приватной сети. Работает на всех ПК и ноутбуках с Windows 10 и 11.</p>
+            <div class="cta-actions">
+                <a class="btn btn-lime" href="https://panel.3set.online" target="_blank" rel="noopener">Купить подписку →</a>
+                <a class="btn btn-ghost" href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-бот @3set_online_bot</a>
+            </div>
+            <div class="cta-guar"><span>✓ 7 ДНЕЙ ГАРАНТИЯ</span><span>✓ БЕЗ ЛОГОВ</span><span>✓ МИР / СБП / CRYPTO</span><span>✓ ПОДДЕРЖКА 24/7</span></div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer>
+    <div class="wrap">
+        <div class="f-grid">
+            <div class="f-about">
+                <a class="logo" href="/" style="color:#fff"><svg viewBox="0 0 32 32" fill="none" width="28" height="28"><path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" stroke="#b7ff45" stroke-width="2.2"></path><path d="M11 16l3.5 3.5L21 13" stroke="#b7ff45" stroke-width="2.4" stroke-linecap="round"></path></svg><span>3<em style="color:var(--lime)">set</em><span class="tld" style="color:#5d6b62">.online</span></span></a>
+                <p>Виртуальная частная сеть нового поколения. Приватный и стабильный доступ в обход блокировок. Используйте VPN только в законных целях.</p>
+            </div>
+            <div><h4>Продукт</h4><a href="/#pricing">Тарифы и цены</a><a href="/#status">Статус серверов</a><a href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-бот</a><a href="https://panel.3set.online" target="_blank" rel="noopener">Купить доступ</a></div>
+            <div><h4>Устройства</h4><a href="/ios/">VPN для iOS</a><a href="/android/">VPN для Android</a><a href="/windows/">VPN для Windows</a><a href="/mac/">VPN для macOS</a><a href="/router/">VPN на роутер</a><a href="/smart-tv/">VPN для Smart TV</a></div>
+            <div><h4>Технологии</h4><a href="/vless-reality/">VLESS Reality</a><a href="/shadowsocks/">Shadowsocks</a><a href="/wireguard/">WireGuard</a><a href="/#blog">База знаний</a></div>
+            <div><h4>Поддержка</h4><a href="/setup/">Инструкции /setup</a><a href="/#faq">FAQ</a><a href="mailto:support@3set.online">support@3set.online</a><a href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-чат</a></div>
+        </div>
+        <div class="f-bot"><span>© <span id="yearNow">2026</span> 3set.online · Инструкция для Windows</span><span>Политика конфиденциальности · Оферта</span></div>
+    </div>
+</footer>
+
+
+<!-- ═══════════ CHAT ═══════════ -->
+<button id="chatBtn" aria-label="Открыть чат поддержки"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12c0 4.4-4 8-9 8-1.1 0-2.2-.2-3.1-.5L4 21l1.3-3.6C4.5 16 4 14.1 4 12c0-4.4 4-8 8-8s9 3.6 9 8z" fill="currentColor" stroke="none"></path></svg></button>
+<div id="chatPanel" role="dialog" aria-label="Чат поддержки">
+    <div class="chat-hd"><span class="av">А</span><div>Аня · поддержка 3set<small>онлайн · отвечает ~5 мин</small></div></div>
+    <div id="chatMsgs"></div>
+    <div class="chat-chips"><button data-q="Какой клиент для Windows?">Какой клиент?</button><button data-q="TUN или System Proxy?">TUN vs Proxy</button><button data-q="Где купить подписку?">Купить подписку</button></div>
+    <div class="chat-in"><input id="chatInput" type="text" placeholder="Напишите сообщение…" aria-label="Сообщение"><button id="chatSend" aria-label="Отправить">➤</button></div>
+</div>
+
+
+<script>
+(function(){
+    "use strict";
+    var RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+
+    document.getElementById('yearNow').textContent = new Date().getFullYear();
+
+
+    var hdr = document.getElementById('hdr');
+    window.addEventListener('scroll', function(){ hdr.classList.toggle('scrolled', window.scrollY > 10); }, {passive:true});
+
+
+    var mnav = document.getElementById('mnav');
+    document.getElementById('burger').addEventListener('click', function(){ mnav.classList.add('open'); });
+    document.getElementById('mclose').addEventListener('click', function(){ mnav.classList.remove('open'); });
+    mnav.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', function(){ mnav.classList.remove('open'); }); });
+
+
+    var tick = document.getElementById('tickTrack');
+    tick.innerHTML += tick.innerHTML;
+
+
+    var CH = '!<>-_/\\[]{}=+*^?#01';
+    function scrambleEl(el, dur){
+        var target = el.dataset.orig || el.textContent;
+        el.dataset.orig = target;
+        if(RM){ el.textContent = target; return; }
+        dur = dur || 800;
+        var start = performance.now();
+        (function fr(now){
+            var p = Math.min(1, (now - start) / dur);
+            var solved = Math.floor(p * target.length), out = '';
+            for(var i=0;i<target.length;i++){
+                out += i < solved ? target[i] : (target[i] === ' ' ? ' ' : CH[(Math.random()*CH.length)|0]);
+            }
+            el.textContent = out;
+            if(p < 1) requestAnimationFrame(fr); else el.textContent = target;
+        })(start);
+    }
+    var scrSpans = document.querySelectorAll('h1 [data-scr]');
+    scrSpans.forEach(function(s, i){ setTimeout(function(){ scrambleEl(s, 900); }, 200 + i*350); });
+
+
+    var io = new IntersectionObserver(function(es){
+        es.forEach(function(e){
+            if(!e.isIntersecting) return;
+            e.target.classList.add('in');
+            var sc = e.target.querySelector('[data-scr]');
+            if(sc && !sc.dataset.done){ sc.dataset.done = 1; scrambleEl(sc, 700); }
+            if(e.target.hasAttribute('data-scr') && !e.target.dataset.done){ e.target.dataset.done = 1; scrambleEl(e.target, 700); }
+            io.unobserve(e.target);
+        });
+    },{threshold:.15});
+    document.querySelectorAll('.rv, h2[data-scr]').forEach(function(el){ io.observe(el); });
+
+
+    document.querySelectorAll('.acc-q').forEach(function(q){
+        q.addEventListener('click', function(){
+            var item = q.parentElement, body = item.querySelector('.acc-a');
+            var accs = document.querySelectorAll('.acc-item');
+            for(var i=0;i<accs.length;i++){
+                if(accs[i] !== item){ accs[i].classList.remove('open'); accs[i].querySelector('.acc-a').style.maxHeight = '0'; }
+            }
+            var open = item.classList.toggle('open');
+            body.style.maxHeight = open ? body.scrollHeight + 'px' : '0';
+        });
+    });
+
+
+    var chatBtn = document.getElementById('chatBtn'),
+        chatPanel = document.getElementById('chatPanel'),
+        chatMsgs = document.getElementById('chatMsgs'),
+        chatInput = document.getElementById('chatInput'),
+        chatOpened = false;
+    function addMsg(txt, who){
+        var m = document.createElement('div');
+        m.className = 'msg ' + who;
+        m.textContent = txt;
+        chatMsgs.appendChild(m);
+        chatMsgs.scrollTop = chatMsgs.scrollHeight;
+        return m;
+    }
+    function botReply(q){
+        var t = q.toLowerCase(), r;
+        if(/клиент|flclashx|happ|incy|приложен|установ/.test(t)) r = 'Для Windows рекомендуем FlClashX — современный клиент с полной поддержкой TUN и всех протоколов. Happ подойдёт для слабых ПК, INCY — для максимальной простоты. Все три есть на личной странице подписки ✅';
+        if(/брандмауэр|firewall|блокир|сет|разреш/.test(t)) r = 'Параметры → Конфиденциальность и безопасность → Безопасность Windows → Брандмауэр → Разрешённые приложения. Найдите клиент и отметьте галочки «Частные» и «Публичные». Без этого TUN не поднимется.';
+        if(/tun|proxy|прокси|system proxy|режим/.test(t)) r = 'TUN пропускает через VPN весь трафик системы — браузер, игры, Discord, торренты. System Proxy работает только с браузерами и «умными» приложениями. Для Discord, Steam и игр нужен именно TUN.';
+        if(/антивирус|касперск|eset|avast|defender/.test(t)) r = 'Добавьте папку клиента в исключения антивируса. Разрешите создание виртуального сетевого адаптера (Wintun). Если проблема осталась — временно отключите антивирус для диагностики.';
+        if(/smart|smartscreen|запуск|не открыв|выполн/.test(t)) r = 'Если SmartScreen блокирует — нажмите «Подробнее» → «Выполнить в любом случае». Скачивайте установщик только с личной страницы подписки — там проверенные файлы.';
+        if(/куп|подписк|оплат|тариф|цен/.test(t)) r = 'Купить подписку можно на panel.3set.online или в Telegram-боте @3set_online_bot. Оплата картой МИР, СБП или криптой. Ключ приходит за 1 минуту ⚡';
+        if(/ключ|импорт|vless|url|подписк|обнов/.test(t)) r = 'Скопируйте URL подписки с личной страницы → в клиенте: Профили → Новый → URL → вставьте → Сохранить → Обновить. Готово! Серверы подтянутся автоматически.';
+        if(/автозапуск|старт|стартовать|при загрузке|трей/.test(t)) r = 'В клиенте: настройки → «Запуск при старте системы» + «Подключаться автоматически». Клиент будет запускаться в трее при загрузке Windows и сразу поднимать VPN.';
+        if(/discord|steam|игр|торрент|epic/.test(t)) r = 'Для Discord, Steam, игр и торрентов нужен TUN-режим. System Proxy их не видит — они игнорируют системные прокси-настройки. Включите TUN в настройках клиента.';
+        if(/arm64|snapdragon|surface/.test(t)) r = 'Да, работает на Windows ARM64 (Snapdragon). Скачивайте версию с пометкой «ARM64» — она работает быстрее, чем через эмуляцию x64.';
+        if(/работ|блок|росси|dpi/.test(t)) r = 'Да, работает стабильно. Протокол VLESS Reality маскирует трафик под обычный HTTPS, DPI-фильтры нас не видят.';
+        if(/привет|здравств|добр/.test(t)) r = 'Привет! 👋 Подсказать по настройке на Windows, клиентам или подписке?';
+        if(!r) r = 'Хороший вопрос! Быстрее всего ответит оператор в Telegram: @3set_online_bot. Или уточните: клиент, TUN, брандмауэр, подписка?';
+        var ty = addMsg('', 'bot typing');
+        ty.innerHTML = '<i></i><i></i><i></i>';
+        setTimeout(function(){
+            ty.remove();
+            addMsg(r, 'bot');
+        }, RM ? 0 : 700 + Math.min(900, r.length * 4));
+    }
+    function openChat(){
+        chatOpened = true;
+        chatPanel.classList.add('open');
+        if(!chatMsgs.children.length){
+            addMsg('Привет! Я Аня из поддержки 3set ⚡ Помочь с настройке на Windows?', 'bot');
+        }
+    }
+    chatBtn.addEventListener('click', function(){ chatPanel.classList.contains('open') ? chatPanel.classList.remove('open') : openChat(); });
+    function sendChat(){
+        var v = chatInput.value.trim();
+        if(!v) return;
+        addMsg(v, 'usr');
+        chatInput.value = '';
+        botReply(v);
+    }
+    document.getElementById('chatSend').addEventListener('click', sendChat);
+    chatInput.addEventListener('keydown', function(e){ if(e.key === 'Enter') sendChat(); });
+    document.querySelectorAll('.chat-chips button').forEach(function(c){
+        c.addEventListener('click', function(){
+            if(!chatOpened) openChat();
+            addMsg(c.dataset.q, 'usr'); botReply(c.dataset.q);
+        });
+    });
+})();
+</script>
+
+
+</body>
+</html>

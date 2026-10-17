@@ -1,0 +1,340 @@
+/* Support intake — public landing form (POST /api/support/intake).
+ *
+ * One shared stylesheet for every landing page, so the 15 pages cannot drift.
+ * Scoped entirely under .si- prefixes and reusing the page's own CSS variables,
+ * so it inherits each page's palette instead of restating colours.
+ *
+ * Flow mirrors the server contract exactly: pick a reply channel, then supply
+ * the contact for THAT channel, then describe the problem.
+ */
+
+.si-fab {
+  position: fixed;
+  right: 22px;
+  bottom: 90px;
+  z-index: 80;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 100px;
+  background: var(--lime, #b7ff45);
+  color: var(--ink, #0e1512);
+  font-family: var(--disp, sans-serif);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .06em;
+  cursor: pointer;
+  box-shadow: 0 14px 34px -12px rgba(143, 212, 31, .55);
+  transition: transform .25s, box-shadow .25s;
+}
+
+.si-fab:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 44px -12px rgba(143, 212, 31, .7);
+}
+
+.si-fab svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.si-panel {
+  position: fixed;
+  right: 22px;
+  bottom: 144px;
+  z-index: 81;
+  width: min(380px, calc(100vw - 44px));
+  max-height: min(620px, 78vh);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line, #e4dfd1);
+  border-radius: 16px;
+  background: var(--panel, #fff);
+  box-shadow: 0 30px 80px -20px rgba(14, 21, 18, .35);
+  transform: translateY(16px) scale(.97);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform .35s cubic-bezier(.3, .8, .3, 1), opacity .35s;
+}
+
+.si-panel.is-open {
+  transform: none;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ---- header ---- */
+.si-hd {
+  background: var(--ink, #0e1512);
+  color: #e6efe4;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--disp, sans-serif);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.si-hd .si-av {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--lime, #b7ff45);
+  color: var(--ink, #0e1512);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono, monospace);
+  font-size: 13px;
+  font-weight: 700;
+  flex: none;
+}
+
+.si-hd small {
+  display: block;
+  font-family: var(--body, sans-serif);
+  font-weight: 600;
+  font-size: 10.5px;
+  color: var(--lime, #b7ff45);
+  opacity: .9;
+}
+
+.si-hd .si-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #8fa094;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+.si-hd .si-close:hover { color: var(--lime, #b7ff45); }
+
+/* ---- body ---- */
+.si-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 18px 18px;
+  background: var(--panel2, #fbfaf5);
+}
+
+.si-step { display: none; }
+.si-step.is-on { display: block; animation: siFade .28s ease; }
+
+@keyframes siFade {
+  from { opacity: 0; transform: translateY(10px); }
+}
+
+.si-q {
+  font-family: var(--disp, sans-serif);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink, #0e1512);
+  line-height: 1.35;
+  margin: 0 0 6px;
+}
+
+.si-hint {
+  font-size: 12.5px;
+  color: var(--mut, #5b645e);
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.si-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.si-choice button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--line2, #cec7b4);
+  border-radius: 10px;
+  background: var(--panel, #fff);
+  color: var(--ink, #0e1512);
+  font-family: var(--body, sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .2s, transform .2s, background .2s;
+}
+
+.si-choice button:hover {
+  border-color: var(--green, #0c4f36);
+  transform: translateY(-2px);
+}
+
+.si-choice .si-ic {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--ink, #0e1512);
+  color: var(--lime, #b7ff45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.si-choice .si-ic svg { width: 18px; height: 18px; }
+
+.si-choice .si-sub {
+  display: block;
+  font-weight: 500;
+  font-size: 11.5px;
+  color: var(--dim, #8f968f);
+  margin-top: 2px;
+}
+
+.si-label {
+  display: block;
+  font-family: var(--mono, monospace);
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--dim, #8f968f);
+  margin: 0 0 6px;
+}
+
+.si-input,
+.si-textarea {
+  width: 100%;
+  background: var(--panel, #fff);
+  border: 1px solid var(--line2, #cec7b4);
+  border-radius: 8px;
+  padding: 11px 13px;
+  color: var(--ink, #0e1512);
+  font-family: var(--body, sans-serif);
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color .2s;
+}
+
+.si-input:focus,
+.si-textarea:focus { border-color: var(--green, #0c4f36); }
+
+.si-textarea {
+  min-height: 92px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.si-err {
+  display: none;
+  font-size: 12px;
+  color: var(--red, #d84a3f);
+  margin-top: 6px;
+}
+
+.si-err.is-on { display: block; }
+
+/* Honeypot — off-screen but focusable-by-script only. */
+.si-trap {
+  position: absolute !important;
+  left: -9999px !important;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.si-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.si-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: 8px;
+  padding: 13px 18px;
+  font-family: var(--disp, sans-serif);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .05em;
+  cursor: pointer;
+  transition: transform .2s, opacity .2s;
+}
+
+.si-btn-primary {
+  background: var(--ink, #0e1512);
+  color: var(--lime, #b7ff45);
+}
+
+.si-btn-primary:hover { transform: translateY(-2px); }
+.si-btn-primary[disabled] { opacity: .55; cursor: progress; transform: none; }
+
+.si-btn-ghost {
+  background: transparent;
+  color: var(--mut, #5b645e);
+  border: 1px solid var(--line2, #cec7b4);
+}
+
+.si-btn-ghost:hover { color: var(--green, #0c4f36); border-color: var(--green, #0c4f36); }
+
+/* ---- done ---- */
+.si-done {
+  text-align: center;
+  padding: 10px 4px 6px;
+}
+
+.si-done .si-check {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: var(--lime, #b7ff45);
+  color: var(--ink, #0e1512);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+}
+
+.si-done p {
+  font-size: 13.5px;
+  color: var(--mut, #5b645e);
+  line-height: 1.55;
+  margin: 0 0 6px;
+}
+
+.si-done .si-where {
+  font-family: var(--mono, monospace);
+  font-size: 12px;
+  color: var(--green, #0c4f36);
+  background: var(--lime-soft, rgba(143, 212, 31, .14));
+  border: 1px solid rgba(12, 79, 54, .3);
+  border-radius: 8px;
+  padding: 9px 12px;
+  margin: 12px 0 4px;
+  word-break: break-word;
+}
+
+@media (max-width: 520px) {
+  .si-panel { right: 12px; bottom: 132px; width: calc(100vw - 24px); }
+  .si-fab { right: 12px; bottom: 80px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .si-panel, .si-step.is-on, .si-btn, .si-fab, .si-choice button { transition: none; animation: none; }
+}

@@ -57,6 +57,16 @@ export const envSchema = z.object({
   // Comma-separated Telegram ids allowed to reply/close tickets in Phase 4
   // (D-51). Optional: empty/unset means no admins. Server-only.
   ADMIN_TELEGRAM_IDS: z.string().optional(),
+  // Inbox that receives public support requests submitted from the static
+  // landing (POST /api/support/intake). Optional on purpose: when unset the
+  // route still delivers to admins via Telegram and skips only the email
+  // copy (`lib/mail.ts` degrades to a logged no-op), so an unconfigured inbox
+  // never loses a request and never blocks boot. Fail-fast still applies to a
+  // set-but-malformed value. Server-only — never a NEXT_PUBLIC_* var.
+  SUPPORT_ADMIN_EMAIL: z
+    .string()
+    .email("SUPPORT_ADMIN_EMAIL must be an email address")
+    .optional(),
   BOT_MODE: z.enum(["polling", "webhook"]).default("polling"),
   // Bot username for the bot-redirect login deep link (plan 06-06, G-06-4b).
   // Optional: when unset the request route falls back to a cached `getMe()`.

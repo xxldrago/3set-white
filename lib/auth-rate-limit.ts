@@ -232,3 +232,42 @@ export async function checkResetRateLimit(email: string, ip: string): Promise<Ra
 export async function recordResetAttempt(email: string, ip: string): Promise<RateLimitDecision> {
   return recordFailedLogin(resetKey(email), ip);
 }
+
+// ---------------------------------------------------------------------------
+// Public support-intake throttle (landing form, POST /api/support/intake).
+// Unauthenticated, unverified, and reachable by anyone — so it is throttled on
+// the TRUSTED client IP exactly like registration: an anonymous flood must not
+// be able to turn the admin inbox or the Telegram DM into a spam relay. It
+// reuses the D-84 counter with no migration, under a third namespace
+// (`__support__:<ip>` in the `email` column, `EMAIL_ONLY_IP` in `ip`) so it
+// stays disjoint from login, `__register__:`, and `__reset__:` rows. Two extra
+// guards beyond the shared machinery: the contact a visitor typed is never used
+// as a key (it is attacker-chosen, so bucketing by it is bypassable), and the
+// lock is intentionally tight — support is low-frequency, unlike logins.
+// ---------------------------------------------------------------------------
+
+/** Namespace prefix isolating support-intake counters from every other bucket. */
+const SUPPORT_NAMESPACE = "__support__:";
+
+/** Counter key for one trusted client IP (namespaced; never a real email). */
+function supportKey(ip: string): string {
+  return `${SUPPORT_NAMESPACE}${ip}`;
+}
+
+/**
+ * Pre-send gate, keyed on the trusted `clientIp` (never a client-supplied
+ * header, never the visitor's own contact value). Denies with the
+ * server-computed `retryAfterSec` once the per-IP lock engages.
+ */
+export async function checkSupportRateLimit(ip: string): Promise<RateLimitDecision> {
+  return checkLoginRateLimit(supportKey(ip), EMAIL_ONLY_IP);
+}
+
+/**
+ * Record one submitted request for the trusted IP. Called after the gate on
+ * every parsed request — successful or not — so a flood trips the lock whether
+ * or not the individual submissions were valid.
+ */
+export async function recordSupportAttempt(ip: string): Promise<RateLimitDecision> {
+  return recordFailedLogin(supportKey(ip), EMAIL_ONLY_IP);
+}

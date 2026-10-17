@@ -51,3 +51,31 @@ export function notifyAdminsNewTicket(ticketId: string, subject: string): void {
     }
   })();
 }
+
+/**
+ * A support request arrived from the public landing form — there is no ticket
+ * row, so the payload itself is the message. Plain text, no parse_mode (same
+ * reason as `notifyAdminsNewTicket`); `pushAll` clamps to the 4096-char limit.
+ */
+export function notifyAdminsSupportIntake(payload: {
+  channelLabel: string;
+  contact: string;
+  name: string;
+  body: string;
+}): void {
+  void (async () => {
+    try {
+      await pushAll(
+        t("admin.supportIntakeDm", {
+          channelLabel: payload.channelLabel,
+          contact: payload.contact,
+          name: payload.name,
+          body: payload.body,
+        }),
+      );
+      logger.info({ route: "admin-notify", outcome: "support_intake_sent" });
+    } catch {
+      // Best-effort only.
+    }
+  })();
+}

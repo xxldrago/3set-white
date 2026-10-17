@@ -343,6 +343,8 @@ export const ru = {
     navReferrals: 'Рефералы',
     navPartner: 'Партнёр',
     newTicketDm: '🆘 Новое обращение #{id}: {subject}',
+    supportIntakeDm:
+      '📨 Обращение с сайта\nОтветить: {channelLabel} · {contact}\nИмя: {name}\n\nСообщение:\n{body}',
     rolesAllTitle: 'Все пользователи',
     rolesAllSubtitle: 'Назначение ролей, доступы и переход в профиль (там же — процент партнёра). Роль требует привязанный Telegram.',
     rolePartner: 'Партнёр',

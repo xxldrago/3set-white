@@ -329,3 +329,37 @@ export async function sendWelcomeMail(to: string): Promise<MailResult> {
     ].join("\n"),
   });
 }
+
+/**
+ * ADMIN copy of a public landing support request (POST /api/support/intake).
+ * Unlike every other template here the recipient is staff, and the body carries
+ * visitor-supplied text — hence the explicit bounds, the no-credentials notice,
+ * and the "reply on the channel the visitor picked" instruction. Returns
+ * `{ sent: false }` (logged no-op) when no relay/admin inbox is configured, so
+ * the caller treats email as best-effort and never loses the request.
+ */
+export async function sendSupportIntakeMail(
+  to: string,
+  payload: { channelLabel: string; contact: string; name: string; body: string },
+): Promise<MailResult> {
+  const clip = (v: string, max: number): string =>
+    v.length > max ? `${v.slice(0, max)}…` : v;
+  return sendMail({
+    to,
+    tag: "support-intake",
+    subject: `Обращение с сайта — ответить: ${clip(payload.channelLabel, 40)}`,
+    text: [
+      "Новое обращение с лендинга 3set.online.",
+      "",
+      `Ответить через: ${payload.channelLabel}`,
+      `Контакт для ответа: ${payload.contact}`,
+      `Имя: ${payload.name || "—"}`,
+      "",
+      "Сообщение:",
+      clip(payload.body, 4000),
+      "",
+      "Ответьте на указанный контакт — он выбран самим посетителем.",
+      "Не отправляйте в это письмо пароли и ключи доступа.",
+    ].join("\n"),
+  });
+}

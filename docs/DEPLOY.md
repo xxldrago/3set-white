@@ -1,7 +1,7 @@
 # 3set-white — Deploy Runbook (OPS-01)
 
-Production deploy of the single-server topology to **64.188.97.106**, public
-cabinet **`my.3set.online`**, White Label subscription host
+Production deploy of the single-server topology to **81.90.31.102**, public
+cabinet **`panel.3set.online`**, White Label subscription host
 **`sub.my.3set.online` → 144.31.93.193** (ARTEMIDA's IP, not ours).
 
 > **Secret hygiene (D-77):** every real secret lives only in the server `.env`
@@ -14,7 +14,7 @@ cabinet **`my.3set.online`**, White Label subscription host
 
 ## 1. Prerequisites
 
-On the server (`64.188.97.106`):
+On the server (`81.90.31.102`):
 
 - Docker Engine + the Compose v2 plugin (`docker compose version`).
 - The repo checked out at `/opt/3set-white` (or set `BACKUP_DIR` accordingly).
@@ -48,12 +48,12 @@ In Cloudflare:
 
 | Record | Type | Value | Proxy |
 |--------|------|-------|-------|
-| `my.3set.online` | A | `64.188.97.106` | **DNS only (grey cloud)** for first cert issuance |
+| `panel.3set.online` | A | `81.90.31.102` | **DNS only (grey cloud)** for first cert issuance |
 | `sub.my.3set.online` | A | `144.31.93.193` | **DNS only (grey cloud)** |
 
 - **No AAAA** records on either name. Verify: `dig AAAA sub.my.3set.online`
   must return **empty** (else paid users' sub-links break).
-- `my.3set.online` stays DNS-only (grey cloud) for HTTP-01 first issuance; it
+- `panel.3set.online` stays DNS-only (grey cloud) for HTTP-01 first issuance; it
   may be re-proxied after the cert is issued, but DNS-only avoids Platega /
   Telegram webhook origin-IP surprises.
 
@@ -66,7 +66,7 @@ certbot can bind 80 for HTTP-01:
 cd /opt/3set-white
 docker compose -f docker-compose.prod.yml stop nginx
 docker compose -f docker-compose.prod.yml run --rm certbot certonly \
-  --standalone -d my.3set.online \
+  --standalone -d panel.3set.online \
   --agree-tos --no-eff-email -m you@example.com --preferred-challenges http
 docker compose -f docker-compose.prod.yml up -d nginx
 ```
@@ -85,13 +85,13 @@ Migrations run in the image entrypoint (`prisma migrate deploy`, forward-only �
 never `migrate dev` in prod). First boot also runs `prisma generate` in the
 builder, so the generated Prisma 7 client is present.
 
-## 6. Webhooks (must be HTTPS on my.3set.online)
+## 6. Webhooks (must be HTTPS on panel.3set.online)
 
 - **Telegram:** `setWebhook` to
-  `https://my.3set.online/api/telegram/webhook/{WEBHOOK_SECRET}` with
+  `https://panel.3set.online/api/telegram/webhook/{WEBHOOK_SECRET}` with
   `secret_token={WEBHOOK_SECRET}` (the route checks both path and header).
 - **Platega:** set the callback URL in the Platega LK to
-  `https://my.3set.online/api/platega/callback` (header-verified, no signature).
+  `https://panel.3set.online/api/platega/callback` (header-verified, no signature).
 
 ## 7. Backup schedule + restore (D-78)
 
@@ -123,7 +123,7 @@ This restores the pre-deploy `pg_dump` AND checks out the previous commit.
 
 ## 9. Monitoring checklist (D-78)
 
-- **Health:** `curl -f https://my.3set.online/api/health` → `200`
+- **Health:** `curl -f https://panel.3set.online/api/health` → `200`
   (`{ status:"ok", worker:true }`).
 - **Worker:** `worker` must be `true`; if `false`, the outbox/broadcast/reminder
   drain is down.

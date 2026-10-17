@@ -29,6 +29,7 @@ export const SUBDOMAIN_RE = /^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/;
 export const RESERVED_SUBDOMAINS = new Set([
   "www",
   "my",
+  "panel",
   "api",
   "admin",
   "app",

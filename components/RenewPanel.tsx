@@ -21,7 +21,7 @@ const DEBOUNCE_MS = 300;
 const CARD =
   'flex flex-col gap-4 rounded-2xl border border-line p-6 border-line';
 const TRIGGER =
-  'flex h-12 flex-1 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
+  'flex h-14 flex-1 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line p-4 transition-colors hover:bg-foreground/5 border-line ';
 const SECONDARY =
   'flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line ';
 

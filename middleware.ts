@@ -1,6 +1,6 @@
 // Partner-subdomain router (edge, no DB): `<name>.3set.online` → the
 // server-side resolver at `/sub/<name>` (which pins `?ref=` or redirects
-// home). Only the bare `<name>.3set.online` host matches — apex, `my.*`,
+// home). Only the bare `<name>.3set.online` host matches — apex, `panel.*`,
 // localhost, and reserved names pass through untouched.
 //
 // Requires (owner ops, outside code): wildcard DNS `*.3set.online` → this
@@ -10,13 +10,14 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const PARENT = "3set.online";
-const MAIN_HOST = `my.${PARENT}`;
+const MAIN_HOST = `panel.${PARENT}`;
 
 // Edge-safe copy of the reserved set (lib/referrals.ts pulls Prisma, which
 // cannot run in the edge runtime — keep the two lists in sync).
 const RESERVED = new Set([
   "www",
   "my",
+  "panel",
   "api",
   "admin",
   "app",
@@ -44,7 +45,7 @@ export function middleware(req: NextRequest): NextResponse {
     return NextResponse.next();
   }
   const url = req.nextUrl.clone();
-  url.host = `my.${PARENT}`;
+  url.host = MAIN_HOST;
   url.protocol = "https:";
   url.pathname = `/sub/${match}`;
   url.search = "";

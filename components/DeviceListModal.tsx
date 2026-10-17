@@ -94,7 +94,7 @@ export default function DeviceListModal({ keyId, deviceLimit }: DeviceListModalP
       <button
         type="button"
         onClick={openModal}
-        className="flex h-12 items-center justify-center gap-2 rounded-lg border border-line px-4 text-sm font-bold text-muted transition-colors hover:bg-foreground/5"
+        className="flex h-12 items-center justify-center gap-2 rounded-lg border border-line px-4 text-sm font-bold text-foreground transition-colors hover:bg-foreground/5"
       >
         <Smartphone className="h-4 w-4 shrink-0" aria-hidden />
         {t('key.devicesTitle')}

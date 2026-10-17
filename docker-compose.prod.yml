@@ -1,7 +1,7 @@
 # 3set-white production topology (OPS-01 / D-75): web + db + nginx + certbot.
 #
 # Single server (64.188.97.106) behind Nginx terminating TLS for
-# my.3set.online. The Postgres port is NEVER published; `db` lives on the
+# panel.3set.online. The Postgres port is NEVER published; `db` lives on the
 # internal Compose network only (T-05-25). The `web` port is not published
 # either — the only inbound path is Nginx 80/443 (T-05-26, fixed upstream).
 #
@@ -27,7 +27,7 @@ services:
       BOT_MODE: webhook
       NODE_ENV: production
       UPLOAD_DIR: /data/uploads
-      APP_BASE_URL: https://my.3set.online
+      APP_BASE_URL: https://panel.3set.online
     volumes:
       - uploads:/data/uploads
     depends_on:
@@ -81,7 +81,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/my.3set.online.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/panel.3set.online.conf:/etc/nginx/conf.d/default.conf:ro
       - certs:/etc/letsencrypt:ro
       - certbot_www:/var/www/certbot:ro
     depends_on:

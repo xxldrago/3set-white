@@ -4,7 +4,7 @@
 
 **3set-white — сервис продажи VPN**
 
-Сервис продажи VPN-подписок на базе ARTEMIDA Paid API (V1, `https://artemida.cc/v1`). Включает Telegram-бота, PWA личный кабинет на `my.3set.online`, оплату через Platega.io, систему тикетов и админ-панель. Весь бэкенд — тонкая обертка над ARTEMIDA API: баланс, прайсинг, ключи, трафик, устройства, subscription-ссылки. Для русскоязычных пользователей, оплата в рублях.
+Сервис продажи VPN-подписок на базе ARTEMIDA Paid API (V1, `https://artemida.cc/v1`). Включает Telegram-бота, PWA личный кабинет на `panel.3set.online`, оплату через Platega.io, систему тикетов и админ-панель. Весь бэкенд — тонкая обертка над ARTEMIDA API: баланс, прайсинг, ключи, трафик, устройства, subscription-ссылки. Для русскоязычных пользователей, оплата в рублях.
 
 **Core Value:** Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
 
@@ -14,7 +14,7 @@
 - **API limits**: Trial нельзя renew/upgrade; permanent delete без возврата средств; учитывать коды 401/402/409/429/502/503 и `Retry-After`
 - **Security**: `ARTEMIDA_API_KEY`, Platega-секреты, SSH/root-пароль — только env/секреты, запрет коммита секретов; root-пароль из чата перенести в менеджер секретов и ротировать
 - **Compatibility**: PWA (installable, мобильный фокус), Telegram Bot API + Login Widget
-- **Infrastructure**: Один сервер, домен my.3set.online; HTTPS обязателен (Platega webhook + Telegram webhook)
+- **Infrastructure**: Один сервер, домен panel.3set.online; HTTPS обязателен (Platega webhook + Telegram webhook)
 - **Compliance**: RU/RUB, безлимит по умолчанию
 
 <!-- GSD:project-end -->
@@ -67,7 +67,7 @@
 
 # Dev dependencies
 
-# Infra (server 64.188.97.106): Postgres 17 + Nginx via docker-compose.yml
+# Infra (server 81.90.31.102): Postgres 17 + Nginx via docker-compose.yml
 
 # npx prisma migrate deploy  # on deploy, never `migrate dev` in prod
 
@@ -90,7 +90,7 @@
 | Prisma v8 (`8.0.0-rc.x`) | Release candidate on the `latest` tag — do not run RC ORM in prod handling money | Pin `prisma@^7.10.0` / `@prisma/client@^7.10.0` |
 | NestJS / tRPC server | Over-engineering: backend is a thin wrapper over ARTEMIDA (`balance`, `pricing`, `keys`, wallet) + one Platega webhook | Next.js Route Handlers + shared `lib/` clients |
 | MongoDB / Firebase | Orders + tickets + idempotency are relational; document store buys nothing here | PostgreSQL 17 |
-| Vercel / serverless hosting | Violates single-server constraint; bot long-process + Platega/Telegram webhooks + local file uploads fit one host | Docker Compose on 64.188.97.106 + Nginx + `my.3set.online` |
+| Vercel / serverless hosting | Violates single-server constraint; bot long-process + Platega/Telegram webhooks + local file uploads fit one host | Docker Compose on 81.90.31.102 + Nginx + `panel.3set.online` |
 | TypeScript 7 (`^7.0`) | Native port, ecosystem (Next/SW tooling) support unverified at research time | `typescript@~5.9`, revisit in a later milestone |
 | Polling Platega status as primary flow | Webhook contract exists (200 ≤ 60s, 3 retries / 5 min); polling wastes quota and delays key issuance | Webhook-first + idempotent handler keyed by transaction `id` + hourly reconcile job |
 
@@ -106,7 +106,7 @@
 |-----------|-----------------|-------|
 | `next@16.3.x` | `react@19.x`, `typescript@5.x` | Verified `latest`/`19.3.0` on npm 2026-09-30; TS 7 not verified with Next 16 — stay on TS 5.9. |
 | `@serwist/next@9.5.x` | Next 15/16 (webpack prod build) | Disabled in dev under Turbopack — expected; test SW on `next build && next start`. |
-| `telegraf@4.16.3` | Node ≥ 18 (we run 24) | Webhook mode needs public HTTPS — satisfied by Nginx + `my.3set.online`. |
+| `telegraf@4.16.3` | Node ≥ 18 (we run 24) | Webhook mode needs public HTTPS — satisfied by Nginx + `panel.3set.online`. |
 | `prisma@7.10.x` | Node ≥ 20, Postgres 17 | `migrate deploy` in container entrypoint. |
 | `tailwindcss@4.3.x` | Next 16 (CSS-first `@import "tailwindcss"`) | No `tailwind.config.js` needed by default. |
 

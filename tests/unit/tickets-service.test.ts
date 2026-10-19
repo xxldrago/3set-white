@@ -9,9 +9,10 @@ import {
   beginSupportPrompt,
   clearSupportPrompt,
   closeTicket,
-  createTicket,
-  getTicketForUser,
-  hasOpenTicket,
+    createTicket,
+    getTicketById,
+    getTicketForUser,
+    hasOpenTicket,
   isSupportPromptFresh,
   listTicketsForUser,
   markTicketRead,
@@ -81,7 +82,27 @@ describe('tickets-service — create/read path + ownership + prompt claim', () =
     expect(thread?.messages[0]?.attachments).toEqual([]);
   });
 
-  it('persists an attachment descriptor with the first message', async () => {
+    it('returns the ticket owner on the admin read', async () => {
+      await prisma.ticket.deleteMany({ where: { userId } });
+
+      const created = await createTicket({
+        telegramId: TELEGRAM_ID,
+        subject: 'Кто отправил',
+        body: 'Нужна помощь',
+      });
+      const id = created.kind === 'created' ? created.id : '';
+
+      const thread = await getTicketById(id);
+      expect(thread?.requester).toEqual({
+        userId,
+        displayName: null,
+        username: null,
+        email: null,
+        telegramId: String(TELEGRAM_ID),
+      });
+    });
+
+    it('persists an attachment descriptor with the first message', async () => {
     await prisma.ticket.deleteMany({ where: { userId } });
 
     const created = await createTicket({

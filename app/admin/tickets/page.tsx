@@ -2,8 +2,9 @@
 // (ADM-01 / UI-SPEC §7). Enforcement lives HERE (layouts are not a boundary —
 // T-05-01): signed-out → /login, no/wrong role → 404. The list is NOT
 // owner-scoped — the resolved role is the authorization. Rows render through
-// the Phase 4 `TicketList` (subject/status/last-activity/preview only, never a
-// raw ticket id or provider text); the admin variant links to `/admin/tickets`.
+// the Phase 4 `TicketList` (subject/status/requester/last-activity/preview only,
+// never a raw ticket id or provider text); the admin variant links to
+// `/admin/tickets`.
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';

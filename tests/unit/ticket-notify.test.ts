@@ -4,7 +4,9 @@
 // - the worker dispatch resolves the OWNING chat server-side
 //   (`String(user.chatId ?? user.telegramId)`) and can never be pointed at any
 //   other chat (T-04-10 information disclosure);
-// - a Telegram send failure is retryable; a missing row is skipped.
+// - a Telegram send failure is retryable; a missing row is skipped;
+// - an email-only owner (no Telegram identity) is skipped — the reply already
+//   went out through the mail hook, and retrying a null chat must not happen.
 // Runs against the real local Postgres; no network is touched (fake sender).
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { BOT_REPLY_CAP } from "../../lib/bot-payments";
@@ -19,10 +21,12 @@ import { fakeSender } from "../helpers/fake-sender";
 
 const OWNER_WITH_CHAT = BigInt("200000910");
 const OWNER_NO_CHAT = BigInt("200000911");
+const EMAIL_ONLY = "ticket-notify-email-only@example.test";
 const PREFIX = "test-04-03:";
 
 let withChatUserId: number;
 let noChatUserId: number;
+let emailOnlyUserId: number;
 
 /** Seed an owning user → ticket → support message; returns the message id. */
 async function seedSupportMessage(
@@ -66,7 +70,12 @@ async function seedNotification(
 
 async function cleanup(): Promise<void> {
   const users = await prisma.user.findMany({
-    where: { telegramId: { in: [OWNER_WITH_CHAT, OWNER_NO_CHAT] } },
+    where: {
+      OR: [
+        { telegramId: { in: [OWNER_WITH_CHAT, OWNER_NO_CHAT] } },
+        { email: EMAIL_ONLY },
+      ],
+    },
     select: { id: true },
   });
   const ids = users.map((u) => u.id);
@@ -75,7 +84,14 @@ async function cleanup(): Promise<void> {
     await prisma.ticket.deleteMany({ where: { userId: { in: ids } } });
   }
   await prisma.notification.deleteMany({ where: { dedupeKey: { startsWith: PREFIX } } });
-  await prisma.user.deleteMany({ where: { telegramId: { in: [OWNER_WITH_CHAT, OWNER_NO_CHAT] } } });
+  await prisma.user.deleteMany({
+    where: {
+      OR: [
+        { telegramId: { in: [OWNER_WITH_CHAT, OWNER_NO_CHAT] } },
+        { email: EMAIL_ONLY },
+      ],
+    },
+  });
 }
 
 beforeAll(async () => {
@@ -90,6 +106,11 @@ beforeAll(async () => {
     select: { id: true },
   });
   noChatUserId = noChat.id;
+  const emailOnly = await prisma.user.create({
+    data: { email: EMAIL_ONLY },
+    select: { id: true },
+  });
+  emailOnlyUserId = emailOnly.id;
 });
 
 afterAll(async () => {
@@ -98,9 +119,11 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await prisma.notification.deleteMany({ where: { dedupeKey: { startsWith: PREFIX } } });
-  await prisma.ticket.deleteMany({ where: { userId: { in: [withChatUserId, noChatUserId] } } });
+  await prisma.ticket.deleteMany({
+    where: { userId: { in: [withChatUserId, noChatUserId, emailOnlyUserId] } },
+  });
   await prisma.keyCache.deleteMany({
-    where: { userId: { in: [withChatUserId, noChatUserId] } },
+    where: { userId: { in: [withChatUserId, noChatUserId, emailOnlyUserId] } },
   });
 });
 
@@ -195,6 +218,22 @@ describe("dispatchTicketNotification — owning-chat targeting (SUP-03 / T-04-10
     const result = await dispatchTicketNotification(notificationId, sender);
 
     expect(result.outcome).toBe("retryable_error");
+    expect(sender.calls).toHaveLength(0);
+  });
+
+  it("returns skipped for an email-only owner with no Telegram identity", async () => {
+    const { ticketId, messageId } = await seedSupportMessage(emailOnlyUserId, "emailonly");
+    const notificationId = await seedNotification(
+      emailOnlyUserId,
+      ticketId,
+      messageId,
+      "emailonly",
+    );
+    const sender = fakeSender();
+
+    const result = await dispatchTicketNotification(notificationId, sender);
+
+    expect(result.outcome).toBe("skipped");
     expect(sender.calls).toHaveLength(0);
   });
 

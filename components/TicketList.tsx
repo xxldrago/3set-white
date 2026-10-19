@@ -1,16 +1,18 @@
 // Presentational ticket list (SUP-01, UI-SPEC §1).
 //
 // No data fetching here: the server page passes provider-free `TicketListRow`
-// values (subject/status/unread/lastMessageAt/preview only — never a storage
-// path or provider status). Rows render the subject (1-line clamp + full value
-// via `title`), the status chip, the last-activity line, a 1-line preview, and
-// the accent unread badge (capped at `99+`, hidden entirely at 0). The unread
-// badge carries a keyed `aria-label` built through the RU plural helper `tp()`.
+// values (subject/status/unread/lastMessageAt/preview — never a storage path or
+// provider status). Rows render the subject (1-line clamp + full value via
+// `title`), the status chip, the last-activity line, a 1-line preview, and the
+// accent unread badge (capped at `99+`, hidden entirely at 0). The unread badge
+// carries a keyed `aria-label` built through the RU plural helper `tp()`.
+// `requester` is present only on the ADMIN read, so the cabinet list is
+// unchanged while support sees who filed each ticket.
 import Link from 'next/link';
 import TicketStatusChip from './TicketStatusChip';
 import { formatPaymentDate } from './PaymentHistoryList';
 import { t, tp } from '@/lib/i18n';
-import type { TicketListRow } from '@/lib/tickets-service';
+import type { TicketListRow, TicketRequester } from '@/lib/tickets-service';
 
 const CARD = 'rounded-2xl border border-line p-6 border-line';
 
@@ -20,6 +22,29 @@ const UNREAD_BADGE =
 /** Cap the displayed count at `99+` (UI-SPEC zero-one-many); `0` never renders. */
 function unreadDisplay(count: number): string {
   return count > 99 ? '99+' : String(count);
+}
+
+/** Admin-only sender line: name → @username → email → Telegram id → user id. */
+function requesterLine(requester: TicketRequester): string {
+  if (requester.displayName && requester.username) {
+    return t('ticket.fromNameUsername', {
+      name: requester.displayName,
+      username: requester.username,
+    });
+  }
+  if (requester.displayName) {
+    return t('ticket.fromName', { name: requester.displayName });
+  }
+  if (requester.username) {
+    return t('ticket.fromUsername', { name: requester.username });
+  }
+  if (requester.email) {
+    return t('ticket.fromEmail', { email: requester.email });
+  }
+  if (requester.telegramId) {
+    return t('ticket.fromTelegram', { id: requester.telegramId });
+  }
+  return t('ticket.fromUser', { id: requester.userId });
 }
 
 export default function TicketList({
@@ -58,6 +83,15 @@ export default function TicketList({
                 )}
               </div>
             </div>
+
+            {row.requester && (
+              <p
+                className="truncate text-sm text-foreground"
+                title={requesterLine(row.requester)}
+              >
+                {requesterLine(row.requester)}
+              </p>
+            )}
 
             <p className="text-sm text-muted">
               {t('ticket.lastActivity', { date: formatPaymentDate(row.lastMessageAt) })}

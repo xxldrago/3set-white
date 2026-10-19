@@ -30,6 +30,12 @@ export default function UserProfileCard({
           <h2 className="text-xl font-semibold text-foreground">
             {t('admin.profileTitle')}
           </h2>
+          {header.displayName && header.displayName !== header.username && (
+            <p className="text-lg font-semibold text-foreground">{header.displayName}</p>
+          )}
+          <p className="text-sm tabular-nums text-muted">
+            {t('admin.profileUserId', { id: header.userId })}
+          </p>
           {header.username && (
             <p className="text-sm text-muted">
               {t('admin.profileUsername', { name: header.username })}
@@ -38,6 +44,13 @@ export default function UserProfileCard({
           {header.email && (
             <p className="truncate text-sm text-muted" title={header.email}>
               {t('admin.profileEmail', { email: header.email })}
+            </p>
+          )}
+          {header.email && (
+            <p className="text-sm text-muted">
+              {header.emailVerified
+                ? t('admin.profileEmailVerified')
+                : t('admin.profileEmailUnverified')}
             </p>
           )}
           <p className="text-sm tabular-nums text-muted">

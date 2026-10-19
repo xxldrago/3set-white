@@ -61,12 +61,16 @@ export async function dispatchTicketNotification(
   if (!message || !owner) return { outcome: "skipped" };
 
   // The owning chat: prefer the stored chat id, else the telegram id. Never any
-  // other chat. `String()` because the Prisma id is a bigint and the Telegram
-  // API wants number|string.
-  const chatId = String(owner.chatId ?? owner.telegramId);
+  // other chat. Email-only accounts have neither — the reply already went out
+  // through the mail hook in `addSupportMessage`, so there is nothing to push
+  // (and retrying a `null` chat forever would poison the queue).
+  const chatId = owner.chatId ?? owner.telegramId;
+  if (chatId === null) return { outcome: "skipped" };
 
   try {
-    await send.sendMessage(chatId, buildTicketReplyPush(message.body ?? ""));
+    // `String()` because the Prisma id is a bigint and the Telegram API wants
+    // number|string.
+    await send.sendMessage(String(chatId), buildTicketReplyPush(message.body ?? ""));
     return { outcome: "pushed" };
   } catch {
     // A Telegram/network failure is retryable; the worker reschedules.

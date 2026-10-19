@@ -15,7 +15,11 @@ import { toAdminRole, type AdminRole } from "./admin-auth";
 import { deriveStatusKind, type StatusKind } from "./keys-service";
 import { toHistoryRow, type OrderHistoryRow } from "./orders-service";
 import { prisma } from "./prisma";
-import type { TicketListRow } from "./tickets-service";
+import {
+  TICKET_REQUESTER_SELECT,
+  toTicketRequester,
+  type TicketListRow,
+} from "./tickets-service";
 
 /** UI-SPEC §3: over this many matches, render the first 50 + a notice. */
 export const ADMIN_SEARCH_LIMIT = 50;
@@ -64,6 +68,8 @@ export interface AdminProfileHeader {
   username: string | null;
   displayName: string | null;
   createdAt: Date;
+  /** Whether the mailbox is confirmed (email-only accounts must verify). */
+  emailVerified: boolean;
   staffRole: AdminRole | null;
   referralCode: string | null;
   customInviterReward: number | null;
@@ -240,10 +246,11 @@ export async function loadAdminHeader(userId: number): Promise<AdminProfileHeade
         referralCode: true,
         customInviterReward: true,
         customInviterKind: true,
-        customSubdomain: true,
-        passwordHash: true,
-        trialUsed: true,
-      },
+          customSubdomain: true,
+          passwordHash: true,
+          trialUsed: true,
+          emailVerifiedAt: true,
+        },
     }),
     prisma.order.aggregate({
       where: { userId, status: { in: ["paid", "provisioning", "provisioned"] } },
@@ -266,9 +273,10 @@ export async function loadAdminHeader(userId: number): Promise<AdminProfileHeade
     telegramId: user.telegramId === null ? null : String(user.telegramId),
     email: user.email,
     username: user.username,
-    displayName: displayNameOf(user),
-    createdAt: user.createdAt,
-    staffRole: staff ? toAdminRole(staff.role) : null,
+      displayName: displayNameOf(user),
+      createdAt: user.createdAt,
+      emailVerified: user.emailVerifiedAt !== null,
+      staffRole: staff ? toAdminRole(staff.role) : null,
     referralCode: user.referralCode,
     customInviterReward: user.customInviterReward,
     customInviterKind: user.customInviterKind,
@@ -490,6 +498,7 @@ export async function loadAllTickets(): Promise<TicketListRow[]> {
   const rows = await prisma.ticket.findMany({
     orderBy: { lastMessageAt: "desc" },
     include: {
+      user: { select: TICKET_REQUESTER_SELECT },
       messages: {
         orderBy: { createdAt: "desc" },
         take: 1,
@@ -505,6 +514,7 @@ export async function loadAllTickets(): Promise<TicketListRow[]> {
     unreadForUser: row.unreadForUser,
     lastMessageAt: row.lastMessageAt,
     preview: row.messages[0]?.body ?? null,
+    requester: toTicketRequester(row.user),
   }));
 }
 

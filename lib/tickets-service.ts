@@ -13,6 +13,55 @@ import { prisma } from "./prisma";
 export type TicketStatus = "open" | "answered" | "closed";
 export type TicketAuthor = "user" | "support";
 
+/**
+ * Who filed the ticket. Only the admin surfaces load this — the cabinet list
+ * already knows the viewer. `telegramId` is serialized as a string because
+ * Prisma ids are bigints.
+ */
+export interface TicketRequester {
+  userId: number;
+  /** First + last name; null when the account has none. */
+  displayName: string | null;
+  username: string | null;
+  email: string | null;
+  telegramId: string | null;
+}
+
+/** PII-minimal owner selection for the admin ticket surfaces. */
+export const TICKET_REQUESTER_SELECT = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  username: true,
+  email: true,
+  telegramId: true,
+} as const;
+
+interface RequesterRow {
+  id: number;
+  firstName: string | null;
+  lastName: string | null;
+  username: string | null;
+  email: string | null;
+  telegramId: bigint | null;
+}
+
+/** Map a `User` row to the provider-free requester shape the UI renders. */
+export function toTicketRequester(user: RequesterRow): TicketRequester {
+  const full = [user.firstName, user.lastName]
+    .map((part) => part?.trim() ?? "")
+    .filter((part) => part.length > 0)
+    .join(" ")
+    .trim();
+  return {
+    userId: user.id,
+    displayName: full.length > 0 ? full : null,
+    username: user.username,
+    email: user.email,
+    telegramId: user.telegramId === null ? null : String(user.telegramId),
+  };
+}
+
 /** The bot intake flag is valid for 30 minutes after `beginSupportPrompt`. */
 const SUPPORT_PROMPT_TTL_MS = 30 * 60_000;
 
@@ -48,6 +97,8 @@ export interface TicketListRow {
   unreadForUser: number;
   lastMessageAt: Date;
   preview: string | null;
+  /** Present only on admin reads; absent on the owner-scoped cabinet list. */
+  requester?: TicketRequester;
 }
 
 export interface TicketThreadMessage {
@@ -70,6 +121,8 @@ export interface TicketThread {
   status: TicketStatus;
   unreadForUser: number;
   messages: TicketThreadMessage[];
+  /** Present only on the admin read (`getTicketById`). */
+  requester?: TicketRequester;
 }
 
 /**
@@ -276,9 +329,9 @@ async function getTicketForOwner(
 export async function getTicketById(ticketId: string): Promise<TicketThread | null> {
   const row = await prisma.ticket.findUnique({
     where: { id: ticketId },
-    include: THREAD_INCLUDE,
+    include: { ...THREAD_INCLUDE, user: { select: TICKET_REQUESTER_SELECT } },
   });
-  return row ? toThread(row) : null;
+  return row ? { ...toThread(row), requester: toTicketRequester(row.user) } : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -369,12 +422,18 @@ export async function addSupportMessage(
   });
 
   // Best-effort user email — skipped for Telegram-only accounts, swallowed
-  // failures, never fails the reply.
+  // failures, never fails the reply. The import is inside the guard too: a
+  // mail-module hiccup must not reject before the route enqueues the Telegram
+  // push, or the reply would land in neither channel.
   if (exists.user?.email) {
-    const { sendTicketReplyMail } = await import("./mail");
-    void sendTicketReplyMail(exists.user.email, ticketId, exists.subject, body).catch(
-      () => undefined,
-    );
+    try {
+      const { sendTicketReplyMail } = await import("./mail");
+      void sendTicketReplyMail(exists.user.email, ticketId, exists.subject, body).catch(
+        () => undefined,
+      );
+    } catch {
+      // Email is a mirror; the durable Telegram notification still goes out.
+    }
   }
 
   return { id: message.id };

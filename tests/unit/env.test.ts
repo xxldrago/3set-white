@@ -19,21 +19,21 @@ const REQUIRED = {
 };
 
 describe("env schema — prod origin + Phase 5 vars", () => {
-  it("parses the prod origin https://panel.3set.online", () => {
+  it("parses the prod origin https://dash.3set.online", () => {
     const parsed = envSchema.safeParse({
       ...REQUIRED,
-      APP_BASE_URL: "https://panel.3set.online",
+      APP_BASE_URL: "https://dash.3set.online",
     });
 
     expect(parsed.success).toBe(true);
     if (parsed.success) {
-      expect(parsed.data.APP_BASE_URL).toBe("https://panel.3set.online");
+      expect(parsed.data.APP_BASE_URL).toBe("https://dash.3set.online");
     }
   });
 
   it("rejects a non-URL APP_BASE_URL", () => {
     expect(
-      envSchema.safeParse({ ...REQUIRED, APP_BASE_URL: "panel.3set.online" }).success,
+      envSchema.safeParse({ ...REQUIRED, APP_BASE_URL: "dash.3set.online" }).success,
     ).toBe(false);
   });
 

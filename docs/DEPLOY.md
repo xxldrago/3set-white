@@ -1,7 +1,7 @@
 # 3set-white — Deploy Runbook (OPS-01)
 
 Production deploy of the single-server topology to **81.90.31.102**, public
-cabinet **`panel.3set.online`**, White Label subscription host
+cabinet **`dash.3set.online`**, White Label subscription host
 **`sub.my.3set.online` → 144.31.93.193** (ARTEMIDA's IP, not ours).
 
 > **Secret hygiene (D-77):** every real secret lives only in the server `.env`
@@ -48,12 +48,12 @@ In Cloudflare:
 
 | Record | Type | Value | Proxy |
 |--------|------|-------|-------|
-| `panel.3set.online` | A | `81.90.31.102` | **DNS only (grey cloud)** for first cert issuance |
+| `dash.3set.online` | A | `81.90.31.102` | **DNS only (grey cloud)** for first cert issuance |
 | `sub.my.3set.online` | A | `144.31.93.193` | **DNS only (grey cloud)** |
 
 - **No AAAA** records on either name. Verify: `dig AAAA sub.my.3set.online`
   must return **empty** (else paid users' sub-links break).
-- `panel.3set.online` stays DNS-only (grey cloud) for HTTP-01 first issuance; it
+- `dash.3set.online` stays DNS-only (grey cloud) for HTTP-01 first issuance; it
   may be re-proxied after the cert is issued, but DNS-only avoids Platega /
   Telegram webhook origin-IP surprises.
 
@@ -66,7 +66,7 @@ certbot can bind 80 for HTTP-01:
 cd /opt/3set-white
 docker compose -f docker-compose.prod.yml stop nginx
 docker compose -f docker-compose.prod.yml run --rm certbot certonly \
-  --standalone -d panel.3set.online \
+  --standalone -d dash.3set.online \
   --agree-tos --no-eff-email -m you@example.com --preferred-challenges http
 docker compose -f docker-compose.prod.yml up -d nginx
 ```
@@ -85,7 +85,27 @@ Migrations run in the image entrypoint (`prisma migrate deploy`, forward-only �
 never `migrate dev` in prod). First boot also runs `prisma generate` in the
 builder, so the generated Prisma 7 client is present.
 
-## 6. Webhooks + Telegram delivery (must be HTTPS on panel.3set.online)
+### Landing static performance (nginx)
+
+The landing is a static site served from `/var/www/3set.online`. Deploy it with
+`rsync -az --delete landing/ root@<host>:/var/www/3set.online/`; the vhost is
+`/etc/nginx/sites-enabled/3set-landing.conf` (repo copy: `nginx/3set.online.conf`).
+
+Three edge settings carry most of the speed:
+
+- **gzip + brotli for text assets** — Ubuntu ships `gzip_types` commented out,
+  so only HTML is compressed. Apply `nginx/nginx-http-perf.conf` inside the
+  `http { }` block of `/etc/nginx/nginx.conf`; brotli needs the
+  `libnginx-mod-http-brotli-filter` and `libnginx-mod-http-brotli-static`
+  packages (Ubuntu 24.04).
+- **Cache-Control** — immutable assets (`woff2/webp/png/...`) get 1 year
+  `immutable`, `css/js` 7 days, HTML 5 minutes. Without it every visit
+  revalidates all fonts and images.
+- **HTTP/2** — add `http2` to every `listen ... 443 ssl` on the host. Mixing
+  HTTP/2 and non-HTTP/2 listeners on the same address:port logs
+  "protocol options redefined" and can downgrade the shared listener to 1.1.
+
+## 6. Webhooks + Telegram delivery (must be HTTPS on dash.3set.online)
 
 - **Telegram uses LONG POLLING (`BOT_MODE=polling`), not a webhook.** Telegram
   never delivers inbound webhook POSTs to this host's IP: no SYN from
@@ -100,7 +120,7 @@ builder, so the generated Prisma 7 client is present.
   - `deleteWebhook` must be issued when switching to polling — `getUpdates`
     fails with a conflict while a webhook is registered.
 - **Platega:** set the callback URL in the Platega LK to
-  `https://panel.3set.online/api/platega/callback` (header-verified, no signature).
+  `https://dash.3set.online/api/platega/callback` (header-verified, no signature).
   Platega reaches us fine — only Telegram's inbound path is affected.
 
 ## 7. Backup schedule + restore (D-78)
@@ -133,7 +153,7 @@ This restores the pre-deploy `pg_dump` AND checks out the previous commit.
 
 ## 9. Monitoring checklist (D-78)
 
-- **Health:** `curl -f https://panel.3set.online/api/health` → `200`
+- **Health:** `curl -f https://dash.3set.online/api/health` → `200`
   (`{ status:"ok", worker:true }`).
 - **Worker:** `worker` must be `true`; if `false`, the outbox/broadcast/reminder
   drain is down.

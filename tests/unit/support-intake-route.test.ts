@@ -39,7 +39,7 @@ import { env } from "../../lib/env";
 
 /** Build a Request that looks like it came through the nginx proxy. */
 function req(body: unknown, ip = "203.0.113.7"): Request {
-  return new Request("https://panel.3set.online/api/support/intake", {
+  return new Request("https://dash.3set.online/api/support/intake", {
     method: "POST",
     headers: { "content-type": "application/json", "x-real-ip": ip },
     body: JSON.stringify(body),
@@ -144,7 +144,7 @@ describe("POST /api/support/intake — validation", () => {
 
   it("returns 400 on malformed JSON without throwing", async () => {
     const res = await POST(
-      new Request("https://panel.3set.online/api/support/intake", {
+      new Request("https://dash.3set.online/api/support/intake", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: "{not json",

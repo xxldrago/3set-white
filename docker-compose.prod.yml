@@ -1,7 +1,7 @@
 # 3set-white production topology (OPS-01 / D-75): web + db + nginx + certbot.
 #
 # Single server (64.188.97.106) behind Nginx terminating TLS for
-# panel.3set.online. The Postgres port is NEVER published; `db` lives on the
+# dash.3set.online. The Postgres port is NEVER published; `db` lives on the
 # internal Compose network only (T-05-25). The `web` port is not published
 # either — the only inbound path is Nginx 80/443 (T-05-26, fixed upstream).
 #
@@ -31,7 +31,7 @@ services:
       BOT_MODE: ${BOT_MODE:-webhook}
       NODE_ENV: production
       UPLOAD_DIR: /data/uploads
-      APP_BASE_URL: https://panel.3set.online
+      APP_BASE_URL: https://dash.3set.online
       # Docker pre-sets HOSTNAME to the container id, and Next.js uses that
       # value verbatim as its bind address — so the server came up listening on
       # the container's eth0 address instead of 0.0.0.0, and the localhost
@@ -91,7 +91,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/panel.3set.online.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/dash.3set.online.conf:/etc/nginx/conf.d/default.conf:ro
       - certs:/etc/letsencrypt:ro
       - certbot_www:/var/www/certbot:ro
     depends_on:

@@ -317,6 +317,9 @@ export async function sendPurchaseMail(to: string, input: PurchaseMailInput): Pr
 
 /** D-90 template 2/2: registration greeting, no credentials inside. */
 export async function sendWelcomeMail(to: string): Promise<MailResult> {
+  // Хост берём из APP_BASE_URL, а не из константы: переименование домена не должно
+  // снова расходиться с env (см. resetLinkFor выше).
+  const hostLabel = env.APP_BASE_URL.replace(/^https?:\/\//, "").replace(/\/$/, "");
   return sendMail({
     to,
     tag: "welcome",
@@ -324,7 +327,7 @@ export async function sendWelcomeMail(to: string): Promise<MailResult> {
     text: [
       "Регистрация прошла успешно — добро пожаловать в 3set.",
       "",
-      "Войти и управлять подпиской — в кабинете на panel.3set.online.",
+      "Войти и управлять подпиской — в кабинете на " + hostLabel + ".",
       "Если забудете пароль — восстановите его ссылкой из письма на странице входа.",
     ].join("\n"),
   });

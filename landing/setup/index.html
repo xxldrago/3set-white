@@ -174,6 +174,16 @@ h1 .l3{display:block;font-family:var(--body);font-weight:600;font-size:clamp(.95
 .client.hot .go{color:var(--lime)}
 
 
+/* per-platform download links (replaced the single dead "СКАЧАТЬ" CTA) */
+.dl{display:flex;flex-wrap:wrap;gap:7px;margin-top:2px}
+.dl a{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;padding:7px 11px;border-radius:100px;border:1px solid rgba(12,79,54,.3);color:var(--green);background:var(--lime-soft);transition:background .2s,color .2s,border-color .2s;white-space:nowrap}
+.dl a:hover{background:var(--ink);color:var(--lime);border-color:var(--ink)}
+.dl a:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.client.hot .dl a{border-color:rgba(183,255,69,.35);color:var(--lime);background:rgba(183,255,69,.1)}
+.client.hot .dl a:hover{background:var(--lime);color:var(--ink);border-color:var(--lime)}
+.client.hot .dl a:focus-visible{outline-color:var(--lime)}
+
+
 /* protocol comparison */
 .proto-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px}
 .proto{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:28px;position:relative;transition:transform .3s,border-color .3s,box-shadow .3s;display:flex;flex-direction:column;gap:14px;overflow:hidden}
@@ -479,46 +489,46 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
             <p class="sub">Три основных клиента, которые мы рекомендуем. Все три поддерживают VLESS Reality, Shadowsocks и WireGuard, работают на всех платформах и получают регулярные обновления.</p>
         </div>
         <div class="clients">
-            <a class="client hot rv in" href="#" onclick="return false;">
+            <div class="client hot rv in">
                 <span class="pop-tag">РЕКОМЕНДУЕМ</span>
                 <span class="path">Универсальный клиент</span>
                 <div class="client-ic">IN</div>
                 <h3>INCY</h3>
                 <p>Современный клиент с чистой интерфейсной логикой. Автоматический импорт подписки, TUN-режим, интеграция с меню-баром. Лучший выбор для большинства пользователей.</p>
-                <div class="compat">
-                    <span>IOS</span>
-                    <span>ANDROID</span>
-                    <span>WINDOWS</span>
-                    <span>MACOS</span>
+                <div class="dl">
+                    <a href="https://apps.apple.com/us/app/incy/id6756943388" target="_blank" rel="noopener">iOS</a>
+                    <a href="https://play.google.com/store/apps/details?id=llc.itdev.incy&amp;hl=ru" target="_blank" rel="noopener">Android</a>
+                    <a href="https://github.com/INCY-DEV/incy-platforms" target="_blank" rel="noopener">Windows</a>
+                    <a href="https://apps.apple.com/us/app/incy/id6756943388" target="_blank" rel="noopener">macOS</a>
+                    <a href="https://github.com/INCY-DEV/incy-platforms" target="_blank" rel="noopener">Linux</a>
+                    <a href="https://incy.cc/#tv-downloads" target="_blank" rel="noopener">TV</a>
                 </div>
-                <span class="go">СКАЧАТЬ INCY →</span>
-            </a>
-            <a class="client rv d1 in" href="#" onclick="return false;">
+            </div>
+            <div class="client rv d1 in">
                 <span class="path">Лёгкий клиент</span>
                 <div class="client-ic">H</div>
                 <h3>Happ</h3>
                 <p>Лёгкий клиент с минимальным потреблением ресурсов. Отлично подходит для старых устройств, Smart TV и роутеров. Поддерживает все протоколы 3set.</p>
-                <div class="compat">
-                    <span>IOS</span>
-                    <span>ANDROID</span>
-                    <span>WINDOWS</span>
-                    <span>SMART TV</span>
+                <div class="dl">
+                    <a href="https://github.com/Happ-proxy/happ-android/releases/latest/download/Happ.apk" target="_blank" rel="noopener">Android</a>
+                    <a href="https://github.com/Happ-proxy/happ-desktop/releases/latest/download/setup-Happ.x64.exe" target="_blank" rel="noopener">Windows</a>
+                    <a href="https://github.com/Happ-proxy/happ-desktop/releases/latest/download/Happ.linux.x64.deb" target="_blank" rel="noopener">Linux</a>
+                    <a href="https://play.google.com/store/apps/details?id=com.happproxy" target="_blank" rel="noopener">Android TV</a>
+                    <a href="https://apps.apple.com/us/app/happ-proxy-utility-for-tv/id6748297274" target="_blank" rel="noopener">Apple TV</a>
                 </div>
-                <span class="go">СКАЧАТЬ HAPP →</span>
-            </a>
-            <a class="client rv d2 in" href="#" onclick="return false;">
+            </div>
+            <div class="client rv d2 in">
                 <span class="path">Multi-platform клиент</span>
                 <div class="client-ic">FC</div>
                 <h3>FlClashX</h3>
                 <p>Multi-platform клиент на базе Clash Meta. Гибкие правила маршрутизации, TUN-режим, поддержка всех протоколов. Для продвинутых пользователей.</p>
-                <div class="compat">
-                    <span>WINDOWS</span>
-                    <span>MACOS</span>
-                    <span>ANDROID</span>
-                    <span>SMART TV</span>
+                <div class="dl">
+                    <a href="https://github.com/pluralplay/FlClashX/releases/download/core-v1.19.30/FlClashCore-macos-arm64" target="_blank" rel="noopener">macOS</a>
+                    <a href="https://github.com/pluralplay/FlClashX/releases/download/core-v1.19.30/FlClashCore-windows-amd64.exe" target="_blank" rel="noopener">Windows</a>
+                    <a href="https://github.com/pluralplay/FlClashX/releases/download/core-v1.19.30/FlClashCore-linux-arm64" target="_blank" rel="noopener">Linux</a>
+                    <a href="https://github.com/pluralplay/FlClashX/releases/download/v0.4.2/FlClashX-android-universal.apk" target="_blank" rel="noopener">Android</a>
                 </div>
-                <span class="go">СКАЧАТЬ FLCLASHX →</span>
-            </a>
+            </div>
         </div>
     </div>
 </section>

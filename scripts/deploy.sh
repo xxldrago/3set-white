@@ -2,13 +2,18 @@
 # deploy.sh — production deploy for 3set-white (D-76): git pull → build → up -d.
 # Migrations run inside the image entrypoint (`prisma migrate deploy`, forward-only).
 #
+# BOTH compose files are mandatory. `docker-compose.ports.yml` carries the
+# host-side `127.0.0.1:3001->3000` publish that the host nginx proxies to;
+# dropping it recreates the web container without that mapping and takes the
+# whole cabinet down with 502 (it happened once — never deploy with one file).
+#
 # Secrets are read only from the server `.env` (gitignored) and are never
 # printed. Run `scripts/backup.sh` BEFORE deploying (see docs/DEPLOY.md).
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-COMPOSE="docker compose -f docker-compose.prod.yml"
+COMPOSE="docker compose -f docker-compose.prod.yml -f docker-compose.ports.yml"
 
 echo "==> git pull"
 git pull --ff-only

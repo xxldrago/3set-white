@@ -23,7 +23,10 @@ if [ ! -f "$DUMP" ]; then
   exit 1
 fi
 
-COMPOSE="docker compose -f docker-compose.prod.yml"
+# Same rule as deploy.sh: the ports override carries the host-side
+# 127.0.0.1:3001 publish the host nginx proxies to. Without it the recreated
+# web container has no host port and the cabinet answers 502.
+COMPOSE="docker compose -f docker-compose.prod.yml -f docker-compose.ports.yml"
 
 echo "==> restore DB from $DUMP"
 gunzip -c "$DUMP" | $COMPOSE exec -T db psql -U setwhite setwhite

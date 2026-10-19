@@ -32,6 +32,12 @@ services:
       NODE_ENV: production
       UPLOAD_DIR: /data/uploads
       APP_BASE_URL: https://panel.3set.online
+      # Docker pre-sets HOSTNAME to the container id, and Next.js uses that
+      # value verbatim as its bind address — so the server came up listening on
+      # the container's eth0 address instead of 0.0.0.0, and the localhost
+      # healthcheck below could never connect (permanently "unhealthy" while
+      # serving fine). Pin it to 0.0.0.0 so the probe has something to reach.
+      HOSTNAME: "0.0.0.0"
     volumes:
       - uploads:/data/uploads
     depends_on:

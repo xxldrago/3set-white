@@ -6,14 +6,9 @@
     <meta property="og:description" content="Приватный и стабильный доступ. VLESS Reality, Shadowsocks, WireGuard. 34 сервера, 1 Гбит/с, без логов.">
     <meta property="og:type" content="website">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e1512'/%3E%3Cpath d='M16 5l9 4v7c0 6-4 9.5-9 11-5-1.5-9-5-9-11V9l9-4z' fill='none' stroke='%23b7ff45' stroke-width='2.4'/%3E%3Cpath d='M11.5 16l3 3 6-6' fill='none' stroke='%23b7ff45' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/500.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/700.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/400.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/600.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/800.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/600.css">
-<link rel="stylesheet" href="/assets/support-intake.css">
+    <link rel="stylesheet" href="/assets/fonts.css">
+<link rel="preload" href="/assets/support-intake.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="/assets/support-intake.css"></noscript>
     <script type="application/ld+json">
         {"@context":"https://schema.org","@type":"Product","name":"3set VPN","description":"Высокоскоростной VPN для России: приватный и стабильный доступ. Протоколы VLESS/Reality, Shadowsocks, WireGuard.","brand":{"@type":"Brand","name":"3set.online"},"offers":{"@type":"AggregateOffer","priceCurrency":"RUB","lowPrice":"333","highPrice":"449","offerCount":"3"}}
     </script>
@@ -405,7 +400,7 @@
             <a href="#pricing">Тарифы</a><a href="#devices">Устройства</a><a href="#protocols">Технологии</a><a href="#locations">Серверы</a><a href="#status">Статус</a><a href="#blog">База знаний</a><a href="#faq">FAQ</a>
         </nav>
         <div class="hdr-cta">
-            <a class="btn btn-solid" href="https://panel.3set.online/signup" target="_blank" rel="noopener">Подключить</a> <!-- ИЗМЕНЕНО -->
+            <a class="btn btn-solid" href="https://dash.3set.online/signup" target="_blank" rel="noopener">Подключить</a> <!-- ИЗМЕНЕНО -->
             <button id="burger" aria-label="Открыть меню"><i></i><i></i><i></i></button>
         </div>
     </div>
@@ -413,7 +408,7 @@
 <div id="mnav" aria-hidden="true">
     <button id="mclose" aria-label="Закрыть меню">✕</button>
     <a href="#pricing">Тарифы</a><a href="#devices">Устройства</a><a href="#protocols">Технологии</a><a href="#locations">Серверы</a><a href="#status">Статус</a><a href="#blog">База знаний</a><a href="#faq">FAQ</a>
-    <a class="btn btn-solid" href="https://panel.3set.online/signup" target="_blank" rel="noopener">Подключить сейчас</a> <!-- ИЗМЕНЕНО -->
+    <a class="btn btn-solid" href="https://dash.3set.online/signup" target="_blank" rel="noopener">Подключить сейчас</a> <!-- ИЗМЕНЕНО -->
 </div>
 
 
@@ -431,7 +426,7 @@
             </h1>
             <p class="hero-p">Серверы держат до <b>1 Гбит/с</b>, трафик неотличим от обычного HTTPS, а ключ выдаётся автоматически через <b>1 минуту</b> после оплаты — картой РФ или криптой.</p>
             <div class="hero-actions">
-                <a class="btn btn-solid" href="https://panel.3set.online/signup" target="_blank" rel="noopener">Подключить сейчас →</a> <!-- ИЗМЕНЕНО -->
+                <a class="btn btn-solid" href="https://dash.3set.online/signup" target="_blank" rel="noopener">Подключить сейчас →</a> <!-- ИЗМЕНЕНО -->
                 <a class="btn btn-ghost" href="#how">Как это работает</a>
             </div>
             <div class="os-row">
@@ -452,7 +447,7 @@
         <div class="console rv in">
             <div class="console-bar"><i></i><i></i><i></i><span class="ttl">3set · secure shell — vless://</span><span class="live-badge"><span class="pulse-dot"></span>LIVE</span></div>
             <div class="console-body">
-                <img class="globe" src="https://image.qwenlm.ai/public_source/8daac0df-a989-491f-be86-e99bd85b1b2c/19dd95ef4-1c0b-4c28-b384-cfa1532abd58.png" alt="" aria-hidden="true">
+                <img class="globe" src="/assets/img/hero-decor.webp" alt="" aria-hidden="true" width="800" height="800">
                 <div id="term" aria-label="Демонстрация подключения"><div class="tl cmd">$ 3set connect --proto vless-reality</div><div class="tl ok">→ handshake: OK · 24 ms</div><div class="tl ok">→ tunnel: AES-256-GCM · established</div><div class="tl ok">→ dns leak: protected · logs: none</div><div class="tl live">● connected · NL / Amsterdam</div><div class="tl cmd">$ ping 3set.online</div><div class="tl dim">64 bytes: icmp_seq=1 ttl=57 time=23.8 ms</div><div class="tl dim">64 bytes: icmp_seq=2 ttl=57 time=24.1 ms<span class="caret"></span></div></div>
             </div>
             <div class="console-foot">
@@ -586,7 +581,7 @@
                     <li>VLESS Reality + Shadowsocks</li>
                     <li class="no">Настройка на роутере</li>
                 </ul>
-                <a class="btn btn-ghost" href="https://panel.3set.online/signup" target="_blank" rel="noopener">Выбрать Старт</a> <!-- ИЗМЕНЕНО -->
+                <a class="btn btn-ghost" href="https://dash.3set.online/signup" target="_blank" rel="noopener">Выбрать Старт</a> <!-- ИЗМЕНЕНО -->
             </div>
             <div class="plan hot rv d1 in">
                 <span class="pop-tag">ВЫБОР 78% ПОЛЬЗОВАТЕЛЕЙ</span>
@@ -600,7 +595,7 @@
                     <li>Все протоколы + авто-ротация</li>
                     <li>Kill Switch и защита от утечек</li>
                 </ul>
-                <a class="btn btn-lime" href="https://panel.3set.online/signup" target="_blank" rel="noopener">Выбрать Оптимум</a> <!-- ИЗМЕНЕНО -->
+                <a class="btn btn-lime" href="https://dash.3set.online/signup" target="_blank" rel="noopener">Выбрать Оптимум</a> <!-- ИЗМЕНЕНО -->
             </div>
             <div class="plan rv d2 in">
                 <h3>Максимум</h3><p class="pfor">вся семья и домашняя сеть</p>
@@ -613,7 +608,7 @@
                     <li>Выделенный IP по запросу</li>
                     <li>Приоритетная поддержка 24/7</li>
                 </ul>
-                <a class="btn btn-ghost" href="https://panel.3set.online/signup" target="_blank" rel="noopener">Выбрать Максимум</a> <!-- ИЗМЕНЕНО -->
+                <a class="btn btn-ghost" href="https://dash.3set.online/signup" target="_blank" rel="noopener">Выбрать Максимум</a> <!-- ИЗМЕНЕНО -->
             </div>
         </div>
         <div class="pay-strip rv in">
@@ -761,7 +756,7 @@
                 <div class="srow"><span class="nm"><span class="sdot"></span>Нью-Йорк · US</span><span class="pr">WG</span><span class="up">99.95%</span><span class="pg" data-ping="118">116 мс</span></div>
             </div>
             <div class="sside rv d1 in">
-                <div class="simg"><img src="https://image.qwenlm.ai/public_source/8daac0df-a989-491f-be86-e99bd85b1b2c/199b6a145-f452-4fd2-b494-d6e4ad56731f.png" alt="Серверная стойка 3set.online" loading="lazy"></div>
+                <div class="simg"><img src="/assets/img/servers.webp" alt="Серверная стойка 3set.online" loading="lazy" width="1024" height="1024"></div>
                 <div class="ssum"><span class="big">99.98%</span><p>средний аптайм сети за последние 90 дней. Все системы работают в штатном режиме.</p></div>
             </div>
         </div>
@@ -779,19 +774,19 @@
             <p class="sub">Практические гайды без воды: как выбрать, настроить и не потерять соединение.</p></div>
         <div class="blog-grid">
             <a class="post rv in" href="/blog/kak-vybrat-vpn/">
-                <div class="thumb"><img src="https://image.qwenlm.ai/public_source/8daac0df-a989-491f-be86-e99bd85b1b2c/14ea0ddbd-a8af-46e6-88d4-b26fa0401b81.png" alt="Как выбрать VPN для России" loading="lazy"></div>
+                <div class="thumb"><img src="/assets/img/blog-how-to-choose.webp" alt="Как выбрать VPN для России" loading="lazy" width="1024" height="1024"></div>
                 <div class="body"><div class="meta"><span>ГАЙД</span><span>7 МИН</span></div>
                     <h3>Как выбрать лучший VPN для России в 2026 году?</h3>
                     <span class="read">ЧИТАТЬ →</span></div>
             </a>
             <a class="post rv d1 in" href="/blog/vpn-otklyuchaetsya/">
-                <div class="thumb"><img src="https://image.qwenlm.ai/public_source/8daac0df-a989-491f-be86-e99bd85b1b2c/1f4228053-1e9c-45db-ae54-4de8f88c3002.png" alt="VPN постоянно отключается — что делать" loading="lazy"></div>
+                <div class="thumb"><img src="/assets/img/blog-vpn-off.webp" alt="VPN постоянно отключается — что делать" loading="lazy" width="1024" height="1024"></div>
                 <div class="body"><div class="meta"><span>ТРАБЛШУТИНГ</span><span>5 МИН</span></div>
                     <h3>Что делать, если VPN постоянно отключается?</h3>
                     <span class="read">ЧИТАТЬ →</span></div>
             </a>
             <a class="post rv d2 in" href="/blog/free-vs-paid/">
-                <div class="thumb"><img src="https://image.qwenlm.ai/public_source/8daac0df-a989-491f-be86-e99bd85b1b2c/1f4228053-1e9c-45db-ae54-4de8f88c3002.png" alt="Бесплатный и платный VPN — разница" loading="lazy"></div>
+                <div class="thumb"><img src="/assets/img/blog-vpn-off.webp" alt="Бесплатный и платный VPN — разница" loading="lazy" width="1024" height="1024"></div>
                 <div class="body"><div class="meta"><span>ТРАБЛШУТИНГ</span><span>5 МИН</span></div>
                     <h3>Разница между бесплатным и платным VPN: чем вы платите на самом деле</h3>
                     <span class="read">ЧИТАТЬ →</span></div>
@@ -828,7 +823,7 @@
             <h2>Получите доступ за 1 минуту</h2>
             <p>Оплата → ключ в Telegram-боте → подключение. Безопасное соединение на всех устройствах уже сегодня.</p>
             <div class="cta-actions">
-                <a class="btn btn-lime" href="https://panel.3set.online/signup" target="_blank" rel="noopener">Купить доступ →</a> <!-- ИЗМЕНЕНО -->
+                <a class="btn btn-lime" href="https://dash.3set.online/signup" target="_blank" rel="noopener">Купить доступ →</a> <!-- ИЗМЕНЕНО -->
                 <a class="btn btn-ghost" href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-бот @threeSet_bot</a>
             </div>
             <div class="cta-guar"><span>✓ 7 ДНЕЙ ГАРАНТИЯ</span><span>✓ БЕЗ ЛОГОВ</span><span>✓ МИР / СБП / CRYPTO</span><span>✓ ПОДДЕРЖКА 24/7</span></div>
@@ -847,7 +842,7 @@
                 <a class="logo" href="#" style="color:#fff"><svg viewBox="0 0 32 32" fill="none" width="28" height="28"><path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" stroke="#b7ff45" stroke-width="2.2"></path><path d="M11 16l3.5 3.5L21 13" stroke="#b7ff45" stroke-width="2.4" stroke-linecap="round"></path></svg><span>3<em style="color:var(--lime)">set</em><span class="tld" style="color:#5d6b62">.online</span></span></a>
                 <p>Виртуальная частная сеть нового поколения. Приватный и стабильный доступ в обход блокировок. Используйте VPN только в законных целях.</p>
             </div>
-            <div><h4>Продукт</h4><a href="#pricing">Тарифы и цены</a><a href="#status">Статус серверов</a><a href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-бот</a><a href="https://panel.3set.online/signup" target="_blank" rel="noopener">Купить доступ</a></div> <!-- ИЗМЕНЕНО -->
+            <div><h4>Продукт</h4><a href="#pricing">Тарифы и цены</a><a href="#status">Статус серверов</a><a href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-бот</a><a href="https://dash.3set.online/signup" target="_blank" rel="noopener">Купить доступ</a></div> <!-- ИЗМЕНЕНО -->
             <div><h4>Устройства</h4><a href="/ios/">VPN для iOS</a><a href="/android/">VPN для Android</a><a href="/windows/">VPN для Windows</a><a href="/mac/">VPN для macOS</a><a href="/router/">VPN на роутер</a><a href="/smart-tv/">VPN для Smart TV</a></div>
             <div><h4>Технологии</h4><a href="/vless-reality/">VLESS Reality</a><a href="/shadowsocks/">Shadowsocks</a><a href="/wireguard/">WireGuard</a><a href="#blog">База знаний</a></div>
             <div><h4>Поддержка</h4><a href="/setup/">Инструкции /setup</a><a href="#faq">FAQ</a><a href="mailto:support@3set.online">support@3set.online</a><a href="#cta">Чат на сайте</a></div>

@@ -739,7 +739,7 @@ it('waterfall components reconcile to the MRR delta for every month', () => {
 | Req ID | Behavior | Test Type | Automated Command | File Exists? |
 |--------|----------|-----------|-------------------|-------------|
 | ANL-12 | Worker records provider cost on the order; quote failure still provisions and leaves `null` | unit (DB + `vi.spyOn(artemida,'createKey'/'getPricing')`) | `npx vitest run tests/unit/analytics-provider-cost.test.ts` | ❌ Wave 0 |
-| ANL-12 | Customer order-history mapper never exposes cost | source-contract | `npx vitest run tests/unit/analytics-provider-cost.test.ts -t 'no cost leak'` | ❌ Wave 0 |
+| ANL-12 | Customer order-history mapper never exposes cost | source-contract | `npx vitest run tests/unit/analytics-provider-cost.test.ts -t 'no leak'` | ❌ Wave 0 |
 | ANL-15 | MSK label ↔ instant ↔ date-key round trips; month windows; Intl cross-check | unit (pure) | `npx vitest run tests/unit/analytics-time.test.ts` | ❌ Wave 0 |
 | ANL-15 | `buildDailySeries` produces exact per-day cash/counts/coverage/activeKeys | unit (pure, fixture rows) | `npx vitest run tests/unit/analytics-series.test.ts` | ❌ Wave 0 |
 | ANL-15 | Upsert is idempotent: run twice → identical row; concurrent runs → one row | integration (real DB) | `npx vitest run tests/unit/analytics-rollup.test.ts` | ❌ Wave 0 |

@@ -10,9 +10,12 @@
 import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { t } from '@/lib/i18n';
+import { TICKET_TEMPLATES } from '@/lib/ticket-templates';
 
 const TEXTAREA =
   'h-12 w-full min-h-28 resize-y rounded-2xl border border-line bg-panel px-4 py-3 text-base text-foreground placeholder:text-dim border-line bg-panel text-foreground';
+const SELECT =
+  'h-11 w-full rounded-2xl border border-line bg-panel px-3 text-sm text-foreground';
 const FIELD_LABEL = 'text-sm text-muted';
 const PRIMARY =
   'flex h-12 w-full items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50 ';
@@ -24,8 +27,26 @@ export default function AdminReplyComposer({ ticketId }: { ticketId: string }) {
   const [body, setBody] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [templateId, setTemplateId] = useState('');
+  const [templateError, setTemplateError] = useState(false);
 
   const canSubmit = body.trim().length > 0 && !loading;
+
+  const insertTemplate = useCallback(() => {
+    const template = TICKET_TEMPLATES.find((item) => item.id === templateId);
+    if (!template) {
+      setTemplateError(true);
+      return;
+    }
+    setTemplateError(false);
+    setBody((previous) =>
+      (previous.trim().length > 0 ? `${previous.trimEnd()}\n\n${template.body}` : template.body).slice(
+        0,
+        4000,
+      ),
+    );
+    setTemplateId('');
+  }, [templateId]);
 
   const submit = useCallback(async () => {
     if (loading) return;
@@ -39,9 +60,11 @@ export default function AdminReplyComposer({ ticketId }: { ticketId: string }) {
         body: JSON.stringify({ body: body.trim() }),
       });
       if (!res.ok) throw new Error('admin_ticket_reply_failed');
-      // Clear ONLY on success; a failure keeps the typed text.
-      setBody('');
-      setLoading(false);
+        // Clear ONLY on success; a failure keeps the typed text.
+        setBody('');
+        setTemplateId('');
+        setTemplateError(false);
+        setLoading(false);
       router.refresh();
     } catch {
       setError(true);
@@ -57,6 +80,41 @@ export default function AdminReplyComposer({ ticketId }: { ticketId: string }) {
         void submit();
       }}
     >
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+        <label className="flex flex-1 flex-col gap-2">
+          <span className={FIELD_LABEL}>{t('admin.templatesLabel')}</span>
+          <select
+            value={templateId}
+            onChange={(event) => {
+              setTemplateId(event.target.value);
+              setTemplateError(false);
+            }}
+            className={SELECT}
+          >
+            <option value="">{t('admin.templatesPlaceholder')}</option>
+            {TICKET_TEMPLATES.map((template) => (
+              <option key={template.id} value={template.id}>
+                {template.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="button"
+          onClick={insertTemplate}
+          disabled={templateId.length === 0}
+          className={SECONDARY}
+        >
+          {t('admin.templatesInsert')}
+        </button>
+      </div>
+
+      {templateError && (
+        <p role="alert" className="text-sm text-red-600">
+          {t('admin.templatesPlaceholder')}
+        </p>
+      )}
+
       <label className="flex flex-col gap-2">
         <span className={FIELD_LABEL}>{t('ticket.messageLabel')}</span>
         <textarea

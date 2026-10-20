@@ -78,10 +78,12 @@ export interface AdminProfileHeader {
   customSubdomain: string | null;
   /** Password presence only — the hash itself never leaves the server. */
   passwordSet: boolean;
-  trialUsed: boolean;
-  paidOrders: number;
-  paidTotal: number;
-}
+    trialUsed: boolean;
+    /** Spendable referral/compensation balance (days). */
+    bonusDays: number;
+    paidOrders: number;
+    paidTotal: number;
+  }
 
 /** One independently-degrading profile sub-section (ok:false = read failed). */
 export type ProfileSection<T> = { ok: true; rows: T[] } | { ok: false };
@@ -248,10 +250,11 @@ export async function loadAdminHeader(userId: number): Promise<AdminProfileHeade
         customInviterReward: true,
         customInviterKind: true,
           customSubdomain: true,
-          passwordHash: true,
-          trialUsed: true,
-          emailVerifiedAt: true,
-        },
+            passwordHash: true,
+            trialUsed: true,
+            emailVerifiedAt: true,
+            bonusDays: true,
+          },
     }),
     prisma.order.aggregate({
       where: { userId, status: { in: ["paid", "provisioning", "provisioned"] } },
@@ -282,9 +285,10 @@ export async function loadAdminHeader(userId: number): Promise<AdminProfileHeade
     customInviterReward: user.customInviterReward,
     customInviterKind: user.customInviterKind,
     customSubdomain: user.customSubdomain,
-    passwordSet: user.passwordHash !== null,
-    trialUsed: user.trialUsed,
-    paidOrders: paid._count,
+      passwordSet: user.passwordHash !== null,
+      trialUsed: user.trialUsed,
+      bonusDays: Math.max(0, user.bonusDays ?? 0),
+      paidOrders: paid._count,
     paidTotal: Math.max(0, (paid._sum.finalAmount ?? 0)),
   };
 }
@@ -423,7 +427,6 @@ export async function loadAdminUsersTable(): Promise<AdminUserTableRow[]> {
       createdAt: true,
     },
   });
-  const ids = users.map((u) => u.id);
   const roles = await prisma.adminUser.findMany({
     where: { telegramId: { in: users.map((u) => u.telegramId).filter((t): t is bigint => t !== null) } },
     select: { telegramId: true, role: true },

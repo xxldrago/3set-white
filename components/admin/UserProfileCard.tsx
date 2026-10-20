@@ -67,13 +67,16 @@ export default function UserProfileCard({
           <p className="text-sm text-muted">
             {header.passwordSet ? t('admin.profilePasswordSet') : t('admin.profilePasswordNone')}
           </p>
-          <p className="text-sm tabular-nums text-muted">
-            {t('admin.profileMoneyStats', {
-              orders: header.paidOrders,
-              total: header.paidTotal,
-              trial,
-            })}
-          </p>
+            <p className="text-sm tabular-nums text-muted">
+              {t('admin.profileMoneyStats', {
+                orders: header.paidOrders,
+                total: header.paidTotal,
+                trial,
+              })}
+            </p>
+            <p className="text-sm tabular-nums text-muted">
+              {t('admin.profileBonusDays', { days: header.bonusDays })}
+            </p>
         </div>
         {header.staffRole && <RoleChip role={header.staffRole} />}
       </div>

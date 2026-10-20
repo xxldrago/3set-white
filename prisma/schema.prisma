@@ -279,10 +279,11 @@ model Ticket {
   unreadForAdmin Int            @default(0) @map("unread_for_admin")
   lastMessageAt  DateTime       @default(now()) @map("last_message_at")
   createdAt     DateTime        @default(now()) @map("created_at")
-  updatedAt     DateTime        @updatedAt @map("updated_at")
-  messages      TicketMessage[]
+    updatedAt     DateTime        @updatedAt @map("updated_at")
+    messages      TicketMessage[]
+    compensations TicketCompensation[]
 
-  @@index([userId, lastMessageAt])
+    @@index([userId, lastMessageAt])
   @@index([status, lastMessageAt])
   @@index([unreadForAdmin, lastMessageAt])
   @@map("tickets")
@@ -302,8 +303,27 @@ model TicketMessage {
   @@map("ticket_messages")
 }
 
-model Attachment {
-  id        String        @id @default(cuid())
+  // Audited goodwill grants made from a ticket. `requestId` makes the admin
+  // action idempotent (a retried confirm cannot double-credit); `messageId` is
+  // the user-visible support message created with the grant.
+  model TicketCompensation {
+    id              String   @id @default(cuid())
+    ticketId        String   @map("ticket_id")
+    ticket          Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+    adminTelegramId BigInt   @map("admin_telegram_id")
+    days            Int
+    reason          String
+    comment         String?
+    requestId       String   @unique @map("request_id")
+    messageId       String   @map("message_id")
+    createdAt       DateTime @default(now()) @map("created_at")
+
+    @@index([ticketId, createdAt])
+    @@map("ticket_compensations")
+  }
+
+  model Attachment {
+    id        String        @id @default(cuid())
   messageId String        @map("message_id")
   message   TicketMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
   // Relative to UPLOAD_DIR only — never absolute (D-53/D-56).

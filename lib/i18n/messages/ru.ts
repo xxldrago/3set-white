@@ -506,6 +506,7 @@ export const ru = {
     promoFieldLabel: 'Промокод (необязательно)',
     promoCheck: 'Применить',
     navRoles: 'Роли',
+    roleClient: 'Клиент',
     roleAdmin: 'Администратор',
     roleSupport: 'Техподдержка',
     roleManager: 'Менеджер',

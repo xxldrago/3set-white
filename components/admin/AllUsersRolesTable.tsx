@@ -8,8 +8,8 @@
 // gated); their profile link leads to the per-user settings instead.
 import Link from 'next/link';
 import RoleChangeControl from './RoleChangeControl';
+import { roleLabel, type RoleChoice } from './RoleChip';
 import { t } from '@/lib/i18n';
-import type { AdminRole } from '@/lib/admin-auth';
 import type { AdminUserTableRow } from '@/lib/admin-service';
 
 export default function AllUsersRolesTable({
@@ -41,7 +41,8 @@ export default function AllUsersRolesTable({
               row.username ??
               row.email ??
               (row.telegramId !== null ? row.telegramId : `#${row.id}`);
-            const current: AdminRole | null = row.role;
+            // No staff row = an ordinary customer, not a default staff role.
+            const current: RoleChoice = row.role ?? 'client';
             return (
               <tr key={row.id} className="border-b border-line last:border-0">
                 <td className="px-3 py-3 align-middle">
@@ -58,13 +59,13 @@ export default function AllUsersRolesTable({
                   </div>
                 </td>
                 <td className="px-3 py-3 align-middle text-muted">
-                  {current ?? '—'}
+                  {roleLabel(current)}
                 </td>
                 <td className="px-3 py-3 align-middle">
                   {row.telegramId !== null ? (
                     <RoleChangeControl
                       telegramId={row.telegramId}
-                      currentRole={current ?? 'support'}
+                      currentRole={current}
                       name={name}
                       self={row.telegramId === String(callerTelegramId)}
                     />

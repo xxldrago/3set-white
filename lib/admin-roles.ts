@@ -15,6 +15,7 @@
 // succeeding. The self-change block lives in the route as the first line of
 // defence.
 import type { AdminRole } from "./admin-auth";
+import { isUniqueViolation, isWriteConflict } from "./prisma-errors";
 import { prisma } from "./prisma";
 
 export type RoleChangeOutcome = "ok" | "not_found" | "last_admin";
@@ -35,21 +36,50 @@ export async function assignAdminRole(
     });
     return "ok";
   } catch (err: unknown) {
-    if (
-      typeof err === "object" &&
-      err !== null &&
-      "code" in err &&
-      (err as { code: unknown }).code === "P2002"
-    ) {
-      return "ok";
-    }
+    if (isUniqueViolation(err)) return "ok";
     throw err;
   }
 }
 
-/** Prisma's write-conflict / deadlock code (surfaced from PG 40001 / 40P01). */
-function isWriteConflict(err: unknown): boolean {
-  return (err as { code?: string }).code === "P2034";
+export type RoleRemovalOutcome = "ok" | "not_found" | "last_admin";
+
+/**
+ * Remove a staff role, returning the account to the implicit `client` role.
+ * A missing `admin_users` row is already a client → `ok` (idempotent, so the
+ * all-users table can submit "Клиент" for any customer). Keeps the same
+ * last-admin invariant and Serializable single-writer discipline; the
+ * conditional `deleteMany` means a concurrent change loses as `not_found`.
+ */
+export async function removeAdminRole(
+  targetTelegramId: bigint,
+): Promise<RoleRemovalOutcome> {
+  try {
+    return await prisma.$transaction(
+      async (tx) => {
+        const target = await tx.adminUser.findUnique({
+          where: { telegramId: targetTelegramId },
+          select: { role: true },
+        });
+        if (!target) return "ok";
+
+        if (target.role === "administrator") {
+          const otherAdmins = await tx.adminUser.count({
+            where: { role: "administrator", telegramId: { not: targetTelegramId } },
+          });
+          if (otherAdmins === 0) return "last_admin";
+        }
+
+        const { count } = await tx.adminUser.deleteMany({
+          where: { telegramId: targetTelegramId, role: target.role },
+        });
+        return count === 1 ? "ok" : "not_found";
+      },
+      { isolationLevel: "Serializable" },
+    );
+  } catch (err) {
+    if (isWriteConflict(err)) return "not_found";
+    throw err;
+  }
 }
 
 export async function changeAdminRole(

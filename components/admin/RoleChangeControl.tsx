@@ -9,11 +9,10 @@
 // both the roles table and the user-profile role action.
 import { useState } from 'react';
 import AdminConfirmPanel from './AdminConfirmPanel';
-import { roleLabel } from './RoleChip';
+import { roleLabel, type RoleChoice } from './RoleChip';
 import { t } from '@/lib/i18n';
-import type { AdminRole } from '@/lib/admin-auth';
 
-const ROLES: AdminRole[] = ['administrator', 'support', 'manager', 'partner'];
+const ROLES: RoleChoice[] = ['client', 'administrator', 'support', 'manager', 'partner'];
 
 const SELECT =
   'h-11 rounded-2xl border border-line bg-panel px-3 text-sm text-foreground border-line bg-panel text-foreground';
@@ -28,13 +27,14 @@ export default function RoleChangeControl({
 }: {
   /** Target staff telegram id (string — BigInt is not JSON-safe). */
   telegramId: string;
-  currentRole: AdminRole;
+  /** Current staff role; `client` means no `admin_users` row. */
+  currentRole: RoleChoice;
   /** Display name for the downgrade copy; falls back to the telegram id. */
   name: string;
   /** True when the row is the caller's own account (self-change blocked). */
   self?: boolean;
 }) {
-  const [selected, setSelected] = useState<AdminRole>(currentRole);
+  const [selected, setSelected] = useState<RoleChoice>(currentRole);
 
   if (self) {
     return (
@@ -52,10 +52,10 @@ export default function RoleChangeControl({
   return (
     <div className="flex flex-wrap items-center gap-2">
       <select
-        aria-label={t('admin.rolesChange')}
-        value={selected}
-        onChange={(event) => setSelected(event.target.value as AdminRole)}
-        className={SELECT}
+          aria-label={t('admin.rolesChange')}
+          value={selected}
+          onChange={(event) => setSelected(event.target.value as RoleChoice)}
+          className={SELECT}
       >
         {ROLES.map((role) => (
           <option key={role} value={role}>

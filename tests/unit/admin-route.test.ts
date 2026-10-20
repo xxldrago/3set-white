@@ -32,7 +32,7 @@ import { POST as adminRoleChange } from "../../app/api/admin/roles/route";
 import RolesManager from "../../components/admin/RolesManager";
 import { can, getAdminRole, requireRole, type AdminRole } from "../../lib/admin-auth";
 import AdminPricingPage from "../../app/admin/pricing/page";
-import { changeAdminRole } from "../../lib/admin-roles";
+import { changeAdminRole, removeAdminRole } from "../../lib/admin-roles";
 import { signSession } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
 import { AdminError, SessionError } from "../../lib/session";
@@ -46,6 +46,7 @@ const ROLE_TARGET = 910000205;
 const PROFILE_STAFF = 910000206;
 const GUARD_SOLE = 910000207;
 const GUARD_OTHER = 910000208;
+const CLIENT_TARGET = 910000209;
 const IDS = [
   BOOTSTRAP,
   ADMIN,
@@ -54,9 +55,10 @@ const IDS = [
   STRANGER,
   ROLE_TARGET,
   PROFILE_STAFF,
-  GUARD_SOLE,
-  GUARD_OTHER,
-].map((id) => BigInt(id));
+    GUARD_SOLE,
+    GUARD_OTHER,
+    CLIENT_TARGET,
+  ].map((id) => BigInt(id));
 
 const SECRET =
   process.env["SESSION_SECRET"] ?? "unit-test-session-secret-at-least-32-characters";
@@ -292,7 +294,54 @@ describe("POST /api/admin/roles — gate + conditional write (D-66 / T-05-15)", 
     await prisma.adminUser.deleteMany({ where: { telegramId: BigInt(919999999) } });
   });
 
-  it("rejects a self-change (400) and leaves the caller's role unchanged", async () => {
+    it("removes the staff row when the role is set to client", async () => {
+      await authorize(ADMIN);
+      await prisma.adminUser.upsert({
+        where: { telegramId: BigInt(CLIENT_TARGET) },
+        update: { role: "support" },
+        create: { telegramId: BigInt(CLIENT_TARGET), role: "support" },
+      });
+
+      const res = await adminRoleChange(
+        roleChangeRequest({ telegramId: CLIENT_TARGET, role: "client" }),
+      );
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ ok: true, role: "client" });
+      expect(
+        await prisma.adminUser.findUnique({ where: { telegramId: BigInt(CLIENT_TARGET) } }),
+      ).toBeNull();
+    });
+
+    it("treats client for a target without a staff row as an idempotent no-op", async () => {
+      await authorize(ADMIN);
+      await prisma.adminUser.deleteMany({ where: { telegramId: BigInt(CLIENT_TARGET) } });
+
+      const res = await adminRoleChange(
+        roleChangeRequest({ telegramId: CLIENT_TARGET, role: "client" }),
+      );
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ ok: true, role: "client" });
+      expect(
+        await prisma.adminUser.findUnique({ where: { telegramId: BigInt(CLIENT_TARGET) } }),
+      ).toBeNull();
+    });
+
+    it("rejects a self-change to client (400)", async () => {
+      await authorize(ADMIN);
+      const res = await adminRoleChange(
+        roleChangeRequest({ telegramId: ADMIN, role: "client" }),
+      );
+
+      expect(res.status).toBe(400);
+      const row = await prisma.adminUser.findUnique({
+        where: { telegramId: BigInt(ADMIN) },
+      });
+      expect(row?.role).toBe("administrator");
+    });
+
+    it("rejects a self-change (400) and leaves the caller's role unchanged", async () => {
     await authorize(ADMIN);
     const res = await adminRoleChange(
       roleChangeRequest({ telegramId: ADMIN, role: "support" }),
@@ -390,7 +439,35 @@ describe("role changes — last-admin lockout + concurrency (T-05-16)", () => {
     expect(row?.role).toBe("administrator");
   });
 
-  it("allows a downgrade when another administrator remains (no false positive)", async () => {
+    it("rejects removing the only administrator through the client role", async () => {
+      await prisma.adminUser.create({
+        data: { telegramId: BigInt(GUARD_SOLE), role: "administrator" },
+      });
+
+      const outcome = await removeAdminRole(BigInt(GUARD_SOLE));
+      expect(outcome).toBe("last_admin");
+
+      const row = await prisma.adminUser.findUnique({
+        where: { telegramId: BigInt(GUARD_SOLE) },
+      });
+      expect(row?.role).toBe("administrator");
+    });
+
+    it("removes a staff role when another administrator remains", async () => {
+      await prisma.adminUser.createMany({
+        data: [
+          { telegramId: BigInt(GUARD_SOLE), role: "administrator" },
+          { telegramId: BigInt(GUARD_OTHER), role: "administrator" },
+        ],
+      });
+
+      await expect(removeAdminRole(BigInt(GUARD_OTHER))).resolves.toBe("ok");
+      expect(
+        await prisma.adminUser.findUnique({ where: { telegramId: BigInt(GUARD_OTHER) } }),
+      ).toBeNull();
+    });
+
+    it("allows a downgrade when another administrator remains (no false positive)", async () => {
     await prisma.adminUser.createMany({
       data: [
         { telegramId: BigInt(GUARD_SOLE), role: "administrator" },
@@ -454,10 +531,14 @@ const ADMIN_CONFIRM_SOURCE = readFileSync(
   join(HERE, "..", "..", "components", "admin", "AdminConfirmPanel.tsx"),
   "utf8",
 );
-const ROLE_CONTROL_SOURCE = readFileSync(
-  join(HERE, "..", "..", "components", "admin", "RoleChangeControl.tsx"),
-  "utf8",
-);
+  const ROLE_CONTROL_SOURCE = readFileSync(
+    join(HERE, "..", "..", "components", "admin", "RoleChangeControl.tsx"),
+    "utf8",
+  );
+  const ALL_USERS_TABLE_SOURCE = readFileSync(
+    join(HERE, "..", "..", "components", "admin", "AllUsersRolesTable.tsx"),
+    "utf8",
+  );
 
 async function callRolesPage(): Promise<{ ok: true } | { digest: string }> {
   try {
@@ -536,10 +617,16 @@ describe("AdminConfirmPanel + RoleChangeControl contracts (UI-SPEC §6)", () => 
     expect(ADMIN_CONFIRM_SOURCE).toContain("PRIMARY");
   });
 
-  it("uses the destructive downgrade variant only when administrator access is removed", () => {
-    expect(ROLE_CONTROL_SOURCE).toContain(
-      "currentRole === 'administrator' && selected !== 'administrator'",
-    );
+    it("defaults non-staff accounts to the client role, never to support", () => {
+      expect(ALL_USERS_TABLE_SOURCE).toContain("row.role ?? 'client'");
+      expect(ALL_USERS_TABLE_SOURCE).not.toContain("current ?? 'support'");
+      expect(ROLE_CONTROL_SOURCE).toContain("'client', 'administrator'");
+    });
+
+    it("uses the destructive downgrade variant only when administrator access is removed", () => {
+      expect(ROLE_CONTROL_SOURCE).toContain(
+        "currentRole === 'administrator' && selected !== 'administrator'",
+      );
     expect(ROLE_CONTROL_SOURCE).toContain("variant={downgrade ? 'destructive' : 'primary'}");
     expect(ROLE_CONTROL_SOURCE).toContain("t('admin.roleDowngradeBody'");
     expect(ROLE_CONTROL_SOURCE).toContain("t('admin.roleChangeBody'");

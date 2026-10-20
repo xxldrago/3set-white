@@ -7,12 +7,17 @@
 import { t } from '@/lib/i18n';
 import type { AdminRole } from '@/lib/admin-auth';
 
+/** Staff role or the implicit customer role (no `admin_users` row). */
+export type RoleChoice = AdminRole | 'client';
+
 const BADGE_BASE = 'inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold';
 const ROLE_TINT = 'bg-background0/10 text-dim';
 
 /** Literal RU label for a role — shared by the chip and the shell header. */
-export function roleLabel(role: AdminRole): string {
+export function roleLabel(role: RoleChoice): string {
   switch (role) {
+    case 'client':
+      return t('admin.roleClient');
     case 'administrator':
       return t('admin.roleAdmin');
     case 'support':

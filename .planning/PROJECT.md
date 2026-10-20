@@ -2,11 +2,25 @@
 
 ## What This Is
 
-Сервис продажи VPN-подписок на базе ARTEMIDA Paid API (V1, `https://artemida.cc/v1`). Включает Telegram-бота, PWA личный кабинет на `my.3set.online`, оплату через Platega.io, систему тикетов и админ-панель. Весь бэкенд — тонкая обертка над ARTEMIDA API: баланс, прайсинг, ключи, трафик, устройства, subscription-ссылки. Для русскоязычных пользователей, оплата в рублях.
+Сервис продажи VPN-подписок на базе ARTEMIDA Paid API (V1, `https://artemida.cc/v1`). Включает Telegram-бота, PWA личный кабинет на `dash.3set.online` (`panel.3set.online` — живой алиас), оплату через Platega.io, систему тикетов и админ-панель. Весь бэкенд — тонкая обертка над ARTEMIDA API: баланс, прайсинг, ключи, трафик, устройства, subscription-ссылки. Для русскоязычных пользователей, оплата в рублях.
 
 ## Core Value
 
 Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
+
+## Current Milestone: v1.1 Расширенная аналитика
+
+**Goal:** Дать владельцу измеримую картину бизнеса — выручка, юнит-экономика и удержание — с историей, когортами и сегментами, а не одним числом за период.
+
+**Target features:**
+- Метрики бизнеса: MRR/ARR (+ New/Expansion/Contraction/Churned MRR), ARPU/ARPPU, LTV gross + net, renewal/churn по подпискам
+- Когортное удержание и revenue retention (unit = ключ/подписка), когорты по каналу и тиру устройств
+- Воронка оплаты `pending→paid→provisioned` + `failed/canceled` по `errorCode`, время до оплаты, `expired` = pending-by-age
+- Экономика провайдера: `Order.providerCost` + снапшоты `/balance` → маржа, средний расход на ключ, прогноз runway
+- RFM-сегменты (trial-only / payers / active / at-risk / churned / sleeping / VIP) с таргетингом рассылок
+- Основа: `daily_metrics` rollup + `user_rfm` + cron 03:00 + backfill истории
+
+**Out of this milestone (deferred to Future in REQUIREMENTS.md):** promo/referral quality + fraud, WoW/MoM alert rules, expiry save-list, upsell radar, refund accounting, CSV export, metric dictionary.
 
 ## Requirements
 
@@ -41,7 +55,7 @@
 - Trial-ключи нельзя продлевать/апгрейдить (ограничение API) — в UI блокировать эти действия
 - Аутентификация: Telegram Login Widget в PWA, единый идентификатор `telegram-id`; email/пароль не нужен
 - Тикеты: создание из бота и кабинета, вложения (фото/скриншоты), ответы доставляются в оба канала
-- Инфраструктура: single server 64.188.97.106 (root-доступ, секреты только в `.env`, никогда в git), домен my.3set.online → этот сервер; White Label требует A-запись поддомена на `144.31.93.193` без AAAA, DNS Only в Cloudflare, сертификат автоматически
+- Инфраструктура: single server 212.192.14.166 (root-доступ, секреты только в `.env`, никогда в git), домен `dash.3set.online` (+ алиас `panel.3set.online`) → этот сервер; White Label требует A-запись поддомена на `144.31.93.193` без AAAA, DNS Only в Cloudflare, сертификат автоматически
 - Репозиторий: GitHub новый `3set-white` (remote еще не создан, `gh` доступ проверить), все изменения коммитить и пушить, затем деплой на сервер (Docker + Nginx + HTTPS)
 - API-баланс: отдельный от кабинета ARTEMIDA, пополнение через `POST /wallet/topups` + проверка `GET /wallet/topups/{paymentId}`
 
@@ -51,7 +65,7 @@
 - **API limits**: Trial нельзя renew/upgrade; permanent delete без возврата средств; учитывать коды 401/402/409/429/502/503 и `Retry-After`
 - **Security**: `ARTEMIDA_API_KEY`, Platega-секреты, SSH/root-пароль — только env/секреты, запрет коммита секретов; root-пароль из чата перенести в менеджер секретов и ротировать
 - **Compatibility**: PWA (installable, мобильный фокус), Telegram Bot API + Login Widget
-- **Infrastructure**: Один сервер, домен my.3set.online; HTTPS обязателен (Platega webhook + Telegram webhook)
+- **Infrastructure**: Один сервер 212.192.14.166, домен dash.3set.online; HTTPS обязателен (Platega webhook + Telegram webhook)
 - **Compliance**: RU/RUB, безлимит по умолчанию
 
 ## Key Decisions
@@ -85,4 +99,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-30 after initialization*
+*Last updated: 2026-10-20 — milestone v1.1 (Расширенная аналитика) started*

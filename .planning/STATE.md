@@ -1,18 +1,15 @@
 ---
-gsd_state_version: 1.0
-current_phase: 06
-current_phase_name: Email Auth
-status: executing
-stopped_at: Phase 6 executed + verified (4/4 plans, visual + SMTP UAT pending)
-last_updated: "2026-10-05T22:05:39.625Z"
-last_activity: 2026-10-05
-last_activity_desc: Phase 06 execution started
-state_head: 4b4219a02a6735c36322fba539a09f27ce586d31
+gsd_state_version: "1.0"
+milestone: v1.1
+milestone_name: Расширенная аналитика
+status: planning
+last_updated: "2026-10-20T01:11:09.531Z"
+last_activity: 2026-10-20
 progress:
-  total_phases: 6
+  total_phases: 0
   completed_phases: 0
-  total_plans: 47
-  completed_plans: 40
+  total_plans: 0
+  completed_plans: 0
   percent: 0
 ---
 
@@ -20,19 +17,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-30)
+See: .planning/PROJECT.md (updated 2026-10-20)
 
 **Core value:** Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
-**Current focus:** Phase 06 — Email Auth
+**Current focus:** Milestone v1.1 — Расширенная аналитика (defining requirements)
 
 ## Current Position
 
-Phase: 06 (Email Auth) — READY TO EXECUTE
-Plan: 1 of 13
-Status: Ready to execute
-Last activity: 2026-10-05 — Phase 06 execution started
-
-Progress: [░░░░░░░░░░] 0%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-10-20 — Milestone v1.1 started
 
 ## Performance Metrics
 

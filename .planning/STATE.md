@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v1.1
 milestone_name: Расширенная аналитика
 status: planning
-last_updated: "2026-10-20T01:11:09.531Z"
+last_updated: "2026-10-20T00:00:00.000Z"
 last_activity: 2026-10-20
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,14 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-20)
 
 **Core value:** Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
-**Current focus:** Milestone v1.1 — Расширенная аналитика (defining requirements)
+**Current focus:** Milestone v1.1 — Расширенная аналитика (Phase 7 готов к планированию)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-10-20 — Milestone v1.1 started
+Phase: 7 of 11 (Analytics Foundation & Revenue Metrics)
+Plan: 0 of 0 in current phase
+Status: Ready to plan
+Last activity: 2026-10-20 — Roadmap v1.1 создан (5 фаз, 25 требований)
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -57,15 +59,20 @@ Last activity: 2026-10-20 — Milestone v1.1 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [Roadmap]: 5 фаз по dependency-порядку из research/SUMMARY.md; PAY-05 (напоминания) в Phase 4, не в Phase 3 — это cron/notify, а не money pipeline
-- [Roadmap]: Bot-in-Next via webhook (один процесс), согласно ARCHITECTURE.md
+- [Roadmap v1.1]: Порядок фаз по зависимостям — фундамент rollup (`ANL-12`, `ANL-15`) в Phase 7 раньше метрик, потребляющих `providerCost` (`ANL-05`, `ANL-13`, `ANL-14`) в Phase 8
+- [Roadmap v1.1]: Когорты (Phase 10) и сегменты (Phase 11) зависят от rollup Phase 7; сегменты питают существующий broadcast-composer
+- [Roadmap v1.1]: Retention/churn считаем по подписке/ключу (`Order.keyId`, `kind='renew'`), не по аккаунту; `expired` = pending-by-age в аналитике, без нового OrderStatus
+- [Roadmap v1.1]: Хранение = daily rollup-таблицы (`daily_metrics`, `user_rfm`, `artemida_balance_snapshots`) + nightly cron 03:00 + backfill-скрипт; без внешнего BI
+
+### Pending Todos
+
+None yet.
 
 ### Blockers/Concerns
 
-- **03-01 is a hard gate:** ARTEMIDA paid-key create shape + prorated upgrade charge must be probed live (RESEARCH Open Q1/Q2) before `kind:'new'`/`upgrade` fulfillment can be built — plan 03-01 is owner-gated `checkpoint:human-verify`
-- Platega test merchant creds + callback URL needed for live payment verification (`.env.local`, D-36); callback forbids localhost
-- A6: `instrumentation.ts` firing in the standalone Docker image — 03-03 adds a secret-gated `/api/cron/reconcile` fallback
-- Platega CHARGEBACKED may arrive as a callback status (schema enum disagrees) — 03-02 accepts it and maps → `refunded`
+- `Order.providerCost` — новое поле, требуется миграция Prisma; исторические заказы останутся без стоимости (backfill не может её восстановить) — метрики net/margin за прошлое неполны, помечать как таковые
+- `artemida_balance_snapshots` — единственный источник истории баланса: `GET /balance` не имеет wallet-history endpoint, snapshots копятся только с момента деплоя Phase 7
+- Пересчёт rollup должен быть дешёвым (один сервер, `docker compose ... up -d web`): backfill обязан быть runnable on demand, не блокируя запросы
 
 ## Deferred Items
 
@@ -77,6 +84,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-05T06:38:44.732Z
-Stopped at: Phase 6 executed + verified (4/4 plans, visual + SMTP UAT pending)
-Resume file: .planning/phases/06-email-auth/06-VERIFICATION.md
+Last session: 2026-10-20
+Stopped at: Roadmap v1.1 written; Phase 7 ready to plan
+Resume file: None

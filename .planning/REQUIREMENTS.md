@@ -105,4 +105,28 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| *(filled by gsd-roadmapper)* | — | — |
+| ANL-01 | Phase 7 | Pending |
+| ANL-02 | Phase 7 | Pending |
+| ANL-03 | Phase 7 | Pending |
+| ANL-04 | Phase 8 | Pending |
+| ANL-05 | Phase 8 | Pending |
+| ANL-06 | Phase 8 | Pending |
+| ANL-07 | Phase 8 | Pending |
+| ANL-08 | Phase 9 | Pending |
+| ANL-09 | Phase 9 | Pending |
+| ANL-10 | Phase 9 | Pending |
+| ANL-11 | Phase 9 | Pending |
+| ANL-12 | Phase 7 | Pending |
+| ANL-13 | Phase 8 | Pending |
+| ANL-14 | Phase 8 | Pending |
+| ANL-15 | Phase 7 | Pending |
+| COH-01 | Phase 10 | Pending |
+| COH-02 | Phase 10 | Pending |
+| COH-03 | Phase 10 | Pending |
+| COH-04 | Phase 10 | Pending |
+| COH-05 | Phase 10 | Pending |
+| SEG-01 | Phase 11 | Pending |
+| SEG-02 | Phase 11 | Pending |
+| SEG-03 | Phase 11 | Pending |
+| SEG-04 | Phase 11 | Pending |
+| SEG-05 | Phase 11 | Pending |

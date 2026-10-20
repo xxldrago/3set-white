@@ -1,71 +1,85 @@
-# Requirements: 3set-white VPN
+# Requirements — 3set-white
 
-**Defined:** 2026-09-30
-**Core Value:** Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
+## v1.0 Requirements (complete)
 
-## v1 Requirements
+Delivered in milestone v1.0 (phases 1–6, archived at
+`.planning/milestones/v1.0-phases/`): TRIAL-01..03, PAY-01..05, CAB-01..05,
+SUP-01..03, ADM-01..04, OPS-01..03, AUTH-01..06 (29 requirements) plus the
+post-roadmap gap closures (RBAC roles page, admin inbox 2.0, ticket
+compensation/reply templates/requester context).
 
-### Trial / Onboarding
+---
 
-- [ ] **TRIAL-01**: Пользователь может получить trial-ключ в один тап (1 день / 2 устройства) из бота и из кабинета, повторный trial заблокирован сервером
-- [ ] **TRIAL-02**: Пользователь может выбрать тариф 7/30/90 дней и число устройств 2–10 с живой ценой через `GET /pricing`
-- [ ] **TRIAL-03**: Пользователь видит инструкции по подключению (v2rayNG / Streisand / Hiddify) в боте и кабинете
+## Milestone v1.1 Requirements: Расширенная аналитика
 
-### Purchase / Payments (Platega → ARTEMIDA)
+### ANL — Core metrics & unit economics
 
-- [ ] **PAY-01**: Пользователь оплачивает выбранный тариф через Platega (карты МИР / СБП) и мгновенно получает subscription-ссылку + QR после `CONFIRMED`
-- [ ] **PAY-02**: Пользователь может продлить не-trial ключ (`POST /keys/{id}/renew`) с оплатой разницы через тот же pipeline
-- [ ] **PAY-03**: Пользователь может докупить устройства (`POST /keys/{id}/upgrade`), на trial-ключах кнопки скрыты
-- [ ] **PAY-04**: Пользователь видит историю своих платежей (транзакции Platega: сумма, статус, дата)
-- [ ] **PAY-05**: Пользователь получает push-напоминание в Telegram за 3 дня до истечения с кнопкой продления
+- [ ] **ANL-01**: Админ видит MRR и ARR за выбранный период — сумма monthly-equivalent активных подписок (`finalAmount / (days / 30)`), вместе с числом активных подписок
+- [ ] **ANL-02**: Админ видит MRR-waterfall по месяцам: new / expansion / contraction / churned MRR и net change
+- [ ] **ANL-03**: Админ видит ARPU (выручка / все зарегистрированные) и ARPPU (выручка / платящие) за период
+- [ ] **ANL-04**: Админ видит LTV gross — исторический (cumulative revenue на платящего) и прогнозный (ARPPU ÷ месячный churn)
+- [ ] **ANL-05**: Админ видит LTV net (выручка минус расход провайдера) после появления `Order.providerCost`
+- [ ] **ANL-06**: Админ видит renewal rate — доля продлённых подписок от числа истекающих в периоде (`kind = renew`)
+- [ ] **ANL-07**: Админ видит logo churn (истёкшие и не продлённые за grace-период) и revenue churn по подпискам
+- [ ] **ANL-08**: Админ видит воронку оплаты `pending → paid → provisioning → provisioned` с конверсией и отвалом на каждом шаге
+- [ ] **ANL-09**: Админ видит разбивку `failed`/`canceled` по `errorCode` с количеством и долей
+- [ ] **ANL-10**: Админ видит медианное и среднее время `createdAt → paidAt` и `paidAt → provisioned`
+- [ ] **ANL-11**: «Expired» считается как `pending` старше платёжного окна (без нового статуса в стейт-машине)
+- [ ] **ANL-12**: Система сохраняет расход провайдера на заказ (`Order.providerCost`) в момент provisioning
+- [ ] **ANL-13**: Админ видит gross margin (`Σ(finalAmount − providerCost)`), маржинальность в % и средний расход на ключ
+- [ ] **ANL-14**: Система снимает снапшоты `GET /balance` и показывает burn-rate и прогноз runway (баланс ÷ средний дневной расход, дней)
+- [ ] **ANL-15**: Метрики считаются nightly-джобом в `daily_metrics` (cron 03:00) с возможностью backfill истории
 
-### Cabinet PWA
+### COH — Cohorts & retention
 
-- [ ] **CAB-01**: Пользователь видит список «Мои подписки» со статусом, сроком, лимитами в боте и в PWA
-- [ ] **CAB-02**: Пользователь входит в PWA через Telegram Login Widget, аккаунт един (ключ `telegram-id`), сессии бот ↔ сайт синхронизированы
-- [ ] **CAB-03**: Пользователь управляет устройствами ключа (список, удаление одного, сброс всех)
-- [ ] **CAB-04**: Пользователь получает актуальные конфиги VLESS/Trojan + `subscriptionUrl` (`GET /keys/{id}/subscription-links`), видит расход трафика
-- [ ] **CAB-05**: PWA-кабинет устанавливается на устройство (manifest + Serwist), мобильный фокус, RU-интерфейс
+- [ ] **COH-01**: Админ видит когортную матрицу (месяц регистрации × месяц N) — доля аккаунтов с активной платной подпиской
+- [ ] **COH-02**: Админ видит revenue retention по когортам (выручка месяца N относительно первого платного месяца)
+- [ ] **COH-03**: Админ видит когорты в разрезе канала привлечения (реферальный код / промокод / органика)
+- [ ] **COH-04**: Админ видит когорты в разрезе тарифа по числу устройств
+- [ ] **COH-05**: Админ видит когорты по месяцу первой оплаты (payer revenue cohorts)
 
-### Support / Tickets
+### SEG — RFM segments & targeting
 
-- [ ] **SUP-01**: Пользователь создает обращение в поддержку из бота и из кабинета, все падают в единую очередь со статусами open/answered/closed
-- [ ] **SUP-02**: Пользователь может прикрепить фото/скриншот к тикету из обоих каналов
-- [ ] **SUP-03**: Ответ поддержки доставляется и в бот, и в кабинет (fan-out по `chat_id`)
+- [ ] **SEG-01**: Система считает для каждого пользователя Recency / Frequency / Monetary и сохраняет в `user_rfm` с ежедневным обновлением
+- [ ] **SEG-02**: Админ видит именованные сегменты (trial-only, new payer, active, at-risk, churned, sleeping, VIP) с размером каждого
+- [ ] **SEG-03**: Админ видит размер сегмента и может провалиться в список пользователей, отфильтрованный по сегменту
+- [ ] **SEG-04**: Админ выбирает сегмент как аудиторию рассылки с предпросмотром числа получателей
+- [ ] **SEG-05**: Пороги сегментов конфигурируемы (не захардкожены) и меняются без деплоя
 
-### Admin
+## Future Requirements (deferred — not in v1.1)
 
-- [ ] **ADM-01**: Админ-панель с ролями: администратор (всё), техподдержка (тикеты + просмотр ключей), менеджер (финансы + статистика)
-- [ ] **ADM-02**: Админ ищет пользователя по telegram-id / ключу (`q`, `customerRef`), видит его ключи и платежи
-- [ ] **ADM-03**: Админ видит статистику выручки/пользователей и делает broadcast-рассылку
-- [ ] **ADM-04**: Админ видит всю статистику из ARTEMIDA API (баланс `GET /balance`, ключи, устройства) + алерты о низком балансе
+Explicitly requested by the owner but deferred by scope decision on 2026-10-20.
 
-### Ops / Deploy
+### PRM — Promo / referral quality & fraud
 
-- [ ] **OPS-01**: Весь стек деплоится на один сервер 64.188.97.106 (Docker Compose + Nginx + HTTPS), webhooks Platega и Telegram на `my.3set.online`
-- [ ] **OPS-02**: Subscription-ссылки используют White Label домен `my.3set.online` (настройки бренда ARTEMIDA)
-- [ ] **OPS-03**: Код хранится в GitHub `3set-white`, все изменения коммитятся и пушатся, затем деплой на сервер
+- **PRM-01**: Воронка click → register → pay по каждому коду и партнёру
+- **PRM-02**: Стоимость скидки против выручки и ROI по каждому промокоду
+- **PRM-03**: Partner ROI с учётом выплат (`Withdrawal`)
+- **PRM-04**: Fraud-сигналы: trial-фермы по `ipHash`/`emailCanonical`, self-cycles, trial→no-pay ratio по источнику
 
-### Auth / Email
+### ALR — Period comparison & anomaly alerts
 
-- [ ] **AUTH-01**: Пользователь может зарегистрироваться по email + пароль без верификации email и сразу войти
-- [ ] **AUTH-02**: Пользователь может войти по email + пароль; сессия — та же httpOnly cookie, что у Telegram-входа
-- [ ] **AUTH-03**: Пользователь может привязать Telegram к email-аккаунту и наоборот (link/unlink), аккаунты объединяются
-- [ ] **AUTH-04**: Пользователь может сбросить пароль через ссылку на email
-- [ ] **AUTH-05**: Trial для email-аккаунтов защищён от фарма (политика enforcement)
-- [ ] **AUTH-06**: Кнопка «Войти через Telegram» корректно позиционирована на десктопе (layout fix)
+- **ALR-01**: WoW/MoM-сравнение для каждой метрики (дельта и %)
+- **ALR-02**: Алерты: падение оплат, рост `failed`, всплеск тикетов
+- **ALR-03**: Алерт на runway баланса ниже порога
+- **ALR-04**: Доставка алертов админам через существующий outbox/Telegram
 
-## v2 Requirements
+### EXT — Extra analytics
 
-### Growth
+- **EXT-01**: Save-list истекающих ключей (≤7 дней без продления) с push-напоминанием через `cron/remind`
+- **EXT-02**: Upsell-radar — тяжёлые по трафику/устройствам пользователи на низком тарифе
+- **EXT-03**: Refund/chargeback учёт и net revenue
+- **EXT-04**: Корреляция тикетов и churn
+- **EXT-05**: Data-quality флаги (degraded-ответы ARTEMIDA исключаются из агрегатов)
+- **EXT-06**: CSV-экспорт по каждому отчёту
+- **EXT-07**: Metric dictionary — страница с определением каждой формулы
+
+### v2 (from v1.0 roadmap)
 
 - **GRO-01**: Реферальная программа (награда после CONFIRMED-платежа реферала)
 - **GRO-02**: Промокоды и подарочные подписки
 - **GRO-03**: Автопродление (Platega recurrent + dunning)
-
-### Expansion
-
-- **EXP-01**: Английская локализация (ключи i18n заложить в v1)
+- **EXP-01**: Английская локализация
 - **EXP-02**: Оплата криптой
 - **EXP-03**: Страница статуса серверов
 
@@ -80,7 +94,10 @@
 | Renew/upgrade trial-ключей в UI | API запрещает (409), только CTA «купить полный» |
 | Self-service permanent delete ключа юзером | Необратимо без возврата, только админ с подтверждением |
 | Нативные мобильные приложения | Весь рынок CIS живет на sub-link + сторонние клиенты |
-| EN в v1 | Только RU/RUB, EN позже |
+| EN в v1.1 | Только RU/RUB, EN позже |
+| Внешний BI / data warehouse (Metabase, ClickHouse) | Один сервер, объёмы малы; Postgres + rollup-таблицы достаточно |
+| Ad-hoc query builder в админке | Избыточно для 3 отчётов; фиксированные вьюхи + CSV-экспорт |
+| Аналитика по отдельным устройствам/сессиям | ARTEMIDA отдаёт только агрегаты по ключу |
 
 ## Traceability
 
@@ -88,41 +105,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TRIAL-01 | Phase 2 | Pending |
-| TRIAL-02 | Phase 2 | Pending |
-| TRIAL-03 | Phase 2 | Pending |
-| PAY-01 | Phase 3 | Pending |
-| PAY-02 | Phase 3 | Pending |
-| PAY-03 | Phase 3 | Pending |
-| PAY-04 | Phase 3 | Pending |
-| PAY-05 | Phase 4 | Pending |
-| CAB-01 | Phase 2 | Pending |
-| CAB-02 | Phase 1 | Pending |
-| CAB-03 | Phase 2 | Pending |
-| CAB-04 | Phase 2 | Pending |
-| CAB-05 | Phase 1 | Pending |
-| SUP-01 | Phase 4 | Pending |
-| SUP-02 | Phase 4 | Pending |
-| SUP-03 | Phase 4 | Pending |
-| ADM-01 | Phase 5 | Pending |
-| ADM-02 | Phase 5 | Pending |
-| ADM-03 | Phase 5 | Pending |
-| ADM-04 | Phase 5 | Pending |
-| OPS-01 | Phase 5 | Pending |
-| OPS-02 | Phase 5 | Pending |
-| OPS-03 | Phase 1 | Pending |
-| AUTH-01 | Phase 6 | Pending |
-| AUTH-02 | Phase 6 | Pending |
-| AUTH-03 | Phase 6 | Pending |
-| AUTH-04 | Phase 6 | Pending |
-| AUTH-05 | Phase 6 | Pending |
-| AUTH-06 | Phase 6 | Pending |
-
-**Coverage:**
-- v1 requirements: 29 total
-- Mapped to phases: 29
-- Unmapped: 0 ✓
-
----
-*Requirements defined: 2026-09-30*
-*Last updated: 2026-09-30 after initial definition*
+| *(filled by gsd-roadmapper)* | — | — |

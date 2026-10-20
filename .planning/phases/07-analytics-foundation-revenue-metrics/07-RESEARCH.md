@@ -686,21 +686,24 @@ it('waterfall components reconcile to the MRR delta for every month', () => {
 | A6 | `providerCost` for `new` orders without a stored device count uses `order.devices` (it is the purchased count) | providerCost Capture | Only matters for malformed historical rows |
 | A7 | Goodwill ₽-equivalent = `days × (median daily tariff of the key's own term)` — Day 3 of the plan should confirm the conversion basis | Goodwill | A wrong basis misstates the goodwill figure; money metrics are unaffected (D-03) |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Goodwill day count for referral grants is unreconstructable.**
    - What we know: ticket compensations persist `days` (`prisma/schema.prisma:309-323`, `TicketCompensation.days`), but referral day grants write only `WalletTx { amount: 0, reason: "referral_days", refId }` and increment `User.bonusDays` (`lib/referrals.ts:446-455`) — the day count is **not stored**.
    - What's unclear: whether the project is willing to add `WalletTx.days Int?` in this migration to fix it forward (past rows stay unknown).
    - Recommendation: add the nullable column (additive, zero risk) and scope the historical number to ticket compensations only, labelled as such. Do not attempt to infer days from `bonusDays` diffs.
+   - **RESOLVED:** goodwill is scoped to `TicketCompensation` rows only in 07-02 Task 1; referral day grants are excluded from the goodwill figure, and no `WalletTx.days` column is added. The resolution deliberately DIVERGES from the research recommendation (add the nullable column) — a scoped-reduced but additive-safe choice.
 
 2. **Custom date range vs 7/30/90 only.**
    - What we know: CONTEXT §specifics says "7/30/90 + кастомный диапазон", but `PeriodSelector` and both admin panels currently support only the three presets, and `app/api/admin/referrals/stats/route.ts` already has the zod `from`/`to` + 366-day-cap pattern.
    - Recommendation: ship 7/30/90 for Phase 7 (matches every existing surface, keeps D-10's first screen small); the waterfall itself is month-granular and inherently a custom range of months.
+   - **RESOLVED:** UI-SPEC + 07-05 ship 7/30/90 presets only — no custom from/to range control exists in Phase 7 (`?period=` accepts only 7|30|90, anything else normalizes to 30).
 
 3. **`artemida.getBalance()` availability during the rollup.**
    - What we know: the balance chip already exists on `/admin` and `runBalanceAlert` in `lib/worker.ts:458` uses it.
    - What's unclear: whether a 03:05 provider outage is common enough to need a retry inside the cron run.
    - Recommendation: one attempt + `logger.warn`; the snapshot is a convenience series, not an invariant. Phase 8 can backfill gaps from `artemida_balance_snapshots` when runway matters.
+   - **RESOLVED:** 07-02 Task 1 performs one attempt + `logger.warn` on failure; the rollup continues and the daily snapshot row is still written (convenience series, not an invariant).
 
 ## Environment Availability
 

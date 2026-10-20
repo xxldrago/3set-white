@@ -1,10 +1,11 @@
 ---
 phase: "7"
 slug: "analytics-foundation-revenue-metrics"
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: "2026-10-20"
+reviewed_at: "2026-10-20"
 ---
 
 # Phase 7 — UI Design Contract
@@ -28,6 +29,17 @@ period switch and the «Подробнее» link.
 supports only the three presets — verified in code), chart tooltips / JS hover, CSV export,
 tariff/kind breakdowns, margin or runway figures (Phase 8), dark-mode variants, icons, gradients,
 shadows.
+
+### Deviations from locked decisions
+
+Recorded so nothing is silently dropped. Each decision stays intact; only its surface or timing
+changes. No locked choice is reversed here.
+
+| Decision | State in Phase 7 | Why |
+|----------|------------------|-----|
+| **D-03** — goodwill displayed as «выдано бонусом, ₽-эквивалент» | **No Phase 7 surface.** The display is explicitly **deferred to Phase 8**, where the revenue/margin view lands. The decision is not dropped — it is unsurfaced. Phase 7 neither computes nor renders a goodwill line. | Phase 7 is the MRR foundation and the first screen is fixed at three blocks (D-10); a goodwill figure has no home in them. |
+| **CONTEXT `<specifics>`** — custom `from`/`to` date range | **Excluded.** Phase 7 ships the **7 / 30 / 90** presets only (`PeriodSelector` supports no other input — verified in code). | RESEARCH Open Question 2 resolved: presets only. A custom range is outside the phase's cost/value envelope. |
+| **D-10** — waterfall window | **Labelled deviation.** The waterfall uses a **fixed trailing 6-MSK-month, month-granularity window** instead of "за период". The header label is derived from the rendered slot count (§5.4), so it never overstates history. | ANL-02 requires «по месяцам»; a 7/30/90-day window cannot produce month buckets without partial months. The deviation is always stated on the block, never implicit. |
 
 ---
 
@@ -108,7 +120,7 @@ fair game; checking outside this table is the expected path, not an exception.
   5. `lib/i18n/messages/ru.ts` — add `navAnalytics` (see Copywriting Contract).
 - **Nav anatomy is unchanged:** `ITEM_BASE` (`flex h-11 items-center justify-center rounded-lg px-4 text-sm transition-colors`),
   active = `bg-foreground text-lime`, inactive = `border border-line hover:bg-foreground/5`.
-  The bar is `flex flex-wrap gap-2`; a 9th item wraps on narrow viewports and must never cause
+  The bar is `flex flex-wrap gap-2`; a 10th item wraps on narrow viewports and must never cause
   horizontal page overflow.
 - **`/admin` teaser (D-09):** one card inserted **between `<StatsPanel>` and `<RevenuePanel>`** — the
   existing panel order is otherwise untouched:
@@ -170,8 +182,9 @@ fair game; checking outside this table is the expected path, not an exception.
   - KPI: ARPU, ARPPU and cost coverage are windowed by `period`; **MRR/ARR are point-in-time (now)** and
     deliberately do not move.
   - Sparkline: window = `period` days.
-  - Waterfall: **fixed** to the trailing 6 MSK months (§5.4) and always labelled as such. This is the
-    only scope divergence on the page and it is labelled — no block's window is ever implicit.
+  - Waterfall: **fixed** to the trailing 6 MSK months (§5.4) and always labelled with its actual
+    rendered slot count. This is the only scope divergence on the page and it is labelled — no block's
+    window is ever implicit.
 - **`PeriodSelector` changes (two one-liners, they benefit every admin page):**
   1. the container gets `role="group"` alongside the existing `aria-label={t('admin.statsPeriod')}`
      (a bare `aria-label` on a `div` is ignored by assistive tech);
@@ -252,12 +265,21 @@ waterfalls inside one SVG), and therefore no cumulative total line.
   `min(6, months since the first paid order)` slots, minimum 1 — never fabricate empty months before
   the business existed. A month with no activity **inside** the window keeps its slot (zero-height
   bars), so the axis never skips a month.
+- **Window label is derived from the rendered slot count — never hardcoded.** `months.length === 1` →
+  `t('admin.analyticsWaterfallWindowSingle')` («последний месяц · МСК»); `months.length >= 2` →
+  `t('admin.analyticsWaterfallWindowMonths', { n: months.length })` («{n} мес. · МСК» for n = 2–6).
+  The empty state also renders the single-month form (its derived count is 1), so a young install is
+  never told «6 месяцев». Both calls are literal `t()` arguments — the i18n usage scan requires it.
 - **Header:**
 
   ```tsx
   <div className="flex flex-wrap items-baseline justify-between gap-2">
     <h3 className="text-xl font-semibold text-foreground">{t('admin.analyticsWaterfallTitle')}</h3>
-    <span className="text-xs text-muted">{t('admin.analyticsWaterfallWindow')}</span>
+    <span className="text-xs text-muted">
+      {months.length === 1
+        ? t('admin.analyticsWaterfallWindowSingle')
+        : t('admin.analyticsWaterfallWindowMonths', { n: months.length })}
+    </span>
   </div>
   ```
 
@@ -289,8 +311,8 @@ waterfalls inside one SVG), and therefore no cumulative total line.
   | Month labels | `fill-muted`, `fontSize={9}`, `textAnchor="middle"`, `y={H − 8}` | `MM.YY` (e.g. «07.26»), same convention as `FunnelCharts.shortLabel(…, 'month')` — numeric formatting, not copy |
   | New | `fill-lime stroke-green`, `strokeWidth={1}` | Brand accent; the green hairline is what makes lime legible on white |
   | Expansion | `fill-green` | Same "growing" family, darker |
-  | Contraction | `fill-line-2` | Negative by **direction** (below zero), never red |
-  | Churned | `fill-muted` | Darker neutral, below zero |
+  | Contraction | `fill-muted` | Negative by **direction** (below zero), never red; ≈6.1:1 on `--panel` (WCAG 1.4.11) |
+  | Churned | `fill-foreground` | Darkest neutral, below zero |
   | Net change | `stroke-foreground` `strokeWidth={2}` tick across ~70% of the group width + `fill-foreground` dot `r={3}` at group centre, `y = y(net)` | A marker, not a bar — it must not read as a fifth component |
 
   **No red or amber anywhere.** The palette has no semantic destructive token and churn is not an
@@ -299,7 +321,8 @@ waterfalls inside one SVG), and therefore no cumulative total line.
   `{legendLabel} · {MM.YYYY} — {money.format(value)} ₽` (e.g. «Новые · 07.2026 — 12 500 ₽»).
 - **Legend** (HTML under the panel, `flex flex-wrap items-center gap-4 text-xs text-muted`; each item
   `flex items-center gap-1`): swatch `h-2 w-2 rounded-sm` — `bg-lime border border-green`, `bg-green`,
-  `bg-line-2`, `bg-muted`; for net a `h-0.5 w-3 rounded-full bg-foreground`. Labels come from the five
+  `bg-muted`, `bg-foreground`; for net a `h-0.5 w-3 rounded-full bg-foreground` (the line shape, not a
+  square, is what separates the net marker from the churned bar). Labels come from the five
   `admin.analyticsWf*` keys.
 - **Accessible data table:** immediately after the legend, `sr-only`:
   `<table><caption>{t('admin.analyticsWfTable')}</caption>` with columns
@@ -308,7 +331,8 @@ waterfalls inside one SVG), and therefore no cumulative total line.
   single source of truth for assistive tech — a 30-number chart cannot be described by one
   `aria-label` (deliberate difference from `FunnelCharts`' `role="img"`).
 - **States:**
-  - **Empty** (no paid subscription ever): heading + window label stay; panel body is
+  - **Empty** (no paid subscription ever): heading + window label stay (single-month form — the
+    derived slot count is 1); panel body is
     `text-sm text-muted` + `t('admin.analyticsWfEmpty')`; no axes, no legend, no table.
   - **Sparse month:** slot and label render, all bars zero-height, net dot on the zero line.
   - **Loading:** `h-72 animate-pulse rounded-2xl bg-foreground/5` (`aria-hidden`).
@@ -388,8 +412,13 @@ rhythm is `gap-6`; card grids use `gap-4`. The nav wraps rather than overflows a
   segments, the nav item, the «Подробнее» link, the scroll region. Never `outline-none` without a
   replacement.
 - **Contrast (checked against the real tokens):**
-  - `--muted` (#5b645e) on `--panel` (≈6.6:1) and on `--background` (≈5.8:1) — safe for 14px/12px text.
-  - `--dim` (#8f968f) is ≈3:1 — **never used for text on this page** (placeholders/disabled only).
+  - `--muted` (#5b645e) on `--panel` (≈6.1:1) and on `--background` (≈5.6:1) — safe for 14px/12px
+    text, and for the contraction bars (≥3:1 per WCAG 1.4.11).
+  - `--foreground` (#0e1512) on `--panel` ≈17:1 — churned bars and the net-change marker.
+  - `--line-2` (#cec7b4) on `--panel` ≈1.7:1 — **never used for a data mark**; zero line and borders
+    only (a passive reference — sign is carried by direction).
+  - `--dim` (#8f968f) is ≈3:1 — **never used for text or data marks on this page** (inherited
+    placeholders/disabled only).
   - `--lime` (#b7ff45) is ≈1.2:1 on white — **never text**; only as a fill, always with a
     `stroke-green` hairline, or as `text-lime` on `bg-foreground` (≈14:1, the nav/period active pill).
   - `--green` (#0c4f36) on white ≈10:1 — safe for the sparkline stroke.
@@ -423,8 +452,9 @@ Existing scale, reused verbatim. **No new spacing values are introduced.**
 
 ## Typography
 
-**Exactly four declared sizes and exactly two weights across Phase 7.** Everything below already
-exists in the codebase; no new font, no new size.
+**Four sizes are declared by the analytics surface, plus one inherited size; exactly two weights.**
+Everything below already exists in the codebase — the analytics page introduces no new font and no
+new size.
 
 | Role | Size | Weight | Line Height | Where |
 |------|------|--------|-------------|-------|
@@ -433,12 +463,18 @@ exists in the codebase; no new font, no new size.
 | Heading | 20px (`text-xl`) | 600 | 1.25 | Page `h2`, block `h3`, **and the four compact KPI values** |
 | Display | 30px (`text-3xl`) | 600 | 1.1 | MRR hero value only (and the `/admin` teaser value) |
 
+**Inherited / preserved — 24px (`text-2xl`), weight 600.** The extracted `MetricCard` `default` size,
+already shipped on `/admin` through `RevenuePanel`, renders its values at 24px. The extraction must
+preserve it verbatim (e.g. `RevenuePanel` MRR value). It does **not** appear on `/admin/analytics`,
+which uses only `hero` (30px) and `compact` (20px). It is listed here so a type extractor records 24px
+as an inherited value of this phase's surface area instead of "normalizing" `/admin` to 20/30.
+
 Declared weights: **400 (regular)** and **600 (semibold)** — exactly two. Never 500, 700 or 800.
 
 **Inherited exception — 12px (`text-xs`).** Already the codebase's micro-label size (`MetricCard.sub`,
 `FunnelCharts` stat labels/axis/legend, table captions). Phase 7 uses it only for card sub-lines,
-block window labels and chart legends. It is **not** a fifth declared size and must not be used for
-body or labels.
+block window labels and chart legends. Like the inherited 24px, it is **preserved, not declared** — it
+is not a size introduced by the analytics surface and must not be used for body or labels.
 
 **In-SVG text** is `fontSize={9}` (axis, month labels) / `fontSize={10}` (y-ticks) via the attribute —
 chart-internal, exempt from the type scale, matching `FunnelCharts`.
@@ -463,8 +499,10 @@ component (SVG included). The build is light-only.
 | Brand support | `--green` | `#0c4f36` | Expansion bars, sparkline stroke, focus outlines |
 | Destructive | — | — | **None in this phase** (read-only page, no destructive action) |
 
-Supporting tokens: `--line` `#e4dfd1` (card/panel borders), `--line-2` `#cec7b4` (contraction bars,
-zero line), `--muted` `#5b645e` (labels/meta), `--dim` `#8f968f` (not used for text here).
+Supporting tokens: `--line` `#e4dfd1` (card/panel borders), `--line-2` `#cec7b4` (**zero line and
+borders only** — never a data mark), `--muted` `#5b645e` (labels/meta and contraction bars),
+`--foreground` `#0e1512` (churned bars, net-change marker, active pill text), `--dim` `#8f968f`
+(not used for text or data marks here).
 
 **Accent reserved for — explicit list, never "all interactive elements":**
 
@@ -480,10 +518,14 @@ legend labels, the net-change marker, or any large background area.
 
 **Signal semantics (locked):**
 - "Growing" MRR = lime / green, **above** the zero line.
-- "Shrinking" MRR = warm neutrals (`line-2` → `muted`), **below** the zero line.
+- "Shrinking" MRR = warm neutrals (`muted` → `foreground`), **below** the zero line.
 - Sign is conveyed by **position relative to zero first**, hue second — so the chart survives
   grayscale and low-vision viewing.
 - No red: the palette has no destructive token and churn is not a user action.
+- **Data-mark contrast (WCAG 1.4.11):** every bar and legend swatch that carries a value is ≥3:1
+  against `--panel` — contraction `--muted` ≈6.1:1, churned `--foreground` ≈17:1. `--line-2`
+  (≈1.7:1) is restricted to the zero line and borders, where it is a passive reference and never the
+  sole encoding of a value.
 
 ---
 
@@ -511,7 +553,8 @@ below is used by a surface in this contract — add none beyond it, and add all 
 | Active keys (plural) | `admin.analyticsActiveKeysFew` | {n} активные подписки |
 | Active keys (plural) | `admin.analyticsActiveKeysMany` | {n} активных подписок |
 | Waterfall heading | `admin.analyticsWaterfallTitle` | Динамика MRR |
-| Waterfall window | `admin.analyticsWaterfallWindow` | последние 6 месяцев · МСК |
+| Waterfall window — single month | `admin.analyticsWaterfallWindowSingle` | последний месяц · МСК |
+| Waterfall window — 2–6 months | `admin.analyticsWaterfallWindowMonths` | {n} мес. · МСК |
 | Legend / column — new | `admin.analyticsWfNew` | Новые |
 | Legend / column — expansion | `admin.analyticsWfExpansion` | Расширение |
 | Legend / column — contraction | `admin.analyticsWfContraction` | Сокращение |
@@ -531,10 +574,12 @@ below is used by a surface in this contract — add none beyond it, and add all 
 **Reused keys (do not duplicate):** `common.errorLoad`, `admin.statsPeriod`, `admin.statsPeriod7`,
 `admin.statsPeriod30`, `admin.statsPeriod90`.
 
-**Exactly 32 new keys** (29 singletons + the 3 `admin.analyticsActiveKeysOne/Few/Many` forms that
-`tp()` requires). The count is part of the contract: `tests/unit/i18n.test.ts` fails on both a missing
-and an unused key, so extracting the analytics sub-branch must leave it byte-for-byte equal to the
-table above — no extra key "just in case".
+**Exactly 33 new keys** (30 singletons + the 3 `admin.analyticsActiveKeysOne/Few/Many` forms that
+`tp()` requires). The waterfall window contributes **two** keys, not one, because the label is derived
+from the real slot count (1 vs 2–6) — a single «последние 6 месяцев» string would lie on a young
+install. The count is part of the contract: `tests/unit/i18n.test.ts` fails on both a missing and an
+unused key, so extracting the analytics sub-branch must leave it byte-for-byte equal to the table
+above — no extra key "just in case".
 
 The test does **not** read the dictionary for usage: it regex-scans `app/`, `components/` and `lib/`
 for literal `t('…')` / `tp('…')` calls (skipping `lib/i18n/**`). So every key above must appear as a
@@ -584,7 +629,7 @@ Applicable state considerations resolved: **15 covered, 2 backstop, 0 unresolved
 | partial | sparkline with missing rollup days | ✅ covered | Points exist only for real `daily_metrics` days; x follows the window day index, so a gap shows as a longer segment, not a collapse and not a fake zero. |
 | populated | KPI / waterfall / sparkline | ✅ covered | All three render from `loadKpis`, `loadWaterfall`, `loadSparkline`; current day is the live value. |
 | overflow | waterfall below `lg` | ✅ covered | Panel scrolls horizontally (`overflow-x-auto`, SVG `min-w-[40rem]`), never shrinks; region is `role="region" tabIndex={0}` with an aria-label. |
-| overflow | nav with the 9th item | ✅ covered | `flex flex-wrap gap-2` wraps; no horizontal page overflow at any width. |
+| overflow | nav with the 10th item | ✅ covered | `flex flex-wrap gap-2` wraps; no horizontal page overflow at any width. |
 | zero-one-many | active keys / months | ✅ covered | Months: 1–6 fixed slots (never fabricated before the first paid order); keys: `tp('admin.analyticsActiveKeys', n)` with One/Few/Many forms. |
 | zero-one-many | period control | ✅ covered | Exactly 3 segments; the selected one is `aria-pressed` + accent pill; unknown `?period=` normalizes to 30. |
 | long-text | KPI money values | 🧪 backstop | Hero spans 2 of 3 columns and right-aligns; `tabular-nums`; held-out visual test at «9 999 999 ₽» for MRR/ARR and «999 999 ₽» for ARPU/ARPPU. |
@@ -606,12 +651,14 @@ SVG precisely so the registry question never arises.
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** approved — 2026-10-20. Initial verification 7/7 with 3 FLAGs; FLAG 1 (derived waterfall
+window label), FLAG 3 (contraction-mark contrast), FLAG 4 (24px inherited size recorded) and D2 (10
+nav items) resolved in place. Scope and all other locked decisions unchanged.

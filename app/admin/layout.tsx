@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import AdminNav from '@/components/admin/AdminNav';
 import RoleChip, { roleLabel } from '@/components/admin/RoleChip';
+import { loadAdminUnreadTicketCount } from '@/lib/admin-service';
 import { can, getAdminRole, type AdminSection } from '@/lib/admin-auth';
 import { t } from '@/lib/i18n';
 import { requireTelegramSession, SessionError } from '@/lib/session';
@@ -34,6 +35,12 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   const role = await getAdminRole(telegramId);
   const allowed = role ? NAV_SECTIONS.filter((section) => can(role, section)) : [];
+  // A failed count must never take the admin shell down — the badge is
+  // cosmetic, the pages re-check authorization themselves.
+  const unreadTickets =
+    role && can(role, 'tickets')
+      ? await loadAdminUnreadTicketCount().catch(() => 0)
+      : 0;
 
   return (
     <div className="flex flex-col flex-1 items-center bg-background font-sans bg-background">
@@ -55,7 +62,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           )}
         </header>
 
-        {role && <AdminNav sections={allowed} />}
+        {role && <AdminNav sections={allowed} unreadTickets={unreadTickets} />}
 
         {children}
       </main>

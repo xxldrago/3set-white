@@ -8,7 +8,7 @@
 // pathname for the active state.
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { t } from '@/lib/i18n';
+import { t, tp } from '@/lib/i18n';
 import type { AdminSection } from '@/lib/admin-auth';
 
 type NavSection = Extract<
@@ -62,7 +62,14 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export default function AdminNav({ sections }: { sections: AdminSection[] }) {
+export default function AdminNav({
+  sections,
+  unreadTickets = 0,
+}: {
+  sections: AdminSection[];
+  /** Unseen user activity across tickets; `0` hides the badge entirely. */
+  unreadTickets?: number;
+}) {
   const pathname = usePathname();
   return (
     <nav className="flex flex-wrap gap-2">
@@ -72,7 +79,17 @@ export default function AdminNav({ sections }: { sections: AdminSection[] }) {
           href={item.href}
           className={isActive(pathname, item.href) ? ACTIVE : INACTIVE}
         >
-          {itemLabel(item.section)}
+          <span className="flex items-center gap-2">
+            {itemLabel(item.section)}
+            {item.section === 'tickets' && unreadTickets > 0 && (
+              <span
+                aria-label={tp('ticket.unread', unreadTickets)}
+                className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-lime px-1.5 text-xs font-semibold tabular-nums text-foreground"
+              >
+                {unreadTickets > 99 ? '99+' : unreadTickets}
+              </span>
+            )}
+          </span>
         </Link>
       ))}
     </nav>

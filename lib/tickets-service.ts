@@ -95,6 +95,8 @@ export interface TicketListRow {
   subject: string;
   status: TicketStatus;
   unreadForUser: number;
+  /** Present only on admin reads; absent on the owner-scoped cabinet list. */
+  unreadForAdmin?: number;
   lastMessageAt: Date;
   preview: string | null;
   /** Present only on admin reads; absent on the owner-scoped cabinet list. */
@@ -163,6 +165,8 @@ async function createTicketForOwner(
         subject: input.subject,
         status: "open",
         unreadForUser: 0,
+        // The opening message is unseen by support until the thread is opened.
+        unreadForAdmin: 1,
       },
       select: { id: true },
     });
@@ -385,7 +389,9 @@ export async function clearSupportPrompt(
 // `transitionOrder` applies: a conditional `updateMany` makes a transition
 // single-winner, and `unreadForUser` is touched ONLY in `addSupportMessage`
 // (increment exactly once) and `markTicketRead` (clear) — never on enqueue or
-// dispatch (Pitfall 6).
+// dispatch (Pitfall 6). `unreadForAdmin` mirrors it: raised by user writes
+// (`createTicket`, `appendUserMessage`) and cleared by an admin read, reply,
+// or close.
 // ---------------------------------------------------------------------------
 
 /**
@@ -415,6 +421,9 @@ export async function addSupportMessage(
       data: {
         status: "answered",
         unreadForUser: { increment: 1 },
+        // A support reply means the thread has been seen — drop the admin
+        // unread counter in the same write that raises the user's.
+        unreadForAdmin: 0,
         lastMessageAt: new Date(),
       },
     });
@@ -489,7 +498,11 @@ async function appendUserMessageForOwner(
     });
     await tx.ticket.updateMany({
       where: { id: ticketId },
-      data: { status: "open", lastMessageAt: new Date() },
+      data: {
+        status: "open",
+        unreadForAdmin: { increment: 1 },
+        lastMessageAt: new Date(),
+      },
     });
     return message.id;
   });
@@ -523,9 +536,23 @@ async function markTicketReadForOwner(
 }
 
 /**
+ * Admin-side mark-read: clear `unreadForAdmin` for a ticket the caller is
+ * already authorized to view (the route performs `requireRole` first). No
+ * ownership join is needed — the admin list is not owner-scoped. Returns
+ * `false` only when the ticket does not exist.
+ */
+export async function markTicketReadForAdmin(ticketId: string): Promise<boolean> {
+  const { count } = await prisma.ticket.updateMany({
+    where: { id: ticketId },
+    data: { unreadForAdmin: 0 },
+  });
+  return count === 1;
+}
+
+/**
  * Conditional single-writer transition. When `from` is given the update is a
- * compare-and-set (`count === 1` wins); this is the shared primitive behind
- * `closeTicket` and mirrors `transitionOrder` (T-04-02).
+ * compare-and-set (`count === 1` wins); mirrors `transitionOrder` (T-04-02).
+ * `closeTicket` adds its own admin-unread clear on top.
  */
 export async function transitionTicket(
   ticketId: string,
@@ -539,9 +566,17 @@ export async function transitionTicket(
   return count === 1;
 }
 
-/** Admin close (D-51). Returns `false` when the ticket does not exist. */
+/**
+ * Admin close (D-51). Closing also clears `unreadForAdmin` — a closed thread
+ * is no longer awaiting support. Returns `false` when the ticket does not
+ * exist.
+ */
 export async function closeTicket(ticketId: string): Promise<boolean> {
-  return transitionTicket(ticketId, "closed");
+  const { count } = await prisma.ticket.updateMany({
+    where: { id: ticketId },
+    data: { status: "closed", unreadForAdmin: 0 },
+  });
+  return count === 1;
 }
 
 /**

@@ -274,15 +274,17 @@ model Ticket {
   userId        Int             @map("user_id")
   user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   subject       String
-  status        TicketStatus    @default(open)
-  unreadForUser Int             @default(0) @map("unread_for_user")
-  lastMessageAt DateTime        @default(now()) @map("last_message_at")
+  status         TicketStatus   @default(open)
+  unreadForUser  Int            @default(0) @map("unread_for_user")
+  unreadForAdmin Int            @default(0) @map("unread_for_admin")
+  lastMessageAt  DateTime       @default(now()) @map("last_message_at")
   createdAt     DateTime        @default(now()) @map("created_at")
   updatedAt     DateTime        @updatedAt @map("updated_at")
   messages      TicketMessage[]
 
   @@index([userId, lastMessageAt])
   @@index([status, lastMessageAt])
+  @@index([unreadForAdmin, lastMessageAt])
   @@map("tickets")
 }
 

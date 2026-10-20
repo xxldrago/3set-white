@@ -14,9 +14,10 @@ import {
     getTicketForUser,
     hasOpenTicket,
   isSupportPromptFresh,
-  listTicketsForUser,
-  markTicketRead,
-  transitionTicket,
+    listTicketsForUser,
+    markTicketRead,
+    markTicketReadForAdmin,
+    transitionTicket,
 } from '../../lib/tickets-service';
 import { prisma } from '../../lib/prisma';
 
@@ -285,7 +286,39 @@ describe('tickets-service — lifecycle: transitions, reopen, unread (D-50/D-58/
     expect((await getTicketForUser(TELEGRAM_ID, id))?.unreadForUser).toBe(0);
   });
 
-  it('non-owner append/read return null/false; close on an unknown ticket is false', async () => {
+    it('unreadForAdmin tracks user writes and clears on admin read/reply/close', async () => {
+      await prisma.ticket.deleteMany({ where: { userId } });
+      const id = await createOwnTicket();
+
+      const unreadForAdmin = async (): Promise<number> => {
+        const row = await prisma.ticket.findUnique({
+          where: { id },
+          select: { unreadForAdmin: true },
+        });
+        return row?.unreadForAdmin ?? -1;
+      };
+
+      expect(await unreadForAdmin()).toBe(1); // opening message is unseen
+      await appendUserMessage(TELEGRAM_ID, id, 'ещё');
+      expect(await unreadForAdmin()).toBe(2);
+
+      await addSupportMessage(id, 'ответ');
+      expect(await unreadForAdmin()).toBe(0); // a reply implies seen
+
+      await appendUserMessage(TELEGRAM_ID, id, 'снова');
+      expect(await unreadForAdmin()).toBe(1);
+      expect(await markTicketReadForAdmin(id)).toBe(true);
+      expect(await unreadForAdmin()).toBe(0);
+
+      await appendUserMessage(TELEGRAM_ID, id, 'и ещё');
+      expect(await unreadForAdmin()).toBe(1);
+      expect(await closeTicket(id)).toBe(true);
+      expect(await unreadForAdmin()).toBe(0);
+
+      expect(await markTicketReadForAdmin('does-not-exist')).toBe(false);
+    });
+
+    it('non-owner append/read return null/false; close on an unknown ticket is false', async () => {
     await prisma.ticket.deleteMany({ where: { userId } });
     const id = await createOwnTicket();
 

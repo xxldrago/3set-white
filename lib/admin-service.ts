@@ -11,6 +11,7 @@
 // `{ userId, telegramId, displayName, staffRole? }`; a profile key view carries
 // only display fields. chatId, session tokens, provider ids, and subscription
 // URLs are never selected into (or serialized from) an admin surface.
+import type { Prisma } from "../generated/prisma/client";
 import { toAdminRole, type AdminRole } from "./admin-auth";
 import { deriveStatusKind, type StatusKind } from "./keys-service";
 import { toHistoryRow, type OrderHistoryRow } from "./orders-service";
@@ -488,15 +489,78 @@ export async function loadAdminRoster(): Promise<AdminRosterRow[]> {
   });
 }
 
+/** Admin inbox filters. `unread` is the "new for support" slice. */
+export type AdminTicketFilter = "all" | "open" | "answered" | "closed" | "unread";
+
+export interface AdminTicketListParams {
+  filter: AdminTicketFilter;
+  q: string;
+  page: number;
+  pageSize?: number;
+}
+
+export interface AdminTicketListPage {
+  rows: TicketListRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  pageCount: number;
+}
+
+export const ADMIN_TICKETS_PAGE_SIZE = 20;
+const ADMIN_TICKETS_SEARCH_LIMIT = 120;
+
 /**
- * Every ticket in the single queue, newest activity first (ADM-01 / UI-SPEC
- * §7). Not owner-filtered — the admin/support role is the authorization; the
+ * Admin inbox query: status/unread filter + free-text search (subject, any
+ * message body, requester email/@username/name) + offset pagination. The
+ * caller must have passed `requireRole('administrator','support')` first.
+ *
+ * Not owner-filtered — the admin/support role is the authorization; the
  * per-row shape is exactly the cabinet `TicketListRow` (no caller telegram id
  * is read here).
  */
-export async function loadAllTickets(): Promise<TicketListRow[]> {
+export async function loadAllTickets(
+  params: Partial<AdminTicketListParams> = {},
+): Promise<AdminTicketListPage> {
+  const filter = params.filter ?? "all";
+  const q = (params.q ?? "").trim().slice(0, ADMIN_TICKETS_SEARCH_LIMIT);
+  const pageSize = Math.min(
+    Math.max(params.pageSize ?? ADMIN_TICKETS_PAGE_SIZE, 1),
+    100,
+  );
+  const requestedPage = Math.max(params.page ?? 1, 1);
+  const handle = q.startsWith("@") ? q.slice(1) : q;
+
+  const where: Prisma.TicketWhereInput = {
+    ...(filter === "open" || filter === "answered" || filter === "closed"
+      ? { status: filter }
+      : {}),
+    ...(filter === "unread"
+      ? { unreadForAdmin: { gt: 0 }, status: { not: "closed" } }
+      : {}),
+    ...(q
+      ? {
+          OR: [
+            { subject: { contains: q, mode: "insensitive" } },
+            { messages: { some: { body: { contains: q, mode: "insensitive" } } } },
+            { user: { email: { contains: q, mode: "insensitive" } } },
+            { user: { username: { contains: handle, mode: "insensitive" } } },
+            { user: { firstName: { contains: q, mode: "insensitive" } } },
+            { user: { lastName: { contains: q, mode: "insensitive" } } },
+          ],
+        }
+      : {}),
+  };
+
+  const total = await prisma.ticket.count({ where });
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const page = Math.min(requestedPage, pageCount);
+
   const rows = await prisma.ticket.findMany({
+    where,
     orderBy: { lastMessageAt: "desc" },
+    skip: (page - 1) * pageSize,
+    take: pageSize,
     include: {
       user: { select: TICKET_REQUESTER_SELECT },
       messages: {
@@ -507,15 +571,29 @@ export async function loadAllTickets(): Promise<TicketListRow[]> {
     },
   });
 
-  return rows.map((row) => ({
-    id: row.id,
-    subject: row.subject,
-    status: row.status,
-    unreadForUser: row.unreadForUser,
-    lastMessageAt: row.lastMessageAt,
-    preview: row.messages[0]?.body ?? null,
-    requester: toTicketRequester(row.user),
-  }));
+  return {
+    rows: rows.map((row) => ({
+      id: row.id,
+      subject: row.subject,
+      status: row.status,
+      unreadForUser: row.unreadForUser,
+      unreadForAdmin: row.unreadForAdmin,
+      lastMessageAt: row.lastMessageAt,
+      preview: row.messages[0]?.body ?? null,
+      requester: toTicketRequester(row.user),
+    })),
+    total,
+    page,
+    pageSize,
+    pageCount,
+  };
+}
+
+/** Nav badge: tickets with unseen user activity, excluding closed threads. */
+export async function loadAdminUnreadTicketCount(): Promise<number> {
+  return prisma.ticket.count({
+    where: { unreadForAdmin: { gt: 0 }, status: { not: "closed" } },
+  });
 }
 
 /** Run one section read, converting a failure into an `ok:false` marker. */

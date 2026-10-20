@@ -72,6 +72,13 @@ export default function TicketList({
                 {row.subject}
               </span>
               <div className="flex shrink-0 items-center gap-2">
+                {typeof row.unreadForAdmin === 'number' && row.unreadForAdmin > 0 && (
+                  <span
+                    className="inline-block h-2.5 w-2.5 rounded-full bg-foreground"
+                    title={tp('ticket.unread', row.unreadForAdmin)}
+                    aria-label={tp('ticket.unread', row.unreadForAdmin)}
+                  />
+                )}
                 <TicketStatusChip status={row.status} />
                 {row.unreadForUser > 0 && (
                   <span

@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import AdminConfirmPanel from '@/components/admin/AdminConfirmPanel';
 import AdminReplyComposer from '@/components/admin/AdminReplyComposer';
+import AdminTicketReadMarker from '@/components/admin/AdminTicketReadMarker';
 import UserProfileCard from '@/components/admin/UserProfileCard';
 import TicketStatusChip from '@/components/TicketStatusChip';
 import TicketThread from '@/components/TicketThread';
@@ -51,6 +52,7 @@ export default async function AdminTicketDetailPage({
 
   return (
     <section className="flex flex-col gap-6">
+      <AdminTicketReadMarker ticketId={id} />
       <header className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold leading-8 break-words text-foreground">
           {thread.subject}

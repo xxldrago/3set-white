@@ -364,15 +364,25 @@ export async function loadAdminKeys(userId: number): Promise<AdminKeyView[]> {
 }
 
 /**
- * Payment history for one user, mapped through the SAME `toHistoryRow` as the
- * cabinet — the provider-free shape is reused, never re-mapped (T-03-provider-leak).
+ * Admin-only payment row (ANL-12/D-08): the shared `OrderHistoryRow` shape the
+ * cabinet and bot consume is NEVER extended with cost — `providerCost` lives
+ * only in this admin surface type. Render `—` for null (a pre-implementation
+ * order is the honest coverage gap, not 0).
  */
-export async function loadAdminPayments(userId: number): Promise<OrderHistoryRow[]> {
+export type AdminPaymentRow = OrderHistoryRow & { providerCost: number | null };
+
+/**
+ * Payment history for one user, mapped through the SAME `toHistoryRow` as the
+ * cabinet — the provider-free base shape is reused, never re-mapped
+ * (T-03-provider-leak); the provider expense (ANL-12) is spread on ONLY here,
+ * for admin eyes.
+ */
+export async function loadAdminPayments(userId: number): Promise<AdminPaymentRow[]> {
   const orders = await prisma.order.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
   });
-  return orders.map(toHistoryRow);
+  return orders.map((o) => ({ ...toHistoryRow(o), providerCost: o.providerCost ?? null }));
 }
 
 /** Ticket list for one user (same preview shape as the cabinet queue). */

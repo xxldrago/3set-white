@@ -6,6 +6,9 @@
 // source-contract suite (D-08) lives in the "no leak" describe at the bottom.
 // Harness mirrors tests/unit/outbox-worker.test.ts (fresh 2000003xx OWNER +
 // cleanup chain: outbox → order → keyCache → user).
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { ArtemidaError, artemida, type NormalizedKey } from "../../lib/artemida";
 import { logger } from "../../lib/logger";
@@ -184,5 +187,63 @@ describe("providerCost capture — provisioning transition (D-06/D-07)", () => {
     expect(row?.status).toBe("provisioned");
     expect(row?.provisionedKeyId).toBe("key_default");
     expect(row?.providerCost).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// No-leak source contract (ANL-12/D-08, T-07-03-01, Pitfall 5): the cost field
+// name must never appear in the shared customer mapper or any customer-facing
+// surface. The admin row type lives ONLY in lib/admin-service.ts.
+// Pattern: readFileSync scan (mirrors tests/unit/admin-route.test.ts:521-541).
+// The scan targets the MAPPER REGION of lib/orders-service.ts, not the whole
+// file — the transition data bag legitimately carries the field (Task 1).
+// ---------------------------------------------------------------------------
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(HERE, "..", "..");
+const ORDERS_SERVICE_SOURCE = readFileSync(join(ROOT, "lib", "orders-service.ts"), "utf8");
+
+/** Text of one top-level block (`start` … its closing brace at column 0). */
+function block(source: string, start: string): string {
+  const from = source.indexOf(start);
+  if (from === -1) return "";
+  const end = source.indexOf("\n}", from);
+  return end === -1 ? "" : source.slice(from, end);
+}
+
+// Customer-facing surfaces (cabinet payments page/list + order status panel +
+// the bot payment history pipeline — Pitfall 5).
+const CUSTOMER_SURFACES = [
+  "components/PaymentHistoryList.tsx",
+  "components/OrderStatusPanel.tsx",
+  "app/payments/page.tsx",
+  "lib/bot-payments.ts",
+];
+
+describe("no leak — customer surfaces are provably cost-free (D-08)", () => {
+  it("keeps providerCost out of the shared OrderHistoryRow interface", () => {
+    const iface = block(ORDERS_SERVICE_SOURCE, "export interface OrderHistoryRow");
+    expect(iface).not.toBe("");
+    expect(iface).not.toContain("providerCost");
+  });
+
+  it("keeps providerCost out of the shared toHistoryRow mapper", () => {
+    const mapper = block(ORDERS_SERVICE_SOURCE, "export function toHistoryRow");
+    expect(mapper).not.toBe("");
+    expect(mapper).not.toContain("providerCost");
+  });
+
+  it.each(CUSTOMER_SURFACES)(
+    "keeps providerCost out of the customer surface %s",
+    (relative) => {
+      const source = readFileSync(join(ROOT, relative), "utf8");
+      expect(source).not.toContain("providerCost");
+    },
+  );
+
+  it("declares providerCost on the admin-only AdminPaymentRow", () => {
+    const source = readFileSync(join(ROOT, "lib", "admin-service.ts"), "utf8");
+    expect(source).toContain("AdminPaymentRow = OrderHistoryRow & { providerCost: number | null }");
+    expect(source).toContain("loadAdminPayments");
   });
 });

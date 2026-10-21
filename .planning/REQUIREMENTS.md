@@ -28,7 +28,7 @@ compensation/reply templates/requester context).
 - [ ] **ANL-12**: Система сохраняет расход провайдера на заказ (`Order.providerCost`) в момент provisioning
 - [ ] **ANL-13**: Админ видит gross margin (`Σ(finalAmount − providerCost)`), маржинальность в % и средний расход на ключ
 - [ ] **ANL-14**: Система снимает снапшоты `GET /balance` и показывает burn-rate и прогноз runway (баланс ÷ средний дневной расход, дней)
-- [ ] **ANL-15**: Метрики считаются nightly-джобом в `daily_metrics` (cron 03:00) с возможностью backfill истории
+- [x] **ANL-15**: Метрики считаются nightly-джобом в `daily_metrics` (cron 03:00) с возможностью backfill истории
 
 ### COH — Cohorts & retention
 
@@ -119,7 +119,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ANL-12 | Phase 7 | Pending |
 | ANL-13 | Phase 8 | Pending |
 | ANL-14 | Phase 8 | Pending |
-| ANL-15 | Phase 7 | Pending |
+| ANL-15 | Phase 7 | Complete |
 | COH-01 | Phase 10 | Pending |
 | COH-02 | Phase 10 | Pending |
 | COH-03 | Phase 10 | Pending |

@@ -102,11 +102,11 @@ export async function loadKpis(period: 7 | 30 | 90): Promise<KpisData> {
   const fromDay = windowStartDay(period);
   const fromInstant = mskDayStartInstant(fromDay);
 
-  const [history, windowOrders, userCount, payerRows, coverageRows] = await Promise.all([
+  const [history, windowOrders, userCount, payerRows] = await Promise.all([
     loadPaidOrders(),
     prisma.order.findMany({
       where: { status: { in: [...PAID] }, paidAt: { gte: fromInstant } },
-      select: { finalAmount: true, balanceUsed: true },
+      select: { finalAmount: true, balanceUsed: true, providerCost: true },
     }),
     prisma.user.count(),
     // COUNT returns bigint → ::int cast keeps it a JS number (never a BigInt
@@ -118,23 +118,17 @@ export async function loadKpis(period: 7 | 30 | 90): Promise<KpisData> {
       WHERE status IN ('paid', 'provisioning', 'provisioned')
         AND paid_at >= ${pgTimestamp(fromInstant)}
     `,
-    // daily_metrics holds one row per MSK day; the sums are the window's
-    // D-08 coverage ledger (NULL provider cost = unknown, never 0).
-    prisma.$queryRaw<{ known: number; total: number }[]>`
-      SELECT COALESCE(SUM(provider_cost_orders), 0)::int AS known,
-             COALESCE(SUM(paid_orders), 0)::int AS total
-      FROM daily_metrics
-      WHERE day >= ${fromDay}::date
-    `,
   ]);
 
   let windowCash = 0;
   for (const row of windowOrders) windowCash += cashOf(row);
 
+  // Coverage from the same live window orders (includes today)
+  const coverageTotal = windowOrders.length;
+  const coverageKnown = windowOrders.filter(o => o.providerCost !== null).length;
+
   const arpuDenominator = userCount;
   const arppuDenominator = payerRows[0]?.payers ?? 0;
-  const coverageKnown = coverageRows[0]?.known ?? 0;
-  const coverageTotal = coverageRows[0]?.total ?? 0;
 
   return {
     mrr: totalMrrAt(history, now),

@@ -18,7 +18,7 @@ export default function PeriodSelector({ selected = 30 }: { selected?: number })
   }
 
   return (
-    <div className="flex gap-3" aria-label={t('admin.statsPeriod')}>
+    <div className="flex gap-3" role="group" aria-label={t('admin.statsPeriod')}>
       {PERIODS.map((days) => {
         const active = days === selected;
         const label = days === 7 ? t('admin.statsPeriod7') : days === 30 ? t('admin.statsPeriod30') : t('admin.statsPeriod90');
@@ -28,7 +28,11 @@ export default function PeriodSelector({ selected = 30 }: { selected?: number })
             type="button"
             aria-pressed={active}
             onClick={() => choose(days)}
-            className={active ? 'h-11 flex-1 rounded-lg bg-foreground px-4 text-lime' : 'h-11 flex-1 rounded-lg border border-line px-4 border-line'}
+            className={
+              active
+                ? 'h-11 flex-1 rounded-lg bg-foreground px-4 text-lime focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green'
+                : 'h-11 flex-1 rounded-lg border border-line px-4 border-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green'
+            }
           >
             {label}
           </button>

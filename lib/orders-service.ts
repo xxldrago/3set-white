@@ -316,7 +316,17 @@ export async function transitionOrder(
   id: string,
   from: OrderStatus,
   to: OrderStatus,
-  data: Partial<Pick<Order, "paidAt" | "provisionedKeyId" | "errorCode" | "attempts" | "nextAttemptAt">> = {},
+  data: Partial<
+    Pick<
+      Order,
+      | "paidAt"
+      | "provisionedKeyId"
+      | "providerCost"
+      | "errorCode"
+      | "attempts"
+      | "nextAttemptAt"
+    >
+  > = {},
 ): Promise<boolean> {
   const { count } = await prisma.order.updateMany({
     where: { id, status: from },
@@ -473,10 +483,21 @@ export async function transitionToProvisioning(orderId: string): Promise<boolean
   return transitionOrder(orderId, "paid", "provisioning");
 }
 
-/** Terminal success: `provisioning→provisioned`, recording the provider key id. */
-export async function markProvisioned(orderId: string, keyId: string): Promise<boolean> {
+/**
+ * Terminal success: `provisioning→provisioned`, recording the provider key id
+ * AND the per-order provider expense (ANL-12/D-06) captured concurrently at
+ * provisioning time; a quote outage passes `null` (the D-08 coverage gap) —
+ * never a fallback price (Pitfall 6: a grid-derived retail cost would record
+ * structurally-zero margin).
+ */
+export async function markProvisioned(
+  orderId: string,
+  keyId: string,
+  providerCost: number | null = null,
+): Promise<boolean> {
   return transitionOrder(orderId, "provisioning", "provisioned", {
     provisionedKeyId: keyId,
+    providerCost,
     errorCode: null,
     nextAttemptAt: null,
   });

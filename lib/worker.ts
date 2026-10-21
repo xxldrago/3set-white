@@ -132,24 +132,41 @@ export async function processFulfillOrder(orderId: string): Promise<FulfillOutco
   }
 
   try {
-    const key = await provisionByKind({
-      id: order.id,
-      kind: order.kind,
-      keyId: order.keyId,
-      days: order.days,
-      devices: order.devices,
-      // Provider customer reference: telegram id when linked, else the
-      // email-only convention `email:{userId}` (mirrors the trial path).
-      customerRef:
-        order.user.telegramId !== null
-          ? String(order.user.telegramId)
-          : `email:${order.userId}`,
-    });
+    // ANL-12/D-06: the cost quote runs CONCURRENTLY with provisioning so a
+    // /pricing round-trip never delays key delivery. Its own failure path is
+    // the `.catch(() => null)` below — a quote outage logs and leaves
+    // `providerCost` null; provisioning remains the gate. Cost comes ONLY from
+    // `artemida.getPricing`/`getUpgradeQuote` — never `resolveTariffQuote`
+    // (the manual grid answers retail, which would record zero margin).
+    const [key, quotedCost] = await Promise.all([
+      provisionByKind({
+        id: order.id,
+        kind: order.kind,
+        keyId: order.keyId,
+        days: order.days,
+        devices: order.devices,
+        // Provider customer reference: telegram id when linked, else the
+        // email-only convention `email:{userId}` (mirrors the trial path).
+        customerRef:
+          order.user.telegramId !== null
+            ? String(order.user.telegramId)
+            : `email:${order.userId}`,
+      }),
+      quoteProviderCost(order).catch((err) => {
+        logger.warn({
+          route: "worker",
+          outcome: "provider_cost_unavailable",
+          orderId: order.id,
+          code: err instanceof ArtemidaError ? err.code : "unknown",
+        });
+        return null;
+      }),
+    ]);
     await upsertCachedKey(order.userId, key);
     // The transition result is the send gate: only the first writer that
     // actually flips provisioning→provisioned triggers the receipt email,
     // so worker retries can never double-send.
-    const firstProvision = await markProvisioned(order.id, key.id);
+    const firstProvision = await markProvisioned(order.id, key.id, quotedCost);
     await enqueueNotifyProvisioned(order.id);
     if (firstProvision && order.user.email) {
       const { sendPurchaseMail } = await import("./mail");
@@ -207,6 +224,51 @@ async function provisionByKind(order: {
         { idempotencyKey },
       );
   }
+}
+
+/**
+ * Per-order ARTEMIDA expense quote (ANL-12/D-07), computed per kind with the
+ * SAME input shape the provisioning call uses for that kind. NEVER derived
+ * from `resolveTariffQuote`/`resolveUpgradeQuote` — those prefer the manual
+ * retail grid when a row exists (lib/pricing.ts), so a grid-derived "cost"
+ * would be the retail amount itself and margin would be structurally zero
+ * (Pitfall 6).
+ * - `new`/`renew` → `getPricing({ days, devices })` — `days` is non-null for
+ *   both (the provisioning path enforces it for renew; new falls back to 30).
+ * - `upgrade` → `getUpgradeQuote({ days: 30, devices: baseDevices, addDevices })`:
+ *   `order.devices` carries the addDevices delta, and the pre-upgrade device
+ *   limit lives only in the key mirror. It is RECOVERED BY SUBTRACTION because
+ *   a retry after a partial success may already observe the POST-upgrade
+ *   `deviceLimit` in the cache — without the subtraction the tier lookup lands
+ *   one tier too high.
+ */
+async function quoteProviderCost(order: {
+  id: string;
+  kind: string;
+  keyId: string | null;
+  days: number | null;
+  devices: number;
+}): Promise<number | null> {
+  if (order.kind === "upgrade") {
+    if (!order.keyId) {
+      // Upgrades always carry the key reference (the provisioning path throws
+      // the same precondition); without it there is no cost basis.
+      throw new Error("worker:upgrade_missing_key");
+    }
+    const cached = await prisma.keyCache.findFirst({
+      where: { keyId: order.keyId },
+      select: { deviceLimit: true },
+    });
+    const baseDevices = Math.max(1, (cached?.deviceLimit ?? order.devices) - order.devices);
+    const quote = await artemida.getUpgradeQuote({
+      days: 30,
+      devices: baseDevices,
+      addDevices: order.devices,
+    });
+    return quote.amount;
+  }
+  const quote = await artemida.getPricing({ days: order.days ?? 30, devices: order.devices });
+  return quote.price;
 }
 
 async function handleFulfillError(

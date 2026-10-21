@@ -188,6 +188,11 @@ model Order {
   promoCode        String?     @map("promo_code")
   finalAmount      Int         @default(0) @map("final_amount")
   balanceUsed      Int         @default(0) @map("balance_used")
+  // ARTEMIDA charge at provisioning, whole RUB (D-06/D-08). Nullable with NO
+  // default on purpose: NULL means "pre-implementation order or unavailable
+  // quote" and drives the D-08 coverage flag ("себестоимость известна для N
+  // из M"). Never default 0 — that would erase the null gap and pose as fact.
+  providerCost     Int?        @map("provider_cost")
   outbox           Outbox[]
 
   @@index([userId, createdAt])
@@ -569,4 +574,37 @@ model Broadcast {
   finishedAt       DateTime?       @map("finished_at")
 
   @@map("broadcasts")
+}
+
+// Phase 7 analytics foundation (D-12/D-15). `day` is an Europe/Moscow calendar
+// day stored as a native `date`; the stored value IS the MSK label, and Prisma
+// returns it as a Date at UTC midnight. Writes MUST pass `mskDateKey()` (UTC
+// midnight) — never an MSK-start instant, which lands on the previous day.
+model DailyMetric {
+  day                DateTime @id @db.Date
+  paidOrders         Int      @default(0) @map("paid_orders")
+  paidCashRub        Int      @default(0) @map("paid_cash_rub")
+  newOrders          Int      @default(0) @map("new_orders")
+  renewOrders        Int      @default(0) @map("renew_orders")
+  upgradeOrders      Int      @default(0) @map("upgrade_orders")
+  providerCostRub    Int      @default(0) @map("provider_cost_rub")
+  providerCostOrders Int      @default(0) @map("provider_cost_orders")
+  activeKeys         Int      @default(0) @map("active_keys")
+  newUsers           Int      @default(0) @map("new_users")
+  goodwillDays       Int      @default(0) @map("goodwill_days")
+  computedAt         DateTime @default(now()) @map("computed_at")
+
+  @@map("daily_metrics")
+}
+
+// Daily ARTEMIDA wallet balance snapshot — groundwork for ANL-14. One row per
+// MSK day; `source` distinguishes the cron capture from a manual backfill.
+model ArtemidaBalanceSnapshot {
+  day          DateTime @id @db.Date
+  balanceRub   Int      @map("balance_rub")
+  capturedAt   DateTime @default(now()) @map("captured_at")
+  source       String   @default("cron")
+  capturedFrom String?
+
+  @@map("artemida_balance_snapshots")
 }

@@ -33,8 +33,11 @@ describe('analytics/time — MSK primitives', () => {
       const instant = mskDayStartInstant('2026-10-20');
       const key = mskDateKey('2026-10-20');
       expect(instant.getTime()).not.toBe(key.getTime());
-      expect((key.getTime() - instant.getTime()) / 86_400_000).toBe(1);
-      // Passing the instant where a date key belongs would store the previous day.
+      // UTC date components differ by one calendar day — the adapter writes
+      // exactly these components, which is why the instant stores the previous day.
+      expect(instant.toISOString().slice(0, 10)).toBe('2026-10-19');
+      expect(key.toISOString().slice(0, 10)).toBe('2026-10-20');
+      // Both helpers name the same Moscow day once interpreted correctly.
       expect(mskDayLabel(instant)).toBe('2026-10-20');
       expect(mskDayLabel(key)).toBe('2026-10-20');
     });

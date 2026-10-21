@@ -129,12 +129,30 @@ Cron (daily), as root:
 
 ```cron
 0 3 * * * cd /opt/3set-white && scripts/backup.sh
+# analytics nightly rollup (D-13): 03:05 — 03:00 belongs to pg_dump
+5 3 * * * curl -fsS -X POST -H "x-cron-secret: $CRON_SECRET" https://dash.3set.online/api/cron/analytics
 ```
 
 - DB: `pg_dump` gzip to `/opt/3set-white/backups/db-<stamp>.sql.gz`.
 - Uploads: ticket-attachment volume archive `uploads-<stamp>.tar.gz`.
 - Retention: `+7` days pruned (`BACKUP_DIR`/`RETENTION_DAYS` overridable).
 - **Copy both off-box** (the single server is also the only copy otherwise).
+
+### Analytics rollup + backfill (ANL-15 / D-13 / D-14)
+
+- The nightly cron above re-rolls the last 7 MSK days (upsert is absolute — re-running never distorts values). First check the cron secret is set in `.env` (`CRON_SECRET=…`) and a fetch returns 200 after deploy:
+  `curl -sS -X POST -H "x-cron-secret: $CRON_SECRET" -o /dev/null -w '%{http_code}\n' https://dash.3set.online/api/cron/analytics`.
+- One-off history backfill (after first deploy, or after a data fix):
+
+  ```bash
+  docker compose -f docker-compose.prod.yml exec web npx tsx scripts/backfill-analytics.ts
+  ```
+
+  Defaults to iterating from the first paid-order day through yesterday (MSK),
+  printed and upserted in month chunks; safe to re-run.
+- Confirm `tsx` is present in the image before trying the backfill:
+  `docker compose -f docker-compose.prod.yml exec web npx tsx --version`
+  (Pitfall 10 — the runner only has standalone + copied `scripts/`/`node_modules`).
 
 Restore (dry run): `gunzip -c db-<stamp>.sql.gz | docker compose -f docker-compose.prod.yml exec -T db psql -U setwhite setwhite`.
 

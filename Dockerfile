@@ -46,6 +46,10 @@ COPY --from=builder /app/prisma7.config.ts ./
 # Prisma 7's generated client is outside node_modules and may be missed by
 # Next standalone tracing; copy it explicitly for the runtime import.
 COPY --from=builder /app/generated ./generated
+# Backfill CLI (D-14): scripts/ is not part of the standalone trace and the db
+# port is unpublished, so the operator command must run INSIDE the container.
+# tsx is present in the copied node_modules (deps stage built with no NODE_ENV).
+COPY --from=builder /app/scripts ./scripts
 COPY --from=deps /app/node_modules ./node_modules
 EXPOSE 3000
 # Prod migrations run forward only (T-02-02): deploy, never dev.

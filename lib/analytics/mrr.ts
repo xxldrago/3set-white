@@ -95,7 +95,13 @@ function keyMrrAt(ref: string, ops: PaidOrderRow[], t: Date): number {
     if (!u.paidAt) continue;
     const um = u.paidAt.getTime();
     if (um <= (full.base.paidAt as Date).getTime() || um > tm) continue;
-    const remainingDays = (full.termEnd.getTime() - um) / DAY_MS;
+    // Freeze remaining days at the upgrade instant against the term end *then*,
+    // not against the final post-renewal termEnd.
+    const termAtUpgrade = buildKeyTerms(
+      ops.filter((op) => !op.paidAt || op.paidAt.getTime() <= um),
+    ).get(ref);
+    const endAtUpgrade = termAtUpgrade?.termEnd.getTime() ?? full.termEnd.getTime();
+    const remainingDays = (endAtUpgrade - um) / DAY_MS;
     mrr += cashOf(u) / Math.max(1, remainingDays / 30);
   }
   return mrr;

@@ -265,10 +265,10 @@ async function quoteProviderCost(order: {
       devices: baseDevices,
       addDevices: order.devices,
     });
-    return quote.amount;
+    return Math.round(quote.amount);
   }
   const quote = await artemida.getPricing({ days: order.days ?? 30, devices: order.devices });
-  return quote.price;
+  return Math.round(quote.price);
 }
 
 async function handleFulfillError(

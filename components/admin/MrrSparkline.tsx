@@ -42,11 +42,11 @@ export default async function MrrSparkline({ period }: { period: 7 | 30 | 90 }) 
   const header = (
     <div className="flex flex-wrap items-baseline justify-between gap-2">
       <h3 className="text-xl font-semibold text-foreground">{t('admin.analyticsSparkTitle')}</h3>
-      {points.length > 0 && (
-        <span className="text-xs text-muted">
-          {t('admin.analyticsSparkMeta', { n: period, value: money.format(Math.round(points[points.length - 1]!.mrr)) })}
-        </span>
-      )}
+       {points.length > 0 && (
+         <span className="text-xs text-muted">
+           {t('admin.analyticsSparkMeta', { n: period, value: money.format(Math.round(points[points.length - 1]!.mrr)) })}
+         </span>
+       )}
     </div>
   );
 

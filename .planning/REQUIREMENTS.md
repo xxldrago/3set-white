@@ -14,9 +14,9 @@ compensation/reply templates/requester context).
 
 ### ANL — Core metrics & unit economics
 
-- [ ] **ANL-01**: Админ видит MRR и ARR за выбранный период — сумма monthly-equivalent активных подписок (`finalAmount / (days / 30)`), вместе с числом активных подписок
-- [ ] **ANL-02**: Админ видит MRR-waterfall по месяцам: new / expansion / contraction / churned MRR и net change
-- [ ] **ANL-03**: Админ видит ARPU (выручка / все зарегистрированные) и ARPPU (выручка / платящие) за период
+- [x] **ANL-01**: Админ видит MRR и ARR за выбранный период — сумма monthly-equivalent активных подписок (`finalAmount / (days / 30)`), вместе с числом активных подписок
+- [x] **ANL-02**: Админ видит MRR-waterfall по месяцам: new / expansion / contraction / churned MRR и net change
+- [x] **ANL-03**: Админ видит ARPU (выручка / все зарегистрированные) и ARPPU (выручка / платящие) за период
 - [ ] **ANL-04**: Админ видит LTV gross — исторический (cumulative revenue на платящего) и прогнозный (ARPPU ÷ месячный churn)
 - [ ] **ANL-05**: Админ видит LTV net (выручка минус расход провайдера) после появления `Order.providerCost`
 - [ ] **ANL-06**: Админ видит renewal rate — доля продлённых подписок от числа истекающих в периоде (`kind = renew`)
@@ -105,9 +105,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ANL-01 | Phase 7 | Pending |
-| ANL-02 | Phase 7 | Pending |
-| ANL-03 | Phase 7 | Pending |
+| ANL-01 | Phase 7 | Complete |
+| ANL-02 | Phase 7 | Complete |
+| ANL-03 | Phase 7 | Complete |
 | ANL-04 | Phase 8 | Pending |
 | ANL-05 | Phase 8 | Pending |
 | ANL-06 | Phase 8 | Pending |

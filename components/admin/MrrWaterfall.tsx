@@ -70,10 +70,10 @@ function MonthGroup({ row, index, slot, maxAbs }: { row: WaterfallRow; index: nu
   const tickTitle = `${t('admin.analyticsWfNet')} · ${monthFull(row.label)} — ${money.format(Math.round(row.net))} ₽`;
 
   const bars: { value: number; up: boolean; className: string; label: string }[] = [
-    { value: row.new, up: true, className: 'fill-lime stroke-green', label: t('admin.analyticsWfNew') },
-    { value: row.expansion, up: true, className: 'fill-green', label: t('admin.analyticsWfExpansion') },
-    { value: row.contraction, up: false, className: 'fill-muted', label: t('admin.analyticsWfContraction') },
-    { value: row.churned, up: false, className: 'fill-foreground', label: t('admin.analyticsWfChurned') },
+    { value: Math.round(row.new), up: true, className: 'fill-lime stroke-green', label: t('admin.analyticsWfNew') },
+    { value: Math.round(row.expansion), up: true, className: 'fill-green', label: t('admin.analyticsWfExpansion') },
+    { value: Math.round(row.contraction), up: false, className: 'fill-muted', label: t('admin.analyticsWfContraction') },
+    { value: Math.round(row.churned), up: false, className: 'fill-foreground', label: t('admin.analyticsWfChurned') },
   ];
 
   return (

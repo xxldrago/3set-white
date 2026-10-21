@@ -30,7 +30,7 @@ Numbering continues from v1.0 (last phase = 6).
 
 ### Phase 7: Analytics Foundation & Revenue Metrics
 
-**Goal**: Админ видит выручку бизнеса в динамике (MRR/ARR, waterfall, ARPU/ARPPU), а система ежедневно и исторически пересчитывает метрики из `daily_metrics`; стоимость провайдера фиксируется на каждом заказе
+**Goal**: As an admin, I want to see business revenue dynamics (MRR/ARR, waterfall, ARPU/ARPPU) with daily/historical rollups in `daily_metrics` and per-order provider cost at provisioning, so that I can track revenue and unit economics without manual SQL.
 **Mode:** mvp
 **Depends on**: Nothing (first phase of milestone v1.1; переиспользует админ-поверхность и `/api/cron/*` из v1.0)
 **Requirements**: ANL-12, ANL-15, ANL-01, ANL-02, ANL-03

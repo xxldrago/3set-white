@@ -130,3 +130,40 @@ export function activeKeysAt(orders: PaidOrderRow[], t: Date): number {
 export function arrAt(orders: PaidOrderRow[], t: Date): number {
   return totalMrrAt(orders, t) * 12;
 }
+
+// ---------------------------------------------------------------------------
+// Per-user / data-quality ratios (ANL-03). Pure helpers over numbers: the
+// caller owns the window cash (Σ cashOf over paid orders with paidAt in the
+// window — the lib/revenue.ts pattern) and fetches the denominators
+// (prisma.user.count() / COUNT(DISTINCT user_id)).
+//
+// D-05 "без заблокированных" is a DOCUMENTED NO-OP: the User model has no
+// blocked / disabled / deletedAt field (verified against prisma
+// schema.prisma), so the ARPU denominator is plain prisma.user.count(). When
+// such a field ever appears, filter it HERE (the helper, not the callers).
+// ---------------------------------------------------------------------------
+
+/**
+ * Average revenue per day on the window, per user (all accounts). Returns the
+ * EXACT rational — the UI rounds to whole rubles with Math.round; a zero
+ * denominator returns null (the UI renders «—», never «0 ₽»).
+ */
+export function computeArpu(windowCashRub: number, userCount: number): number | null {
+  return userCount === 0 ? null : windowCashRub / userCount;
+}
+
+/** ARPU over paying users only: window cash / DISTINCT payers (not order count). */
+export function computeArppu(windowCashRub: number, payingUsers: number): number | null {
+  return payingUsers === 0 ? null : windowCashRub / payingUsers;
+}
+
+/**
+ * providerCost coverage ratio (D-08: NULL is the honest pre-Phase-7 gap, never
+ * backfilled). known=0 with total>0 returns 0 — the UI's «0 из N» state; a
+ * ZERO total returns null — a different state («за период не было оплаченных
+ * заказов», UI-SPEC §5.3). Collapsing known=0 into null would erase that
+ * distinction.
+ */
+export function computeCoverage(knownOrders: number, totalOrders: number): number | null {
+  return totalOrders === 0 ? null : knownOrders / totalOrders;
+}

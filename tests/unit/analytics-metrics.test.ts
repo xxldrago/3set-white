@@ -193,7 +193,7 @@ describe("analytics/metrics — DB-backed denominators (real DB)", () => {
 
     const payerRows = await prisma.$queryRaw<{ payers: number }[]>`
       SELECT COUNT(DISTINCT user_id)::int AS payers
-      FROM "Order"
+      FROM orders
       WHERE status IN ('paid', 'provisioning', 'provisioned')
         AND paid_at >= ${WINDOW_START}
         AND user_id IN (${ownerUserId}, ${payer2UserId}, ${freeUserId})
@@ -203,7 +203,7 @@ describe("analytics/metrics — DB-backed denominators (real DB)", () => {
     // the same window WITHOUT DISTINCT → 3: ARPPU counts payers, not orders
     const orderCountRaw = await prisma.$queryRaw<{ n: number }[]>`
       SELECT COUNT(*)::int AS n
-      FROM "Order"
+      FROM orders
       WHERE status IN ('paid', 'provisioning', 'provisioned')
         AND paid_at >= ${WINDOW_START}
         AND user_id IN (${ownerUserId}, ${payer2UserId}, ${freeUserId})

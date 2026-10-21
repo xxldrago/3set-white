@@ -29,6 +29,7 @@ export function toAdminRole(value: string): AdminRole | null {
 
 export type AdminSection =
   | "overview"
+  | "analytics"
   | "users"
   | "profileKeys"
   | "profilePayments"
@@ -45,6 +46,7 @@ export type AdminSection =
 const MATRIX: Record<AdminRole, readonly AdminSection[]> = {
   administrator: [
     "overview",
+    "analytics",
     "users",
     "profileKeys",
     "profilePayments",
@@ -57,7 +59,7 @@ const MATRIX: Record<AdminRole, readonly AdminSection[]> = {
     "roles",
   ],
   support: ["users", "profileKeys", "profileTickets", "tickets"],
-  manager: ["overview", "users", "profilePayments"],
+  manager: ["overview", "analytics", "users", "profilePayments"],
   // Partners see ONLY their own dashboard. They never enter the shared
   // queues (users/tickets/roles) — чужі дані недоступні. Support contact
   // stays in the cabinet (/support), linked from the dashboard.

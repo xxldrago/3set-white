@@ -343,6 +343,7 @@ export const ru = {
     currentRole: 'Ваша роль: {role}',
     toCabinet: 'Кабинет',
     navOverview: 'Обзор',
+    navAnalytics: 'Аналитика',
     navUsers: 'Пользователи',
       navTickets: 'Обращения',
       ticketsFilterAll: 'Все',
@@ -422,6 +423,7 @@ export const ru = {
     analyticsTableMonth: 'Месяц',
     analyticsTableDate: 'Дата',
     analyticsTableMrr: 'MRR, ₽',
+    analyticsTeaserLink: 'Подробнее',
     newTicketDm: '🆘 Новое обращение #{id}: {subject}',
     supportIntakeDm:
       '📨 Обращение с сайта\nОтветить: {channelLabel} · {contact}\nИмя: {name}\n\nСообщение:\n{body}',

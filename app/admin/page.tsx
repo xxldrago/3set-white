@@ -8,6 +8,7 @@
 // source failing never blanks the other (UI-SPEC §2). This plan renders the
 // empty `—` baseline; plan 05-07 fills the real reads (and the balance chip)
 // and must NOT import lib/artemida into this page scope until then.
+import { Suspense } from 'react';
 import { notFound, redirect } from 'next/navigation';
 import { requireRole } from '@/lib/admin-auth';
 import { t } from '@/lib/i18n';
@@ -15,6 +16,7 @@ import { AdminError, SessionError } from '@/lib/session';
 import RevenuePanel from '@/components/admin/RevenuePanel';
 import FunnelCharts from '@/components/admin/FunnelCharts';
 import StatsPanel from '@/components/admin/StatsPanel';
+import AnalyticsTeaser from '@/components/admin/AnalyticsTeaser';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +38,11 @@ export default async function AdminOverviewPage({ searchParams }: { searchParams
       <h2 className="text-xl font-semibold text-foreground">{t('admin.statsTitle')}</h2>
 
       <StatsPanel period={period} />
+      {/* D-09 MRR teaser — one card between stats and revenue. Own Suspense +
+          catch: a failing teaser never blanks the overview. */}
+      <Suspense fallback={<div className="h-28 animate-pulse rounded-2xl bg-foreground/5" aria-hidden="true" />}>
+        <AnalyticsTeaser />
+      </Suspense>
       <RevenuePanel period={period} />
       {role === 'administrator' && (
         <section className="flex flex-col gap-3">

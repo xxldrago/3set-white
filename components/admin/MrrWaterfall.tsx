@@ -67,7 +67,7 @@ function MonthGroup({ row, index, slot, maxAbs }: { row: WaterfallRow; index: nu
   const barH = (value: number): number => (maxAbs > 0 ? (Math.abs(value) / maxAbs) * MAX_BAR : 0);
   const yOf = (value: number): number => (maxAbs > 0 ? ZERO_Y - (value / maxAbs) * MAX_BAR : ZERO_Y);
   const netY = yOf(row.net);
-  const tickTitle = `${t('admin.analyticsWfNet')} · ${monthFull(row.label)} — ${money.format(row.net)} ₽`;
+  const tickTitle = `${t('admin.analyticsWfNet')} · ${monthFull(row.label)} — ${money.format(Math.round(row.net))} ₽`;
 
   const bars: { value: number; up: boolean; className: string; label: string }[] = [
     { value: row.new, up: true, className: 'fill-lime stroke-green', label: t('admin.analyticsWfNew') },
@@ -93,7 +93,7 @@ function MonthGroup({ row, index, slot, maxAbs }: { row: WaterfallRow; index: nu
             strokeWidth={1}
             className={bar.className}
           >
-            <title>{`${bar.label} · ${monthFull(row.label)} — ${money.format(bar.value)} ₽`}</title>
+            <title>{`${bar.label} · ${monthFull(row.label)} — ${money.format(Math.round(bar.value))} ₽`}</title>
           </rect>
         );
       })}
@@ -228,11 +228,11 @@ export default async function MrrWaterfall() {
           {months.map((row) => (
             <tr key={row.label}>
               <th scope="row">{monthFull(row.label)}</th>
-              <td>{money.format(row.new)}</td>
-              <td>{money.format(row.expansion)}</td>
-              <td>{money.format(row.contraction)}</td>
-              <td>{money.format(row.churned)}</td>
-              <td>{money.format(row.net)}</td>
+               <td>{money.format(Math.round(row.new))}</td>
+               <td>{money.format(Math.round(row.expansion))}</td>
+               <td>{money.format(Math.round(row.contraction))}</td>
+               <td>{money.format(Math.round(row.churned))}</td>
+               <td>{money.format(Math.round(row.net))}</td>
             </tr>
           ))}
         </tbody>

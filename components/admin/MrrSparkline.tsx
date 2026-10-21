@@ -44,7 +44,7 @@ export default async function MrrSparkline({ period }: { period: 7 | 30 | 90 }) 
       <h3 className="text-xl font-semibold text-foreground">{t('admin.analyticsSparkTitle')}</h3>
       {points.length > 0 && (
         <span className="text-xs text-muted">
-          {t('admin.analyticsSparkMeta', { n: period, value: money.format(points[points.length - 1]!.mrr) })}
+          {t('admin.analyticsSparkMeta', { n: period, value: money.format(Math.round(points[points.length - 1]!.mrr)) })}
         </span>
       )}
     </div>
@@ -121,7 +121,7 @@ export default async function MrrSparkline({ period }: { period: 7 | 30 | 90 }) 
           {points.map((p) => (
             <tr key={p.day}>
               <th scope="row">{p.day.split('-').reverse().join('.')}</th>
-              <td>{money.format(p.mrr)}</td>
+              <td>{money.format(Math.round(p.mrr))}</td>
             </tr>
           ))}
         </tbody>

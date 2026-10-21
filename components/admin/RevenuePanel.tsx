@@ -3,20 +3,9 @@
 // Degrades to the shared load-error copy, never a raw DB string.
 import { loadRevenue } from '@/lib/revenue';
 import { t } from '@/lib/i18n';
+import { MetricCard, CARD, GRID } from './MetricCard';
 
-const CARD = 'flex flex-col gap-2 rounded-2xl border border-line p-6 border-line';
-const GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3';
 const money = new Intl.NumberFormat('ru-RU');
-
-function MetricCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
-  return (
-    <div className={CARD}>
-      <span className="text-sm text-muted">{label}</span>
-      <span className="text-2xl font-semibold tabular-nums text-foreground">{value}</span>
-      {sub && <span className="text-xs text-muted">{sub}</span>}
-    </div>
-  );
-}
 
 export default async function RevenuePanel({ period }: { period: 7 | 30 | 90 }) {
   let data;

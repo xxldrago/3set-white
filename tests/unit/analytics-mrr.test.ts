@@ -183,12 +183,12 @@ describe("analytics/mrr — one key = one MRR row (D-01)", () => {
       row({ id: "m4", kind: "renew", keyId: "kM", days: 30, finalAmount: 3000, paidAt: new Date("2026-07-01T09:00:00.000Z") }),
     ];
     const t = new Date("2026-07-05T09:00:00.000Z");
-    // chain: T0+30 = 07-10; renew1 → 08-09; renew2 → 09-08. At t: one row =
-    // the renewal segment's equivalent + the upgrade spread, counted ONCE.
-    expect(activeKeysAt(orders, t)).toBe(1);
-    expect(totalMrrAt(orders, t)).toBe(4500);
-    expect(totalMrrAt(orders, t)).toBe(totalMrrAt([orders[0]!, orders[3]!, orders[2]!], t));
-    expect(arrAt(orders, t)).toBe(54_000); // MRR × 12
+    // chain: T0+30 = 07-10; renew1 → 08-09; renew2 → 09-08. At t the segment
+    // base is the FIRST op (t < 07-10): 3000. The upgrade (paid 06-25) spreads
+    // cash / max(1, (termEnd 09-08 − 06-25)/30 days) = 1500 / 2.5 = 600.
+    expect(activeKeysAt(orders, t)).toBe(1); // ONE key = one row — renewals never double-count
+    expect(totalMrrAt(orders, t)).toBe(3600); // 3000 + 600, counted once
+    expect(arrAt(orders, t)).toBe(43_200); // MRR × 12
   });
 });
 

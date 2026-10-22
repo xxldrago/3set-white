@@ -1,10 +1,11 @@
 ---
 phase: "8"
 slug: "unit-economics-retention"
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: "2026-10-22"
+reviewed_at: "2026-10-22"
 ---
 
 # Phase 8 — UI Design Contract
@@ -592,30 +593,40 @@ key counts as unused and fails the suite).
 > zero-one-many / long-text). Empty- and error-state COPY lives in `## Copywriting Contract` above;
 > this section covers state coverage and references those rows rather than restating copy.
 
-Applicable state considerations resolved: **17 covered, 3 backstop, 0 unresolved**.
+Probe-applicable state considerations resolved: **17 total — 12 covered, 5 backstop, 0 unresolved**.
+Element kinds confirmed: E1–E4 and E6 = `static-content`, E5 = `list-collection`.
 
 | Category | Element(s) | Status | Resolution / Reason |
 |----------|------------|--------|---------------------|
-| empty | LTV cards (no payer ever) | ✅ covered | Three «—» values; subs state «платящих: 0» / «месячный отток —» / `analyticsLtvNetNoCost`. No banner. |
+| overflow | E1 LTV cards | ✅ covered | Three cards in the existing `GRID`; values wrap inside `p-6`, never clip; the grid collapses to one column on mobile and never scrolls horizontally. |
+| long-text | E1 LTV card values | 🧪 backstop | `text-xl` + `tabular-nums`; held-out visual test at 7-digit LTV, negative net, and «100%» on 375px. |
+| overflow | E2 margin cards | ✅ covered | Same `GRID`/card anatomy; the coverage meta is the only long line and wraps below the cards. |
+| long-text | E2 margin meta | 🧪 backstop | Coverage sentence `text-xs` + `flex-wrap`, no truncation; held-out visual test at 4-digit `known`/`total` on 375px. |
+| overflow | E3 burn/runway cards | ✅ covered | Dedicated 2-up grid, never stretched to thirds; values wrap inside the cards. |
+| long-text | E3 burn/runway values | 🧪 backstop | `text-xl` + `tabular-nums`; held-out visual test at a 7-digit daily burn and a 4-digit runway on 375px. |
+| overflow | E4 retention cards | ✅ covered | Three cards in `GRID`; absolute counts live in the sub-line and wrap, never clip. |
+| long-text | E4 retention subs | 🧪 backstop | Absolute-count subs use `text-xs` + `flex-wrap`; held-out visual test with 4-digit counts on 375px. |
+| empty | E5 churn table | ✅ covered | Heading + derived window label survive; `analyticsChurnEmpty` in a bordered panel; no table/header row. |
+| loading | E5 churn table | ✅ covered | `ChartSkeleton h-64` (`aria-hidden`) inside the block's `Suspense`; no layout jump when rows arrive. |
+| error | E5 churn table | ✅ covered | Heading survives, body `common.errorLoad`; the other four blocks still render (D-19). |
+| populated | E5 churn table | ✅ covered | 1–6 MSK rows, six columns, `MM.YYYY` month format matching `MrrWaterfall`; no row cap beyond the 6-month window. |
+| partial | E5 churn table | ✅ covered | A missing month is a truthful zero row, not a dropped row; null bases render «—» in that cell only. |
+| overflow | E5 churn table below `sm` | ✅ covered | `overflow-x-auto` panel with `min-w-[36rem]`; `role="region" tabIndex={0}` + `aria-label`; region scrolls, never shrinks. |
+| zero-one-many | E5 churn table months | ✅ covered | Trailing 6 MSK months capped by business age, minimum 1; window label derived from the rendered count (reuses Phase 7 keys). |
+| overflow | E6 section header | ✅ covered | `flex flex-wrap items-baseline justify-between gap-2`; a long meta line wraps under the heading instead of clipping. |
+| long-text | E6 section meta | 🧪 backstop | Meta is `text-xs` + `flex-wrap`; held-out visual test with a 90-day coverage sentence on 375px, checking the heading stays on its own line. |
+
+### Additional card-level states (authored, not probe-applicable)
+
+| State | Element(s) | Status | Resolution |
+|-------|------------|--------|------------|
+| empty | LTV cards (no payer ever) | ✅ covered | Three «—» values; subs state «платящих: 0» / «месячный отток —» / `analyticsLtvNetNoCost`; no banner. |
 | empty | margin cards (no paid orders in period) | ✅ covered | Meta switches to `analyticsWindowCoverageNoOrders`; all three cards «—». |
 | empty | burn/runway (no costed orders, burn = 0) | ✅ covered | Burn «—» + coverage meta; runway «—» + `analyticsRunwayNoBurn`. |
-| empty | retention cards (no expirations in period) | ✅ covered | All three «—»; subs carry the zero counts (`истекало: 0`, `активных на начало: 0`, `база 0 ₽`). |
-| empty | churn table | ✅ covered | Heading + derived window label survive; `analyticsChurnEmpty` in a bordered panel; no table/header row. |
-| loading | all five new blocks | ✅ covered | Per-block `Suspense` skeletons: `CardsSkeleton count=3` / `count=2 twoUp` (`h-32`) and `ChartSkeleton h-64`, all `aria-hidden`. |
-| error | DB failure in any one block | ✅ covered | Heading survives, body `common.errorLoad`; the other four blocks still render (D-19). |
+| empty | retention cards (no expirations in period) | ✅ covered | All three «—»; subs carry `истекало: 0` / `активных на начало: 0` / `база 0 ₽`. |
 | error | `GET /balance` failure | ✅ covered | Only the runway card degrades to «—» + `analyticsRunwayNoBalance`; burn card still renders (D-15). |
-| partial | margin coverage < 100% | ✅ covered | Coverage sentence in the block meta; metrics computed on the costed subset only — no extrapolation, no `0` for missing cost. |
-| partial | burn coverage < 100% or < 7 covered days | ✅ covered | Burn = «—» + coverage meta (D-14); runway cascades to `analyticsRunwayNoBurn`. |
-| partial | LTV net window is a subset of all-time | ✅ covered | Window stated in the card sub («с 21.10.2026»); no gross/net delta or ratio anywhere (D-03). |
-| populated | all five blocks | ✅ covered | Render from `loadLtv` / `loadMargin` / `loadBurnRunway` / `loadRetention` / `loadChurnTable`; live balance read once per render. |
-| overflow | churn table below `sm` | ✅ covered | `overflow-x-auto` panel with `min-w-[36rem]`; `role="region" tabIndex={0}` + `aria-label`; region scrolls, never shrinks. |
-| overflow | section header with a long meta line | ✅ covered | `flex flex-wrap items-baseline justify-between gap-2`; the meta wraps under the heading instead of clipping. |
-| zero-one-many | churn table months (1…6) | ✅ covered | Trailing 6 MSK months capped by business age, minimum 1; label derived from the rendered count (reuses Phase 7 keys). |
-| zero-one-many | retention denominators (0 → «—») | ✅ covered | `expiring = 0` / `activeAtStart = 0` / `mrrAtStart = 0` each produce «—» while the absolute counts stay visible (D-08/D-09). |
-| zero-one-many | burn card row (exactly 2 cards) | ✅ covered | Dedicated 2-up grid; never padded with a third invented card and never stretched to thirds. |
-| long-text | card values (LTV up to «1 234 567 ₽», margin negative) | 🧪 backstop | `text-xl` + `tabular-nums` inside `p-6`; held-out visual test at 7-digit LTV, a negative margin, and «100%» on a 375px viewport. |
-| long-text | coverage window meta («90 дн. · МСК · покрытие 1 234 из 5 678 заказов») | 🧪 backstop | `text-xs` + `flex-wrap`, no truncation; held-out visual test at 4-digit `known`/`total` on 375px, checking the heading stays on its own line. |
-| long-text | table cells with large lost-MRR values | 🧪 backstop | Right-aligned `tabular-nums` inside a horizontally scrolling table; held-out visual test at «1 234 567» in the last column on 375px. |
+| zero-one-many | retention denominators | ✅ covered | `expiring = 0` / `activeAtStart = 0` / `mrrAtStart = 0` each produce «—» while absolute counts stay visible (D-08/D-09). |
+| zero-one-many | burn card row | ✅ covered | Exactly two cards; never padded with an invented third card and never stretched to thirds. |
 
 ---
 
@@ -632,12 +643,12 @@ new surface is cards, one table and text. The registry question does not arise.
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: PASS (non-blocking FLAG: burn partial-state dash reason)
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-10-22

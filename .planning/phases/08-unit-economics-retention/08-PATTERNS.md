@@ -274,7 +274,7 @@ Five new `<Suspense>` boundaries: `LtvCards` (count=3), `MarginCards period={per
 
 ### `lib/i18n/messages/ru.ts` (modify)
 
-**Analog: itself.** Add exactly the **43 keys** enumerated in 08-UI-SPEC §Copywriting (:513-556) to the flat `admin` object, after the existing `analytics*` block (ru.ts:395-426, near `analyticsTableMrr`). Reused (do not duplicate): `common.errorLoad` (:655), `admin.analyticsTableMonth` (:423), `admin.analyticsWaterfallWindowSingle` (:410), `admin.analyticsWaterfallWindowMonths` (:411).
+**Analog: itself.** Add exactly the **44 keys** enumerated in 08-UI-SPEC §Copywriting (:513-557, 43 locked + `analyticsLtvGrossHistSubActive`, the D-01 under-amortization marker) to the flat `admin` object, after the existing `analytics*` block (ru.ts:395-426, near `analyticsTableMrr`). Reused (do not duplicate): `common.errorLoad` (:655), `admin.analyticsTableMonth` (:423), `admin.analyticsWaterfallWindowSingle` (:410), `admin.analyticsWaterfallWindowMonths` (:411).
 
 **Landmine (Pitfall 10):** `tests/unit/i18n.test.ts` regex-scans `app/`, `components/`, `lib/` and fails on unused AND missing keys; a dynamically built key (`t('admin.' + x)`) counts as unused. Every key must be referenced by a literal `t('…')` / `tp('…')` call in the new components.
 
@@ -322,7 +322,7 @@ Five new `<Suspense>` boundaries: `LtvCards` (count=3), `MarginCards period={per
 
 ### i18n literal-key discipline
 **Source:** `tests/unit/i18n.test.ts:33-77` — literal `t('…')` calls only; unused or missing keys fail the suite.
-**Apply to:** all new components and `ru.ts` (exactly 43 keys, §Copywriting).
+**Apply to:** all new components and `ru.ts` (exactly 44 keys, §Copywriting).
 
 ### Baseline-aware phase gate
 **Source:** `tests/unit/analytics-mrr.test.ts:190` — pre-existing red (`expected 4000 to be 3600`; the code froze `termEnd` at upgrade time in Phase 7 CR-01, the test encodes the stale expectation). Do NOT touch it in Phase 8; the gate is "no new failures".

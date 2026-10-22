@@ -96,7 +96,7 @@ The central code finding is that `buildKeyTerms` is the right cursor engine but 
 
 Two implementation traps are documented in full below. First, `redeemBonusDays` extends a key **through the provider and `upsertCachedKey` without creating an `Order` row** — order-chain reconstruction cannot see those days, so the *latest* term of each key needs a `KeyCache.expiresAt` liveness override or the key will be reported as churned while it is still active. Second, D-07's literal `finalAmount / (days/30)` is **not** the same money base as D-13's `cashOf`; this research follows the locked D-07 formula for revenue churn and flags the mismatch as A1 for an explicit plan-time decision. Only one test in the whole analytics suite is currently red (`tests/unit/analytics-mrr.test.ts:190`, a stale pre-CR-01 expectation — reproduction included below), and the phase gate must be baseline-aware.
 
-**Primary recommendation:** Add two pure modules (`lib/analytics/retention.ts`, `lib/analytics/economics.ts`), five loaders appended to `lib/analytics/service.ts`, five server components + one presentational `AnalyticsSection`, and exactly the 43 UI-SPEC keys; write the pure test suites first (term events + grace boundary + zero denominators), then wire the UI.
+**Primary recommendation:** Add two pure modules (`lib/analytics/retention.ts`, `lib/analytics/economics.ts`), five loaders appended to `lib/analytics/service.ts`, five server components + one presentational `AnalyticsSection`, and exactly the 44 UI-SPEC keys (43 locked + `analyticsLtvGrossHistSubActive` for the D-01 under-amortization marker); write the pure test suites first (term events + grace boundary + zero denominators), then wire the UI.
 
 ## Architectural Responsibility Map
 
@@ -209,7 +209,7 @@ components/admin/
 └── ChurnTable.tsx        # NEW async RSC, ignores period
 
 app/admin/analytics/page.tsx  # + CardsSkeleton + two sections (nothing above moves)
-lib/i18n/messages/ru.ts       # + exactly 43 keys inside the existing flat `admin` object
+lib/i18n/messages/ru.ts       # + exactly 44 keys inside the existing flat `admin` object (43 locked + D-01 marker)
 ```
 
 ### Pattern 1: Pure derivation + thin loader (Phase 7 contract)
@@ -343,6 +343,7 @@ Window boundaries:
 | `net` | `Σ(cashOf − providerCost) over PAID orders with providerCost !== null` ÷ `COUNT(DISTINCT user_id)` over the **same costed subset**; `null` when costed payers = 0 |
 | `netPayers` | costed-subset DISTINCT count |
 | `coverageFrom` | `mskDayLabel(min paidAt among costed orders)` → `"YYYY-MM-DD"`; `null` when none |
+| `activePayers` | `DISTINCT user_id` among `buildKeyTermEvents(...)` events classified `'open'` at `now` — the D-01 under-amortization marker (active payers are still realizing LTV, so the historical average is a floor); always `≤ grossHistoricalPayers` |
 
 Implementation notes: all-time cash and payers are computed from `loadPaidOrders()` in JS (one query, and `cashOf` stays the only money formula). `net`/`netPayers`/`coverageFrom` come from the same array filtered to `providerCost !== null` — no second SQL aggregate is needed at this data scale, and JS avoids a `SUM(final_amount - balance_used)` that could disagree with `cashOf`'s per-row clamp. If the row count ever makes this slow, replace only the costed branch with one `$queryRaw` row (`SUM(provider_cost)::int`, `SUM(GREATEST(0, final_amount - balance_used))::int`, `COUNT(DISTINCT user_id)::int` — `::int` per Pitfall 6).
 
@@ -418,7 +419,7 @@ Pinned details: `burnTotalOrders = windowOrders.length`, `burnCostedOrders = cos
 
 Every block: `h3` at `text-base font-semibold` (the one new type role) + right-aligned `text-xs text-muted` window meta; body `common.errorLoad` on failure; no `'use client'`; no charts; no new colors. `page.tsx` gains `CardsSkeleton({ count, twoUp })` next to `KpiSkeleton`/`ChartSkeleton` [VERIFIED: app/admin/analytics/page.tsx:34-49], five `<Suspense>` boundaries after `<MrrSparkline/>` (lines 76-84), and nothing above it changes (D-17).
 
-**i18n:** add exactly the 43 keys listed in 08-UI-SPEC §Copywriting (count verified by enumerating the table: `analyticsUnitTitle`, `analyticsRetentionTitle`, `analyticsWindowDays`, `analyticsWindowCoverage`, `analyticsWindowCoverageNoOrders`, `analyticsLtvTitle`, `analyticsLtvMeta`, `analyticsLtvGrossHist`, `analyticsLtvGrossHistSub`, `analyticsLtvGrossPred`, `analyticsLtvGrossPredSub`, `analyticsLtvNet`, `analyticsLtvNetSub`, `analyticsLtvNetNoCost`, `analyticsMarginTitle`, `analyticsGrossMargin`, `analyticsGrossMarginSub`, `analyticsMarginPct`, `analyticsMarginPctSub`, `analyticsCostPerKey`, `analyticsCostPerKeySub`, `analyticsBurnTitle`, `analyticsBurnRate`, `analyticsBurnRateSub`, `analyticsRunway`, `analyticsRunwaySub`, `analyticsRunwayNoBurn`, `analyticsRunwayNoBalance`, `analyticsRetentionCardsTitle`, `analyticsRenewalRate`, `analyticsRenewalRateSub`, `analyticsLogoChurn`, `analyticsLogoChurnSub`, `analyticsRevenueChurn`, `analyticsRevenueChurnSub`, `analyticsChurnTitle`, `analyticsChurnCaption`, `analyticsColExpiring`, `analyticsColRenewed`, `analyticsColRenewalPct`, `analyticsColChurned`, `analyticsColLostMrr`, `analyticsChurnEmpty` — [VERIFIED: enumerated from 08-UI-SPEC.md:513-556]). Reuse `common.errorLoad` [VERIFIED: lib/i18n/messages/ru.ts:655], `admin.analyticsTableMonth` (:423), `admin.analyticsWaterfallWindowSingle` (:410), `admin.analyticsWaterfallWindowMonths` (:411), `admin.statsPeriod*` (:554-557). The i18n test regex-scans `app/`, `components/`, `lib/` and fails on unused **and** missing keys [VERIFIED: tests/unit/i18n.test.ts:33-77], so every key must be referenced by a literal `t('…')` call.
+**i18n:** add exactly the 44 keys listed in 08-UI-SPEC §Copywriting (count verified by enumerating the table: `analyticsUnitTitle`, `analyticsRetentionTitle`, `analyticsWindowDays`, `analyticsWindowCoverage`, `analyticsWindowCoverageNoOrders`, `analyticsLtvTitle`, `analyticsLtvMeta`, `analyticsLtvGrossHist`, `analyticsLtvGrossHistSub`, `analyticsLtvGrossHistSubActive`, `analyticsLtvGrossPred`, `analyticsLtvGrossPredSub`, `analyticsLtvNet`, `analyticsLtvNetSub`, `analyticsLtvNetNoCost`, `analyticsMarginTitle`, `analyticsGrossMargin`, `analyticsGrossMarginSub`, `analyticsMarginPct`, `analyticsMarginPctSub`, `analyticsCostPerKey`, `analyticsCostPerKeySub`, `analyticsBurnTitle`, `analyticsBurnRate`, `analyticsBurnRateSub`, `analyticsRunway`, `analyticsRunwaySub`, `analyticsRunwayNoBurn`, `analyticsRunwayNoBalance`, `analyticsRetentionCardsTitle`, `analyticsRenewalRate`, `analyticsRenewalRateSub`, `analyticsLogoChurn`, `analyticsLogoChurnSub`, `analyticsRevenueChurn`, `analyticsRevenueChurnSub`, `analyticsChurnTitle`, `analyticsChurnCaption`, `analyticsColExpiring`, `analyticsColRenewed`, `analyticsColRenewalPct`, `analyticsColChurned`, `analyticsColLostMrr`, `analyticsChurnEmpty` — [VERIFIED: enumerated from 08-UI-SPEC.md:513-557]). Reuse `common.errorLoad` [VERIFIED: lib/i18n/messages/ru.ts:655], `admin.analyticsTableMonth` (:423), `admin.analyticsWaterfallWindowSingle` (:410), `admin.analyticsWaterfallWindowMonths` (:411), `admin.statsPeriod*` (:554-557). The i18n test regex-scans `app/`, `components/`, `lib/` and fails on unused **and** missing keys [VERIFIED: tests/unit/i18n.test.ts:33-77], so every key must be referenced by a literal `t('…')` call.
 
 ## Don't Hand-Roll
 
@@ -491,7 +492,7 @@ Every block: `h3` at `text-base font-semibold` (the one new type role) + right-a
 
 ### Pitfall 10: i18n drift
 **What goes wrong:** a missing or unused key fails `tests/unit/i18n.test.ts`; a dynamically built key (`t('admin.' + x)`) counts as unused [VERIFIED: tests/unit/i18n.test.ts:37-39].
-**How to avoid:** add exactly the 43 UI-SPEC keys, reference each with a literal `t('…')`; reuse the listed Phase 7 keys.
+**How to avoid:** add exactly the 44 UI-SPEC keys, reference each with a literal `t('…')`; reuse the listed Phase 7 keys.
 
 ### Pitfall 11: Pre-existing red test blamed on Phase 8
 **What goes wrong:** the full suite is red before any Phase 8 change; an executor "fixes" `analytics-mrr.test.ts` and changes Phase 7 behavior.
@@ -618,13 +619,13 @@ For LTV net the same query gains `AND provider_cost IS NOT NULL`; for all-time g
 | A7 | `activeAtStart` counts order-bearing coverage (including 0 ₽ terms), not `mrr > 0`. | §Derivation 2.4 | Reusing `activeKeysAt` can produce churn > 100 %. |
 | A8 | `Balance.unlimited === true` maps to `balance: null` → `runwayReason: 'no-balance'` («баланс недоступен»). | §Derivation 4 | The copy is imprecise for an unlimited line; the pinned payload has no third reason. This account is pay-per-key (observed balance 0/120 RUB in `docs/artemida-v1-contract.json`), so the branch is unlikely. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Revenue-churn money base (A1).** What we know: D-07 says `finalAmount`, D-13 says `cashOf` for margin. What's unclear: whether wallet-covered churn should contribute lost MRR at face value. Recommendation: follow D-07 literally; note in the plan that switching to `cashOf` is a one-line change if the user prefers cash consistency.
-2. **Bonus-day liveness override (A2).** What we know: `redeemBonusDays` creates no order (`lib/referrals.ts:689-698`). What's unclear: whether the user accepts a latest-term override vs. adding a bonus ledger. Recommendation: override; a ledger is schema work explicitly outside this phase.
-3. **Renewal-rate counting unit (A6).** D-09 says "продлённые ключи ÷ ключи, чьё покрытие закончилось" — terms vs distinct keys only diverges when a 90-day window contains two ends for one key. Recommendation: terms (matches "каждое событие окончания" in D-06), with the label «продлено / истекало» already term-flavored.
-4. **The pre-existing red test.** `tests/unit/analytics-mrr.test.ts:190` fails before Phase 8 (reproduced: `expected 4000 to be 3600`). Recommendation: do not touch it in this phase; record the baseline and keep the phase gate green-except-baseline. If the user wants it fixed, it should be a separate quick task (Phase 7 CR-01 behavior is correct — the test encodes the pre-fix expectation).
-5. **Predictive-LTV censoring.** The 30-day churn denominator ignores terms still inside grace, so early-month churn is slightly under-measured. Recommendation: accept; it is inherent to a 7-day grace and disappears as history ages.
+1. **Revenue-churn money base (A1).** What we know: D-07 says `finalAmount`, D-13 says `cashOf` for margin. What's unclear: whether wallet-covered churn should contribute lost MRR at face value. **RESOLVED:** follow D-07 literally — pinned by 08-01 Task 1 Test 5 (wallet-covered churned term contributes `(finalAmount × 30) / days` to lostMrr) and 08-01 Task 2 Test 10 (`lostMrrOf`); switching to `cashOf` remains a one-line change if the user later prefers cash consistency.
+2. **Bonus-day liveness override (A2).** What we know: `redeemBonusDays` creates no order (`lib/referrals.ts:689-698`). What's unclear: whether the user accepts a latest-term override vs. adding a bonus ledger. **RESOLVED:** latest-term override accepted — pinned by 08-01 Task 1 (A2 case: `liveExpiry` later than last end → the extended event classifies `'open'`) and 08-02 `loadKeyCacheState` (`liveExpiry` map from `KeyCache.expiresAt` feeds `buildKeyTermEvents`); a ledger remains explicitly out of scope (schema work).
+3. **Renewal-rate counting unit (A6).** D-09 says "продлённые ключи ÷ ключи, чьё покрытие закончилось" — terms vs distinct keys only diverges when a 90-day window contains two ends for one key. **RESOLVED:** term-based — pinned by 08-01 Task 1 Tests 8-9 (a key with two term ends in a 90-day window yields `expiringKeys = 2`; churn is cohort-clamped by Test 7); the label «продлено / истекало» is already term-flavored.
+4. **The pre-existing red test.** `tests/unit/analytics-mrr.test.ts:190` fails before Phase 8 (reproduced: `expected 4000 to be 3600`). **RESOLVED:** pinned baseline — 08-01 Task 1 explicitly forbids touching it and every phase gate allows exactly that one failure; fixing it is a separate quick task if the user wants (Phase 7 CR-01 behavior is correct).
+5. **Predictive-LTV censoring.** The 30-day churn denominator ignores terms still inside grace, so early-month churn is slightly under-measured. **RESOLVED:** accepted — 08-01 Task 1 Test 6 pins the `pending` state (in-grace terms count as expiring, neither renewed nor churned) and 08-01 Task 2 Test 2 pins D-02 «—» on null/0 churn; the censoring is inherent to a 7-day grace and disappears as history ages.
 
 ## Environment Availability
 
@@ -665,7 +666,7 @@ For LTV net the same query gains `AND provider_cost IS NOT NULL`; for all-time g
 | ANL-13 | Margin = Σ(cash−cost) over costed; margin % on costed Σcash; cost/key = Σcost/costedOrders; wallet-only row → negative margin; 0 costed → null | unit (pure) | `… analytics-economics.test.ts -t "margin"` | ❌ Wave 0 |
 | ANL-14 | Burn null unless 100 % coverage + ≥7 distinct days; real zero burn = 0; runway `floor(balance/exactBurn)`; balance error isolated | unit (pure + stubbed client) | `… analytics-economics.test.ts -t "burn"` | ❌ Wave 0 |
 | ANL-04/05/06/07/13/14 | Loaders return the §6.7 shapes, `null` not 0, `::int` numbers, trial filter, balance isolation | integration (DB) | `npx vitest run tests/unit/analytics-phase8-loaders.test.ts` | ❌ Wave 0 (recommended) |
-| ANL-04..14 | Page renders two sections, guard intact, 43 keys referenced literally | source contract | `npx vitest run tests/unit/admin-analytics-page.test.ts tests/unit/i18n.test.ts` | ✅ (add a sibling for the new components) |
+| ANL-04..14 | Page renders two sections, guard intact, 44 keys referenced literally | source contract | `npx vitest run tests/unit/admin-analytics-page.test.ts tests/unit/i18n.test.ts` | ✅ (add a sibling for the new components) |
 
 ### Sampling Rate
 
@@ -731,7 +732,7 @@ For LTV net the same query gains `AND provider_cost IS NOT NULL`; for all-time g
 
 ### Secondary (MEDIUM confidence — planning artifacts, cited)
 - `.planning/phases/08-unit-economics-retention/08-CONTEXT.md` — D-01..D-20 (locked decisions, copied verbatim into `## User Constraints`).
-- `.planning/phases/08-unit-economics-retention/08-UI-SPEC.md` — §6.1-§6.9 (composition, block anatomy, table recipe, accessibility), §6.7 (five loader payload shapes), §Copywriting (43 new keys, formatting rules).
+- `.planning/phases/08-unit-economics-retention/08-UI-SPEC.md` — §6.1-§6.9 (composition, block anatomy, table recipe, accessibility), §6.7 (five loader payload shapes, `activePayers` marker), §Copywriting (44 new keys, formatting rules).
 - `.planning/phases/07-analytics-foundation-revenue-metrics/07-CONTEXT.md` (D-01..D-15), `07-PATTERNS.md`, `07-VALIDATION.md`, `07-VERIFICATION.md` (CR-01/WR-01 fixes).
 - `.planning/REQUIREMENTS.md` ANL-04..07/13/14; `.planning/ROADMAP.md` Phase 8 (success criteria).
 - `docs/artemida-v1-contract.md` — `GET /balance` OBSERVED (200), fields `ok/data.balance/data.currency/data.unlimited`.
@@ -746,7 +747,7 @@ For LTV net the same query gains `AND provider_cost IS NOT NULL`; for all-time g
 - Architecture: HIGH — module/loader/component boundaries follow Phase 7 code read in this session.
 - Derivations: HIGH on mechanics (term cursor, grace, MSK math, null semantics — each mapped to a verified code path); MEDIUM on A1 (D-07 vs D-13 money base), A2 (bonus-day override), A5 (grace-pending state), A6 (term vs key counting / cohort clamp) — all flagged for plan-time confirmation.
 - Pitfalls: HIGH — each maps to a verified code path or a measured failure.
-- UI/i18n contract: HIGH — 43 keys and payload shapes enumerated from 08-UI-SPEC (count re-verified line-by-line).
+- UI/i18n contract: HIGH — 44 keys and payload shapes enumerated from 08-UI-SPEC (count re-verified line-by-line).
 
 **Research date:** 2026-10-22
 **Valid until:** 2026-11-21 (30 days; stack is pinned and this phase adds no dependencies). Re-verify only if `providerCost` semantics, `Order`/`KeyCache` schema, or `buildKeyTerms` change.

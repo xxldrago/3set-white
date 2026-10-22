@@ -54,7 +54,7 @@ created: "2026-10-22"
 | 08-xx-xx | 08-01 | 0 | ANL-14 | — | Burn null unless 100% coverage + ≥7 distinct MSK days; real zero burn = 0; runway `floor(balance/exactBurn)`; balance error isolated | unit (pure + stubbed client) | `… npx vitest run tests/unit/analytics-economics.test.ts -t "burn"` | ❌ W0 | ⬜ pending |
 | 08-xx-xx | 08-01 | 0 | ANL-04..07/13/14 | El. of Privilege | Loaders return §6.7 shapes, `null` not `0`, `::int` numbers, trial filter, balance isolation in `loadBurnRunway` only | integration (DB + `vi.spyOn(artemida,'getBalance')`) | `… npx vitest run tests/unit/analytics-phase8-loaders.test.ts` | ❌ W0 | ⬜ pending |
 | 08-xx-xx | 08-02 | 1/2 | ANL-04..14 + UI gate | El. of Privilege / Info Disclosure | Page: two `<AnalyticsSection>`s below sparkline, guard intact, five Suspense boundaries, no `'use client'` in the new components, balance called only in `BurnRunwayCards`, no `providerCost`/`userId`/API key leaked | source-contract | `… npx vitest run tests/unit/admin-analytics-page.test.ts tests/unit/i18n.test.ts` | ✅ (page) ❌ (new sibling) | ⬜ pending |
-| 08-xx-xx | 08-02 | 1 | i18n (43 new keys) | — | 43 new keys referenced literally, none unused, no missing in any locale | existing i18n suite | `… npx vitest run tests/unit/i18n.test.ts` | ✅ | ⬜ pending |
+| 08-xx-xx | 08-02 | 1 | i18n (44 new keys) | — | 44 new keys referenced literally, none unused, no missing in any locale | existing i18n suite | `… npx vitest run tests/unit/i18n.test.ts` | ✅ | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 

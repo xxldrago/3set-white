@@ -188,7 +188,7 @@ Append to the existing `<section className="flex flex-col gap-6">` in
 
 | Order | Label key | Value | Sub key / sub text |
 |-------|-----------|-------|--------------------|
-| 1 | `admin.analyticsLtvGrossHist` — «LTV gross, исторический» | `{₽}` or «—» | `analyticsLtvGrossHistSub` → «за всё время · платящих: {n}» |
+| 1 | `admin.analyticsLtvGrossHist` — «LTV gross, исторический» | `{₽}` or «—» | `analyticsLtvGrossHistSub` → «за всё время · платящих: {n}»; when `activePayers > 0` the sub switches to `analyticsLtvGrossHistSubActive` → «за всё время · платящих: {n} · из них {active} ещё активны — LTV недоамортизирован» (D-01) |
 | 2 | `admin.analyticsLtvGrossPred` — «LTV gross, прогноз» | `{₽}` or «—» | `analyticsLtvGrossPredSub` → «30 дней · месячный отток {value}» |
 | 3 | `admin.analyticsLtvNet` — «LTV net» | `{₽}` or «—» | `analyticsLtvNetSub` → «с {date} · платящих: {n}» |
 
@@ -355,6 +355,7 @@ loadLtv() → {
   grossHistorical: number | null; grossHistoricalPayers: number;
   grossPredictive: number | null; predictiveChurnRate: number | null;
   net: number | null; netPayers: number; coverageFrom: string | null; // "YYYY-MM-DD"
+  activePayers: number;   // DISTINCT user_id with an 'open' term at now — D-01 under-amortization marker
 }
 
 loadMargin(period: 7 | 30 | 90) → {
@@ -507,7 +508,7 @@ All copy is Russian, lives in `lib/i18n/messages/ru.ts`, and is referenced **onl
 `t('…')` / `tp('…')` calls (the i18n test regex-scans `app/`, `components/`, `lib/`; a dynamically built
 key counts as unused and fails the suite).
 
-**New keys — 43.** Add exactly these; add none "just in case".
+**New keys — 44.** Add exactly these; add none "just in case".
 
 | Element | i18n key | Copy |
 |---------|----------|------|
@@ -520,6 +521,7 @@ key counts as unused and fails the suite).
 | LTV block meta | `admin.analyticsLtvMeta` | не зависит от периода |
 | LTV card 1 label | `admin.analyticsLtvGrossHist` | LTV gross, исторический |
 | LTV card 1 sub | `admin.analyticsLtvGrossHistSub` | за всё время · платящих: {n} |
+| LTV card 1 sub — active payers (D-01) | `admin.analyticsLtvGrossHistSubActive` | за всё время · платящих: {n} · из них {active} ещё активны — LTV недоамортизирован |
 | LTV card 2 label | `admin.analyticsLtvGrossPred` | LTV gross, прогноз |
 | LTV card 2 sub | `admin.analyticsLtvGrossPredSub` | 30 дней · месячный отток {value} |
 | LTV card 3 label | `admin.analyticsLtvNet` | LTV net |

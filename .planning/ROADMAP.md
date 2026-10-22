@@ -59,8 +59,13 @@ Numbering continues from v1.0 (last phase = 6).
   4. Админ видит logo churn и revenue churn по подпискам за период
   5. Админ видит gross margin, маржинальность в % и средний расход на ключ, а также burn-rate и прогноз runway в днях по снапшотам `GET /balance`
 
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
+
+Plans:
+- [ ] 08-01-PLAN.md — Pure derivation core: retention.ts (term events, grace, retention window) + economics.ts (LTV/margin/burn/runway) + pure test suites
+- [ ] 08-02-PLAN.md — Five §6.7 loaders in service.ts (loadLtv/loadMargin/loadBurnRunway/loadRetention/loadChurnTable) + trailingMonthLabels + DB-backed loader tests
+- [ ] 08-03-PLAN.md — Two page sections: five async server components + AnalyticsSection + 43 i18n keys + page-contract test
 
 ### Phase 9: Payment Funnel & Failure Analysis
 
@@ -120,7 +125,7 @@ Phases execute in numeric order: 7 → 8 → 9 → 10 → 11
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 7. Analytics Foundation & Revenue Metrics | v1.1 | 5/5 | Complete    | 2026-10-21 |
-| 8. Unit Economics & Retention | v1.1 | 0/0 | Not started | - |
+| 8. Unit Economics & Retention | v1.1 | 0/3 | Not started | - |
 | 9. Payment Funnel & Failure Analysis | v1.1 | 0/0 | Not started | - |
 | 10. Cohorts & Retention Analytics | v1.1 | 0/0 | Not started | - |
 | 11. RFM Segments & Targeting | v1.1 | 0/0 | Not started | - |

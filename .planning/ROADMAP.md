@@ -63,8 +63,16 @@ Numbering continues from v1.0 (last phase = 6).
 **UI hint**: yes
 
 Plans:
+**Wave 1**
+
 - [ ] 08-01-PLAN.md — Pure derivation core: retention.ts (term events, grace, retention window) + economics.ts (LTV/margin/burn/runway) + pure test suites
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 08-02-PLAN.md — Five §6.7 loaders in service.ts (loadLtv/loadMargin/loadBurnRunway/loadRetention/loadChurnTable) + trailingMonthLabels + DB-backed loader tests
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 08-03-PLAN.md — Two page sections: five async server components + AnalyticsSection + 43 i18n keys + page-contract test
 
 ### Phase 9: Payment Funnel & Failure Analysis

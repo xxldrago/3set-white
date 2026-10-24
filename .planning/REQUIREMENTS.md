@@ -17,17 +17,17 @@ compensation/reply templates/requester context).
 - [x] **ANL-01**: Админ видит MRR и ARR за выбранный период — сумма monthly-equivalent активных подписок (`finalAmount / (days / 30)`), вместе с числом активных подписок
 - [x] **ANL-02**: Админ видит MRR-waterfall по месяцам: new / expansion / contraction / churned MRR и net change
 - [x] **ANL-03**: Админ видит ARPU (выручка / все зарегистрированные) и ARPPU (выручка / платящие) за период
-- [ ] **ANL-04**: Админ видит LTV gross — исторический (cumulative revenue на платящего) и прогнозный (ARPPU ÷ месячный churn)
-- [ ] **ANL-05**: Админ видит LTV net (выручка минус расход провайдера) после появления `Order.providerCost`
-- [ ] **ANL-06**: Админ видит renewal rate — доля продлённых подписок от числа истекающих в периоде (`kind = renew`)
-- [ ] **ANL-07**: Админ видит logo churn (истёкшие и не продлённые за grace-период) и revenue churn по подпискам
+- [x] **ANL-04**: Админ видит LTV gross — исторический (cumulative revenue на платящего) и прогнозный (ARPPU ÷ месячный churn)
+- [x] **ANL-05**: Админ видит LTV net (выручка минус расход провайдера) после появления `Order.providerCost`
+- [x] **ANL-06**: Админ видит renewal rate — доля продлённых подписок от числа истекающих в периоде (`kind = renew`)
+- [x] **ANL-07**: Админ видит logo churn (истёкшие и не продлённые за grace-период) и revenue churn по подпискам
 - [ ] **ANL-08**: Админ видит воронку оплаты `pending → paid → provisioning → provisioned` с конверсией и отвалом на каждом шаге
 - [ ] **ANL-09**: Админ видит разбивку `failed`/`canceled` по `errorCode` с количеством и долей
 - [ ] **ANL-10**: Админ видит медианное и среднее время `createdAt → paidAt` и `paidAt → provisioned`
 - [ ] **ANL-11**: «Expired» считается как `pending` старше платёжного окна (без нового статуса в стейт-машине)
 - [x] **ANL-12**: Система сохраняет расход провайдера на заказ (`Order.providerCost`) в момент provisioning
-- [ ] **ANL-13**: Админ видит gross margin (`Σ(finalAmount − providerCost)`), маржинальность в % и средний расход на ключ
-- [ ] **ANL-14**: Система снимает снапшоты `GET /balance` и показывает burn-rate и прогноз runway (баланс ÷ средний дневной расход, дней)
+- [x] **ANL-13**: Админ видит gross margin (`Σ(finalAmount − providerCost)`), маржинальность в % и средний расход на ключ
+- [x] **ANL-14**: Система снимает снапшоты `GET /balance` и показывает burn-rate и прогноз runway (баланс ÷ средний дневной расход, дней)
 - [x] **ANL-15**: Метрики считаются nightly-джобом в `daily_metrics` (cron 03:00) с возможностью backfill истории
 
 ### COH — Cohorts & retention
@@ -108,17 +108,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ANL-01 | Phase 7 | Complete |
 | ANL-02 | Phase 7 | Complete |
 | ANL-03 | Phase 7 | Complete |
-| ANL-04 | Phase 8 | Pending |
-| ANL-05 | Phase 8 | Pending |
-| ANL-06 | Phase 8 | Pending |
-| ANL-07 | Phase 8 | Pending |
+| ANL-04 | Phase 8 | Complete |
+| ANL-05 | Phase 8 | Complete |
+| ANL-06 | Phase 8 | Complete |
+| ANL-07 | Phase 8 | Complete |
 | ANL-08 | Phase 9 | Pending |
 | ANL-09 | Phase 9 | Pending |
 | ANL-10 | Phase 9 | Pending |
 | ANL-11 | Phase 9 | Pending |
 | ANL-12 | Phase 7 | Complete |
-| ANL-13 | Phase 8 | Pending |
-| ANL-14 | Phase 8 | Pending |
+| ANL-13 | Phase 8 | Complete |
+| ANL-14 | Phase 8 | Complete |
 | ANL-15 | Phase 7 | Complete |
 | COH-01 | Phase 10 | Pending |
 | COH-02 | Phase 10 | Pending |

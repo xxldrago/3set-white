@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Расширенная аналитика
-current_phase: 8
-current_phase_name: unit-economics-retention
+current_phase: 08
+current_phase_name: Unit Economics & Retention
 status: executing
-stopped_at: Phase 8 UI-SPEC approved
-last_updated: "2026-10-22T23:52:09.446Z"
-last_activity: 2026-10-21
-last_activity_desc: Phase 07 complete, transitioned to Phase 8
-state_head: 568590755146d640b6796639d56b04d0cf91cfef
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-10-24T09:39:26.360Z"
+last_activity: 2026-10-24
+last_activity_desc: Phase 08 execution started
+state_head: 18b96a56bb9497d5a5c8f5267ba4ac59494500ac
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 8
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -24,22 +24,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-20)
 
 **Core value:** Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
-**Current focus:** Phase 07 — Analytics Foundation & Revenue Metrics
+**Current focus:** Phase 08 — Unit Economics & Retention
 
 ## Current Position
 
-Phase: 8 (unit-economics-retention) — READY TO EXECUTE
-Plan: Not started
+Phase: 08 (Unit Economics & Retention) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-10-21 — Phase 07 complete, transitioned to Phase 8
+Last activity: 2026-10-24 — Completed 08-01 (retention + economics pure core)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [████████░░] 75% (6/8 plans)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 5
+- Total plans completed: 6
 - Average duration: -
 - Total execution time: -
 
@@ -55,6 +55,11 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 08 P01 | 4min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -67,6 +72,9 @@ Recent decisions affecting current work:
 - [Roadmap v1.1]: Когорты (Phase 10) и сегменты (Phase 11) зависят от rollup Phase 7; сегменты питают существующий broadcast-composer
 - [Roadmap v1.1]: Retention/churn считаем по подписке/ключу (`Order.keyId`, `kind='renew'`), не по аккаунту; `expired` = pending-by-age в аналитике, без нового OrderStatus
 - [Roadmap v1.1]: Хранение = daily rollup-таблицы (`daily_metrics`, `user_rfm`, `artemida_balance_snapshots`) + nightly cron 03:00 + backfill-скрипт; без внешнего BI
+- [Phase 08]: A1 lostMrr uses finalAmount×30/days (D-07 literal), not cashOf
+- [Phase 08]: A2 liveExpiry extends only the latest term per keyRef
+- [Phase 08]: A6/A7 activeAtStart is order-bearing coverage incl. 0₽ bonus terms; churn cohort-clamped
 
 ### Pending Todos
 
@@ -88,6 +96,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-22T05:31:50.121Z
-Stopped at: Phase 8 UI-SPEC approved
-Resume file: .planning/phases/08-unit-economics-retention/08-UI-SPEC.md
+Last session: 2026-10-24T09:39:26.302Z
+Stopped at: Completed 08-01-PLAN.md
+Resume file: None

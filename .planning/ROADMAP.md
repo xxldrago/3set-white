@@ -65,7 +65,7 @@ Numbering continues from v1.0 (last phase = 6).
 Plans:
 **Wave 1**
 
-- [ ] 08-01-PLAN.md — Pure derivation core: retention.ts (term events, grace, retention window) + economics.ts (LTV/margin/burn/runway) + pure test suites
+- [x] 08-01-PLAN.md — Pure derivation core: retention.ts (term events, grace, retention window) + economics.ts (LTV/margin/burn/runway) + pure test suites
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -133,7 +133,7 @@ Phases execute in numeric order: 7 → 8 → 9 → 10 → 11
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 7. Analytics Foundation & Revenue Metrics | v1.1 | 5/5 | Complete    | 2026-10-21 |
-| 8. Unit Economics & Retention | v1.1 | 0/3 | Not started | - |
+| 8. Unit Economics & Retention | v1.1 | 1/3 | In Progress | - |
 | 9. Payment Funnel & Failure Analysis | v1.1 | 0/0 | Not started | - |
 | 10. Cohorts & Retention Analytics | v1.1 | 0/0 | Not started | - |
 | 11. RFM Segments & Targeting | v1.1 | 0/0 | Not started | - |

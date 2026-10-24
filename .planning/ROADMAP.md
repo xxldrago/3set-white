@@ -69,7 +69,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 08-02-PLAN.md — Five §6.7 loaders in service.ts (loadLtv/loadMargin/loadBurnRunway/loadRetention/loadChurnTable) + trailingMonthLabels + DB-backed loader tests
+- [x] 08-02-PLAN.md — Five §6.7 loaders in service.ts (loadLtv/loadMargin/loadBurnRunway/loadRetention/loadChurnTable) + trailingMonthLabels + DB-backed loader tests
 
 **Wave 3** *(blocked on Wave 2 completion)*
 

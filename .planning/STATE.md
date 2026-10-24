@@ -5,16 +5,16 @@ milestone_name: Расширенная аналитика
 current_phase: 08
 current_phase_name: Unit Economics & Retention
 status: executing
-stopped_at: Completed 08-01-PLAN.md
-last_updated: "2026-10-24T09:39:26.360Z"
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-10-24T10:39:54.716Z"
 last_activity: 2026-10-24
 last_activity_desc: Phase 08 execution started
-state_head: 18b96a56bb9497d5a5c8f5267ba4ac59494500ac
+state_head: 7a0ff3be9086f090ba6c840a396f16f39991d37a
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 8
-  completed_plans: 6
+  completed_plans: 7
 ---
 
 # Project State
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-10-20)
 ## Current Position
 
 Phase: 08 (Unit Economics & Retention) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-10-24 — Completed 08-01 (retention + economics pure core)
 
@@ -60,6 +60,7 @@ Progress: [████████░░] 75% (6/8 plans)
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 08 P01 | 4min | 2 tasks | 4 files |
+| Phase 08 P02 | 4 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,9 @@ Recent decisions affecting current work:
 - [Phase 08]: A1 lostMrr uses finalAmount×30/days (D-07 literal), not cashOf
 - [Phase 08]: A2 liveExpiry extends only the latest term per keyRef
 - [Phase 08]: A6/A7 activeAtStart is order-bearing coverage incl. 0₽ bonus terms; churn cohort-clamped
+- [Phase 08]: Phase 08: trailingMonthLabels extracted from loadWaterfall — shared month-slot helper; reconciliation test pins output-identity
+- [Phase 08]: Phase 08: loadBurnRunway calls artemida.getBalance() once with .then(unlimited→null).catch(() => null) — never rejects the loader
+- [Phase 08]: Phase 08: costed-subset discipline — providerCost !== null filters net LTV / margin / burn; coverage counts reported, never zero-filled
 
 ### Pending Todos
 
@@ -96,6 +100,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-24T09:39:26.302Z
-Stopped at: Completed 08-01-PLAN.md
+Last session: 2026-10-24T10:39:54.660Z
+Stopped at: Completed 08-02-PLAN.md
 Resume file: None

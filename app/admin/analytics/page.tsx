@@ -23,6 +23,8 @@ import PeriodSelector from '@/components/admin/PeriodSelector';
 import AnalyticsKpi from '@/components/admin/AnalyticsKpi';
 import MrrWaterfall from '@/components/admin/MrrWaterfall';
 import MrrSparkline from '@/components/admin/MrrSparkline';
+import AnalyticsSection from '@/components/admin/AnalyticsSection';
+import LtvCards from '@/components/admin/LtvCards';
 import { requireRole } from '@/lib/admin-auth';
 import { AdminError, SessionError } from '@/lib/session';
 import { t } from '@/lib/i18n';
@@ -46,6 +48,17 @@ function KpiSkeleton() {
 /** Block skeleton for the two charts (`h-72` waterfall, `h-24` sparkline). */
 function ChartSkeleton({ className }: { className: string }) {
   return <div className={`${className} animate-pulse rounded-2xl bg-foreground/5`} aria-hidden="true" />;
+}
+
+/** §6.1 loading: the card grid skeletons for the two new sections (3-up or 2-up). */
+function CardsSkeleton({ count, twoUp }: { count: number; twoUp?: boolean }) {
+  return (
+    <div className={twoUp ? 'grid grid-cols-1 gap-4 sm:grid-cols-2' : GRID} aria-hidden="true">
+      {Array.from({ length: count }, (_, i) => (
+        <div key={i} className="h-32 animate-pulse rounded-2xl bg-foreground/5" />
+      ))}
+    </div>
+  );
 }
 
 export default async function AdminAnalyticsPage({ searchParams }: { searchParams?: Promise<{ period?: string }> } = {}) {
@@ -82,6 +95,12 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
       <Suspense fallback={<ChartSkeleton className="h-24" />}>
         <MrrSparkline period={period} />
       </Suspense>
+
+      <AnalyticsSection title={t('admin.analyticsUnitTitle')}>
+        <Suspense fallback={<CardsSkeleton count={3} />}>
+          <LtvCards />
+        </Suspense>
+      </AnalyticsSection>
     </section>
   );
 }

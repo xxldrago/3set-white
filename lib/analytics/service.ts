@@ -25,13 +25,19 @@
 // holds one row per day. The PAID-order loads are the derivation core's own
 // unbounded-below source (rollup.ts rationale: term chains need each key's
 // full history) — a few thousand rows at MVP scale.
+//
+// Phase 8 loaders (LTV/margin/burn/retention/churn) derive on the fly from
+// orders + keys_cache and one live GET /balance (loadBurnRunway only).
+// daily_metrics and artemida_balance_snapshots stay Phase 7's rollup (D-16).
 import { prisma } from "../prisma";
+import { artemida } from "../artemida";
 import {
   activeKeysAt,
   arrAt,
   computeArpu,
   computeArppu,
   computeCoverage,
+  keyRefOf,
   totalMrrAt,
 } from "./mrr";
 import { waterfallForMonths, type WaterfallRow } from "./waterfall";
@@ -44,6 +50,21 @@ import {
   mskMonthLabel,
   pgTimestamp,
 } from "./time";
+import {
+  buildKeyTermEvents,
+  classifyTerm,
+  retentionForWindow,
+} from "./retention";
+import {
+  burnPerDayOf,
+  costPerKeyOf,
+  grossMarginOf,
+  ltvGrossHistorical,
+  ltvNet,
+  ltvPredictive,
+  marginPctOf,
+  runwayDaysOf,
+} from "./economics";
 
 // Mirrors lib/revenue.ts:10 / rollup.ts:32 — the same money pipeline, never a
 // second enum. The PAID-status filter belongs HERE (the DB layer); the pure
@@ -144,16 +165,12 @@ export async function loadKpis(period: 7 | 30 | 90): Promise<KpisData> {
 }
 
 /**
- * The waterfall's window: trailing MSK calendar months ending with the
- * CURRENT month, at most 6 slots and never more MSK months than the business
- * has existed (months since the first paid order, minimum 1 — a brand-new
- * install renders a single current-month slot, which the UI turns into the
- * §5.4 empty state; a month with no activity inside the window keeps its
- * slot).
+ * Trailing MSK calendar-month labels ending with the CURRENT month — the
+ * exact month-slot math loadWaterfall used inline. Shared with loadChurnTable
+ * so the two 6-month blocks can never disagree (08-02 D-extraction).
  */
-export async function loadWaterfall(): Promise<{ months: WaterfallRow[] }> {
-  const orders = await loadPaidOrders();
-  const currentMonth = mskMonthLabel(mskDayLabel(new Date()));
+export function trailingMonthLabels(orders: PaidOrderRow[], now: Date): string[] {
+  const currentMonth = mskMonthLabel(mskDayLabel(now));
 
   let firstPaidMonth: string | null = null;
   for (const order of orders) {
@@ -173,7 +190,20 @@ export async function loadWaterfall(): Promise<{ months: WaterfallRow[] }> {
 
   const labels: string[] = [];
   for (let i = slots - 1; i >= 0; i--) labels.push(mskMonthLabel(addMonths(currentMonth, -i)));
+  return labels;
+}
 
+/**
+ * The waterfall's window: trailing MSK calendar months ending with the
+ * CURRENT month, at most 6 slots and never more MSK months than the business
+ * has existed (months since the first paid order, minimum 1 — a brand-new
+ * install renders a single current-month slot, which the UI turns into the
+ * §5.4 empty state; a month with no activity inside the window keeps its
+ * slot).
+ */
+export async function loadWaterfall(): Promise<{ months: WaterfallRow[] }> {
+  const orders = await loadPaidOrders();
+  const labels = trailingMonthLabels(orders, new Date());
   return { months: waterfallForMonths(labels, orders) };
 }
 
@@ -214,4 +244,287 @@ export async function loadSparkline(
   points.push({ day: today, mrr: totalMrrAt(orders, now) });
 
   return { points };
+}
+
+// ---------------------------------------------------------------------------
+// Phase 8 — unit economics + retention loaders (UI-SPEC §6.7)
+// ---------------------------------------------------------------------------
+
+/** LTV block payload (§6.7). No period — D-04 ignores ?period. */
+export interface LtvData {
+  grossHistorical: number | null;
+  grossHistoricalPayers: number;
+  grossPredictive: number | null;
+  predictiveChurnRate: number | null;
+  net: number | null;
+  netPayers: number;
+  coverageFrom: string | null;
+  activePayers: number;
+}
+
+/** Margin block payload (§6.7). Windowed by ?period like loadKpis. */
+export interface MarginData {
+  grossMargin: number | null;
+  marginPct: number | null;
+  costPerKey: number | null;
+  costedOrders: number;
+  totalOrders: number;
+}
+
+/** Burn + runway payload (§6.7). Fixed 30 MSK days (D-14). */
+export interface BurnRunwayData {
+  burnPerDay: number | null;
+  burnCostedOrders: number;
+  burnTotalOrders: number;
+  burnDaysCovered: number;
+  balance: number | null;
+  runwayDays: number | null;
+  runwayReason: "no-burn" | "no-balance" | null;
+}
+
+/** Retention cards payload (§6.7). */
+export interface RetentionData {
+  renewalRate: number | null;
+  renewedKeys: number;
+  expiringKeys: number;
+  logoChurnRate: number | null;
+  churnedKeys: number;
+  activeKeysAtStart: number;
+  revenueChurnRate: number | null;
+  lostMrr: number;
+  mrrAtStart: number;
+}
+
+/** Churn table payload (§6.7). */
+export interface ChurnTableData {
+  months: {
+    month: string;
+    expiring: number;
+    renewed: number;
+    renewalRate: number | null;
+    churned: number;
+    lostMrr: number;
+  }[];
+}
+
+/**
+ * Trial refs + live expiry map from keys_cache (A2/D-10). Single scan used by
+ * loadLtv / loadRetention / loadChurnTable.
+ */
+async function loadKeyCacheState(): Promise<{
+  trialRefs: Set<string>;
+  liveExpiry: Map<string, Date>;
+}> {
+  const rows = await prisma.keyCache.findMany({
+    select: { keyId: true, isTrial: true, expiresAt: true },
+  });
+  const trialRefs = new Set<string>();
+  const liveExpiry = new Map<string, Date>();
+  for (const row of rows) {
+    if (row.isTrial) trialRefs.add(row.keyId);
+    if (row.expiresAt) liveExpiry.set(row.keyId, row.expiresAt);
+  }
+  return { trialRefs, liveExpiry };
+}
+
+/** Drop trial-key orders (D-10). keyRefOf null rows are kept (no trial match). */
+function withoutTrialOrders(
+  orders: PaidOrderRow[],
+  trialRefs: Set<string>,
+): PaidOrderRow[] {
+  if (trialRefs.size === 0) return orders;
+  return orders.filter((o) => {
+    const ref = keyRefOf(o);
+    return !ref || !trialRefs.has(ref);
+  });
+}
+
+/**
+ * All-time LTV block (D-01..D-04). Trial-filtered orders; predictive uses the
+ * same 30-MSK-day window as loadKpis(30). activePayers is the D-01
+ * under-amortization marker (open terms at now).
+ */
+export async function loadLtv(): Promise<LtvData> {
+  const now = new Date();
+  const [ordersRaw, keyState] = await Promise.all([loadPaidOrders(), loadKeyCacheState()]);
+  const orders = withoutTrialOrders(ordersRaw, keyState.trialRefs);
+
+  let cashTotal = 0;
+  const payers = new Set<number>();
+  for (const o of orders) {
+    cashTotal += cashOf(o);
+    payers.add(o.userId);
+  }
+  const grossHistoricalPayers = payers.size;
+  const grossHistorical = ltvGrossHistorical(cashTotal, grossHistoricalPayers);
+
+  const from30 = mskDayStartInstant(windowStartDay(30));
+  let cash30 = 0;
+  const payers30 = new Set<number>();
+  for (const o of orders) {
+    if (!o.paidAt || o.paidAt.getTime() < from30.getTime()) continue;
+    cash30 += cashOf(o);
+    payers30.add(o.userId);
+  }
+  const arppu30 = computeArppu(cash30, payers30.size);
+
+  const events = buildKeyTermEvents(orders, keyState.liveExpiry);
+  const predictiveChurnRate = retentionForWindow(events, orders, {
+    start: from30,
+    endExclusive: now,
+    now,
+  }).logoChurnRate;
+  const grossPredictive = ltvPredictive(arppu30, predictiveChurnRate);
+
+  const activePayers = new Set(
+    events.filter((e) => classifyTerm(e, now) === "open").map((e) => e.op.userId),
+  ).size;
+
+  const costed = orders.filter((o) => o.providerCost !== null);
+  let cashMinusCost = 0;
+  const costedPayers = new Set<number>();
+  let earliestCosted: Date | null = null;
+  for (const o of costed) {
+    cashMinusCost += cashOf(o) - (o.providerCost as number);
+    costedPayers.add(o.userId);
+    if (o.paidAt && (earliestCosted === null || o.paidAt.getTime() < earliestCosted.getTime())) {
+      earliestCosted = o.paidAt;
+    }
+  }
+  const netPayers = costedPayers.size;
+  const net = ltvNet(cashMinusCost, netPayers);
+  const coverageFrom =
+    costed.length === 0 || earliestCosted === null ? null : mskDayLabel(earliestCosted);
+
+  return {
+    grossHistorical,
+    grossHistoricalPayers,
+    grossPredictive,
+    predictiveChurnRate,
+    net,
+    netPayers,
+    coverageFrom,
+    activePayers,
+  };
+}
+
+/**
+ * Windowed gross margin / margin % / cost-per-key over the costed subset
+ * (D-11/D-12/D-13). Same fromInstant as loadKpis.
+ */
+export async function loadMargin(period: 7 | 30 | 90): Promise<MarginData> {
+  const fromInstant = mskDayStartInstant(windowStartDay(period));
+  const rows = await prisma.order.findMany({
+    where: { status: { in: [...PAID] }, paidAt: { gte: fromInstant } },
+    select: { finalAmount: true, balanceUsed: true, providerCost: true },
+  });
+  const costed = rows.filter((o) => o.providerCost !== null);
+  let cash = 0;
+  let cost = 0;
+  for (const o of costed) {
+    cash += cashOf(o);
+    cost += o.providerCost as number;
+  }
+  return {
+    grossMargin: grossMarginOf(cash, cost, costed.length),
+    marginPct: marginPctOf(cash, cost, costed.length),
+    costPerKey: costPerKeyOf(cost, costed.length),
+    costedOrders: costed.length,
+    totalOrders: rows.length,
+  };
+}
+
+/**
+ * Fixed 30-MSK-day burn + live ARTEMIDA balance runway (D-14/D-15/D-16).
+ * getBalance is called exactly once here and never rejects the loader.
+ */
+export async function loadBurnRunway(): Promise<BurnRunwayData> {
+  const fromInstant = mskDayStartInstant(windowStartDay(30));
+  const [rows, balance] = await Promise.all([
+    prisma.order.findMany({
+      where: { status: { in: [...PAID] }, paidAt: { gte: fromInstant } },
+      select: { providerCost: true, paidAt: true },
+    }),
+    artemida
+      .getBalance()
+      .then((b) => (b.unlimited ? null : b.balance))
+      .catch(() => null),
+  ]);
+
+  const costed = rows.filter((o) => o.providerCost !== null && o.paidAt);
+  let costSum = 0;
+  const dayLabels = new Set<string>();
+  for (const o of costed) {
+    costSum += o.providerCost as number;
+    dayLabels.add(mskDayLabel(o.paidAt as Date));
+  }
+  const distinctDays = dayLabels.size;
+  const burnPerDay = burnPerDayOf(costSum, rows.length, costed.length, distinctDays);
+  const { days: runwayDays, reason: runwayReason } = runwayDaysOf(balance, burnPerDay);
+
+  return {
+    burnPerDay,
+    burnCostedOrders: costed.length,
+    burnTotalOrders: rows.length,
+    burnDaysCovered: distinctDays,
+    balance,
+    runwayDays,
+    runwayReason,
+  };
+}
+
+/**
+ * Retention cards for the last `period` MSK days — window identical to
+ * loadKpis (D-10 trial filter before event build).
+ */
+export async function loadRetention(period: 7 | 30 | 90): Promise<RetentionData> {
+  const now = new Date();
+  const [ordersRaw, keyState] = await Promise.all([loadPaidOrders(), loadKeyCacheState()]);
+  const orders = withoutTrialOrders(ordersRaw, keyState.trialRefs);
+  const events = buildKeyTermEvents(orders, keyState.liveExpiry);
+  const result = retentionForWindow(events, orders, {
+    start: mskDayStartInstant(windowStartDay(period)),
+    endExclusive: now,
+    now,
+  });
+  return {
+    renewalRate: result.renewalRate,
+    renewedKeys: result.renewedKeys,
+    expiringKeys: result.expiringKeys,
+    logoChurnRate: result.logoChurnRate,
+    churnedKeys: result.churnedKeys,
+    activeKeysAtStart: result.activeKeysAtStart,
+    revenueChurnRate: result.revenueChurnRate,
+    lostMrr: result.lostMrr,
+    mrrAtStart: result.mrrAtStart,
+  };
+}
+
+/**
+ * 6-month churn table — month slots from trailingMonthLabels (shared with
+ * loadWaterfall). Half-open [monthStart, min(nextMonthStart, now)).
+ */
+export async function loadChurnTable(): Promise<ChurnTableData> {
+  const now = new Date();
+  const [ordersRaw, keyState] = await Promise.all([loadPaidOrders(), loadKeyCacheState()]);
+  const orders = withoutTrialOrders(ordersRaw, keyState.trialRefs);
+  const events = buildKeyTermEvents(orders, keyState.liveExpiry);
+  const labels = trailingMonthLabels(orders, now);
+
+  const months = labels.map((label) => {
+    const start = mskDayStartInstant(label);
+    const nextStart = mskDayStartInstant(addMonths(label, 1));
+    const endExclusive = new Date(Math.min(nextStart.getTime(), now.getTime()));
+    const r = retentionForWindow(events, orders, { start, endExclusive, now });
+    return {
+      month: label,
+      expiring: r.expiringKeys,
+      renewed: r.renewedKeys,
+      renewalRate: r.renewalRate,
+      churned: r.churnedKeys,
+      lostMrr: r.lostMrr,
+    };
+  });
+
+  return { months };
 }

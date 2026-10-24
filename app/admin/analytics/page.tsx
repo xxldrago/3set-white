@@ -25,6 +25,10 @@ import MrrWaterfall from '@/components/admin/MrrWaterfall';
 import MrrSparkline from '@/components/admin/MrrSparkline';
 import AnalyticsSection from '@/components/admin/AnalyticsSection';
 import LtvCards from '@/components/admin/LtvCards';
+import MarginCards from '@/components/admin/MarginCards';
+import BurnRunwayCards from '@/components/admin/BurnRunwayCards';
+import RetentionCards from '@/components/admin/RetentionCards';
+import ChurnTable from '@/components/admin/ChurnTable';
 import { requireRole } from '@/lib/admin-auth';
 import { AdminError, SessionError } from '@/lib/session';
 import { t } from '@/lib/i18n';
@@ -99,6 +103,21 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
       <AnalyticsSection title={t('admin.analyticsUnitTitle')}>
         <Suspense fallback={<CardsSkeleton count={3} />}>
           <LtvCards />
+        </Suspense>
+        <Suspense fallback={<CardsSkeleton count={3} />}>
+          <MarginCards period={period} />
+        </Suspense>
+        <Suspense fallback={<CardsSkeleton count={2} twoUp />}>
+          <BurnRunwayCards />
+        </Suspense>
+      </AnalyticsSection>
+
+      <AnalyticsSection title={t('admin.analyticsRetentionTitle')}>
+        <Suspense fallback={<CardsSkeleton count={3} />}>
+          <RetentionCards period={period} />
+        </Suspense>
+        <Suspense fallback={<ChartSkeleton className="h-64" />}>
+          <ChurnTable />
         </Suspense>
       </AnalyticsSection>
     </section>

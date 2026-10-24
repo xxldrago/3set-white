@@ -73,7 +73,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 08-03-PLAN.md — Two page sections: five async server components + AnalyticsSection + 43 i18n keys + page-contract test
+- [x] 08-03-PLAN.md — Two page sections: five async server components + AnalyticsSection + 43 i18n keys + page-contract test
 
 ### Phase 9: Payment Funnel & Failure Analysis
 

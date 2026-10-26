@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Numbering continues from v1.0 (last phase = 6).
 
 - [x] **Phase 7: Analytics Foundation & Revenue Metrics** - `daily_metrics` rollup, nightly cron 03:00 + backfill, `Order.providerCost`; MRR/ARR, MRR-waterfall, ARPU/ARPPU (completed 2026-10-21)
-- [ ] **Phase 8: Unit Economics & Retention** - LTV gross/net, renewal rate, logo/revenue churn, gross margin, средний расход на ключ, burn-rate и runway
+- [x] **Phase 8: Unit Economics & Retention** - LTV gross/net, renewal rate, logo/revenue churn, gross margin, средний расход на ключ, burn-rate и runway (completed 2026-10-26)
 - [ ] **Phase 9: Payment Funnel & Failure Analysis** - Воронка `pending→paid→provisioning→provisioned`, `errorCode`, время до оплаты/выдачи, `expired` = pending-by-age
 - [ ] **Phase 10: Cohorts & Retention Analytics** - Когортная матрица, revenue retention, срезы по каналу и числу устройств, когорты по месяцу первой оплаты
 - [ ] **Phase 11: RFM Segments & Targeting** - Ежедневный `user_rfm`, именованные сегменты, drill-down в список, сегмент как аудитория рассылки, настраиваемые пороги
@@ -133,7 +133,7 @@ Phases execute in numeric order: 7 → 8 → 9 → 10 → 11
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 7. Analytics Foundation & Revenue Metrics | v1.1 | 5/5 | Complete    | 2026-10-21 |
-| 8. Unit Economics & Retention | v1.1 | 1/3 | In Progress | - |
+| 8. Unit Economics & Retention | v1.1 | 3/3 | Complete    | 2026-10-26 |
 | 9. Payment Funnel & Failure Analysis | v1.1 | 0/0 | Not started | - |
 | 10. Cohorts & Retention Analytics | v1.1 | 0/0 | Not started | - |
 | 11. RFM Segments & Targeting | v1.1 | 0/0 | Not started | - |

@@ -65,6 +65,7 @@ import {
   marginPctOf,
   runwayDaysOf,
 } from "./economics";
+import { PAYMENT_WINDOW_MS, funnelOf, type FunnelRow, type FunnelStep } from "./funnel";
 
 // Mirrors lib/revenue.ts:10 / rollup.ts:32 — the same money pipeline, never a
 // second enum. The PAID-status filter belongs HERE (the DB layer); the pure
@@ -527,4 +528,83 @@ export async function loadChurnTable(): Promise<ChurnTableData> {
   });
 
   return { months };
+}
+
+// ---------------------------------------------------------------------------
+// Phase 9 — payment funnel + failure analysis loaders (ANL-08..11)
+//
+// All four WINDOWED loaders (?period = 7 | 30 | 90 MSK days, D-06) share ONE
+// createdAt cohort window — mskDayStartInstant(windowStartDay(period)), the same
+// bound loadKpis uses. The funnel base is orders CREATED in the period:
+// pending orders have no paidAt, so a paidAt window would silently drop them
+// out of the funnel's first step. loadExpired is the ONLY point-in-time read
+// (no period): pending AND created strictly before now − PAYMENT_WINDOW_MS.
+//
+// Stage membership, error grouping and timing statistics are NEVER re-derived
+// here — lib/analytics/funnel.ts (09-01) owns every derivation; these loaders
+// only build the SQL WHERE and pass plain rows through.
+// ---------------------------------------------------------------------------
+
+/** The FunnelRow slice the 09-01 derivation core consumes. */
+const FUNNEL_ORDER_SELECT = {
+  id: true,
+  status: true,
+  createdAt: true,
+  paidAt: true,
+  provisionedKeyId: true,
+  updatedAt: true,
+  errorCode: true,
+} as const;
+
+/** Funnel block payload (§9): four fixed steps, exact rationals or null. */
+export interface FunnelData {
+  steps: {
+    step: FunnelStep;
+    count: number;
+    conversion: number | null;
+    dropOff: number | null;
+  }[];
+}
+
+/** Expired block payload — point-in-time, windowHours feeds the copy. */
+export interface ExpiredData {
+  count: number;
+  windowHours: number;
+}
+
+/**
+ * Every order CREATED inside the period window, any status — pending/paid/
+ * provisioning/provisioned/failed/canceled/refunded all entered the funnel at
+ * creation; the 09-01 stage predicates classify them (reach-based).
+ */
+async function loadFunnelOrderRows(period: 7 | 30 | 90): Promise<FunnelRow[]> {
+  return prisma.order.findMany({
+    where: { createdAt: { gte: mskDayStartInstant(windowStartDay(period)) } },
+    select: FUNNEL_ORDER_SELECT,
+    orderBy: { createdAt: "asc" },
+  });
+}
+
+/**
+ * Payment funnel over orders created in the last `period` MSK days (ANL-08,
+ * D-06). Exact rationals cross the boundary — the component does ×100.
+ */
+export async function loadFunnel(period: 7 | 30 | 90): Promise<FunnelData> {
+  const steps = funnelOf(await loadFunnelOrderRows(period));
+  return { steps };
+}
+
+/**
+ * Pending orders older than the 24h payment window (ANL-11/D-01). POINT-IN-
+ * TIME, no period (D-06): a report window would hide today's stuck orders.
+ * The bound is an INSTANT compared against the timestamp(3) createdAt column —
+ * never a day label (time.ts:9-15 one-day trap). Strict `<`; no status
+ * mutation, no enum change.
+ */
+export async function loadExpired(): Promise<ExpiredData> {
+  const windowMs = PAYMENT_WINDOW_MS;
+  const count = await prisma.order.count({
+    where: { status: "pending", createdAt: { lt: new Date(Date.now() - windowMs) } },
+  });
+  return { count, windowHours: windowMs / 3_600_000 };
 }

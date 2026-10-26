@@ -196,16 +196,20 @@ describe("analytics/funnel — funnelOf counts and conversions", () => {
     expect(steps[3]!.dropOff).toBeCloseTo(1 / 6, 12);
   });
 
-  it("yields null conversion and drop-off when the previous step is zero", () => {
+  it("yields null conversion when the previous step is zero (a real zero stays 0)", () => {
     const steps = funnelOf([
       row({ id: "p1", createdAt: NOW }),
       row({ id: "p2", createdAt: NOW }),
     ]);
     expect(steps.map((s) => s.count)).toEqual([2, 0, 0, 0]);
-    expect(steps[1]!.conversion).toBeNull();
-    expect(steps[1]!.dropOff).toBeNull();
+    // prev = 2 → 0/2 is a REAL zero, not an unknown.
+    expect(steps[1]!.conversion).toBe(0);
+    expect(steps[1]!.dropOff).toBe(1);
+    // prev = 0 → null, never −∞ (ANL-08 boundary).
     expect(steps[2]!.conversion).toBeNull();
+    expect(steps[2]!.dropOff).toBeNull();
     expect(steps[3]!.conversion).toBeNull();
+    expect(steps[3]!.dropOff).toBeNull();
   });
 
   it("returns four zero steps with null rates for an empty funnel (ANL-08 empty)", () => {

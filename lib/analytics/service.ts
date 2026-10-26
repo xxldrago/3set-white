@@ -65,7 +65,14 @@ import {
   marginPctOf,
   runwayDaysOf,
 } from "./economics";
-import { PAYMENT_WINDOW_MS, funnelOf, type FunnelRow, type FunnelStep } from "./funnel";
+import {
+  PAYMENT_WINDOW_MS,
+  errorBreakdown,
+  funnelOf,
+  timingStats,
+  type FunnelRow,
+  type FunnelStep,
+} from "./funnel";
 
 // Mirrors lib/revenue.ts:10 / rollup.ts:32 — the same money pipeline, never a
 // second enum. The PAID-status filter belongs HERE (the DB layer); the pure
@@ -607,4 +614,72 @@ export async function loadExpired(): Promise<ExpiredData> {
     where: { status: "pending", createdAt: { lt: new Date(Date.now() - windowMs) } },
   });
   return { count, windowHours: windowMs / 3_600_000 };
+}
+
+/** Error-breakdown block payload (§9): grouped rows + the failed+canceled total. */
+export interface ErrorBreakdownData {
+  rows: { code: string | null; count: number }[];
+  total: number;
+}
+
+/** Timing block payload (§9). Exact rationals, null when the sample is empty. */
+export interface TimingData {
+  medianMs: number | null;
+  meanMs: number | null;
+  orders: number;
+}
+
+/**
+ * Failed/canceled orders in the SAME createdAt window, grouped by the RAW
+ * errorCode (ANL-09/D-03). The pure module owns the status filter, grouping,
+ * null preservation and count-desc/code-asc sorting; `total` is the
+ * failed+canceled denominator the «доля» cells divide by.
+ */
+export async function loadErrorBreakdown(period: 7 | 30 | 90): Promise<ErrorBreakdownData> {
+  const rows = await loadFunnelOrderRows(period);
+  const breakdown = errorBreakdown(rows);
+  return { rows: breakdown, total: breakdown.reduce((sum, r) => sum + r.count, 0) };
+}
+
+/**
+ * Successful chains in the createdAt window (D-04): status 'provisioned' AND
+ * both paidAt and provisionedKeyId present. The WHERE mirrors timingStats'
+ * defensive filter — a post-provision chargeback (status 'refunded', updatedAt
+ * moved to the refund instant) can never enter the timing sample.
+ */
+async function loadProvisionedRows(period: 7 | 30 | 90): Promise<FunnelRow[]> {
+  return prisma.order.findMany({
+    where: {
+      status: "provisioned",
+      paidAt: { not: null },
+      provisionedKeyId: { not: null },
+      createdAt: { gte: mskDayStartInstant(windowStartDay(period)) },
+    },
+    select: FUNNEL_ORDER_SELECT,
+    orderBy: { createdAt: "asc" },
+  });
+}
+
+/** Median/mean createdAt → paidAt over successful chains (ANL-10). */
+export async function loadTimeToPay(period: 7 | 30 | 90): Promise<TimingData> {
+  const stats = timingStats(await loadProvisionedRows(period));
+  return {
+    medianMs: stats.createdToPaid.medianMs,
+    meanMs: stats.createdToPaid.meanMs,
+    orders: stats.orders,
+  };
+}
+
+/**
+ * Median/mean paidAt → provisioned over successful chains (ANL-10), using the
+ * documented updatedAt proxy (markProvisioned is the terminal-success
+ * transition; the 'provisioned' scope excludes later updatedAt touches).
+ */
+export async function loadTimeToProvision(period: 7 | 30 | 90): Promise<TimingData> {
+  const stats = timingStats(await loadProvisionedRows(period));
+  return {
+    medianMs: stats.paidToProvisioned.medianMs,
+    meanMs: stats.paidToProvisioned.meanMs,
+    orders: stats.orders,
+  };
 }

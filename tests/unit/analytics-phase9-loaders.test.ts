@@ -16,11 +16,19 @@
 // Where the fixture owns the whole window (verified at run time) the test also
 // pins the hand-computed value, so a silent derivation drift still fails.
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { loadExpired, loadFunnel } from "../../lib/analytics/service";
+import {
+  loadErrorBreakdown,
+  loadExpired,
+  loadFunnel,
+  loadTimeToPay,
+  loadTimeToProvision,
+} from "../../lib/analytics/service";
 import {
   PAYMENT_WINDOW_MS,
+  errorBreakdown,
   expiredCount,
   funnelOf,
+  timingStats,
   type FunnelRow,
 } from "../../lib/analytics/funnel";
 import { mskDayLabel, mskDayStartInstant } from "../../lib/analytics/time";
@@ -145,6 +153,20 @@ function windowStart(period: number): Date {
 async function scanFunnelRows(period: 7 | 30 | 90): Promise<FunnelRow[]> {
   return prisma.order.findMany({
     where: { createdAt: { gte: windowStart(period) } },
+    select: FUNNEL_SELECT,
+    orderBy: { createdAt: "asc" },
+  });
+}
+
+/** Re-run loadProvisionedRows' query — the timing-sample identity scan. */
+async function scanProvisionedRows(period: 7 | 30 | 90): Promise<FunnelRow[]> {
+  return prisma.order.findMany({
+    where: {
+      status: "provisioned",
+      paidAt: { not: null },
+      provisionedKeyId: { not: null },
+      createdAt: { gte: windowStart(period) },
+    },
     select: FUNNEL_SELECT,
     orderBy: { createdAt: "asc" },
   });
@@ -366,5 +388,269 @@ describe("analytics phase9 loaders — Task 1 (funnel / expired)", () => {
     expect(data.windowHours).toBe(PAYMENT_WINDOW_MS / 3_600_000);
     // Payload shape: exactly the two copy fields.
     expect(Object.keys(data).sort()).toEqual(["count", "windowHours"]);
+  });
+});
+
+describe("analytics phase9 loaders — Task 2 (error breakdown / timing)", () => {
+  it("Test 5: loadErrorBreakdown — raw-code grouping, null preserved, count-desc sorting", async () => {
+    const ids = [
+      await makeOrder(ownerId, {
+        status: "failed",
+        createdAt: daysAgo(3),
+        paidAt: daysAgo(3),
+        errorCode: "api_down",
+        updatedAt: daysAgo(3),
+      }),
+      await makeOrder(payer2Id, {
+        status: "failed",
+        createdAt: daysAgo(4),
+        paidAt: daysAgo(4),
+        errorCode: "api_down",
+        updatedAt: daysAgo(4),
+      }),
+      await makeOrder(payer3Id, {
+        status: "failed",
+        createdAt: daysAgo(5),
+        paidAt: daysAgo(5),
+        errorCode: "timeout",
+        updatedAt: daysAgo(5),
+      }),
+      await makeOrder(ownerId, {
+        status: "failed",
+        createdAt: daysAgo(6),
+        paidAt: daysAgo(6),
+        errorCode: null,
+        updatedAt: daysAgo(6),
+      }),
+      await makeOrder(payer2Id, {
+        status: "failed",
+        createdAt: daysAgo(7),
+        paidAt: daysAgo(7),
+        errorCode: null,
+        updatedAt: daysAgo(7),
+      }),
+      await makeOrder(payer3Id, {
+        status: "canceled",
+        createdAt: daysAgo(8),
+        errorCode: "manual",
+      }),
+      // A successful order carrying a stale errorCode must NOT enter the table.
+      await makeOrder(ownerId, {
+        status: "provisioned",
+        createdAt: daysAgo(9),
+        paidAt: daysAgo(9),
+        provisionedKeyId: "p9-t5-stale",
+        errorCode: "stale",
+        updatedAt: daysAgo(9),
+      }),
+    ];
+
+    const data = await loadErrorBreakdown(30);
+    const rows = await scanFunnelRows(30);
+    const expected = errorBreakdown(rows);
+
+    // Identity: the payload IS the pure module's grouping of the loader's scan.
+    expect(data.rows).toEqual(expected);
+    expect(data.total).toBe(expected.reduce((sum, r) => sum + r.count, 0));
+    expect(typeof data.total).toBe("number");
+    expect(Number.isInteger(data.total)).toBe(true);
+
+    // Payload rows expose ONLY { code, count } — no per-order detail.
+    for (const row of data.rows) {
+      expect(Object.keys(row).sort()).toEqual(["code", "count"]);
+    }
+    // Sort invariant: count DESC, ties by raw code ASC with null as ''.
+    for (let i = 1; i < data.rows.length; i++) {
+      const prev = data.rows[i - 1]!;
+      const cur = data.rows[i]!;
+      const tieOk = (prev.code ?? "") <= (cur.code ?? "");
+      expect(prev.count > cur.count || (prev.count === cur.count && tieOk)).toBe(true);
+    }
+    expect(data.rows.some((r) => r.code === "stale")).toBe(false);
+
+    const fixtureCodes = ["api_down", "timeout", "manual"];
+    const rowsAreOurs =
+      rows.filter((r) => r.status === "failed" || r.status === "canceled").length === 6 &&
+      ids.every((id) => rows.some((r) => r.id === id));
+    if (rowsAreOurs) {
+      // Hand-computed: api_down 2, unknown (null) 2, manual 1, timeout 1.
+      // Tie-break rule (09-01): null sorts as '' → unknown leads its tie block.
+      expect(data.rows).toEqual([
+        { code: null, count: 2 },
+        { code: "api_down", count: 2 },
+        { code: "manual", count: 1 },
+        { code: "timeout", count: 1 },
+      ]);
+      expect(data.total).toBe(6);
+      for (const code of fixtureCodes) {
+        expect(data.rows.find((r) => r.code === code)!.count).toBeGreaterThanOrEqual(1);
+      }
+    }
+  });
+
+  it("Test 6: loadErrorBreakdown — empty failed/canceled sample → rows [] / total 0", async () => {
+    // Only successful orders: the breakdown must be empty when the global
+    // failed/canceled window is empty, otherwise still identity-equal.
+    await makeOrder(ownerId, {
+      status: "provisioned",
+      createdAt: daysAgo(2),
+      paidAt: daysAgo(2),
+      provisionedKeyId: "p9-t6-ok",
+      updatedAt: daysAgo(2),
+    });
+
+    const data = await loadErrorBreakdown(30);
+    const rows = await scanFunnelRows(30);
+    const failedCanceled = rows.filter((r) => r.status === "failed" || r.status === "canceled");
+
+    expect(data.rows).toEqual(errorBreakdown(rows));
+    expect(data.total).toBe(data.rows.reduce((sum, r) => sum + r.count, 0));
+    if (failedCanceled.length === 0) {
+      expect(data.rows).toEqual([]);
+      expect(data.total).toBe(0);
+    }
+  });
+
+  it("Test 7: loadTimeToPay — median/mean of createdAt → paidAt over successful chains", async () => {
+    const base = Date.now();
+    const at = (msAgo: number) => new Date(base - msAgo);
+
+    // Successful chains: created→paid of 1h / 2h / 6h (median 2h, mean 3h).
+    const ids = [
+      await makeOrder(ownerId, {
+        status: "provisioned",
+        createdAt: at(7 * 3_600_000),
+        paidAt: at(6 * 3_600_000),
+        provisionedKeyId: "p9-t7-a",
+        updatedAt: at(6 * 3_600_000 - 30_000),
+      }),
+      await makeOrder(ownerId, {
+        status: "provisioned",
+        createdAt: at(4 * 3_600_000),
+        paidAt: at(2 * 3_600_000),
+        provisionedKeyId: "p9-t7-b",
+        updatedAt: at(2 * 3_600_000 - 60_000),
+      }),
+      await makeOrder(payer2Id, {
+        status: "provisioned",
+        createdAt: at(8 * 3_600_000),
+        paidAt: at(2 * 3_600_000),
+        provisionedKeyId: "p9-t7-c",
+        updatedAt: at(2 * 3_600_000 - 240_000),
+      }),
+      // Excluded from the sample: failed + pending.
+      await makeOrder(payer3Id, {
+        status: "failed",
+        createdAt: at(9 * 3_600_000),
+        paidAt: at(8 * 3_600_000),
+        errorCode: "api_down",
+        updatedAt: at(8 * 3_600_000),
+      }),
+      await makeOrder(payer3Id, { status: "pending", createdAt: at(10 * 3_600_000) }),
+    ];
+
+    const data = await loadTimeToPay(30);
+    const rows = await scanProvisionedRows(30);
+    const stats = timingStats(rows);
+
+    expect(data).toEqual({
+      medianMs: stats.createdToPaid.medianMs,
+      meanMs: stats.createdToPaid.meanMs,
+      orders: stats.orders,
+    });
+    expect(data.medianMs === null || typeof data.medianMs === "number").toBe(true);
+    expect(data.meanMs === null || typeof data.meanMs === "number").toBe(true);
+
+    if (windowIsExactly(rows, ids.slice(0, 3))) {
+      // created→paid: 1h, 2h, 6h → median 2h, mean 3h (exact, no rounding).
+      expect(data.orders).toBe(3);
+      expect(data.medianMs).toBe(2 * 3_600_000);
+      expect(data.meanMs).toBe(3 * 3_600_000);
+    }
+  });
+
+  it("Test 8: loadTimeToProvision — paidAt → updatedAt proxy pinned by a known delta", async () => {
+    const base = Date.now();
+    const at = (msAgo: number) => new Date(base - msAgo);
+
+    // Same rows as Test 7: paid→updatedAt of 30s / 60s / 240s
+    // (median 60s, mean 110s) — deliberately different from created→paid so a
+    // swapped interval cannot pass.
+    const ids = [
+      await makeOrder(ownerId, {
+        status: "provisioned",
+        createdAt: at(7 * 3_600_000),
+        paidAt: at(6 * 3_600_000),
+        provisionedKeyId: "p9-t8-a",
+        updatedAt: at(6 * 3_600_000 - 30_000),
+      }),
+      await makeOrder(ownerId, {
+        status: "provisioned",
+        createdAt: at(4 * 3_600_000),
+        paidAt: at(2 * 3_600_000),
+        provisionedKeyId: "p9-t8-b",
+        updatedAt: at(2 * 3_600_000 - 60_000),
+      }),
+      await makeOrder(payer2Id, {
+        status: "provisioned",
+        createdAt: at(8 * 3_600_000),
+        paidAt: at(2 * 3_600_000),
+        provisionedKeyId: "p9-t8-c",
+        updatedAt: at(2 * 3_600_000 - 240_000),
+      }),
+    ];
+
+    const data = await loadTimeToProvision(30);
+    const rows = await scanProvisionedRows(30);
+    const stats = timingStats(rows);
+
+    expect(data).toEqual({
+      medianMs: stats.paidToProvisioned.medianMs,
+      meanMs: stats.paidToProvisioned.meanMs,
+      orders: stats.orders,
+    });
+
+    if (windowIsExactly(rows, ids)) {
+      expect(data.orders).toBe(3);
+      expect(data.medianMs).toBe(60_000);
+      expect(data.meanMs).toBe(110_000);
+      // Proxy pin: paid→provisioned ≠ created→paid on this fixture.
+      expect(data.medianMs).not.toBe(2 * 3_600_000);
+    }
+
+    // A refunded row (post-provision chargeback moves updatedAt) never enters.
+    await makeOrder(payer3Id, {
+      status: "refunded",
+      createdAt: at(3 * 3_600_000),
+      paidAt: at(3 * 3_600_000),
+      provisionedKeyId: "p9-t8-refunded",
+    });
+    const after = await loadTimeToProvision(30);
+    const afterRows = await scanProvisionedRows(30);
+    expect(after).toEqual({
+      medianMs: timingStats(afterRows).paidToProvisioned.medianMs,
+      meanMs: timingStats(afterRows).paidToProvisioned.meanMs,
+      orders: timingStats(afterRows).orders,
+    });
+  });
+
+  it("Test 9: timing loaders — zero sample → nulls with orders 0", async () => {
+    // No provisioned rows from our users: if the global 30d provisioned sample
+    // is empty both loaders must report unknown (null), never a fabricated 0.
+    const rows = await scanProvisionedRows(30);
+    const pay = await loadTimeToPay(30);
+    const provision = await loadTimeToProvision(30);
+
+    expect(pay).toEqual({
+      medianMs: timingStats(rows).createdToPaid.medianMs,
+      meanMs: timingStats(rows).createdToPaid.meanMs,
+      orders: timingStats(rows).orders,
+    });
+    expect(provision.orders).toBe(pay.orders);
+
+    if (rows.length === 0) {
+      expect(pay).toEqual({ medianMs: null, meanMs: null, orders: 0 });
+      expect(provision).toEqual({ medianMs: null, meanMs: null, orders: 0 });
+    }
   });
 });

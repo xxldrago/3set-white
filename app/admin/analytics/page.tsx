@@ -29,6 +29,8 @@ import MarginCards from '@/components/admin/MarginCards';
 import BurnRunwayCards from '@/components/admin/BurnRunwayCards';
 import RetentionCards from '@/components/admin/RetentionCards';
 import ChurnTable from '@/components/admin/ChurnTable';
+import FunnelCards from '@/components/admin/FunnelCards';
+import ExpiredCards from '@/components/admin/ExpiredCards';
 import { requireRole } from '@/lib/admin-auth';
 import { AdminError, SessionError } from '@/lib/session';
 import { t } from '@/lib/i18n';
@@ -118,6 +120,15 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
         </Suspense>
         <Suspense fallback={<ChartSkeleton className="h-64" />}>
           <ChurnTable />
+        </Suspense>
+      </AnalyticsSection>
+
+      <AnalyticsSection title={t('admin.analyticsFunnelTitle')}>
+        <Suspense fallback={<CardsSkeleton count={4} />}>
+          <FunnelCards period={period} />
+        </Suspense>
+        <Suspense fallback={<CardsSkeleton count={1} />}>
+          <ExpiredCards />
         </Suspense>
       </AnalyticsSection>
     </section>

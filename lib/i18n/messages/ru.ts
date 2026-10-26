@@ -470,6 +470,18 @@ export const ru = {
     analyticsColLostMrr: 'Потеряно MRR, ₽',
     analyticsChurnEmpty:
       'Пока нет истёкших подписок: таблица заполнится после первого окончания оплаченного срока.',
+    analyticsFunnelTitle: 'Воронка платежей',
+    analyticsFunnelCardsTitle: 'Шаги оплаты',
+    analyticsFunnelStepPending: 'Создано',
+    analyticsFunnelStepPaid: 'Оплачено',
+    analyticsFunnelStepProvisioning: 'Выдача начата',
+    analyticsFunnelStepProvisioned: 'Ключ выдан',
+    analyticsFunnelBaseSub: 'все заказы периода',
+    analyticsFunnelConvSub: 'конверсия {conv} · отвал {drop}',
+    analyticsExpiredTitle: 'Просроченные платежи',
+    analyticsExpiredMeta: 'сейчас · не зависит от периода',
+    analyticsExpiredLabel: 'Ждут оплаты более {hours} ч',
+    analyticsExpiredSub: 'заказы в статусе «pending» без оплаты',
     newTicketDm: '🆘 Новое обращение #{id}: {subject}',
     supportIntakeDm:
       '📨 Обращение с сайта\nОтветить: {channelLabel} · {contact}\nИмя: {name}\n\nСообщение:\n{body}',

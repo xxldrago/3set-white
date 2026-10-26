@@ -146,3 +146,96 @@ export function expiredCount(
   const cutoff = now.getTime() - windowMs;
   return rows.filter((o) => o.status === "pending" && o.createdAt.getTime() < cutoff).length;
 }
+
+/** One error-code group of the failure breakdown (ANL-09). */
+export interface ErrorBreakdownRow {
+  /** Raw stored errorCode; null means the order never recorded one. */
+  code: string | null;
+  count: number;
+}
+
+/**
+ * Failed/canceled orders grouped by their RAW errorCode (D-03/ANL-09).
+ * Only 'failed' and 'canceled' rows enter — a provisioned/pending row that
+ * still carries a stale errorCode is ignored. `null` stays `null` in the
+ * payload: the «unknown» label is the component's render decision (it keeps
+ * the i18n key in use). Sorted by count DESC, ties by code ASC with null
+ * treated as '' — so the unknown group leads its tie block.
+ */
+export function errorBreakdown(rows: FunnelRow[]): ErrorBreakdownRow[] {
+  const counts = new Map<string | null, number>();
+  for (const o of rows) {
+    if (o.status !== "failed" && o.status !== "canceled") continue;
+    const code = o.errorCode ?? null;
+    counts.set(code, (counts.get(code) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([code, count]) => ({ code, count }))
+    .sort((a, b) => {
+      if (a.count !== b.count) return b.count - a.count;
+      // Documented tie-break: null sorts as '' (first among equal counts).
+      const aCode = a.code ?? "";
+      const bCode = b.code ?? "";
+      return aCode < bCode ? -1 : aCode > bCode ? 1 : 0;
+    });
+}
+
+/**
+ * Median of a millisecond sample — exact rational, never rounded (ANL-10).
+ * Even n → mean of the two middle values. Empty sample → null.
+ */
+export function medianMs(values: number[]): number | null {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 1) return sorted[mid]!;
+  return (sorted[mid - 1]! + sorted[mid]!) / 2;
+}
+
+/** Arithmetic mean of a millisecond sample; empty sample → null. */
+export function meanMs(values: number[]): number | null {
+  if (values.length === 0) return null;
+  return values.reduce((sum, v) => sum + v, 0) / values.length;
+}
+
+export interface TimingStatPair {
+  medianMs: number | null;
+  meanMs: number | null;
+}
+
+export interface TimingStats {
+  createdToPaid: TimingStatPair;
+  paidToProvisioned: TimingStatPair;
+  orders: number;
+}
+
+/**
+ * Timing statistics over SUCCESSFUL CHAINS ONLY (D-04/ANL-10):
+ * status 'provisioned' AND paidAt AND provisionedKeyId all present. Failed,
+ * canceled, refunded, pending and null-paidAt / null-key rows are excluded
+ * defensively here — the 09-02 loader applies the same filter in SQL (belt
+ * and braces).
+ *
+ * paidToProvisioned uses the documented updatedAt proxy: markProvisioned is
+ * the terminal-success transition, and the status === 'provisioned' scope
+ * excludes any later updatedAt touch (a chargeback would move updatedAt to
+ * the refund instant), so the proxy cannot drift with refund activity.
+ */
+export function timingStats(rows: FunnelRow[]): TimingStats {
+  const done = rows.filter(
+    (o) => o.status === "provisioned" && o.paidAt !== null && o.provisionedKeyId !== null,
+  );
+  const createdToPaid = done.map((o) => o.paidAt!.getTime() - o.createdAt.getTime());
+  const paidToProvisioned = done.map((o) => o.updatedAt.getTime() - o.paidAt!.getTime());
+  return {
+    createdToPaid: {
+      medianMs: medianMs(createdToPaid),
+      meanMs: meanMs(createdToPaid),
+    },
+    paidToProvisioned: {
+      medianMs: medianMs(paidToProvisioned),
+      meanMs: meanMs(paidToProvisioned),
+    },
+    orders: done.length,
+  };
+}

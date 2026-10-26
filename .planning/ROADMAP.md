@@ -88,8 +88,21 @@ Plans:
   3. Админ видит медианное и среднее время `createdAt → paidAt` и `paidAt → provisioned`
   4. Админ видит «expired» как `pending` старше платёжного окна — отдельной метрикой, без изменения статусов заказов
 
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
+
+Plans:
+**Wave 1**
+
+- [ ] 09-01-PLAN.md — Pure derivation core: funnel.ts (funnel stage counts, 24h expired window, errorCode breakdown, timing median/mean) + pure test suite
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 09-02-PLAN.md — Five §9 loaders in service.ts (loadFunnel/loadExpired/loadErrorBreakdown/loadTimeToPay/loadTimeToProvision) + DB-backed loader tests
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 09-03-PLAN.md — Three page sections: five async server components + 31 i18n keys + page-contract test + phase-8 contract Suspense-count update
 
 ### Phase 10: Cohorts & Retention Analytics
 
@@ -134,7 +147,7 @@ Phases execute in numeric order: 7 → 8 → 9 → 10 → 11
 |-------|-----------|----------------|--------|-----------|
 | 7. Analytics Foundation & Revenue Metrics | v1.1 | 5/5 | Complete    | 2026-10-21 |
 | 8. Unit Economics & Retention | v1.1 | 3/3 | Complete    | 2026-10-26 |
-| 9. Payment Funnel & Failure Analysis | v1.1 | 0/0 | Not started | - |
+| 9. Payment Funnel & Failure Analysis | v1.1 | 0/3 | Not started | - |
 | 10. Cohorts & Retention Analytics | v1.1 | 0/0 | Not started | - |
 | 11. RFM Segments & Targeting | v1.1 | 0/0 | Not started | - |
 

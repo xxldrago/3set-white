@@ -31,6 +31,9 @@ import RetentionCards from '@/components/admin/RetentionCards';
 import ChurnTable from '@/components/admin/ChurnTable';
 import FunnelCards from '@/components/admin/FunnelCards';
 import ExpiredCards from '@/components/admin/ExpiredCards';
+import ErrorTable from '@/components/admin/ErrorTable';
+import TimeToPayCards from '@/components/admin/TimeToPayCards';
+import TimeToProvisionCards from '@/components/admin/TimeToProvisionCards';
 import { requireRole } from '@/lib/admin-auth';
 import { AdminError, SessionError } from '@/lib/session';
 import { t } from '@/lib/i18n';
@@ -129,6 +132,21 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
         </Suspense>
         <Suspense fallback={<CardsSkeleton count={1} />}>
           <ExpiredCards />
+        </Suspense>
+      </AnalyticsSection>
+
+      <AnalyticsSection title={t('admin.analyticsErrorTitle')}>
+        <Suspense fallback={<ChartSkeleton className="h-64" />}>
+          <ErrorTable period={period} />
+        </Suspense>
+      </AnalyticsSection>
+
+      <AnalyticsSection title={t('admin.analyticsTimingTitle')}>
+        <Suspense fallback={<CardsSkeleton count={2} twoUp />}>
+          <TimeToPayCards period={period} />
+        </Suspense>
+        <Suspense fallback={<CardsSkeleton count={2} twoUp />}>
+          <TimeToProvisionCards period={period} />
         </Suspense>
       </AnalyticsSection>
     </section>

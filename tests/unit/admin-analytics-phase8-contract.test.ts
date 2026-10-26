@@ -153,7 +153,7 @@ describe("/admin/analytics — phase 8 composition (D-17: below the sparkline, n
     expect(PAGE_SOURCE).toContain("<CardsSkeleton count={2} twoUp />");
     expect(PAGE_SOURCE).toContain('<ChartSkeleton className="h-64" />');
     const suspenses = PAGE_SOURCE.match(/<Suspense fallback=\{/g) ?? [];
-    expect(suspenses.length).toBe(8); // KPI + waterfall + sparkline + 5 new
+    expect(suspenses.length).toBe(13); // KPI + waterfall + sparkline + 5 phase-8 + 5 phase-9 boundaries (funnel 4, expired 1, error h-64, timing ×2)
     expect(PAGE_SOURCE).toContain("BurnRunwayCards");
     expect(PAGE_SOURCE).toContain("RetentionCards");
     expect(PAGE_SOURCE).toContain("ChurnTable");

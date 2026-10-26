@@ -4,17 +4,17 @@ milestone: v1.1
 milestone_name: Расширенная аналитика
 current_phase: 09
 current_phase_name: Payment Funnel & Failure Analysis
-status: executing
-stopped_at: Completed 09-02-PLAN.md (Phase 9 loaders)
-last_updated: "2026-10-26T22:20:40.929Z"
+status: verifying
+stopped_at: Completed 09-03-PLAN.md (Phase 9 UI surface)
+last_updated: "2026-10-26T22:53:27.898Z"
 last_activity: 2026-10-27
 last_activity_desc: Plan 09-02 complete — Phase 9 DB loaders green (9 tests)
-state_head: 1617dc116c5fd0691f9bc9c055db5b62404f67d6
+state_head: 1b66c5d91760c4b46abbf2cd7d05d10784a2cb59
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-10-20)
 
 Phase: 09 (Payment Funnel & Failure Analysis) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-10-27 — Plan 09-02 complete (Phase 9 loaders, 9 DB tests green)
 
 Progress: [██████████] 91% (10/11 plans)
@@ -65,6 +65,7 @@ Progress: [██████████] 91% (10/11 plans)
 | Phase 08 P03 | 61 | 2 tasks | 9 files |
 | Phase 09 P01 | 3min | 2 tasks | 2 files |
 | Phase 09 P02 | 6min | 2 tasks | 2 files |
+| Phase 09 P03 | 9 | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,7 @@ Recent decisions affecting current work:
 - [Phase 09]: P01 PAYMENT_WINDOW_MS = 24h hardcoded code constant; expiredCount strict `<` (±1 ms boundary pinned)
 - [Phase 09]: Phase 09 loaders: funnel/error/timing share the loadKpis createdAt cohort window — a paidAt window would drop pending orders from the funnel base; loadExpired is the only point-in-time read and derives windowHours from PAYMENT_WINDOW_MS
 - [Phase 09]: Phase 09 DB loader tests use the identity pattern (re-run the loader's own WHERE/SELECT, derive via lib/analytics/funnel.ts) because funnel/expired counts are global across the shared test Postgres
+- [Phase 09]: Phase 9 UI: funnel step labels go through a literal switch (a Record map fails the i18n unused-key scan); ErrorTable renders raw error codes verbatim with the i18n «unknown» label for the null group; shared formatDuration exported from TimeToPayCards and imported by TimeToProvisionCards
 
 ### Pending Todos
 
@@ -112,6 +114,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-26T22:20:40.829Z
-Stopped at: Completed 09-02-PLAN.md (Phase 9 loaders)
+Last session: 2026-10-26T22:53:27.801Z
+Stopped at: Completed 09-03-PLAN.md (Phase 9 UI surface)
 Resume file: None

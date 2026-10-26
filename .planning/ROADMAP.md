@@ -102,7 +102,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 09-03-PLAN.md — Three page sections: five async server components + 31 i18n keys + page-contract test + phase-8 contract Suspense-count update
+- [x] 09-03-PLAN.md — Three page sections: five async server components + 31 i18n keys + page-contract test + phase-8 contract Suspense-count update
 
 ### Phase 10: Cohorts & Retention Analytics
 

@@ -150,6 +150,8 @@ bot.start(async (ctx) => {
         [{ text: t("bot.menuReferrals") }],
         [{ text: t("bot.menuGuides") }, { text: t("bot.menuHelp") }],
         [{ text: t("bot.menuSupport") }],
+        [{ text: t("bot.menuPrivacy") }],
+        [{ text: t("bot.menuTerms") }],
       ],
       resize_keyboard: true,
     },
@@ -605,6 +607,27 @@ bot.action(/^key:link:(\d+)$/, async (ctx) => {
     await ctx.reply(t("key.linkError"));
     logger.warn({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "key-link-failed" });
   }
+});
+
+// Legal pages live on the public site (APP_BASE_URL points at the cabinet).
+// Reply-keyboard buttons cannot carry URLs, so each menu tap answers with the
+// document link.
+bot.hears(t("bot.menuPrivacy"), async (ctx) => {
+  await ctx.reply(
+    t("bot.legalLink", {
+      title: t("bot.menuPrivacy"),
+      url: `${env.LEGAL_BASE_URL}/privacy`,
+    }),
+  );
+});
+
+bot.hears(t("bot.menuTerms"), async (ctx) => {
+  await ctx.reply(
+    t("bot.legalLink", {
+      title: t("bot.menuTerms"),
+      url: `${env.LEGAL_BASE_URL}/terms`,
+    }),
+  );
 });
 
 // TRIAL-03 bot half: the «Инструкции» button resolves the SAME guide sections

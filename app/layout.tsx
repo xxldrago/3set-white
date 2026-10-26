@@ -36,6 +36,9 @@ export const metadata: Metadata = {
   icons: {
     apple: [{ url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }],
   },
+  other: {
+    '1plat': '2614',
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {

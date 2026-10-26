@@ -22,6 +22,9 @@ export const envSchema = z.object({
   PLATEGA_SECRET: z.string().min(1, "PLATEGA_SECRET is required"),
   PLATEGA_BASE_URL: z.string().url().default("https://app.platega.io"),
   APP_BASE_URL: z.string().url().default("http://localhost:3000"),
+  // Public marketing site that hosts the legal pages (/privacy, /terms). The
+  // cabinet (APP_BASE_URL) does not serve them, so the bot links point here.
+  LEGAL_BASE_URL: z.string().url().default("https://3set.online"),
   // Own SMTP relay for Phase 6 mail (D-87/D-90, 06-03). Server-only — never
   // a NEXT_PUBLIC_* var. All OPTIONAL on purpose: without SMTP_HOST/SMTP_FROM
   // `lib/mail.ts` degrades to a logged no-op (dev/test need no credentials;

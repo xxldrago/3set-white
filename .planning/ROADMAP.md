@@ -98,7 +98,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 09-02-PLAN.md — Five §9 loaders in service.ts (loadFunnel/loadExpired/loadErrorBreakdown/loadTimeToPay/loadTimeToProvision) + DB-backed loader tests
+- [x] 09-02-PLAN.md — Five §9 loaders in service.ts (loadFunnel/loadExpired/loadErrorBreakdown/loadTimeToPay/loadTimeToProvision) + DB-backed loader tests
 
 **Wave 3** *(blocked on Wave 2 completion)*
 

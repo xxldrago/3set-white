@@ -21,10 +21,10 @@ compensation/reply templates/requester context).
 - [x] **ANL-05**: Админ видит LTV net (выручка минус расход провайдера) после появления `Order.providerCost`
 - [x] **ANL-06**: Админ видит renewal rate — доля продлённых подписок от числа истекающих в периоде (`kind = renew`)
 - [x] **ANL-07**: Админ видит logo churn (истёкшие и не продлённые за grace-период) и revenue churn по подпискам
-- [ ] **ANL-08**: Админ видит воронку оплаты `pending → paid → provisioning → provisioned` с конверсией и отвалом на каждом шаге
-- [ ] **ANL-09**: Админ видит разбивку `failed`/`canceled` по `errorCode` с количеством и долей
-- [ ] **ANL-10**: Админ видит медианное и среднее время `createdAt → paidAt` и `paidAt → provisioned`
-- [ ] **ANL-11**: «Expired» считается как `pending` старше платёжного окна (без нового статуса в стейт-машине)
+- [x] **ANL-08**: Админ видит воронку оплаты `pending → paid → provisioning → provisioned` с конверсией и отвалом на каждом шаге
+- [x] **ANL-09**: Админ видит разбивку `failed`/`canceled` по `errorCode` с количеством и долей
+- [x] **ANL-10**: Админ видит медианное и среднее время `createdAt → paidAt` и `paidAt → provisioned`
+- [x] **ANL-11**: «Expired» считается как `pending` старше платёжного окна (без нового статуса в стейт-машине)
 - [x] **ANL-12**: Система сохраняет расход провайдера на заказ (`Order.providerCost`) в момент provisioning
 - [x] **ANL-13**: Админ видит gross margin (`Σ(finalAmount − providerCost)`), маржинальность в % и средний расход на ключ
 - [x] **ANL-14**: Система снимает снапшоты `GET /balance` и показывает burn-rate и прогноз runway (баланс ÷ средний дневной расход, дней)
@@ -112,10 +112,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ANL-05 | Phase 8 | Complete |
 | ANL-06 | Phase 8 | Complete |
 | ANL-07 | Phase 8 | Complete |
-| ANL-08 | Phase 9 | Pending |
-| ANL-09 | Phase 9 | Pending |
-| ANL-10 | Phase 9 | Pending |
-| ANL-11 | Phase 9 | Pending |
+| ANL-08 | Phase 9 | Complete |
+| ANL-09 | Phase 9 | Complete |
+| ANL-10 | Phase 9 | Complete |
+| ANL-11 | Phase 9 | Complete |
 | ANL-12 | Phase 7 | Complete |
 | ANL-13 | Phase 8 | Complete |
 | ANL-14 | Phase 8 | Complete |

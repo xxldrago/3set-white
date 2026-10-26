@@ -5,16 +5,16 @@ milestone_name: Расширенная аналитика
 current_phase: 09
 current_phase_name: Payment Funnel & Failure Analysis
 status: executing
-stopped_at: Completed 09-01-PLAN.md (funnel derivation core)
-last_updated: "2026-10-27T08:12:00.000Z"
+stopped_at: Completed 09-02-PLAN.md (Phase 9 loaders)
+last_updated: "2026-10-26T22:20:40.929Z"
 last_activity: 2026-10-27
-last_activity_desc: Plan 09-01 complete — pure funnel derivation core green
-state_head: 5daa2f757566e3c53665ca54b1d050f2526e9d22
+last_activity_desc: Plan 09-02 complete — Phase 9 DB loaders green (9 tests)
+state_head: 1617dc116c5fd0691f9bc9c055db5b62404f67d6
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 11
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Project State
@@ -29,11 +29,11 @@ See: .planning/PROJECT.md (updated 2026-10-20)
 ## Current Position
 
 Phase: 09 (Payment Funnel & Failure Analysis) — EXECUTING
-Plan: 2 of 3
-Status: Executing Phase 09 — 09-01 complete, 09-02 (loaders) next
-Last activity: 2026-10-27 — Plan 09-01 complete (pure funnel core, 16 fixtures green)
+Plan: 3 of 3
+Status: Ready to execute
+Last activity: 2026-10-27 — Plan 09-02 complete (Phase 9 loaders, 9 DB tests green)
 
-Progress: [█████████░] 82% (9/11 plans)
+Progress: [██████████] 91% (10/11 plans)
 
 ## Performance Metrics
 
@@ -64,6 +64,7 @@ Progress: [█████████░] 82% (9/11 plans)
 | Phase 08 P02 | 4 | 2 tasks | 2 files |
 | Phase 08 P03 | 61 | 2 tasks | 9 files |
 | Phase 09 P01 | 3min | 2 tasks | 2 files |
+| Phase 09 P02 | 6min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,8 @@ Recent decisions affecting current work:
 - [Phase 09]: P01 errorBreakdown keeps null errorCode (component owns «unknown» label); tie-break count desc, code asc with null as ''
 - [Phase 09]: P01 timingStats = successful chains only; paidToProvisioned uses the updatedAt proxy, guarded by the status='provisioned' scope
 - [Phase 09]: P01 PAYMENT_WINDOW_MS = 24h hardcoded code constant; expiredCount strict `<` (±1 ms boundary pinned)
+- [Phase 09]: Phase 09 loaders: funnel/error/timing share the loadKpis createdAt cohort window — a paidAt window would drop pending orders from the funnel base; loadExpired is the only point-in-time read and derives windowHours from PAYMENT_WINDOW_MS
+- [Phase 09]: Phase 09 DB loader tests use the identity pattern (re-run the loader's own WHERE/SELECT, derive via lib/analytics/funnel.ts) because funnel/expired counts are global across the shared test Postgres
 
 ### Pending Todos
 
@@ -109,6 +112,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-27T08:12:00.000Z
-Stopped at: Completed 09-01-PLAN.md (funnel derivation core)
+Last session: 2026-10-26T22:20:40.829Z
+Stopped at: Completed 09-02-PLAN.md (Phase 9 loaders)
 Resume file: None

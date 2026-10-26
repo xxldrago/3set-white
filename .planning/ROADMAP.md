@@ -94,7 +94,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 09-01-PLAN.md — Pure derivation core: funnel.ts (funnel stage counts, 24h expired window, errorCode breakdown, timing median/mean) + pure test suite
+- [x] 09-01-PLAN.md — Pure derivation core: funnel.ts (funnel stage counts, 24h expired window, errorCode breakdown, timing median/mean) + pure test suite
 
 **Wave 2** *(blocked on Wave 1 completion)*
 

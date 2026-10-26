@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Расширенная аналитика
-current_phase: 9
+current_phase: 09
 current_phase_name: Payment Funnel & Failure Analysis
-status: planning
-stopped_at: Phase 8 complete, ready to plan Phase 9
-last_updated: "2026-10-26T02:40:13.415Z"
-last_activity: 2026-10-26
-last_activity_desc: Phase 8 complete, transitioned to Phase 9
-state_head: d73177bce40190c7b852f57d8c23bc7f80988dae
+status: executing
+stopped_at: Completed 09-01-PLAN.md (funnel derivation core)
+last_updated: "2026-10-27T08:12:00.000Z"
+last_activity: 2026-10-27
+last_activity_desc: Plan 09-01 complete — pure funnel derivation core green
+state_head: 5daa2f757566e3c53665ca54b1d050f2526e9d22
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 11
+  completed_plans: 9
 ---
 
 # Project State
@@ -24,16 +24,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-20)
 
 **Core value:** Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
-**Current focus:** Phase 08 — Unit Economics & Retention
+**Current focus:** Phase 09 — Payment Funnel & Failure Analysis
 
 ## Current Position
 
-Phase: 9 — Payment Funnel & Failure Analysis
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-10-26 — Phase 8 complete, transitioned to Phase 9
+Phase: 09 (Payment Funnel & Failure Analysis) — EXECUTING
+Plan: 2 of 3
+Status: Executing Phase 09 — 09-01 complete, 09-02 (loaders) next
+Last activity: 2026-10-27 — Plan 09-01 complete (pure funnel core, 16 fixtures green)
 
-Progress: [████████░░] 75% (6/8 plans)
+Progress: [█████████░] 82% (9/11 plans)
 
 ## Performance Metrics
 
@@ -63,6 +63,7 @@ Progress: [████████░░] 75% (6/8 plans)
 | Phase 08 P01 | 4min | 2 tasks | 4 files |
 | Phase 08 P02 | 4 | 2 tasks | 2 files |
 | Phase 08 P03 | 61 | 2 tasks | 9 files |
+| Phase 09 P01 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,10 @@ Recent decisions affecting current work:
 - [Phase 08]: Phase 08: costed-subset discipline — providerCost !== null filters net LTV / margin / burn; coverage counts reported, never zero-filled
 - [Phase 08]: Phase 08: error body = single-CARD common.errorLoad per PATTERNS degradation skeleton (plan action text supersedes the UI-SPEC heading-survives variant)
 - [Phase 08]: Phase 08: BurnRunwayCards source avoids the strings artemida/providerCost/userId even in comments — the component passes the strongest no-leak/no-provider scan
+- [Phase 09]: P01 funnel stages are reach-based (paidAt/key/status), never current-status-only; paid→failed fallback and keyless CHARGEBACKED-from-provisioning rows declared as DOCUMENTED APPROXIMATIONS in the module header
+- [Phase 09]: P01 errorBreakdown keeps null errorCode (component owns «unknown» label); tie-break count desc, code asc with null as ''
+- [Phase 09]: P01 timingStats = successful chains only; paidToProvisioned uses the updatedAt proxy, guarded by the status='provisioned' scope
+- [Phase 09]: P01 PAYMENT_WINDOW_MS = 24h hardcoded code constant; expiredCount strict `<` (±1 ms boundary pinned)
 
 ### Pending Todos
 
@@ -104,6 +109,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-24T12:40:18.400Z
-Stopped at: Phase 8 complete, ready to plan Phase 9
+Last session: 2026-10-27T08:12:00.000Z
+Stopped at: Completed 09-01-PLAN.md (funnel derivation core)
 Resume file: None

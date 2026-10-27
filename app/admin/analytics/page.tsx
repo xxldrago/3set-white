@@ -37,7 +37,7 @@ import TimeToProvisionCards from '@/components/admin/TimeToProvisionCards';
 import { requireRole } from '@/lib/admin-auth';
 import { AdminError, SessionError } from '@/lib/session';
 import { t } from '@/lib/i18n';
-import { GRID } from '@/components/admin/MetricCard';
+import { GRID, FUNNEL_GRID } from '@/components/admin/MetricCard';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,10 +59,13 @@ function ChartSkeleton({ className }: { className: string }) {
   return <div className={`${className} animate-pulse rounded-2xl bg-foreground/5`} aria-hidden="true" />;
 }
 
-/** §6.1 loading: the card grid skeletons for the two new sections (3-up or 2-up). */
-function CardsSkeleton({ count, twoUp }: { count: number; twoUp?: boolean }) {
+/** §6.1 loading: the card grid skeletons for the two new sections (3-up, 4-up or 2-up). */
+function CardsSkeleton({ count, twoUp, fourUp }: { count: number; twoUp?: boolean; fourUp?: boolean }) {
   return (
-    <div className={twoUp ? 'grid grid-cols-1 gap-4 sm:grid-cols-2' : GRID} aria-hidden="true">
+    <div
+      className={twoUp ? 'grid grid-cols-1 gap-4 sm:grid-cols-2' : fourUp ? FUNNEL_GRID : GRID}
+      aria-hidden="true"
+    >
       {Array.from({ length: count }, (_, i) => (
         <div key={i} className="h-32 animate-pulse rounded-2xl bg-foreground/5" />
       ))}
@@ -127,7 +130,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
       </AnalyticsSection>
 
       <AnalyticsSection title={t('admin.analyticsFunnelTitle')}>
-        <Suspense fallback={<CardsSkeleton count={4} />}>
+        <Suspense fallback={<CardsSkeleton count={4} fourUp />}>
           <FunnelCards period={period} />
         </Suspense>
         <Suspense fallback={<CardsSkeleton count={1} />}>

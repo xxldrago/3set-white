@@ -167,7 +167,7 @@ describe("/admin/analytics — phase 9 composition (D-05: three sections below r
   });
 
   it("adds exactly five new Suspense boundaries (funnel 4, expired 1, error h-64, timing ×2)", () => {
-    expect(PAGE_SOURCE).toContain("<CardsSkeleton count={4} />");
+    expect(PAGE_SOURCE).toContain("<CardsSkeleton count={4} fourUp />");
     expect(PAGE_SOURCE).toContain("<CardsSkeleton count={1} />");
 
     const twoUp = PAGE_SOURCE.match(/<CardsSkeleton count=\{2\} twoUp \/>/g) ?? [];

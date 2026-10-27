@@ -6,6 +6,11 @@
 // CARD/GRID move with the card so every importer spells the same strings.
 export const CARD = 'flex flex-col gap-2 rounded-2xl border border-line p-6 border-line';
 export const GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3';
+// D-02 locks the funnel to four cards in one row; the shared three-up GRID
+// would wrap the final `provisioned` step onto its own row. Every consumer
+// (the block and the page's Suspense fallback) must use the same constant so
+// the skeleton does not reflow into the grid on hydration.
+export const FUNNEL_GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4';
 
 export function MetricCard({
   label,

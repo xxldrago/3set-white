@@ -1,15 +1,16 @@
 // Admin analytics — block: payment funnel (ANL-08, D-02/D-05/D-06). Async
 // server component with its own try/catch (D-05: every block degrades alone).
 // Windowed by ?period; the meta reuses the shared «{n} дн. · МСК» key. Four
-// cards in GRID in the fixed funnel order — the first card is the funnel base
-// and has no rate, cards 2-4 carry conversion + drop-off from the PREVIOUS
-// step. Exact rationals arrive in the payload; the ×100 and the Intl
+// cards in FUNNEL_GRID (four-up at lg per D-02) in the fixed funnel order —
+// the first card is the funnel base and has no rate, cards 2-4 carry
+// conversion + drop-off from the PREVIOUS step. Exact rationals arrive in the
+// payload; the ×100 and the Intl
 // formatting happen here. A null rate (zero previous step, empty funnel)
 // renders «—» — never 0 %, while a real zero count renders truthfully.
 import { t } from '@/lib/i18n';
 import { loadFunnel, type FunnelData } from '@/lib/analytics/service';
 import type { FunnelStep } from '@/lib/analytics/funnel';
-import { MetricCard, CARD, GRID } from './MetricCard';
+import { MetricCard, CARD, FUNNEL_GRID } from './MetricCard';
 
 const countFmt = new Intl.NumberFormat('ru-RU');
 const pct = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
@@ -56,7 +57,7 @@ export default async function FunnelCards({ period }: { period: 7 | 30 | 90 }) {
   return (
     <div className="flex flex-col gap-2">
       {header}
-      <div className={GRID}>
+      <div className={FUNNEL_GRID}>
         {data.steps.map((step, index) => (
           <MetricCard
             key={step.step}

@@ -477,7 +477,7 @@ export const ru = {
     analyticsFunnelStepProvisioning: 'Выдача начата',
     analyticsFunnelStepProvisioned: 'Ключ выдан',
     analyticsFunnelBaseSub: 'все заказы периода',
-    analyticsFunnelConvSub: 'конверсия {conv} · отвал {drop}',
+    analyticsFunnelConvSub: 'конверсия {conv}% · отвал {drop}%',
     analyticsExpiredTitle: 'Просроченные платежи',
     analyticsExpiredMeta: 'сейчас · не зависит от периода',
     analyticsExpiredLabel: 'Ждут оплаты более {hours} ч',

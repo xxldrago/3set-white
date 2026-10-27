@@ -3,7 +3,7 @@ status: testing
 phase: 09-payment-funnel-failure-analysis
 source: [09-VERIFICATION.md]
 started: 2026-10-27T13:35:00Z
-updated: 2026-10-27T13:35:00Z
+updated: 2026-10-27T03:50:00Z
 ---
 
 ## Current Test
@@ -26,25 +26,24 @@ expected: |
   table scrolls horizontally inside a focusable region; a zero/empty sample shows «—», never «0 %».
 result: [pending]
 
-### 2. Funnel conversion copy without a % unit (MD-02)
+### 2. Funnel conversion copy carries a % unit (MD-02)
 expected: |
   Read the funnel card sub-lines on a window with a known sample (e.g. ?period=30). Cards 2-4 read
-  «конверсия … · отвал …» — decide whether the missing % unit is acceptable copy for an operator or
-  must be added to the dictionary literal.
-result: [pending]
+  «конверсия N% · отвал N%». Confirm the unit renders and nothing else on the card is cramped.
+result: passed — resolved in code (commit ce3402a: dictionary literal now carries `%`)
 
-### 3. Four funnel cards render as 3 + 1 at 1280 px (MD-03)
+### 3. Four funnel cards render 4-up at 1280 px (MD-03)
 expected: |
-  At 1280 px inspect the four funnel cards as a group. Confirm whether the 3 + 1 wrap of the fourth
-  card («Ключ выдан») is acceptable, or whether the funnel needs its own 4-up grid.
-result: [pending]
+  At 1280 px the four funnel cards sit in one row of four (not 3 + 1). Confirm it, and that the
+  loading skeleton does not reflow on hydration.
+result: passed — resolved in code (commit 361fb6a: `FUNNEL_GRID` lg:grid-cols-4 + matching skeleton)
 
 ## Summary
 
 total: 3
-passed: 0
+passed: 2
 issues: 0
-pending: 3
+pending: 1
 skipped: 0
 blocked: 0
 

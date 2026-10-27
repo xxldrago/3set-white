@@ -3,10 +3,14 @@
 // meta reuses the shared «{n} дн. · МСК» key. Rows arrive already grouped by
 // the RAW stored error code, count-desc with the null group preserved — the
 // grouping/sorting lives in the derivation core, this block only renders.
-// A null code renders the «unknown» label; a non-null code renders verbatim
-// (provider codes are never translated). «Доля» divides by the payload total
-// (failed + canceled). No hover/zebra/sort affordance — the table is read-only
-// and visually identical to the retention table recipe.
+// A null code renders the «не указан» sentinel label; a non-null code renders
+// verbatim (provider codes are never translated — including a literal
+// 'unknown', which is emitted by lib/worker.ts and is a DISTINCT group from
+// the null sentinel). Keys are prefixed and the null case gets its own opaque
+// token so the two groups can never collide or reconcile into one row.
+// «Доля» divides by the payload total (failed + canceled). No hover/zebra/sort
+// affordance — the table is read-only and visually identical to the retention
+// table recipe.
 import { t } from '@/lib/i18n';
 import { loadErrorBreakdown, type ErrorBreakdownData } from '@/lib/analytics/service';
 import { CARD } from './MetricCard';
@@ -72,7 +76,7 @@ export default async function ErrorTable({ period }: { period: 7 | 30 | 90 }) {
           </thead>
           <tbody className="divide-y divide-line">
             {data.rows.map((row) => (
-              <tr key={row.code ?? 'unknown'}>
+              <tr key={row.code === null ? 'code:__null__' : `code:${row.code}`}>
                 <th scope="row" className="px-4 py-3 font-normal text-muted">
                   {row.code === null ? t('admin.analyticsErrorUnknown') : row.code}
                 </th>

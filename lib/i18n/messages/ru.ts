@@ -487,7 +487,7 @@ export const ru = {
     analyticsErrorColCode: 'Код',
     analyticsErrorColCount: 'Заказы',
     analyticsErrorColPct: 'Доля',
-    analyticsErrorUnknown: 'unknown',
+    analyticsErrorUnknown: 'не указан',
     analyticsErrorEmpty: 'За период нет failed или canceled заказов',
     analyticsErrorCaption: 'Ошибки выдачи по кодам за период, МСК.',
     analyticsTimingTitle: 'Скорость оплаты и выдачи',

@@ -241,7 +241,7 @@ counts as unused and fails the suite).
 | Input — at-risk from | `admin.thresholdAtRiskDays` | Под риском, дней (от) |
 | Input — churned days | `admin.thresholdChurnedDays` | Ушедший/спящий, дней |
 | Input — VIP percent | `admin.thresholdVipPercent` | VIP, топ % |
-| Save CTA | `admin.segmentsSave` | Сохранить |
+| Save CTA | `admin.segmentsSave` | Сохранить пороги |
 | Saving | `admin.segmentsSaving` | Сохраняется… |
 | Saved | `admin.segmentsSaved` | Пороги сохранены. Пересчёт запущен. |
 | Save error | `admin.segmentsSaveError` | Не удалось сохранить пороги. Попробуйте ещё раз. |
@@ -278,7 +278,7 @@ counts as unused and fails the suite).
 
 | Element | Copy |
 |---------|------|
-| Primary CTA (segments page) | «Сохранить» (`admin.segmentsSave`) — verb + noun, 44px, `bg-foreground text-lime`. |
+| Primary CTA (segments page) | «Сохранить пороги» (`admin.segmentsSave`) — verb + noun, 44px, `bg-foreground text-lime`. |
 | Primary CTA (broadcast) | reused «Подготовить рассылку» (`admin.broadcastCta`). |
 | Empty state — segments page (no `user_rfm` rows yet) | `admin.segmentsEmpty` in a bordered panel; page title + meta survive; no cards with fake zeros. |
 | Empty state — single segment with 0 members | Card still renders with count `0` and its rule; no "empty" banner per card (a zero is a real value). |

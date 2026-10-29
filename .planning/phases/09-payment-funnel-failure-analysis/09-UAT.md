@@ -1,21 +1,14 @@
 ---
-status: testing
+status: complete
 phase: 09-payment-funnel-failure-analysis
 source: [09-VERIFICATION.md]
 started: 2026-10-27T13:35:00Z
-updated: 2026-10-27T03:50:00Z
+updated: 2026-10-29T00:00:00Z
 ---
 
 ## Current Test
 
-number: 1
-name: Responsive layout of the three new analytics sections
-expected: |
-  «Воронка платежей» (4 funnel cards + expired card), «Ошибки выдачи» (code table or bordered
-  empty panel) and «Скорость оплаты и выдачи» (2 + 2 timing cards) all render below the retention
-  section; the funnel collapses to one column on mobile and the error table scrolls horizontally
-  inside a focusable region; a zero/empty sample shows «—», never «0 %».
-awaiting: user response
+[testing complete]
 
 ## Tests
 
@@ -24,7 +17,8 @@ expected: |
   Open /admin/analytics as administrator at 360, 768 and 1280 px and scroll below the retention
   section. All three new sections render; the funnel collapses to one column on mobile; the error
   table scrolls horizontally inside a focusable region; a zero/empty sample shows «—», never «0 %».
-result: [pending]
+result: pass
+note: "user advanced without reporting a defect («продолжай»)" 
 
 ### 2. Funnel conversion copy carries a % unit (MD-02)
 expected: |
@@ -41,9 +35,9 @@ result: passed — resolved in code (commit 361fb6a: `FUNNEL_GRID` lg:grid-cols-
 ## Summary
 
 total: 3
-passed: 2
+passed: 3
 issues: 0
-pending: 1
+pending: 0
 skipped: 0
 blocked: 0
 

@@ -260,6 +260,8 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 .f-grid a:hover{color:var(--lime)}
 .f-about p{font-size:13px;color:#7c8a7e;margin-top:14px;max-width:260px}
 .f-bot{border-top:1px solid #1d2822;padding-top:24px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:#5d6b62}
+        .f-bot a{transition:color .2s}
+        .f-bot a:hover{color:var(--lime)}
 
 
 #chatBtn{position:fixed;right:22px;bottom:22px;z-index:80;width:58px;height:58px;border-radius:50%;background:var(--ink);color:var(--lime);display:flex;align-items:center;justify-content:center;box-shadow:0 16px 40px -10px rgba(14,21,18,.5);transition:transform .3s}
@@ -512,7 +514,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 <div class="cause-ic">🖥</div>
 <span class="plat">СЕРВЕР · ПРОВАЙДЕР</span>
 <h4>Сервер перегружен или заблокирован</h4>
-<p>Если VPN отключается у всех пользователей одновременно — дело в сервере. Он либо перегружен, либо попал под блокировку провайдера. Решение — переключиться на другой сервер той же локации.</p>
+<p>Если VPN отключается у всех пользователей одновременно — дело в сервере. Он либо перегружен, либо стал нестабильным. Решение — переключиться на другой сервер той же локации.</p>
 <div class="fix"><b>РЕШЕНИЕ:</b>В клиенте: «Обновить подписку» → подтянутся актуальные серверы. Выбрать другой сервер из той же страны. В 3set серверы ротируются автоматически.</div>
 </div>
 </div>
@@ -604,9 +606,9 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 <div class="info-box warn rv in">
 <span class="ib-tag">⚠ ЕСЛИ НИЧЕГО НЕ ПОМОГЛО</span>
 <h4>Попробуйте другой протокол</h4>
-<p>Если проблема повторяется на одном протоколе — переключитесь на другой. VLESS Reality, WireGuard и Shadowsocks используют разные транспорты (TCP/UDP, TLS/чистый UDP). Если один «режется» вашим провайдером — другой пройдёт стабильно.</p>
+<p>Если проблема повторяется на одном протоколе — переключитесь на другой. VLESS Reality, WireGuard и Shadowsocks используют разные транспорты (TCP/UDP, TLS/чистый UDP). Если один протокол работает нестабильно — другой может оказаться устойчивее.</p>
 <ul>
-<li>VLESS Reality — для России и стран с DPI</li>
+<li>VLESS Reality — для России и нестабильных сетей</li>
 <li>WireGuard — для игр и стриминга (максимальная скорость)</li>
 <li>Shadowsocks 2022 — для мобильных сетей и слабых устройств</li>
 </ul>
@@ -621,7 +623,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 
 <ul>
 <li><b>Отключается у всех пользователей одновременно.</b> Проверьте статус серверов в Telegram-канале сервиса или на сайте статуса. Если там «авария» — ждите или переключайтесь на другой сервер.</li>
-<li><b>Серверы не обновляются месяцами.</b> Если провайдер не добавляет новые серверы и не ротирует старые — они быстро попадают под блокировки.</li>
+<li><b>Серверы не обновляются месяцами.</b> Если провайдер не добавляет новые серверы и не ротирует старые — они быстро становятся менее стабильными.</li>
 <li><b>Нет поддержки современных протоколов.</b> Если сервис предлагает только OpenVPN — в 2026 году это устаревший выбор. Нужны VLESS Reality, WireGuard, Shadowsocks 2022.</li>
 <li><b>Поддержка отвечает шаблонами.</b> Если на ваш вопрос про обрывы отвечают «попробуйте переустановить» — это не поддержка, а отписка.</li>
 </ul>
@@ -638,7 +640,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 </div>
 <div class="rec-feat">
 <div class="rf-ic">02</div>
-<div><b>Авто-ротация серверов</b><span>Если сервер попадает под блокировку — клиент автоматически переключается на другой. Без вашего участия.</span></div>
+<div><b>Авто-ротация серверов</b><span>Если сервер становится нестабильным — клиент автоматически переключается на другой. Без вашего участия.</span></div>
 </div>
 <div class="rec-feat">
 <div class="rf-ic">03</div>
@@ -646,7 +648,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 </div>
 <div class="rec-feat">
 <div class="rf-ic">04</div>
-<div><b>Живая поддержка · 5 мин</b><span>Не бот, не FAQ — живой оператор в Telegram @3set_online_bot. Ответим, поможем, настроим под ваше устройство.</span></div>
+<div><b>Живая поддержка · 5 мин</b><span>Не бот, не FAQ — живой оператор в Telegram @threeSet_bot. Ответим, поможем, настроим под ваше устройство.</span></div>
 </div>
 <div class="rec-feat">
 <div class="rf-ic">05</div>
@@ -659,7 +661,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 </div>
 <div class="rec-actions">
 <a class="btn btn-lime" href="https://dash.3set.online" target="_blank" rel="noopener">Попробовать 3set.online →</a>
-<a class="btn btn-ghost" href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-бот @3set_online_bot</a>
+<a class="btn btn-ghost" href="https://t.me/threeSet_bot" target="_blank" rel="noopener">Telegram-бот @threeSet_bot</a>
 </div>
 </div>
 
@@ -690,9 +692,9 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 <div class="acc-item rv in"><button class="acc-q">Антивирус блокирует VPN. Как разрешить?<span class="ic">+</span></button><div class="acc-a"><p>Добавьте папку клиента в исключения антивируса (Касперский, ESET, Avast, Dr.Web). Разрешите создание виртуального сетевого адаптера (Wintun / tun2socks). Если проблема осталась — временно отключите антивирус для диагностики. В 90% случаев после добавления в исключения всё работает стабильно.</p></div></div>
 <div class="acc-item rv in"><button class="acc-q">На macOS VPN отключается после обновления системы. Что делать?<span class="ic">+</span></button><div class="acc-a"><p>После обновления macOS системное расширение клиента может «слететь». Зайдите в Системные настройки → Конфиденциальность и безопасность → разрешите расширение клиента. В самом клиенте нажмите «Reinstall System Extension». Перезагрузите Mac. После этого VPN будет работать стабильно.</p></div></div>
 <div class="acc-item rv in"><button class="acc-q">VPN отключается у всех пользователей одновременно. Это проблема сервиса?<span class="ic">+</span></button><div class="acc-a"><p>Да, скорее всего. Проверьте статус серверов в Telegram-канале сервиса или на сайте статуса. Если там «авария» — ждите, пока провайдер починит. Если статуса нет или он всегда «зелёный» — это плохой знак: провайдер не мониторит ситуацию. В 3set мы публикуем статус в реальном времени и автоматически ротируем серверы при проблемах.</p></div></div>
-<div class="acc-item rv in"><button class="acc-q">Какой протокол выбрать, если VPN постоянно обрывается?<span class="ic">+</span></button><div class="acc-a"><p>Переключитесь на другой протокол. VLESS Reality, WireGuard и Shadowsocks используют разные транспорты (TCP/UDP, TLS/чистый UDP). Если один «режется» вашим провайдером — другой пройдёт стабильно. Для России рекомендуем VLESS Reality, для игр — WireGuard, для мобильных сетей — Shadowsocks 2022.</p></div></div>
+<div class="acc-item rv in"><button class="acc-q">Какой протокол выбрать, если VPN постоянно обрывается?<span class="ic">+</span></button><div class="acc-a"><p>Переключитесь на другой протокол. VLESS Reality, WireGuard и Shadowsocks используют разные транспорты (TCP/UDP, TLS/чистый UDP). Если один протокол работает нестабильно — другой может оказаться устойчивее. Для России рекомендуем VLESS Reality, для игр — WireGuard, для мобильных сетей — Shadowsocks 2022.</p></div></div>
 <div class="acc-item rv in"><button class="acc-q">На роутере OpenWrt VPN отключается через несколько часов. Почему?<span class="ic">+</span></button><div class="acc-a"><p>Скорее всего, перегрузка CPU или устаревшие геобазы. Проверьте загрузку через <code>top</code> — если CPU &gt; 80%, роутер не справляется. Обновите геобазы (в HomeProxy: «Auto-update geodata»). Если роутер слабый — упростите правила PBR или перейдите на более лёгкий клиент (Shadowsocks вместо VLESS).</p></div></div>
-<div class="acc-item rv in"><button class="acc-q">Ничего не помогло. Что делать?<span class="ic">+</span></button><div class="acc-a"><p>Напишите в поддержку — разберёмся вместе. Telegram-бот @3set_online_bot или чат на сайте (кнопка в правом нижнем углу). Опишите устройство, клиент, протокол и что именно не работает. В 95% случаев проблему удаётся решить за один диалог.</p></div></div>
+<div class="acc-item rv in"><button class="acc-q">Ничего не помогло. Что делать?<span class="ic">+</span></button><div class="acc-a"><p>Напишите в поддержку — разберёмся вместе. Telegram-бот @threeSet_bot или чат на сайте (кнопка в правом нижнем углу). Опишите устройство, клиент, протокол и что именно не работает. В 95% случаев проблему удаётся решить за один диалог.</p></div></div>
 </div>
 </div>
 </section>
@@ -720,7 +722,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 <a class="post rv d2 in" href="/vless-reality/">
 <div class="thumb"><img src="/assets/img/card-vless-reality.webp" alt="VLESS Reality" loading="lazy" width="600" height="400"></div>
 <div class="body"><div class="meta"><span>ТЕХНОЛОГИЯ</span><span>6 МИН</span></div>
-<h3>VLESS Reality: как работает невидимый для DPI протокол</h3>
+<h3>VLESS Reality: как работает современный защищённый протокол</h3>
 <span class="read">ЧИТАТЬ →</span></div>
 </a>
 </div>
@@ -736,7 +738,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 <p>Все три протокола, авто-ротация серверов, seamless handover, живая поддержка 24/7. Если VPN отключается — напишите в поддержку, разберёмся за 5 минут.</p>
 <div class="cta-actions">
 <a class="btn btn-lime" href="https://dash.3set.online" target="_blank" rel="noopener">Купить подписку →</a>
-<a class="btn btn-ghost" href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-бот @3set_online_bot</a>
+<a class="btn btn-ghost" href="https://t.me/threeSet_bot" target="_blank" rel="noopener">Telegram-бот @threeSet_bot</a>
 </div>
 <div class="cta-guar"><span>✓ 7 ДНЕЙ ГАРАНТИЯ</span><span>✓ БЕЗ ЛОГОВ</span><span>✓ МИР / СБП / CRYPTO</span><span>✓ ПОДДЕРЖКА 24/7</span></div>
 </div>
@@ -750,14 +752,14 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 <div class="f-grid">
 <div class="f-about">
 <a class="logo" href="/" style="color:#fff"><svg viewBox="0 0 32 32" fill="none" width="28" height="28"><path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" stroke="#b7ff45" stroke-width="2.2"></path><path d="M11 16l3.5 3.5L21 13" stroke="#b7ff45" stroke-width="2.4" stroke-linecap="round"></path></svg><span>3<em style="color:var(--lime)">set</em><span class="tld" style="color:#5d6b62">.online</span></span></a>
-<p>Виртуальная частная сеть нового поколения. Приватный и стабильный доступ в обход блокировок. Используйте VPN только в законных целях.</p>
+<p>Виртуальная частная сеть нового поколения. Приватный и стабильный доступ. Используйте VPN только в законных целях.</p>
 </div>
-<div><h4>Продукт</h4><a href="/#pricing">Тарифы и цены</a><a href="/#status">Статус серверов</a><a href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-бот</a><a href="https://dash.3set.online" target="_blank" rel="noopener">Купить доступ</a></div>
+<div><h4>Продукт</h4><a href="/#pricing">Тарифы и цены</a><a href="/#status">Статус серверов</a><a href="https://t.me/threeSet_bot" target="_blank" rel="noopener">Telegram-бот</a><a href="https://dash.3set.online" target="_blank" rel="noopener">Купить доступ</a></div>
 <div><h4>Устройства</h4><a href="/ios/">VPN для iOS</a><a href="/android/">VPN для Android</a><a href="/windows/">VPN для Windows</a><a href="/mac/">VPN для macOS</a><a href="/router/">VPN на роутер</a><a href="/smart-tv/">VPN для Smart TV</a></div>
 <div><h4>Технологии</h4><a href="/vless-reality/">VLESS Reality</a><a href="/shadowsocks/">Shadowsocks</a><a href="/wireguard/">WireGuard</a><a href="/#blog">База знаний</a></div>
-<div><h4>Поддержка</h4><a href="/setup/">Инструкции /setup</a><a href="/#faq">FAQ</a><a href="mailto:support@3set.online">support@3set.online</a><a href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-чат</a></div>
+<div><h4>Поддержка</h4><a href="/setup/">Инструкции /setup</a><a href="/#faq">FAQ</a><a href="mailto:support@3set.online">support@3set.online</a><a href="https://t.me/threeSet_bot" target="_blank" rel="noopener">Telegram-чат</a></div>
 </div>
-<div class="f-bot"><span>© <span id="yearNow">2026</span> 3set.online · Блог · Почему VPN отключается</span><span>Политика конфиденциальности · Оферта</span></div>
+<div class="f-bot"><span>© <span id="yearNow">2026</span> 3set.online · Блог · Почему VPN отключается</span><span><a href="/privacy">Политика конфиденциальности</a> · <a href="/terms">Пользовательское соглашение</a></span></div>
 </div>
 </footer>
 
@@ -879,7 +881,7 @@ if(/протокол|vless|wireguard|shadowsocks|переключ/.test(t)) r = 
 if(/сервер|авария|статус|массово|у всех/.test(t)) r = 'Если VPN отключается у всех одновременно — дело в сервере. Проверьте статус в Telegram-канале сервиса. В 3set мы публикуем статус в реальном времени и автоматически ротируем серверы при проблемах.';
 if(/куп|подписк|оплат|тариф|цен|сколько стоит|стоит|3set/.test(t)) r = 'Попробуйте 3set.online: все три протокола, авто-ротация серверов, seamless handover, живая поддержка 24/7. 7 дней гарантии возврата. Оплата картой МИР, СБП или криптой. Ключ за 1 минуту ⚡';
 if(/привет|здравств|добр/.test(t)) r = 'Привет! 👋 Прочитали статью про отключение VPN? Могу помочь с конкретной проблемой — опишите устройство и что именно происходит.';
-if(!r) r = 'Хороший вопрос! Быстрее всего ответит оператор в Telegram: @3set_online_bot. Или уточните: устройство, клиент, протокол, когда отключается?';
+if(!r) r = 'Хороший вопрос! Быстрее всего ответит оператор в Telegram: @threeSet_bot. Или уточните: устройство, клиент, протокол, когда отключается?';
 var ty = addMsg('', 'bot typing');
 ty.innerHTML = '<i></i><i></i><i></i>';
 setTimeout(function(){
@@ -915,5 +917,6 @@ addMsg(c.dataset.q, 'usr'); botReply(c.dataset.q);
 
 
 <script src="/assets/support-intake.js" defer></script>
+
 </body>
 </html>

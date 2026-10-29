@@ -282,6 +282,8 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 .f-grid a:hover{color:var(--lime)}
 .f-about p{font-size:13px;color:#7c8a7e;margin-top:14px;max-width:260px}
 .f-bot{border-top:1px solid #1d2822;padding-top:24px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:#5d6b62}
+        .f-bot a{transition:color .2s}
+        .f-bot a:hover{color:var(--lime)}
 
 
 #chatBtn{position:fixed;right:22px;bottom:22px;z-index:80;width:58px;height:58px;border-radius:50%;background:var(--ink);color:var(--lime);display:flex;align-items:center;justify-content:center;box-shadow:0 16px 40px -10px rgba(14,21,18,.5);transition:transform .3s}
@@ -420,7 +422,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
                 <span class="l2" data-scr="" data-orig="WireGuard">WireGuard</span>
                 <span class="l3">Самый быстрый современный VPN-протокол. Встроен в ядро Linux с версии 5.6, работает нативно в iOS и Android. Минимальный пинг, максимальная пропускная способность, криптография уровня NSA-grade — и всё это в ~4000 строках кода.</span>
             </h1>
-            <p class="hero-p">Если ваша сеть <b>не находится под агрессивным DPI</b> — WireGuard даст вам максимум скорости и минимум задержки. Идеален для онлайн-игр, 4K-стриминга и торрентов. В 3set доступен на всех 34 серверах.</p>
+            <p class="hero-p">WireGuard даст вам максимум скорости и минимум задержки. Идеален для онлайн-игр, 4K-стриминга и торрентов. В 3set доступен на всех 34 серверах.</p>
             <div class="hero-actions">
                 <a class="btn btn-solid" href="https://dash.3set.online" target="_blank" rel="noopener">Попробовать WireGuard →</a>
                 <a class="btn btn-ghost" href="#how">Как это работает</a>
@@ -562,7 +564,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
     <div class="wrap">
         <div class="rv in"><span class="kicker">03 · как работает</span>
         <h2 data-scr="" data-orig="Путь пакета через WireGuard" class="in">Путь пакета через WireGuard</h2>
-        <p class="sub">От клика в игре до ответа сервера — четыре шага, каждый из которых происходит на уровне ядра. DPI-фильтр видит только UDP-пакеты с зашифрованной полезной нагрузкой.</p>
+        <p class="sub">От клика в игре до ответа сервера — четыре шага, каждый из которых происходит на уровне ядра. Внешний наблюдатель видит только UDP-пакеты с зашифрованной полезной нагрузкой.</p>
     </div>
 
 
@@ -582,8 +584,8 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
             <div class="tl cmd">$ iperf3 -c nl.3set.online -t 10</div>
             <div class="tl ok">→ [SUM] 0-10 sec  1.18 GBytes   987 Mbits/sec</div>
             <div class="tl ok">→ cpu overhead: 0.3% · kernel path · zero-copy</div>
-            <div class="tl dim">[DPI observer] sees: UDP packets, encrypted payload</div>
-            <div class="tl warn">→ DPI verdict: «UDP flow · unknown protocol» · PASS</div>
+            <div class="tl dim">[observer] sees: UDP packets, encrypted payload</div>
+            <div class="tl warn">→ observer: «UDP flow» · encrypted</div>
             <div class="tl cmd">$ <span class="caret"></span></div>
         </div>
         <div class="console-foot">
@@ -623,7 +625,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
             <span class="val">низкий</span>
         </div>
         <div class="cmp-row">
-            <span class="param">Скрытность от DPI</span>
+            <span class="param">Защита соединения</span>
             <span class="val dim"><b>62%</b><span class="bar-mini"><i style="width:62%"></i></span></span>
             <span class="val hl"><b>98%</b><span class="bar-mini"><i style="width:98%"></i></span></span>
             <span class="val"><b>88%</b><span class="bar-mini"><i style="width:88%"></i></span></span>
@@ -661,7 +663,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
         <div class="cmp-row">
             <span class="param">Лучше всего для</span>
             <span class="val hl">Игры · стриминг · торренты</span>
-            <span class="val hl">Россия · агрессивный DPI</span>
+            <span class="val hl">Россия · мобильные сети</span>
             <span class="val hl">Мобильные сети · 4G/5G</span>
         </div>
     </div>
@@ -722,8 +724,8 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2L4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4z"/></svg>
             </div>
             <div>
-                <h3>Россия, Иран, Китай (агрессивный DPI)</h3>
-                <p>WireGuard легко детектируется по характерному UDP-handshake. В сетях с активным DPI его могут временно блокировать. Для РФ и подобных — используйте VLESS Reality как основной протокол.</p>
+                <h3>Мобильные и нестабильные сети</h3>
+                <p>WireGuard использует характерный UDP-handshake, поэтому в некоторых сетях его стабильность ниже. Для повышенной стабильности используйте VLESS Reality как основной протокол.</p>
                 <span class="verdict bad">✗ ЛУЧШЕ VLESS REALITY</span>
             </div>
         </div>
@@ -733,7 +735,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
             </div>
             <div>
                 <h3>Максимальная анонимность</h3>
-                <p>WireGuard не маскирует трафик под легитимный HTTPS-сайт. Для DPI он выглядит как «какой-то UDP-протокол». Если нужна максимальная скрытность — VLESS Reality с маскировкой под реальный TLS-сайт.</p>
+                <p>WireGuard использует собственный UDP-транспорт. Если нужна максимальная защита соединения — VLESS Reality на основе TLS 1.3.</p>
                 <span class="verdict mid">~ ЛУЧШЕ VLESS REALITY</span>
             </div>
         </div>
@@ -762,10 +764,10 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
         </div>
         <div class="alert warn rv d1 in">
             <span class="tag">⚠ СЛАБАЯ СТОРОНА</span>
-            <h3>Легко детектируется DPI</h3>
-            <p>WireGuard-пакеты имеют характерный формат handshake, по которому DPI легко определяет протокол. В России, Иране, Китае WireGuard могут временно блокировать. Для этих регионов используйте VLESS Reality.</p>
+            <h3>Особенности UDP-транспорта</h3>
+            <p>WireGuard-пакеты имеют характерный формат handshake. В некоторых сетях это снижает стабильность — для повышенной устойчивости используйте VLESS Reality.</p>
             <ul>
-                <li>UDP-handshake виден DPI-фильтрам</li>
+                <li>UDP-handshake имеет характерный формат</li>
                 <li>Нет маскировки под легитимный трафик</li>
                 <li>В РФ — только как резервный протокол</li>
             </ul>
@@ -839,8 +841,8 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
         <div class="faq-wrap">
             <div class="acc-item rv in"><button class="acc-q">WireGuard — это VPN или прокси?<span class="ic">+</span></button><div class="acc-a"><p>WireGuard — это полноценный VPN-протокол. Он создаёт виртуальный сетевой интерфейс (wg0) на уровне ядра ОС и пропускает через себя весь трафик системы. В отличие от Shadowsocks (прокси), WireGuard работает как классический VPN: весь трафик идёт через зашифрованный туннель.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">Почему WireGuard быстрее OpenVPN?<span class="ic">+</span></button><div class="acc-a"><p>OpenVPN работает в user-space и использует TLS-стек с множеством слоёв. WireGuard — в ядре ОС, использует UDP и минималистичный крипто-стек (ChaCha20 + Curve25519). Результат: WireGuard выдаёт 980+ Мбит/с на гигабитном канале, OpenVPN — 200–400 Мбит/с. Разница в 2–5 раз.</p></div></div>
-            <div class="acc-item rv in"><button class="acc-q">WireGuard работает в России?<span class="ic">+</span></button><div class="acc-a"><p>Иногда — да, иногда — нет. WireGuard легко детектируется DPI по характерному UDP-handshake. В некоторых сетях (домашний Wi-Fi, офисы) он работает стабильно. В сетях с агрессивным DPI (мобильные операторы, публичные Wi-Fi) его могут блокировать. Для максимальной стабильности в РФ используйте VLESS Reality.</p></div></div>
-            <div class="acc-item rv in"><button class="acc-q">В чём разница между WireGuard и VLESS Reality?<span class="ic">+</span></button><div class="acc-a"><p>WireGuard — самый быстрый протокол, но легко детектируется DPI. VLESS Reality медленнее на 5–10%, но маскирует трафик под валидный HTTPS-сайт — DPI почти не может его отличить от обычного трафика. В 3set оба протокола доступны на всех серверах, переключение — в один тап.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">WireGuard работает в России?<span class="ic">+</span></button><div class="acc-a"><p>WireGuard использует характерный UDP-handshake. В большинстве сетей он работает стабильно и быстро. Для максимальной стабильности в РФ используйте VLESS Reality.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">В чём разница между WireGuard и VLESS Reality?<span class="ic">+</span></button><div class="acc-a"><p>WireGuard — самый быстрый протокол. VLESS Reality медленнее на 5–10%, но обеспечивает повышенную защиту соединения на основе TLS 1.3. В 3set оба протокола доступны на всех серверах, переключение — в один тап.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">WireGuard безопасен?<span class="ic">+</span></button><div class="acc-a"><p>Да. WireGuard использует только современные криптографические примитивы: ChaCha20-Poly1305 (шифрование), Curve25519 (обмен ключами), BLAKE2s (хеширование), Noise IK (рукопожатие). Код прошёл независимый аудит и формальную верификацию. Криптография уровня NSA-grade.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">Можно ли использовать WireGuard для торрентов?<span class="ic">+</span></button><div class="acc-a"><p>Да, WireGuard — один из лучших протоколов для P2P-трафика. Максимальная скорость, поддержка UDP, минимальная нагрузка на CPU. На гигабитном канале торренты раскрываются полностью — никаких «режущихся» скоростей, как у OpenVPN.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">Почему WireGuard UDP-only? Будут ли проблемы с TCP-трафиком?<span class="ic">+</span></button><div class="acc-a"><p>WireGuard работает поверх UDP — это даёт минимальную задержку (нет TCP-handshake, нет retransmission overhead). TCP-трафик (браузер, видеозвонки) инкапсулируется внутрь UDP-пакетов WireGuard — для приложений это прозрачно. Проблем с TCP-трафиком не будет.</p></div></div>
@@ -872,14 +874,14 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
         <div class="f-grid">
             <div class="f-about">
                 <a class="logo" href="/" style="color:#fff"><svg viewBox="0 0 32 32" fill="none" width="28" height="28"><path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" stroke="#b7ff45" stroke-width="2.2"></path><path d="M11 16l3.5 3.5L21 13" stroke="#b7ff45" stroke-width="2.4" stroke-linecap="round"></path></svg><span>3<em style="color:var(--lime)">set</em><span class="tld" style="color:#5d6b62">.online</span></span></a>
-                <p>Виртуальная частная сеть нового поколения. Приватный и стабильный доступ в обход блокировок. Используйте VPN только в законных целях.</p>
+                <p>Виртуальная частная сеть нового поколения. Приватный и стабильный доступ. Используйте VPN только в законных целях.</p>
             </div>
-            <div><h4>Продукт</h4><a href="/#pricing">Тарифы и цены</a><a href="/#status">Статус серверов</a><a href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-бот</a><a href="https://dash.3set.online" target="_blank" rel="noopener">Купить доступ</a></div>
+            <div><h4>Продукт</h4><a href="/#pricing">Тарифы и цены</a><a href="/#status">Статус серверов</a><a href="https://t.me/threeSet_bot" target="_blank" rel="noopener">Telegram-бот</a><a href="https://dash.3set.online" target="_blank" rel="noopener">Купить доступ</a></div>
             <div><h4>Устройства</h4><a href="/ios/">VPN для iOS</a><a href="/android/">VPN для Android</a><a href="/windows/">VPN для Windows</a><a href="/mac/">VPN для macOS</a><a href="/router/">VPN на роутер</a><a href="/smart-tv/">VPN для Smart TV</a></div>
             <div><h4>Технологии</h4><a href="/vless-reality/">VLESS Reality</a><a href="/shadowsocks/">Shadowsocks</a><a href="/wireguard/">WireGuard</a><a href="/#blog">База знаний</a></div>
-            <div><h4>Поддержка</h4><a href="/setup/">Инструкции /setup</a><a href="/#faq">FAQ</a><a href="mailto:support@3set.online">support@3set.online</a><a href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-чат</a></div>
+            <div><h4>Поддержка</h4><a href="/setup/">Инструкции /setup</a><a href="/#faq">FAQ</a><a href="mailto:support@3set.online">support@3set.online</a><a href="https://t.me/threeSet_bot" target="_blank" rel="noopener">Telegram-чат</a></div>
         </div>
-        <div class="f-bot"><span>© <span id="yearNow">2026</span> 3set.online · WireGuard Technology Overview</span><span>Политика конфиденциальности · Оферта</span></div>
+        <div class="f-bot"><span>© <span id="yearNow">2026</span> 3set.online · WireGuard Technology Overview</span><span><a href="/privacy">Политика конфиденциальности</a> · <a href="/terms">Пользовательское соглашение</a></span></div>
     </div>
 </footer>
 
@@ -990,14 +992,14 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
     function botReply(q){
         var t = q.toLowerCase(), r;
         if(/wireguard|wg|скорость|пинг|игра|стрим|торрент/.test(t)) r = 'WireGuard — самый быстрый VPN-протокол. 980+ Мбит/с на гигабитном канале, пинг 18–25 мс до Европы. Идеален для игр, 4K-стриминга и торрентов. В 3set доступен на всех 34 серверах ✅';
-        if(/vless|reality|выбор|что лучше|какой протокол/.test(t)) r = 'Для России — VLESS Reality (маскирует под HTTPS, DPI почти не видит). Для игр и стриминга — WireGuard (максимальная скорость). Для мобильных сетей — Shadowsocks. В 3set все три доступны, переключение в один тап.';
-        if(/работ|блок|росси|dpi/.test(t)) r = 'WireGuard в РФ работает нестабильно — его легко детектирует DPI по характерному UDP-handshake. Для максимальной стабильности в России используйте VLESS Reality как основной протокол. WireGuard — как резервный.';
+        if(/vless|reality|выбор|что лучше|какой протокол/.test(t)) r = 'Для России — VLESS Reality (защищённое соединение на TLS 1.3). Для игр и стриминга — WireGuard (максимальная скорость). Для мобильных сетей — Shadowsocks. В 3set все три доступны, переключение в один тап.';
+        if(/работ|блок|росси|dpi/.test(t)) r = 'Для максимальной стабильности в России используйте VLESS Reality как основной протокол. WireGuard — как резервный, он даёт максимальную скорость.';
         if(/безопас|крипт|шифр|chacha|curve/.test(t)) r = 'WireGuard использует только современные примитивы: ChaCha20-Poly1305 (шифрование), Curve25519 (обмен ключами), BLAKE2s (хеширование), Noise IK (рукопожатие). Код прошёл независимый аудит. Криптография уровня NSA-grade.';
         if(/быстрее|openvpn|почему быстрее/.test(t)) r = 'WireGuard работает в ядре ОС (kernel-mode), OpenVPN — в user-space. WireGuard использует UDP и минималистичный крипто-стек, OpenVPN — TLS с множеством слоёв. Результат: WireGuard в 2–5 раз быстрее OpenVPN.';
         if(/udp|tcp/.test(t)) r = 'WireGuard работает поверх UDP — это даёт минимальную задержку. TCP-трафик (браузер, видеозвонки) инкапсулируется внутрь UDP-пакетов WireGuard — для приложений это прозрачно. Проблем с TCP-трафиком не будет.';
-        if(/куп|подписк|оплат|тариф|цен/.test(t)) r = 'Купить подписку можно на dash.3set.online или в Telegram-боте @3set_online_bot. Оплата картой МИР, СБП или криптой. Ключ приходит за 1 минуту ⚡';
+        if(/куп|подписк|оплат|тариф|цен/.test(t)) r = 'Купить подписку можно на dash.3set.online или в Telegram-боте @threeSet_bot. Оплата картой МИР, СБП или криптой. Ключ приходит за 1 минуту ⚡';
         if(/привет|здравств|добр/.test(t)) r = 'Привет! 👋 Подсказать по WireGuard, выбору протокола или подписке?';
-        if(!r) r = 'Хороший вопрос! Быстрее всего ответит оператор в Telegram: @3set_online_bot. Или уточните: WireGuard, VLESS, скорость, выбор протокола?';
+        if(!r) r = 'Хороший вопрос! Быстрее всего ответит оператор в Telegram: @threeSet_bot. Или уточните: WireGuard, VLESS, скорость, выбор протокола?';
         var ty = addMsg('', 'bot typing');
         ty.innerHTML = '<i></i><i></i><i></i>';
         setTimeout(function(){
@@ -1033,5 +1035,6 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 
 
 <script src="/assets/support-intake.js" defer></script>
+
 </body>
 </html>

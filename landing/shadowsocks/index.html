@@ -2,9 +2,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shadowsocks — Протокол обхода блокировок (3set.online)</title>
+<title>Shadowsocks — Лёгкий зашифрованный протокол (3set.online)</title>
 <meta name="description" content="Shadowsocks и Shadowsocks 2022: принцип работы, версии протокола, алгоритмы шифрования AES-256-GCM и ChaCha20. Когда выбирать Shadowsocks вместо VLESS Reality.">
-<meta property="og:title" content="Shadowsocks — Протокол обхода блокировок · 3set.online">
+<meta property="og:title" content="Shadowsocks — Лёгкий зашифрованный протокол · 3set.online">
 <meta property="og:description" content="Всё о Shadowsocks: SS, SS-AEAD, Shadowsocks 2022. Алгоритмы шифрования, сравнение с VLESS Reality и WireGuard, настройка на всех устройствах.">
 <meta property="og:type" content="article">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e1512'/%3E%3Cpath d='M16 5l9 4v7c0 6-4 9.5-9 11-5-1.5-9-5-9-11V9l9-4z' fill='none' stroke='%23b7ff45' stroke-width='2.4'/%3E%3Cpath d='M11.5 16l3 3 6-6' fill='none' stroke='%23b7ff45' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
@@ -297,6 +297,8 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 .f-grid a:hover{color:var(--lime)}
 .f-about p{font-size:13px;color:#7c8a7e;margin-top:14px;max-width:260px}
 .f-bot{border-top:1px solid #1d2822;padding-top:24px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:#5d6b62}
+        .f-bot a{transition:color .2s}
+        .f-bot a:hover{color:var(--lime)}
 
 
 #chatBtn{position:fixed;right:22px;bottom:22px;z-index:80;width:58px;height:58px;border-radius:50%;background:var(--ink);color:var(--lime);display:flex;align-items:center;justify-content:center;box-shadow:0 16px 40px -10px rgba(14,21,18,.5);transition:transform .3s}
@@ -377,9 +379,9 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 <!-- ═══════════ LIVE TICKER ═══════════ -->
 <div class="topline" aria-hidden="true">
     <div class="tick-wrap"><div class="tick-track" id="tickTrack">
-        <span><i class="dotg">●</i> ТЕХНОЛОГИЯ · SHADOWSOCKS &nbsp;·&nbsp; <b>SS · SS-AEAD · SHADOWSOCKS 2022</b> &nbsp;·&nbsp; AES-256-GCM · CHACHA20-IETF-POLY1305 &nbsp;·&nbsp; <b>ОБХОД DPI</b> · МОБИЛЬНЫЕ СЕТИ &nbsp;·&nbsp; AEAD ШИФРОВАНИЕ &nbsp;·&nbsp; ПОДДЕРЖКА НА ВСЕХ ПЛАТФОРМАХ &nbsp;·&nbsp;</span>
-        <span><i class="dotg">●</i> ТЕХНОЛОГИЯ · SHADOWSOCKS &nbsp;·&nbsp; <b>SS · SS-AEAD · SHADOWSOCKS 2022</b> &nbsp;·&nbsp; AES-256-GCM · CHACHA20-IETF-POLY1305 &nbsp;·&nbsp; <b>ОБХОД DPI</b> · МОБИЛЬНЫЕ СЕТИ &nbsp;·&nbsp; AEAD ШИФРОВАНИЕ &nbsp;·&nbsp; ПОДДЕРЖКА НА ВСЕХ ПЛАТФОРМАХ &nbsp;·&nbsp;</span>
-        <span><i class="dotg">●</i> ТЕХНОЛОГИЯ · SHADOWSOCKS &nbsp;·&nbsp; <b>SS · SS-AEAD · SHADOWSOCKS 2022</b> &nbsp;·&nbsp; AES-256-GCM · CHACHA20-IETF-POLY1305 &nbsp;·&nbsp; <b>ОБХОД DPI</b> · МОБИЛЬНЫЕ СЕТИ &nbsp;·&nbsp; AEAD ШИФРОВАНИЕ &nbsp;·&nbsp; ПОДДЕРЖКА НА ВСЕХ ПЛАТФОРМАХ &nbsp;·&nbsp;</span>
+        <span><i class="dotg">●</i> ТЕХНОЛОГИЯ · SHADOWSOCKS &nbsp;·&nbsp; <b>SS · SS-AEAD · SHADOWSOCKS 2022</b> &nbsp;·&nbsp; AES-256-GCM · CHACHA20-IETF-POLY1305 &nbsp;·&nbsp; <b>ШИФРОВАНИЕ</b> · МОБИЛЬНЫЕ СЕТИ &nbsp;·&nbsp; AEAD ШИФРОВАНИЕ &nbsp;·&nbsp; ПОДДЕРЖКА НА ВСЕХ ПЛАТФОРМАХ &nbsp;·&nbsp;</span>
+        <span><i class="dotg">●</i> ТЕХНОЛОГИЯ · SHADOWSOCKS &nbsp;·&nbsp; <b>SS · SS-AEAD · SHADOWSOCKS 2022</b> &nbsp;·&nbsp; AES-256-GCM · CHACHA20-IETF-POLY1305 &nbsp;·&nbsp; <b>ШИФРОВАНИЕ</b> · МОБИЛЬНЫЕ СЕТИ &nbsp;·&nbsp; AEAD ШИФРОВАНИЕ &nbsp;·&nbsp; ПОДДЕРЖКА НА ВСЕХ ПЛАТФОРМАХ &nbsp;·&nbsp;</span>
+        <span><i class="dotg">●</i> ТЕХНОЛОГИЯ · SHADOWSOCKS &nbsp;·&nbsp; <b>SS · SS-AEAD · SHADOWSOCKS 2022</b> &nbsp;·&nbsp; AES-256-GCM · CHACHA20-IETF-POLY1305 &nbsp;·&nbsp; <b>ШИФРОВАНИЕ</b> · МОБИЛЬНЫЕ СЕТИ &nbsp;·&nbsp; AEAD ШИФРОВАНИЕ &nbsp;·&nbsp; ПОДДЕРЖКА НА ВСЕХ ПЛАТФОРМАХ &nbsp;·&nbsp;</span>
     </div></div>
 </div>
 
@@ -433,9 +435,9 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
             <h1>
                 <span class="l1" data-scr="" data-orig="Протокол">Протокол</span>
                 <span class="l2" data-scr="" data-orig="Shadowsocks">Shadowsocks</span>
-                <span class="l3">Классика обхода блокировок: лёгкий зашифрованный прокси с минимальными накладными расходами. От мобильных сетей 4G/5G до агрессивной DPI-фильтрации — Shadowsocks остаётся одним из самых живучих протоколов за 12 лет существования.</span>
+                <span class="l3">Лёгкий зашифрованный прокси с минимальными накладными расходами. От мобильных сетей 4G/5G до требовательных условий — Shadowsocks остаётся одним из самых эффективных протоколов за 12 лет существования.</span>
             </h1>
-            <p class="hero-p">В 3set используем <b>Shadowsocks 2022</b> — последнюю версию протокола с современными AEAD-шифрами и защитой от повторного воспроизведения. Работает там, где «классический OpenVPN режут первым».</p>
+            <p class="hero-p">В 3set используем <b>Shadowsocks 2022</b> — последнюю версию протокола с современными AEAD-шифрами и защитой от повторного воспроизведения. Отличается минимальными накладными расходами и высокой скоростью.</p>
             <div class="hero-actions">
                 <a class="btn btn-solid" href="https://dash.3set.online" target="_blank" rel="noopener">Попробовать Shadowsocks →</a>
                 <a class="btn btn-ghost" href="#how">Как это работает</a>
@@ -497,7 +499,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
     <div class="wrap">
         <div class="rv in"><span class="kicker">01 · что это</span>
             <h2 data-scr="" data-orig="Что такое Shadowsocks" class="in">Что такое Shadowsocks</h2>
-            <p class="sub">Лёгкий зашифрованный прокси-протокол, созданный в 2012 году китайским программистом clowwindj для обхода Great Firewall. За 12 лет стал стандартом для обхода DPI-фильтров по всему миру.</p>
+            <p class="sub">Лёгкий зашифрованный прокси-протокол, созданный в 2012 году. За 12 лет стал одним из самых распространённых протоколов для приватного доступа в интернет.</p>
         </div>
         <div class="bento">
             <div class="bcard b7 rv in">
@@ -513,8 +515,8 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
             </div>
             <div class="bcard b5 rv d1 in">
                 <span class="tag">ИСТОРИЯ</span>
-                <h3>12 лет борьбы с DPI</h3>
-                <p>Создан в 2012 для обхода китайского Great Firewall. За это время протокол мутировал 4 раза: от простого stream-cipher до современного Shadowsocks 2022 с защитой от replay-атак. Каждый раз, когда DPI учился его детектить — протокол эволюционировал.</p>
+                <h3>12 лет развития протокола</h3>
+                <p>Создан в 2012 году. За это время протокол мутировал 4 раза: от простого stream-cipher до современного Shadowsocks 2022 с защитой от replay-атак. Каждое обновление повышало безопасность и производительность.</p>
                 <div class="chiprow">
                     <span class="chip">2012 · v1</span>
                     <span class="chip">2016 · AEAD</span>
@@ -564,7 +566,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
                 <ul>
                     <li>Stream-cipher · без AEAD</li>
                     <li>Уязвим к active probing</li>
-                    <li>DPI детектирует по паттерну</li>
+                    <li>Уязвим к анализу трафика</li>
                     <li>Не рекомендуется к использованию</li>
                 </ul>
             </div>
@@ -572,7 +574,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
                 <div class="ver-ic">AE</div>
                 <span class="year">2016 · STABLE</span>
                 <h3>Shadowsocks AEAD</h3>
-                <p>Добавлено AEAD-шифрование (AES-256-GCM, ChaCha20-IETF-Poly1305). Защита от модификации трафика, лучшая стойкость к DPI. Работает стабильно в большинстве сетей.</p>
+                <p>Добавлено AEAD-шифрование (AES-256-GCM, ChaCha20-IETF-Poly1305). Защита от модификации трафика, повышенная устойчивость. Работает стабильно в большинстве сетей.</p>
                 <ul>
                     <li>AEAD · AES-256-GCM</li>
                     <li>ChaCha20-IETF-Poly1305</li>
@@ -604,7 +606,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
     <div class="wrap">
         <div class="rv in"><span class="kicker">03 · как работает</span>
             <h2 data-scr="" data-orig="Путь трафика через Shadowsocks" class="in">Путь трафика через Shadowsocks</h2>
-            <p class="sub">От клика в браузере до загрузки страницы — четыре шага, каждый из которых защищён. DPI-фильтр видит только зашифрованный поток, неотличимый от случайного шума.</p>
+            <p class="sub">От клика в браузере до загрузки страницы — четыре шага, каждый из которых защищён. Внешний наблюдатель видит только зашифрованный поток.</p>
         </div>
 
 
@@ -620,14 +622,14 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
                 <div class="tl ok">[3] server: decrypt → resolve instagram.com → 157.240.22.174</div>
                 <div class="tl live">[4] server → instagram.com → response → encrypt → client</div>
                 <div class="tl ok">→ 200 OK · 142 KB · 248 ms · tunnel stable</div>
-                <div class="tl dim">[DPI observer] sees: random-looking TLS-like bytes</div>
-                <div class="tl warn">→ DPI verdict: «legitimate HTTPS traffic» · PASS</div>
+                <div class="tl dim">[observer] sees: encrypted TLS-like bytes</div>
+                <div class="tl warn">→ transport: encrypted stream · OK</div>
                 <div class="tl cmd">$ <span class="caret"></span></div>
             </div>
             <div class="console-foot">
                 <div class="cfoot"><span>ШИФР</span><b>2022-BLAKE3-AES-256-GCM</b></div>
                 <div class="cfoot"><span>СЕРВЕР</span><b class="cy">NL · 38 МС</b></div>
-                <div class="cfoot"><span>DPI VERDICT</span><b>PASS ✓</b></div>
+                <div class="cfoot"><span>ШИФРОВАНИЕ</span><b>AES-256 ✓</b></div>
             </div>
         </div>
     </div>
@@ -655,7 +657,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
                 <span class="val hl"><b>99%</b><span class="bar-mini"><i style="width:99%"></i></span></span>
             </div>
             <div class="cmp-row">
-                <span class="param">Скрытность от DPI</span>
+                <span class="param">Защита соединения</span>
                 <span class="val hl"><b>88%</b><span class="bar-mini"><i style="width:88%"></i></span></span>
                 <span class="val hl"><b>98%</b><span class="bar-mini"><i style="width:98%"></i></span></span>
                 <span class="val dim"><b>62%</b><span class="bar-mini"><i style="width:62%"></i></span></span>
@@ -673,9 +675,9 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
                 <span class="val">ChaCha20 · X25519</span>
             </div>
             <div class="cmp-row">
-                <span class="param">Маскировка под HTTPS</span>
+                <span class="param">TLS-защита</span>
                 <span class="val">Частичная</span>
-                <span class="val hl">Полная · с валидным TLS</span>
+                <span class="val hl">Полная · TLS 1.3</span>
                 <span class="val dim">Нет</span>
             </div>
             <div class="cmp-row">
@@ -693,7 +695,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
             <div class="cmp-row">
                 <span class="param">Лучше всего для</span>
                 <span class="val hl">Мобильные сети · 4G/5G</span>
-                <span class="val hl">Россия · агрессивный DPI</span>
+                <span class="val hl">Россия · мобильные сети</span>
                 <span class="val hl">Игры · низкий пинг</span>
             </div>
         </div>
@@ -734,8 +736,8 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2L4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4z"/></svg>
                 </div>
                 <div>
-                    <h3>Агрессивный DPI (Россия, Иран, Китай)</h3>
-                    <p>В сетях с активной DPI-фильтрацией Shadowsocks 2022 работает, но менее стабильно, чем VLESS Reality. Последний маскирует трафик под валидный TLS — его почти невозможно отличить от обычного HTTPS.</p>
+                    <h3>Мобильные и нестабильные сети</h3>
+                    <p>В нестабильных сетях Shadowsocks 2022 работает, но VLESS Reality обеспечивает более высокую устойчивость соединения за счёт TLS 1.3.</p>
                     <span class="verdict mid">~ ЛУЧШЕ VLESS REALITY</span>
                 </div>
             </div>
@@ -754,8 +756,8 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.8 4 6 4 9s-1.5 6.2-4 9c-2.5-2.8-4-6-4-9s1.5-6.2 4-9z"/></svg>
                 </div>
                 <div>
-                    <h3>Обход блокировок в «спокойных» сетях</h3>
-                    <p>В сетях без агрессивного DPI (большинство домашних Wi-Fi, офисы, кафе) Shadowsocks работает стабильно и быстро. Идеальный баланс скорости и приватности.</p>
+                    <h3>Стабильная работа в обычных сетях</h3>
+                    <p>В большинстве домашних Wi-Fi, офисов и кафе Shadowsocks работает стабильно и быстро. Идеальный баланс скорости и приватности.</p>
                     <span class="verdict good">✓ ОТЛИЧНЫЙ ВЫБОР</span>
                 </div>
             </div>
@@ -794,10 +796,10 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
             </div>
             <div class="alert warn rv d1 in">
                 <span class="tag">⚠ СЛАБАЯ СТОРОНА</span>
-                <h3>Активный DPI может детектировать</h3>
-                <p>В сетях с агрессивной DPI-фильтрацией (Россия, Иран, Китай) Shadowsocks 2022 работает, но его могут временно блокировать. VLESS Reality в таких условиях стабильнее — он маскирует трафик под валидный TLS-сайт.</p>
+                <h3>Ограничения в нестабильных сетях</h3>
+                <p>В нестабильных сетях Shadowsocks 2022 работает, но его устойчивость ниже. VLESS Reality в таких условиях стабильнее за счёт TLS 1.3.</p>
                 <ul>
-                    <li>DPI может отличить SS-трафик от обычного HTTPS</li>
+                    <li>Устойчивость ниже, чем у VLESS Reality</li>
                     <li>В РФ рекомендуем VLESS Reality как основной</li>
                     <li>Shadowsocks — как резервный протокол</li>
                 </ul>
@@ -861,11 +863,11 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
         <div class="rv in" style="text-align:center"><span class="kicker">faq · shadowsocks</span><h2 data-scr="" data-orig="Частые вопросы про Shadowsocks" class="in">Частые вопросы про Shadowsocks</h2></div>
         <div class="faq-wrap">
             <div class="acc-item rv in"><button class="acc-q">Shadowsocks — это VPN?<span class="ic">+</span></button><div class="acc-a"><p>Технически — нет. Shadowsocks это зашифрованный прокси (SOCKS5), а не полноценный VPN. Он не создаёт виртуальный сетевой адаптер и не пропускает через себя весь трафик системы по умолчанию. Но в связке с TUN-режимом в клиенте (INCY, Happ, FlClashX) он работает как полноценный VPN — весь трафик идёт через зашифрованный туннель.</p></div></div>
-            <div class="acc-item rv in"><button class="acc-q">В чём разница между Shadowsocks и VLESS Reality?<span class="ic">+</span></button><div class="acc-a"><p>VLESS Reality маскирует трафик под посещение реального HTTPS-сайта с валидным TLS-сертификатом — DPI почти не может его отличить от обычного трафика. Shadowsocks шифрует трафик, но не маскирует его под легитимный сайт. В сетях с агрессивным DPI (Россия, Иран) VLESS Reality стабильнее. В обычных сетях Shadowsocks быстрее и легче.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">В чём разница между Shadowsocks и VLESS Reality?<span class="ic">+</span></button><div class="acc-a"><p>VLESS Reality использует TLS 1.3 с валидным сертификатом и обеспечивает повышенную защиту соединения. Shadowsocks шифрует трафик и отличается минимальными накладными расходами. В нестабильных сетях VLESS Reality стабильнее, в обычных сетях Shadowsocks быстрее и легче.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">Какую версию Shadowsocks использовать?<span class="ic">+</span></button><div class="acc-a"><p>Только Shadowsocks 2022 с шифром 2022-blake3-aes-256-gcm. Классические версии (SS, SS-AEAD) считаются небезопасными — они уязвимы к replay-атакам и active probing. В 3set по умолчанию используется именно SS-2022 на всех серверах.</p></div></div>
-            <div class="acc-item rv in"><button class="acc-q">Shadowsocks работает в России?<span class="ic">+</span></button><div class="acc-a"><p>Да, работает, но с оговорками. В сетях без агрессивного DPI (большинство домашних Wi-Fi, офисы) — стабильно. В сетях с активным DPI (некоторые мобильные операторы, публичные Wi-Fi) — возможны временные блокировки. Для максимальной стабильности в РФ рекомендуем VLESS Reality как основной протокол, а Shadowsocks — как резервный.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Shadowsocks работает в России?<span class="ic">+</span></button><div class="acc-a"><p>Да, работает стабильно в большинстве сетей. В нестабильных сетях рекомендуем VLESS Reality как основной протокол, а Shadowsocks — как резервный.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">Можно ли использовать Shadowsocks для торрентов?<span class="ic">+</span></button><div class="acc-a"><p>Да, Shadowsocks поддерживает UDP и работает с торрент-трафиком. Но для P2P лучше WireGuard — у него ниже накладные расходы и выше скорость на больших объёмах. Shadowsocks подойдёт, если WireGuard заблокирован в вашей сети.</p></div></div>
-            <div class="acc-item rv in"><button class="acc-q">Почему Shadowsocks быстрее VLESS Reality?<span class="ic">+</span></button><div class="acc-a"><p>Не всегда быстрее, но часто — да. VLESS Reality добавляет overhead на TLS-рукопожатие и маскировку под реальный сайт. Shadowsocks — минималистичный протокол с меньшим количеством слоёв. В сетях без DPI разница почти незаметна, но на слабых CPU (роутеры, старые телефоны) Shadowsocks даёт выигрыш 10–15%.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Почему Shadowsocks быстрее VLESS Reality?<span class="ic">+</span></button><div class="acc-a"><p>Не всегда быстрее, но часто — да. VLESS Reality добавляет overhead на TLS-рукопожатие. Shadowsocks — минималистичный протокол с меньшим количеством слоёв. На слабых CPU (роутеры, старые телефоны) Shadowsocks даёт выигрыш 10–15%.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">Какой шифр выбрать — AES-256-GCM или ChaCha20?<span class="ic">+</span></button><div class="acc-a"><p>На современных устройствах (с AES-NI) — AES-256-GCM, он быстрее. На старых ARM-процессорах без аппаратного AES — ChaCha20-IETF-Poly1305, он не зависит от AES-NI и работает стабильнее. В Shadowsocks 2022 по умолчанию используется 2022-blake3-aes-256-gcm — это оптимальный выбор для большинства устройств.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">Можно ли переключаться между протоколами на лету?<span class="ic">+</span></button><div class="acc-a"><p>Да. В клиентах INCY, Happ и FlClashX можно добавить несколько профилей — один VLESS Reality, другой Shadowsocks, третий WireGuard. Переключение между ними — в один тап. Если один протокол заблокирован — сразу переходите на другой без переустановки ключа.</p></div></div>
         </div>
@@ -895,14 +897,14 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
         <div class="f-grid">
             <div class="f-about">
                 <a class="logo" href="/" style="color:#fff"><svg viewBox="0 0 32 32" fill="none" width="28" height="28"><path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" stroke="#b7ff45" stroke-width="2.2"></path><path d="M11 16l3.5 3.5L21 13" stroke="#b7ff45" stroke-width="2.4" stroke-linecap="round"></path></svg><span>3<em style="color:var(--lime)">set</em><span class="tld" style="color:#5d6b62">.online</span></span></a>
-                <p>Виртуальная частная сеть нового поколения. Приватный и стабильный доступ в обход блокировок. Используйте VPN только в законных целях.</p>
+                <p>Виртуальная частная сеть нового поколения. Приватный и стабильный доступ. Используйте VPN только в законных целях.</p>
             </div>
-            <div><h4>Продукт</h4><a href="/#pricing">Тарифы и цены</a><a href="/#status">Статус серверов</a><a href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-бот</a><a href="https://dash.3set.online" target="_blank" rel="noopener">Купить доступ</a></div>
+            <div><h4>Продукт</h4><a href="/#pricing">Тарифы и цены</a><a href="/#status">Статус серверов</a><a href="https://t.me/threeSet_bot" target="_blank" rel="noopener">Telegram-бот</a><a href="https://dash.3set.online" target="_blank" rel="noopener">Купить доступ</a></div>
             <div><h4>Устройства</h4><a href="/ios/">VPN для iOS</a><a href="/android/">VPN для Android</a><a href="/windows/">VPN для Windows</a><a href="/mac/">VPN для macOS</a><a href="/router/">VPN на роутер</a><a href="/smart-tv/">VPN для Smart TV</a></div>
             <div><h4>Технологии</h4><a href="/vless-reality/">VLESS Reality</a><a href="/shadowsocks/">Shadowsocks</a><a href="/wireguard/">WireGuard</a><a href="/#blog">База знаний</a></div>
-            <div><h4>Поддержка</h4><a href="/setup/">Инструкции /setup</a><a href="/#faq">FAQ</a><a href="mailto:support@3set.online">support@3set.online</a><a href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-чат</a></div>
+            <div><h4>Поддержка</h4><a href="/setup/">Инструкции /setup</a><a href="/#faq">FAQ</a><a href="mailto:support@3set.online">support@3set.online</a><a href="https://t.me/threeSet_bot" target="_blank" rel="noopener">Telegram-чат</a></div>
         </div>
-        <div class="f-bot"><span>© <span id="yearNow">2026</span> 3set.online · Shadowsocks Technology Overview</span><span>Политика конфиденциальности · Оферта</span></div>
+        <div class="f-bot"><span>© <span id="yearNow">2026</span> 3set.online · Shadowsocks Technology Overview</span><span><a href="/privacy">Политика конфиденциальности</a> · <a href="/terms">Пользовательское соглашение</a></span></div>
     </div>
 </footer>
 
@@ -1002,16 +1004,16 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
     }
     function botReply(q){
         var t = q.toLowerCase(), r;
-        if(/shadowsocks|ss|аес|chacha|шифр/.test(t)) r = 'Shadowsocks 2022 — лёгкий зашифрованный прокси. Отлично работает в мобильных сетях и на слабых устройствах. В 3set используем шифр 2022-blake3-aes-256-gcm. Для агрессивного DPI в РФ лучше VLESS Reality ✅';
-        if(/vless|reality|выбор|что лучше|какой протокол/.test(t)) r = 'Для России — VLESS Reality (маскирует под HTTPS, DPI почти не видит). Для мобильных сетей и слабых роутеров — Shadowsocks 2022. Для игр — WireGuard. В 3set все три доступны на всех серверах, переключение в один тап.';
-        if(/работ|блок|росси|dpi|great firewall/.test(t)) r = 'Shadowsocks 2022 работает в РФ, но в сетях с агрессивным DPI возможны временные блокировки. VLESS Reality стабильнее — он маскирует трафик под валидный TLS-сайт. Рекомендуем VLESS как основной, SS как резервный.';
+        if(/shadowsocks|ss|аес|chacha|шифр/.test(t)) r = 'Shadowsocks 2022 — лёгкий зашифрованный прокси. Отлично работает в мобильных сетях и на слабых устройствах. В 3set используем шифр 2022-blake3-aes-256-gcm. Для максимальной стабильности в РФ лучше VLESS Reality ✅';
+        if(/vless|reality|выбор|что лучше|какой протокол/.test(t)) r = 'Для России — VLESS Reality (защищённое соединение на TLS 1.3). Для мобильных сетей и слабых роутеров — Shadowsocks 2022. Для игр — WireGuard. В 3set все три доступны на всех серверах, переключение в один тап.';
+        if(/работ|блок|росси|dpi|great firewall/.test(t)) r = 'Shadowsocks 2022 работает в РФ. В нестабильных сетях VLESS Reality стабильнее за счёт TLS 1.3. Рекомендуем VLESS как основной, SS как резервный.';
         if(/верси|2022|aead|классическ/.test(t)) r = 'Используйте только Shadowsocks 2022 с шифром 2022-blake3-aes-256-gcm. Классические версии (SS, SS-AEAD) устарели — уязвимы к replay-атакам. В 3set по умолчанию SS-2022 на всех серверах.';
         if(/aes|chacha20|шифр|алгоритм/.test(t)) r = 'На современных CPU (с AES-NI) — AES-256-GCM, он быстрее. На старых ARM без AES-NI — ChaCha20-IETF-Poly1305. В SS-2022 по умолчанию 2022-blake3-aes-256-gcm — оптимум для большинства устройств.';
         if(/скорость|быстр|производ/.test(t)) r = 'Shadowsocks быстрее VLESS Reality на 10-15% в обычных сетях (меньше overhead). Но WireGuard ещё быстрее — у него минимальные накладные расходы. Для игр — WireGuard, для мобильных — Shadowsocks, для РФ — VLESS.';
         if(/торрент|p2p|udp/.test(t)) r = 'Да, Shadowsocks поддерживает UDP и работает с торрентами. Но для P2P лучше WireGuard — выше скорость на больших объёмах. SS подойдёт, если WireGuard заблокирован.';
-        if(/куп|подписк|оплат|тариф|цен/.test(t)) r = 'Купить подписку можно на dash.3set.online или в Telegram-боте @3set_online_bot. Оплата картой МИР, СБП или криптой. Ключ приходит за 1 минуту ⚡';
+        if(/куп|подписк|оплат|тариф|цен/.test(t)) r = 'Купить подписку можно на dash.3set.online или в Telegram-боте @threeSet_bot. Оплата картой МИР, СБП или криптой. Ключ приходит за 1 минуту ⚡';
         if(/привет|здравств|добр/.test(t)) r = 'Привет! 👋 Подсказать по Shadowsocks, выбору протокола или подписке?';
-        if(!r) r = 'Хороший вопрос! Быстрее всего ответит оператор в Telegram: @3set_online_bot. Или уточните: Shadowsocks, VLESS, шифры, выбор протокола?';
+        if(!r) r = 'Хороший вопрос! Быстрее всего ответит оператор в Telegram: @threeSet_bot. Или уточните: Shadowsocks, VLESS, шифры, выбор протокола?';
         var ty = addMsg('', 'bot typing');
         ty.innerHTML = '<i></i><i></i><i></i>';
         setTimeout(function(){
@@ -1047,5 +1049,6 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 
 
 <script src="/assets/support-intake.js" defer></script>
+
 </body>
 </html>

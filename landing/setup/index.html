@@ -248,6 +248,8 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 .f-grid a:hover{color:var(--lime)}
 .f-about p{font-size:13px;color:#7c8a7e;margin-top:14px;max-width:260px}
 .f-bot{border-top:1px solid #1d2822;padding-top:24px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:#5d6b62}
+        .f-bot a{transition:color .2s}
+        .f-bot a:hover{color:var(--lime)}
 
 
 #chatBtn{position:fixed;right:22px;bottom:22px;z-index:80;width:58px;height:58px;border-radius:50%;background:var(--ink);color:var(--lime);display:flex;align-items:center;justify-content:center;box-shadow:0 16px 40px -10px rgba(14,21,18,.5);transition:transform .3s}
@@ -557,13 +559,13 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
                 <span class="pop-tag">ДЛЯ РОССИИ</span>
                 <div class="proto-ic">VR</div>
                 <h3>VLESS Reality</h3>
-                <p>Самый скрытный протокол. Маскирует трафик под обычный HTTPS к Cloudflare или Microsoft. DPI не может отличить от легитимного трафика.</p>
+                <p>Самый защищённый протокол. Использует TLS 1.3 и современное шифрование для надёжной защиты соединения.</p>
                 <div class="bars">
                     <div class="bar-row"><span>СКРЫТНОСТЬ</span><div class="bar"><i style="width:98%"></i></div><b>98%</b></div>
                     <div class="bar-row"><span>СКОРОСТЬ</span><div class="bar"><i style="width:92%"></i></div><b>92%</b></div>
                     <div class="bar-row"><span>СТАБИЛЬНОСТЬ В РФ</span><div class="bar"><i style="width:96%"></i></div><b>96%</b></div>
                 </div>
-                <span class="best-for">✓ ЛУЧШИЙ ВЫБОР ДЛЯ РОССИИ · DPI · МОБИЛЬНЫЕ ОПЕРАТОРЫ</span>
+                <span class="best-for">✓ ЛУЧШИЙ ВЫБОР ДЛЯ РОССИИ · МОБИЛЬНЫЕ ОПЕРАТОРЫ</span>
             </div>
             <div class="proto rv d1 in">
                 <div class="proto-ic">WG</div>
@@ -660,12 +662,12 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
         <div class="faq-wrap">
             <div class="acc-item rv in"><button class="acc-q">Сколько времени занимает настройка VPN?<span class="ic">+</span></button><div class="acc-a"><p>От 2 минут на телефоне до 20 минут на роутере. На iPhone/Android — 2 минуты: установили клиент, импортировали ключ, включили VPN. На Windows/macOS — 3 минуты: добавили разрешение брандмауэра или системного расширения. На Smart TV — 5 минут: QR-код или код привязки. На роутере OpenWrt — 20 минут: установка пакетов, импорт подписки, настройка маршрутизации.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">Один ключ работает на всех устройствах?<span class="ic">+</span></button><div class="acc-a"><p>Да. Один ключ подписки работает на всех платформах: iOS, Android, Windows, macOS, Smart TV, роутер. Количество одновременных подключений зависит от тарифа: «Старт» — 2 устройства, «Оптимум» — 3, «Максимум» — 10 + роутер. Ключ тот же — импортируется на все устройства.</p></div></div>
-            <div class="acc-item rv in"><button class="acc-q">Какой протокол выбрать для России?<span class="ic">+</span></button><div class="acc-a"><p>Для России рекомендуем VLESS Reality как основной протокол. Он маскирует трафик под обычный HTTPS к Cloudflare/Microsoft — DPI не может его отличить от легитимного трафика. Стабильность в РФ — 96%. WireGuard и Shadowsocks тоже работают, но менее стабильно при агрессивном DPI. В клиенте можно добавить все три протокола и переключаться между ними в один тап.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Какой протокол выбрать для России?<span class="ic">+</span></button><div class="acc-a"><p>Для России рекомендуем VLESS Reality как основной протокол. Он обеспечивает защищённое соединение на основе TLS 1.3. Стабильность в РФ — 96%. WireGuard и Shadowsocks тоже работают, а в клиенте можно добавить все три протокола и переключаться между ними в один тап.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">Нужно ли настраивать VPN на каждом устройстве отдельно?<span class="ic">+</span></button><div class="acc-a"><p>Да, на каждом устройстве нужно установить клиент и импортировать ключ. Но если настроить VPN на роутере — все устройства в сети (телефоны, ноутбуки, TV, консоли) пойдут через VPN автоматически, без установки клиента на каждое. Это самый удобный вариант для дома.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">Что делать, если клиент не подключается?<span class="ic">+</span></button><div class="acc-a"><p>Проверьте три вещи: (1) ключ подписки актуален — нажмите «Обновить подписку» в клиенте, (2) брандмауэр не блокирует клиент — разрешите сетевой доступ, (3) попробуйте другой сервер из той же локации. Если не помогло — напишите в поддержку, разберёмся.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">Можно ли использовать VPN для торрентов и игр?<span class="ic">+</span></button><div class="acc-a"><p>Да. Для торрентов и игр лучше всего подходит WireGuard — максимальная скорость, минимальный пинг, поддержка UDP. VLESS Reality тоже работает, но на 5–10% медленнее из-за TLS-handshake. Обязательно включите TUN-режим в клиенте — иначе торренты и игры могут не видеть VPN.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">Как обновить подписку, если сервер перестал работать?<span class="ic">+</span></button><div class="acc-a"><p>В клиенте нажмите «Обновить подписку» (или «Reload») — подтянутся актуальные серверы и ключи. Это занимает 2–3 секунды и решает проблему без ручной переустановки. Если не помогло — попробуйте другой сервер из той же локации.</p></div></div>
-            <div class="acc-item rv in"><button class="acc-q">Что делать, если моей проблемы нет в списке?<span class="ic">+</span></button><div class="acc-a"><p>Напишите в поддержку — ответим за 5 минут. Telegram-бот @3set_online_bot или чат на сайте (кнопка в правом нижнем углу). Опишите устройство, клиент, протокол и что именно не работает — разберёмся вместе.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Что делать, если моей проблемы нет в списке?<span class="ic">+</span></button><div class="acc-a"><p>Напишите в поддержку — ответим за 5 минут. Telegram-бот @threeSet_bot или чат на сайте (кнопка в правом нижнем углу). Опишите устройство, клиент, протокол и что именно не работает — разберёмся вместе.</p></div></div>
         </div>
     </div>
 </section>
@@ -679,7 +681,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
             <p>Покупка подписки → установка клиента → импорт ключа → вы в приватной сети. Работает на всех устройствах: iPhone, Android, Windows, Mac, Smart TV, роутер.</p>
             <div class="cta-actions">
                 <a class="btn btn-lime" href="https://dash.3set.online" target="_blank" rel="noopener">Купить подписку →</a>
-                <a class="btn btn-ghost" href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-бот @3set_online_bot</a>
+                <a class="btn btn-ghost" href="https://t.me/threeSet_bot" target="_blank" rel="noopener">Telegram-бот @threeSet_bot</a>
             </div>
             <div class="cta-guar"><span>✓ 7 ДНЕЙ ГАРАНТИЯ</span><span>✓ БЕЗ ЛОГОВ</span><span>✓ МИР / СБП / CRYPTO</span><span>✓ ПОДДЕРЖКА 24/7</span></div>
         </div>
@@ -693,14 +695,14 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
         <div class="f-grid">
             <div class="f-about">
                 <a class="logo" href="/" style="color:#fff"><svg viewBox="0 0 32 32" fill="none" width="28" height="28"><path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" stroke="#b7ff45" stroke-width="2.2"></path><path d="M11 16l3.5 3.5L21 13" stroke="#b7ff45" stroke-width="2.4" stroke-linecap="round"></path></svg><span>3<em style="color:var(--lime)">set</em><span class="tld" style="color:#5d6b62">.online</span></span></a>
-                <p>Виртуальная частная сеть нового поколения. Приватный и стабильный доступ в обход блокировок. Используйте VPN только в законных целях.</p>
+                <p>Виртуальная частная сеть нового поколения. Приватный и стабильный доступ. Используйте VPN только в законных целях.</p>
             </div>
-            <div><h4>Продукт</h4><a href="/#pricing">Тарифы и цены</a><a href="/#status">Статус серверов</a><a href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-бот</a><a href="https://dash.3set.online" target="_blank" rel="noopener">Купить доступ</a></div>
+            <div><h4>Продукт</h4><a href="/#pricing">Тарифы и цены</a><a href="/#status">Статус серверов</a><a href="https://t.me/threeSet_bot" target="_blank" rel="noopener">Telegram-бот</a><a href="https://dash.3set.online" target="_blank" rel="noopener">Купить доступ</a></div>
             <div><h4>Устройства</h4><a href="/ios/">VPN для iOS</a><a href="/android/">VPN для Android</a><a href="/windows/">VPN для Windows</a><a href="/mac/">VPN для macOS</a><a href="/router/">VPN на роутер</a><a href="/smart-tv/">VPN для Smart TV</a></div>
             <div><h4>Технологии</h4><a href="/vless-reality/">VLESS Reality</a><a href="/shadowsocks/">Shadowsocks</a><a href="/wireguard/">WireGuard</a><a href="/#blog">База знаний</a></div>
-            <div><h4>Поддержка</h4><a href="/setup/">Инструкции /setup</a><a href="/#faq">FAQ</a><a href="mailto:support@3set.online">support@3set.online</a><a href="https://t.me/3set_online_bot" target="_blank" rel="noopener">Telegram-чат</a></div>
+            <div><h4>Поддержка</h4><a href="/setup/">Инструкции /setup</a><a href="/#faq">FAQ</a><a href="mailto:support@3set.online">support@3set.online</a><a href="https://t.me/threeSet_bot" target="_blank" rel="noopener">Telegram-чат</a></div>
         </div>
-        <div class="f-bot"><span>© <span id="yearNow">2026</span> 3set.online · Общая инструкция по настройке VPN</span><span>Политика конфиденциальности · Оферта</span></div>
+        <div class="f-bot"><span>© <span id="yearNow">2026</span> 3set.online · Общая инструкция по настройке VPN</span><span><a href="/privacy">Политика конфиденциальности</a> · <a href="/terms">Пользовательское соглашение</a></span></div>
     </div>
 </footer>
 
@@ -803,11 +805,11 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
         if(/настро|начать|с чего|как подключ|инструкц/.test(t)) r = 'Настройка VPN занимает от 2 до 20 минут в зависимости от устройства. Три шага: (1) купить подписку на dash.3set.online, (2) установить клиент (INCY, Happ или FlClashX), (3) импортировать ключ и выбрать сервер. Выберите своё устройство в разделе «Шаг 1» выше — там подробная инструкция ⚡';
         if(/устройств|телефон|ноутбук|tv|телевизор|роутер|mac|windows|android|ios|iphone/.test(t)) r = 'Поддерживаем все платформы: iPhone/iPad (iOS 14+), Android (7+), Windows (10/11), macOS (12+), Smart TV (Android TV, LG, Samsung), роутеры OpenWrt (23.05+). Выберите своё устройство в разделе «Шаг 1» — там пошаговая инструкция.';
         if(/клиент|incy|happ|flclashx|приложен|какой клиент/.test(t)) r = 'Рекомендуем INCY — современный клиент с чистой логикой, работает на всех платформах. Happ — лёгкий, для старых устройств и Smart TV. FlClashX — для продвинутых пользователей, гибкие правила маршрутизации. Все три есть на личной странице подписки ✅';
-        if(/протокол|vless|wireguard|shadowsocks|какой протокол|выбор/.test(t)) r = 'Для России — VLESS Reality (маскирует под HTTPS, DPI почти не видит). Для игр и стриминга — WireGuard (максимальная скорость). Для мобильных сетей — Shadowsocks 2022. В 3set все три доступны на всех серверах, переключение в один тап.';
+        if(/протокол|vless|wireguard|shadowsocks|какой протокол|выбор/.test(t)) r = 'Для России — VLESS Reality (защищённое соединение на TLS 1.3). Для игр и стриминга — WireGuard (максимальная скорость). Для мобильных сетей — Shadowsocks 2022. В 3set все три доступны на всех серверах, переключение в один тап.';
         if(/не работа|не подключ|ошибк|проблем|тормоз|пад|обрыв/.test(t)) r = 'Проверьте три вещи: (1) обновите подписку в клиенте, (2) разрешите клиенту сетевой доступ в брандмауэре, (3) попробуйте другой сервер. Если не помогло — опишите устройство, клиент и что именно не работает. Разберёмся вместе!';
-        if(/куп|подписк|оплат|тариф|цен/.test(t)) r = 'Купить подписку можно на dash.3set.online или в Telegram-боте @3set_online_bot. Оплата картой МИР, СБП или криптой. Ключ приходит за 1 минуту ⚡';
+        if(/куп|подписк|оплат|тариф|цен/.test(t)) r = 'Купить подписку можно на dash.3set.online или в Telegram-боте @threeSet_bot. Оплата картой МИР, СБП или криптой. Ключ приходит за 1 минуту ⚡';
         if(/привет|здравств|добр/.test(t)) r = 'Привет! 👋 Подсказать по настройке VPN, выбору устройства или протокола?';
-        if(!r) r = 'Хороший вопрос! Быстрее всего ответит оператор в Telegram: @3set_online_bot. Или уточните: устройство, клиент, протокол, проблема?';
+        if(!r) r = 'Хороший вопрос! Быстрее всего ответит оператор в Telegram: @threeSet_bot. Или уточните: устройство, клиент, протокол, проблема?';
         var ty = addMsg('', 'bot typing');
         ty.innerHTML = '<i></i><i></i><i></i>';
         setTimeout(function(){
@@ -843,5 +845,6 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 
 
 <script src="/assets/support-intake.js" defer></script>
+
 </body>
 </html>

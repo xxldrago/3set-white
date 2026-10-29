@@ -32,11 +32,11 @@ compensation/reply templates/requester context).
 
 ### COH — Cohorts & retention
 
-- [ ] **COH-01**: Админ видит когортную матрицу (месяц регистрации × месяц N) — доля аккаунтов с активной платной подпиской
-- [ ] **COH-02**: Админ видит revenue retention по когортам (выручка месяца N относительно первого платного месяца)
-- [ ] **COH-03**: Админ видит когорты в разрезе канала привлечения (реферальный код / промокод / органика)
-- [ ] **COH-04**: Админ видит когорты в разрезе тарифа по числу устройств
-- [ ] **COH-05**: Админ видит когорты по месяцу первой оплаты (payer revenue cohorts)
+- [x] **COH-01**: Админ видит когортную матрицу (месяц регистрации × месяц N) — доля аккаунтов с активной платной подпиской
+- [x] **COH-02**: Админ видит revenue retention по когортам (выручка месяца N относительно первого платного месяца)
+- [x] **COH-03**: Админ видит когорты в разрезе канала привлечения (реферальный код / промокод / органика)
+- [x] **COH-04**: Админ видит когорты в разрезе тарифа по числу устройств
+- [x] **COH-05**: Админ видит когорты по месяцу первой оплаты (payer revenue cohorts)
 
 ### SEG — RFM segments & targeting
 
@@ -120,11 +120,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ANL-13 | Phase 8 | Complete |
 | ANL-14 | Phase 8 | Complete |
 | ANL-15 | Phase 7 | Complete |
-| COH-01 | Phase 10 | Pending |
-| COH-02 | Phase 10 | Pending |
-| COH-03 | Phase 10 | Pending |
-| COH-04 | Phase 10 | Pending |
-| COH-05 | Phase 10 | Pending |
+| COH-01 | Phase 10 | Complete |
+| COH-02 | Phase 10 | Complete |
+| COH-03 | Phase 10 | Complete |
+| COH-04 | Phase 10 | Complete |
+| COH-05 | Phase 10 | Complete |
 | SEG-01 | Phase 11 | Pending |
 | SEG-02 | Phase 11 | Pending |
 | SEG-03 | Phase 11 | Pending |

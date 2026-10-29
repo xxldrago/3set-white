@@ -18,21 +18,27 @@ Webvisor, clickmap, accurate bounce and ecommerce (`dataLayer`).
 
 ## Tasks
 
-- [x] Insert the counter snippet (script + `<noscript>` pixel) before `</body>` of
-      every `landing/**/index.html` (14 files), verbatim from the Metrika dashboard
-      with one added guard: `window.dataLayer = window.dataLayer || []` so the
-      configured `ecommerce: "dataLayer"` transport never hits a missing object.
+- [x] Insert the counter snippet (script + `<noscript>` pixel) into every landing
+      page, verbatim from the Metrika dashboard with one added guard:
+      `window.dataLayer = window.dataLayer || []` so the configured
+      `ecommerce: "dataLayer"` transport never hits a missing object.
+- [x] Move the script into `<head>`; keep the `<noscript>` pixel right after
+      `<body>` (a `<div>` inside `<head>` is invalid HTML).
 - [x] Verify: exactly one `tag.js?id=113865085` and one `watch/113865085` per file.
 - [x] Verify live-in-browser behaviour against a local static server:
       `tag.js` → 200, pageview hit `mc.yandex.com/watch/113865085` → 200
       (so `ssr:true` does not suppress the initial hit).
-- [ ] Deploy: `rsync -az --delete landing/ root@<host>:/var/www/3set.online/`.
+- [x] Deploy to `212.192.14.166:/var/www/3set.online` (backup first, `rsync -azR`
+      **without `--delete`**) and re-verify on the live domain.
 
 ## Notes
 
-- Placement at the very end of `<body>` keeps the counter off the render-critical
-  path (the async tag script cannot block paint).
+- Placement of the script inside `<head>` keeps it off the render-critical path
+  (the tag script is `async`), and it is early enough to see the whole session.
 - `ssr: true` is Metrika's technical flag for server-generated insert code; per
-  docs it does not disable tracking — confirmed by the local run above.
+  docs it does not disable tracking — confirmed by the local and live runs above.
 - The dashboard app (`dash.3set.online`) is a separate surface and deliberately
   not instrumented in this task.
+- Deploy caveat: `--delete` is destructive on this docroot (`privacy/`, `terms/`
+  and `.bak-*` files exist only on the server). Use a targeted push until the repo
+  and the live copy are reconciled.

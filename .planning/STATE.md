@@ -21,7 +21,7 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-10-20)
+See: .planning/PROJECT.md (updated 2026-10-29)
 
 **Core value:** Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
 **Current focus:** Phase 10 — Cohorts & Retention Analytics

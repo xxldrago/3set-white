@@ -34,6 +34,8 @@ import ExpiredCards from '@/components/admin/ExpiredCards';
 import ErrorTable from '@/components/admin/ErrorTable';
 import TimeToPayCards from '@/components/admin/TimeToPayCards';
 import TimeToProvisionCards from '@/components/admin/TimeToProvisionCards';
+import CohortTabs from '@/components/admin/CohortTabs';
+import CohortMatrix from '@/components/admin/CohortMatrix';
 import { requireRole } from '@/lib/admin-auth';
 import { AdminError, SessionError } from '@/lib/session';
 import { t } from '@/lib/i18n';
@@ -73,7 +75,7 @@ function CardsSkeleton({ count, twoUp, fourUp }: { count: number; twoUp?: boolea
   );
 }
 
-export default async function AdminAnalyticsPage({ searchParams }: { searchParams?: Promise<{ period?: string }> } = {}) {
+export default async function AdminAnalyticsPage({ searchParams }: { searchParams?: Promise<{ period?: string; regCh?: string; payCh?: string; payDev?: string }> } = {}) {
   let role: string | null = null;
   try {
     ({ role } = await requireRole('administrator', 'manager'));
@@ -85,9 +87,12 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
 
   // ?period= accepts only 7 | 30 | 90; anything else → 30 (identical to
   // app/admin/page.tsx — no from/to parsing exists in this phase).
-  const params = await (searchParams ?? Promise.resolve({ period: undefined }));
+  const params = await (searchParams ?? Promise.resolve({ period: undefined, regCh: undefined, payCh: undefined, payDev: undefined }));
   const rawPeriod = Number(params.period ?? 30);
   const period = rawPeriod === 7 || rawPeriod === 90 ? rawPeriod : 30;
+  const regCh = ['all', 'referral', 'promo', 'organic'].includes(params.regCh ?? '') ? (params.regCh as string) : 'all';
+  const payCh = ['all', 'referral', 'promo', 'organic'].includes(params.payCh ?? '') ? (params.payCh as string) : 'all';
+  const payDev = ['all', '1', '2', '3', '4', '5+'].includes(params.payDev ?? '') ? (params.payDev as string) : 'all';
 
   return (
     <section className="flex flex-col gap-6">
@@ -150,6 +155,48 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
         </Suspense>
         <Suspense fallback={<CardsSkeleton count={2} twoUp />}>
           <TimeToProvisionCards period={period} />
+        </Suspense>
+      </AnalyticsSection>
+
+      <AnalyticsSection title={t('admin.analyticsRegCohortTitle')}>
+        <CohortTabs
+          param="regCh"
+          label={t('admin.analyticsCohortChannelLabel')}
+          options={['all', 'referral', 'promo', 'organic']}
+          labels={{
+            all: t('admin.analyticsCohortTabAll'),
+            referral: t('admin.analyticsCohortTabReferral'),
+            promo: t('admin.analyticsCohortTabPromo'),
+            organic: t('admin.analyticsCohortTabOrganic'),
+          }}
+        />
+        <Suspense fallback={<ChartSkeleton className="h-64" />}>
+          <CohortMatrix kind="registration" channel={regCh} />
+        </Suspense>
+      </AnalyticsSection>
+
+      <AnalyticsSection title={t('admin.analyticsPayerCohortTitle')}>
+        <div className="flex flex-col gap-2">
+          <CohortTabs
+            param="payCh"
+            label={t('admin.analyticsCohortChannelLabel')}
+            options={['all', 'referral', 'promo', 'organic']}
+            labels={{
+              all: t('admin.analyticsCohortTabAll'),
+              referral: t('admin.analyticsCohortTabReferral'),
+              promo: t('admin.analyticsCohortTabPromo'),
+              organic: t('admin.analyticsCohortTabOrganic'),
+            }}
+          />
+          <CohortTabs
+            param="payDev"
+            label={t('admin.analyticsCohortDevicesLabel')}
+            options={['all', '1', '2', '3', '4', '5+']}
+            labels={{ all: t('admin.analyticsCohortTabAll') }}
+          />
+        </div>
+        <Suspense fallback={<ChartSkeleton className="h-64" />}>
+          <CohortMatrix kind="payer" channel={payCh} deviceBucket={payDev} />
         </Suspense>
       </AnalyticsSection>
     </section>

@@ -174,10 +174,10 @@ describe("/admin/analytics — phase 9 composition (D-05: three sections below r
     expect(twoUp.length).toBe(3); // 1 burn (phase 8) + 2 timing (phase 9)
 
     const chart64 = PAGE_SOURCE.match(/<ChartSkeleton className="h-64" \/>/g) ?? [];
-    expect(chart64.length).toBe(2); // 1 churn (phase 8) + 1 error (phase 9)
+    expect(chart64.length).toBe(4); // 1 churn (ph8) + 1 error (ph9) + 2 cohorts (ph10)
 
     const suspenses = PAGE_SOURCE.match(/<Suspense fallback=\{/g) ?? [];
-    expect(suspenses.length).toBe(13); // 3 phase-7 + 5 phase-8 + 5 phase-9
+    expect(suspenses.length).toBe(15); // 3 phase-7 + 5 phase-8 + 5 phase-9 + 2 phase-10
   });
 });
 

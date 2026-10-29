@@ -73,6 +73,13 @@ import {
   type FunnelRow,
   type FunnelStep,
 } from "./funnel";
+import {
+  COHORT_MONTHS,
+  buildPayerCohorts,
+  buildRegistrationCohorts,
+  type ChannelFilter,
+  type DeviceFilter,
+} from "./cohorts";
 
 // Mirrors lib/revenue.ts:10 / rollup.ts:32 — the same money pipeline, never a
 // second enum. The PAID-status filter belongs HERE (the DB layer); the pure
@@ -682,4 +689,116 @@ export async function loadTimeToProvision(period: 7 | 30 | 90): Promise<TimingDa
     meanMs: stats.paidToProvisioned.meanMs,
     orders: stats.orders,
   };
+}
+
+export async function loadRegistrationCohorts(channel: ChannelFilter): Promise<{
+  cohorts: import("./cohorts").RegistrationCohort[];
+}> {
+  const ch: ChannelFilter = (["all", "referral", "promo", "organic"] as const).includes(
+    channel,
+  )
+    ? channel
+    : "all";
+
+  const windowStart = new Date(Date.now() - 365 * 86_400_000);
+
+  const [users, paidOrders, trialKeyIds] = await Promise.all([
+    prisma.user.findMany({
+      where: { createdAt: { gte: windowStart } },
+      select: { id: true, createdAt: true, referredById: true, pendingPromo: true },
+    }),
+    prisma.order.findMany({
+      where: { status: { in: [...PAID] }, paidAt: { not: null } },
+      select: { userId: true, promoCode: true },
+    }),
+    prisma.keyCache.findMany({
+      where: { isTrial: true },
+      select: { keyId: true },
+    }),
+  ]);
+
+  const trialSet = new Set(trialKeyIds.map((k) => k.keyId));
+
+  const spanOrders = await prisma.order.findMany({
+    where: { status: { in: [...PAID] }, paidAt: { not: null } },
+    select: { userId: true, paidAt: true, days: true, keyId: true, provisionedKeyId: true },
+  });
+  const terms = spanOrders
+    .filter((o) => {
+      const key = o.provisionedKeyId ?? o.keyId;
+      return key == null || !trialSet.has(key);
+    })
+    .map((o) => ({
+      userId: o.userId,
+      termStart: o.paidAt as Date,
+      termEnd: new Date((o.paidAt as Date).getTime() + (o.days ?? 30) * 86_400_000),
+    }));
+
+  const cohortUsers = users.map((u) => ({
+    id: u.id,
+    createdAt: u.createdAt,
+    referredById: u.referredById,
+    pendingPromo: u.pendingPromo,
+  }));
+
+  const cohorts = buildRegistrationCohorts(
+    { users: cohortUsers, terms, orders: paidOrders, now: new Date() },
+    ch,
+  );
+  return { cohorts };
+}
+
+export async function loadPayerCohorts(
+  channel: ChannelFilter,
+  deviceBucket: DeviceFilter,
+): Promise<{ cohorts: import("./cohorts").PayerCohort[] }> {
+  const ch: ChannelFilter = (["all", "referral", "promo", "organic"] as const).includes(
+    channel,
+  )
+    ? channel
+    : "all";
+  const db: DeviceFilter = (["all", "1", "2", "3", "4", "5+"] as const).includes(
+    deviceBucket,
+  )
+    ? deviceBucket
+    : "all";
+
+  const [users, paidOrders] = await Promise.all([
+    prisma.user.findMany({
+      select: { id: true, createdAt: true, referredById: true, pendingPromo: true },
+    }),
+    prisma.order.findMany({
+      where: { status: { in: [...PAID] }, paidAt: { not: null } },
+      select: {
+        userId: true,
+        paidAt: true,
+        finalAmount: true,
+        balanceUsed: true,
+        devices: true,
+        promoCode: true,
+      },
+    }),
+  ]);
+
+  const cohortUsers = users.map((u) => ({
+    id: u.id,
+    createdAt: u.createdAt,
+    referredById: u.referredById,
+    pendingPromo: u.pendingPromo,
+  }));
+
+  const orders = paidOrders.map((o) => ({
+    userId: o.userId,
+    paidAt: o.paidAt as Date,
+    cash: cashOf({ finalAmount: o.finalAmount, balanceUsed: o.balanceUsed }),
+    devices: o.devices,
+    promoCode: o.promoCode,
+  }));
+
+  const cohorts = buildPayerCohorts(
+    { users: cohortUsers, orders, now: new Date() },
+    ch,
+    db,
+  );
+  return { cohorts };
 }

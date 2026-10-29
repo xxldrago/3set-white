@@ -4,6 +4,7 @@ quick_id: 261029-gni
 slug: yandex-metrika-landing
 date: 2026-10-29
 commit: 866c093
+sync_commit: e113217
 deployed: 2026-10-29
 ---
 
@@ -23,10 +24,12 @@ Snippet = Metrika dashboard code (Webvisor, clickmap, `accurateTrackBounce`,
 `window.dataLayer = window.dataLayer || []` as the first line so the ecommerce
 transport is guaranteed to exist.
 
-## Repo files (14)
+## Repo files (16)
 
 `landing/index.html`, `landing/{android,ios,mac,windows,router,setup,smart-tv,shadowsocks,vless-reality,wireguard}/index.html`,
-`landing/blog/{free-vs-paid,kak-vybrat-vpn,vpn-otklyuchaetsya}/index.html`.
+`landing/blog/{free-vs-paid,kak-vybrat-vpn,vpn-otklyuchaetsya}/index.html`,
+plus `landing/privacy/index.html` and `landing/terms/index.html` (adopted into the
+repo together with the rest of the canonical server copy).
 
 Commits: `c77c820` (add, end of body) → `866c093` (move to head).
 
@@ -53,24 +56,28 @@ So the deploy was a targeted file push. `privacy/index.html` and `terms/index.ht
 were patched **in place on the server only** — they still need to be brought into
 the repo, otherwise the next `--delete` deploy removes them again.
 
-### ⚠️ Repo and live site have diverged (content, not just the counter)
+### ⚠️ Repo and live site had diverged (resolved 2026-10-29)
 
-Server files were last modified 2026-10-22; the repo's landing content is from
-2026-10-19. Per page 26–54 lines differ beyond the counter: meta description,
+Server files were last modified 2026-10-22; the repo's landing content was from
+2026-10-19. Per page 26–54 lines differed beyond the counter: meta description,
 FAQ JSON-LD, the Telegram handle (`@threeSet_bot` on the server vs
 `@3set_online_bot` in the repo), the hero badge («РАБОТАЕТ В РОССИИ» vs
 «РАБОТАЕТ В РОССИИ · ОБХОД DPI») and a few `.f-bot` CSS rules.
 
-Consequence: uploading `landing/` wholesale would rewrite the live copy with the
-repo variant. Not done as part of this task — needs an owner decision on which
-side is canonical. The live docroot remains byte-identical to its 2026-10-22
-state except for the inserted counter block.
+**Resolution:** the owner declared the live server copy canonical. `landing/` was
+re-synced **from** the host (`e113217`), so repo ↔ live diff is now empty across
+all 16 pages and assets. `privacy/` and `terms/` — previously server-only — are
+now in the repo as well, which makes a plain `rsync --delete` safe again.
+
+The live host vhost was also missing from the repo; it is now recorded verbatim
+as `nginx/3set-landing.conf`, and the stale `nginx/3set.online.conf` (a redirect
+to dash, never mounted by Compose) is marked legacy.
 
 ## Not done
 
 - `dash.3set.online` (Next.js app) intentionally left uninstrumented.
-- `privacy/` / `terms/` not added to the repo.
-- Repo↔live content reconciliation.
+- Server-side `index.html.bak-20261022-*` and `._*` leftovers not removed (a
+  future `rsync --delete` clears them; they are not content).
 
 ## Verification table
 
@@ -78,8 +85,9 @@ state except for the inserted counter block.
 |-------|--------|
 | One `tag.js?id=113865085` per repo page | 14/14 |
 | One `watch/113865085` noscript pixel per repo page | 14/14 |
-| Live pages carrying the counter | 16/16 (incl. server-only `privacy`, `terms`) |
+| Live pages carrying the counter | 16/16 (incl. `privacy`, `terms`) |
 | Script before `</head>` on live pages | 16/16 |
+| Repo ↔ live diff after canonical sync | empty (`diff -rq` clean) |
 | `tag.js` in a real browser on `https://3set.online/` | 200 |
 | Pageview hit `mc.yandex.com/watch/113865085` | 200 |
 | Console errors | none |

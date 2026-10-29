@@ -87,9 +87,27 @@ builder, so the generated Prisma 7 client is present.
 
 ### Landing static performance (nginx)
 
-The landing is a static site served from `/var/www/3set.online`. Deploy it with
-`rsync -az --delete landing/ root@<host>:/var/www/3set.online/`; the vhost is
-`/etc/nginx/sites-enabled/3set-landing.conf` (repo copy: `nginx/3set.online.conf`).
+The landing is a static site served from `/var/www/3set.online` by the **host**
+nginx (`/etc/nginx/sites-enabled/3set-landing.conf`, repo copy:
+`nginx/3set-landing.conf` — byte-identical, synced 2026-10-29). It is not the
+Compose nginx: `docker-compose.prod.yml` mounts only `dash.3set.online.conf`.
+`nginx/3set.online.conf` is legacy and must not be used for the landing.
+
+Deploy it with:
+
+```bash
+rsync -az --delete landing/ root@<host>:/var/www/3set.online/
+```
+
+Repo `landing/` is the canonical copy since 2026-10-29 (server ↔ repo diff is
+empty, `privacy/` and `terms/` included). Notes on `--delete`:
+
+- It removes `index.html.bak-*` and `._*` files that only exist on the host —
+  those are editor/OS leftovers, not content; deleting them is intended.
+- Never point `--delete` at a docroot that still holds content missing from the
+  repo, or the legal pages and backups go with it (this happened during the
+  2026-10-29 Metrika deploy and was caught by a dry run first).
+
 
 Three edge settings carry most of the speed:
 

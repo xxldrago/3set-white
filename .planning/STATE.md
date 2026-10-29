@@ -8,7 +8,7 @@ status: planning
 stopped_at: Phase 9 complete, ready to plan Phase 10
 last_updated: "2026-10-29T01:51:55.227Z"
 last_activity: 2026-10-29
-last_activity_desc: Phase 9 complete, transitioned to Phase 10
+last_activity_desc: Phase 9 complete, transitioned to Phase 10; quick task 261029-gni (Yandex Metrika counter on landing)
 state_head: 9a877bcecb56582f8dcdc435bcb3f101c215a869
 progress:
   total_phases: 5
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-10-29)
 Phase: 10 — Cohorts & Retention Analytics
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-10-29 — Phase 9 complete, transitioned to Phase 10
+Last activity: 2026-10-29 — Phase 9 complete, transitioned to Phase 10; quick task 261029-gni (Yandex Metrika on landing)
 
 Progress: [██████████] 100% (11/11 plans)
 
@@ -105,6 +105,12 @@ None yet.
 - `artemida_balance_snapshots` — единственный источник истории баланса: `GET /balance` не имеет wallet-history endpoint, snapshots копятся только с момента деплоя Phase 7
 - Пересчёт rollup должен быть дешёвым (один сервер, `docker compose ... up -d web`): backfill обязан быть runnable on demand, не блокируя запросы
 - `[Phase 09]` `paidAt → provisioned` считается через `Order.updatedAt` (proxy): merge аккаунтов (`lib/accounts.ts:164`) переписывает `updatedAt` историческим provisioned-заказам и может завысить среднее. Нужна nullable-колонка `Order.provisionedAt` + миграция + `provisionedAt ?? updatedAt` (MD-01 в `09-REVIEW.md`, AR-09-01 в `09-SECURITY.md`)
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 261029-gni | Yandex Metrika counter 113865085 on 3set.online landing (14 pages) | 2026-10-29 | c77c820 | [20261029-yandex-metrika-landing](./quick/20261029-yandex-metrika-landing/) |
 
 ## Deferred Items
 

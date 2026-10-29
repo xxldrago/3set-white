@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Расширенная аналитика
-current_phase: 09
-current_phase_name: Payment Funnel & Failure Analysis
-status: verifying
-stopped_at: Completed 09-03-PLAN.md (Phase 9 UI surface)
-last_updated: "2026-10-26T22:53:27.898Z"
-last_activity: 2026-10-27
-last_activity_desc: Plan 09-02 complete — Phase 9 DB loaders green (9 tests)
-state_head: 1b66c5d91760c4b46abbf2cd7d05d10784a2cb59
+current_phase: 10
+current_phase_name: Cohorts & Retention Analytics
+status: planning
+stopped_at: Phase 9 complete, ready to plan Phase 10
+last_updated: "2026-10-29T01:51:55.227Z"
+last_activity: 2026-10-29
+last_activity_desc: Phase 9 complete, transitioned to Phase 10
+state_head: 9a877bcecb56582f8dcdc435bcb3f101c215a869
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 11
   completed_plans: 11
 ---
@@ -24,22 +24,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-20)
 
 **Core value:** Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
-**Current focus:** Phase 09 — Payment Funnel & Failure Analysis
+**Current focus:** Phase 10 — Cohorts & Retention Analytics
 
 ## Current Position
 
-Phase: 09 (Payment Funnel & Failure Analysis) — EXECUTING
-Plan: 3 of 3
-Status: Phase complete — ready for verification
-Last activity: 2026-10-27 — Plan 09-02 complete (Phase 9 loaders, 9 DB tests green)
+Phase: 10 — Cohorts & Retention Analytics
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-10-29 — Phase 9 complete, transitioned to Phase 10
 
-Progress: [██████████] 91% (10/11 plans)
+Progress: [██████████] 100% (11/11 plans)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 8
+- Total plans completed: 11
 - Average duration: -
 - Total execution time: -
 
@@ -49,6 +49,7 @@ Progress: [██████████] 91% (10/11 plans)
 |-------|-------|-------|----------|
 | 07 | 5 | - | - |
 | 8 | 3 | - | - |
+| 9 | 3 | - | - |
 
 **Recent Trend:**
 
@@ -103,6 +104,7 @@ None yet.
 - `Order.providerCost` — новое поле, требуется миграция Prisma; исторические заказы останутся без стоимости (backfill не может её восстановить) — метрики net/margin за прошлое неполны, помечать как таковые
 - `artemida_balance_snapshots` — единственный источник истории баланса: `GET /balance` не имеет wallet-history endpoint, snapshots копятся только с момента деплоя Phase 7
 - Пересчёт rollup должен быть дешёвым (один сервер, `docker compose ... up -d web`): backfill обязан быть runnable on demand, не блокируя запросы
+- `[Phase 09]` `paidAt → provisioned` считается через `Order.updatedAt` (proxy): merge аккаунтов (`lib/accounts.ts:164`) переписывает `updatedAt` историческим provisioned-заказам и может завысить среднее. Нужна nullable-колонка `Order.provisionedAt` + миграция + `provisionedAt ?? updatedAt` (MD-01 в `09-REVIEW.md`, AR-09-01 в `09-SECURITY.md`)
 
 ## Deferred Items
 
@@ -115,5 +117,5 @@ Items acknowledged and deferred at milestone close, most recent first:
 ## Session Continuity
 
 Last session: 2026-10-26T22:53:27.801Z
-Stopped at: Completed 09-03-PLAN.md (Phase 9 UI surface)
+Stopped at: Phase 9 complete, ready to plan Phase 10
 Resume file: None

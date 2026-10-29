@@ -1,12 +1,13 @@
 ---
 phase: 09-payment-funnel-failure-analysis
 verified: 2026-10-27T13:31:00Z
-status: human_needed
+status: passed
 score: 4/4 must-haves verified
 behavior_unverified: 0
 overrides_applied: 0
 gaps: []
 advisory:
+
   - id: MD-01
     finding: "paid→provisioned uses Order.updatedAt; an account merge (lib/accounts.ts:164) re-points historical provisioned orders and moves updatedAt, inflating the mean by days"
     verdict: "quality-debt"
@@ -38,6 +39,7 @@ advisory:
     affects_success_criteria: false
     rationale: "Verified live in this run: the local orders table was empty (selected count = 0), so every exact pin (5/4/3/2, 4/5, 3/4, 2/3, 60_000/110_000) executed. Test-fragility risk for future dirty environments, not a current verification gap."
 human_verification:
+
   - test: "Open /admin/analytics as administrator at 360, 768 and 1280 px and scroll below the retention section"
     expected: "«Воронка платежей» (4 funnel cards + expired card), «Ошибки выдачи» (code table or bordered empty panel) and «Скорость оплаты и выдачи» (2 + 2 timing cards) all render below the retention section; the funnel collapses to one column on mobile and the error table scrolls horizontally inside a focusable region; a zero/empty sample shows «—», never «0 %»"
     why_human: "Actual browser layout, responsive collapse, horizontal scroll and the focusable scroll region cannot be proven by source scans; the phase's own verification section declares this an end-of-phase visual check."

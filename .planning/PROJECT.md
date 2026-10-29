@@ -99,4 +99,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-20 — milestone v1.1 (Расширенная аналитика) started*
+*Last updated: 2026-10-29 — after Phase 9 (Payment Funnel & Failure Analysis); v1.1 requirements live in REQUIREMENTS.md (ANL-01…ANL-15, COH-01…05, SEG-01…05)*

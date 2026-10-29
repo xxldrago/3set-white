@@ -5,15 +5,15 @@ milestone_name: Расширенная аналитика
 current_phase: 10
 current_phase_name: Cohorts & Retention Analytics
 status: planning
-stopped_at: Phase 10 UI-SPEC approved
-last_updated: "2026-10-29T03:20:14.672Z"
+stopped_at: Phase 10 planned (3 waves)
+last_updated: "2026-10-29T06:52:49.082Z"
 last_activity: 2026-10-29
 last_activity_desc: Phase 9 complete, transitioned to Phase 10; quick task 261029-gni (Yandex Metrika counter on landing)
-state_head: da4fa268a2702d69230ed6bfae5476d9bdf621d4
+state_head: a5b03813677067eb0bb1d16915fdc0b881ac0a6d
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 11
+  total_plans: 14
   completed_plans: 11
 ---
 
@@ -122,6 +122,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-29T03:20:14.396Z
-Stopped at: Phase 10 UI-SPEC approved
-Resume file: .planning/phases/10-cohorts-retention-analytics/10-UI-SPEC.md
+Last session: 2026-10-29T06:52:48.796Z
+Stopped at: Phase 10 planned (3 waves)
+Resume file: .planning/phases/10-cohorts-retention-analytics/10-01-PLAN.md

@@ -17,15 +17,24 @@
 - [ ] **PRM-01**: Воронка click → register → pay по каждому коду и партнёру
 - [ ] **PRM-02**: Стоимость скидки против выручки и ROI по каждому промокоду
 - [ ] **PRM-03**: Partner ROI с учётом выплат (`Withdrawal`)
-- [ ] **PRM-04**: Fraud-сигналы: trial-фермы по `ipHash`/`emailCanonical`, self-cycles, trial→no-pay ratio по источнику
+- [ ] **PRM-04**: Fraud-сигналы: self-dealing промокод, mutual referral pairs, кластеры заблокированных регистраций по email, trial→no-pay ratio по источнику (наблюдение, без авто-банов). IP-кластеры по `signupIpHash` — P2, после накопления данных (сбор начинается в Phase 12)
 
 ### EXT — Extra analytics
 
-- [ ] **EXT-01**: Save-list истекающих ключей (≤7 дней без продления) с push-напоминанием через `cron/remind`
+- [ ] **EXT-01**: Save-list истекающих ключей (≤7 дней без продления) с push-напоминанием T-7 / T-3 / T-1 через `cron/remind` (MSK-ключ дня, стадийная идемпотентность)
 - [ ] **EXT-02**: Upsell-radar — тяжёлые по трафику/устройствам пользователи на низком тарифе
-- [ ] **EXT-05**: Data-quality флаги (degraded-ответы ARTEMIDA исключаются из агрегатов)
+- [ ] **EXT-05**: Data-quality флаги (degraded-ответы ARTEMIDA исключаются из агрегатов; degraded-прогон rollup не перезаписывает здоровые значения)
 - [ ] **EXT-06**: CSV-экспорт по каждому отчёту
 - [ ] **EXT-07**: Metric dictionary — страница с определением каждой формулы
+
+## Milestone Decisions (owner, 2026-10-31)
+
+- **D1**: собираем клики и для generic-, и для партнёрских кодов (`promo_clicks` + beacon в Phase 12) — воронка честная для всех кодов
+- **D2**: собираем `User.signupIpHash` (sha256, сырой IP не храним, литерал `"direct"` исключён) с Phase 12; история только вперёд
+- **D3**: алерты получает только `administrator`
+- **D4**: fraud P1 (self-dealing, mutual pairs, trial→no-pay) в Phase 14; IP-кластеры — P2
+- **D5**: каденция T-7 / T-3 / T-1, MSK-ключ дня; `autorenew.ts` не трогаем
+- **D6**: 4 алерта с фиксированными дефолтами в `Setting`, без per-rule overrides
 
 ## Out of Scope (v1.2)
 

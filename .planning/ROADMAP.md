@@ -118,10 +118,10 @@ Plans:
   4. Админ видит когорты в разрезе тарифа по числу устройств
   5. Админ видит revenue-когорты по месяцу первой оплаты (payer cohorts)
 
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
 
-### Phase 11: RFM Segments & Targeting
+### Phase 11: RFM Segments & Targeting:
 
 **Goal**: Админ видит RFM-сегменты пользователей и может использовать сегмент как аудиторию рассылки
 **Mode:** mvp
@@ -135,8 +135,16 @@ Plans:
   4. Админ выбирает сегмент как аудиторию рассылки и видит предпросмотр числа получателей до отправки
   5. Админ меняет пороги сегментов без деплоя, и размеры сегментов пересчитываются
 
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
+
+Plans:
+**Wave 1**
+- [ ] 11-01-PLAN.md — Pure RFM derivation + thresholds helpers + user_rfm migration (gated by D-10 checkpoint)
+**Wave 2** *(blocked on Wave 1)*
+- [ ] 11-02-PLAN.md — rfm-service loaders + cron route + backfill + DB identity tests
+**Wave 3** *(blocked on Wave 2)*
+- [ ] 11-03-PLAN.md — /admin/segments page + cards + thresholds form + count/thresholds routes + broadcast targeting + users drill-down + 34 i18n keys + contract tests
 
 ## Progress
 

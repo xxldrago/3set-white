@@ -8,37 +8,37 @@
 
 Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
 
-## Current Milestone: v1.1 Расширенная аналитика
+## Current Milestone: v1.1 Расширенная аналитика ✅ SHIPPED 2026-10-31
 
-**Goal:** Дать владельцу измеримую картину бизнеса — выручка, юнит-экономика и удержание — с историей, когортами и сегментами, а не одним числом за период.
+**Goal (achieved):** Дать владельцу измеримую картину бизнеса — выручка, юнит-экономика и удержание — с историей, когортами и сегментами, а не одним числом за период.
 
-**Target features:**
-- Метрики бизнеса: MRR/ARR (+ New/Expansion/Contraction/Churned MRR), ARPU/ARPPU, LTV gross + net, renewal/churn по подпискам
-- Когортное удержание и revenue retention (unit = ключ/подписка), когорты по каналу и тиру устройств
-- Воронка оплаты `pending→paid→provisioned` + `failed/canceled` по `errorCode`, время до оплаты, `expired` = pending-by-age
-- Экономика провайдера: `Order.providerCost` + снапшоты `/balance` → маржа, средний расход на ключ, прогноз runway
-- RFM-сегменты (trial-only / payers / active / at-risk / churned / sleeping / VIP) с таргетингом рассылок
-- Основа: `daily_metrics` rollup + `user_rfm` + cron 03:00 + backfill истории
+**Shipped (5 phases, 17 plans):**
+- Phase 7: Analytics Foundation & Revenue Metrics (MRR/ARR, waterfall, ARPU/ARPPU, daily_metrics rollup, backfill, providerCost)
+- Phase 8: Unit Economics & Retention (LTV gross/net, renewal, churn, margin, burn-rate/runway)
+- Phase 9: Payment Funnel & Failure Analysis (funnel, errorCode, timing, expired-by-age)
+- Phase 10: Cohorts & Retention Analytics (registration/payer matrices, channel & device slices)
+- Phase 11: RFM Segments & Targeting (user_rfm, 7 named segments, drill-down, broadcast targeting, configurable thresholds)
 
-**Out of this milestone (deferred to Future in REQUIREMENTS.md):** promo/referral quality + fraud, WoW/MoM alert rules, expiry save-list, upsell radar, refund accounting, CSV export, metric dictionary.
+**Next:** v1.2 (not started) — run `/gsd-new-milestone` to define scope.
 
 ## Requirements
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Регистрация через Telegram с синхронизацией бота и PWA-кабинета — v1.0
+- ✓ Trial-ключ, покупка, продление, апгрейд — v1.0
+- ✓ Личный кабинет (PWA), тикеты, админ-панель с ролями — v1.0
+- ✓ Деплой на single server, White Label — v1.0
+- ✓ Analytics foundation: daily_metrics rollup, cron 03:00, backfill, providerCost — v1.1
+- ✓ MRR/ARR/ARPU/ARPPU + waterfall — v1.1
+- ✓ LTV gross/net, renewal, churn, margin, burn-rate/runway — v1.1
+- ✓ Payment funnel + timing + expired-by-age — v1.1
+- ✓ Cohort matrices (registration + payer) с channel/device slices — v1.1
+- ✓ RFM segments (7 named) + drill-down + broadcast targeting + configurable thresholds — v1.1
 
 ### Active
 
-- [ ] Регистрация через Telegram с синхронизацией бота и PWA-кабинета (единый аккаунт по telegram-id)
-- [ ] Trial-ключ на 1 день / 2 устройства через `POST /trial`
-- [ ] Покупка подписки (7/30/90 дней, выбор числа устройств, безлимитный трафик) с оплатой Platega.io (оплата сразу за ключ)
-- [ ] Продление ключа (`POST /keys/{id}/renew`), апгрейд устройств (`POST /keys/{id}/upgrade`)
-- [ ] Личный кабинет (PWA): список ключей, детали, subscription-ссылки (VLESS/Trojan), управление устройствами, трафик
-- [ ] Обращение в техподдержку из бота и из кабинета — единая очередь тикетов с файлами/скриншотами и ответами в оба канала
-- [ ] Админ-панель с ролями: администратор (всё), техподдержка (тикеты + просмотр ключей), менеджер (финансы + статистика)
-- [ ] Деплой всего стека на один сервер 64.188.97.106, домен my.3set.online, коммиты и пуш в GitHub-репозиторий
-- [ ] White Label: использование my.3set.online как бренд-домена для subscription-ссылок ARTEMIDA
+(None — next milestone not yet defined; run `/gsd-new-milestone`)
 
 ### Out of Scope
 
@@ -99,4 +99,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-29 — after Phase 9 (Payment Funnel & Failure Analysis); v1.1 requirements live in REQUIREMENTS.md (ANL-01…ANL-15, COH-01…05, SEG-01…05)*
+*Last updated: 2026-10-31 — v1.1 milestone shipped (Phases 7-11)*

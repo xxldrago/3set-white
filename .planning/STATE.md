@@ -21,10 +21,10 @@ current_phase_name: RFM Segments & Targeting
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-10-29)
+See: .planning/PROJECT.md (updated 2026-10-31)
 
 **Core value:** Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
-**Current focus:** Phase 11 — RFM Segments & Targeting (complete)
+**Current focus:** v1.1 shipped; planning next milestone
 
 ## Current Position
 
@@ -122,9 +122,9 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-29T07:33:59.868Z
-Stopped at: Phase 11 UI-SPEC approved
-Resume file: .planning/phases/11-rfm-segments-targeting/11-UI-SPEC.md
+Last session: 2026-10-31
+Stopped at: v1.1 milestone complete
+Resume file: (none)
 
 ## Operator Next Steps
 

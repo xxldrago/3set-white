@@ -24,7 +24,7 @@ Numbering continues from v1.0 (last phase = 6).
 - [x] **Phase 8: Unit Economics & Retention** - LTV gross/net, renewal rate, logo/revenue churn, gross margin, средний расход на ключ, burn-rate и runway (completed 2026-10-26)
 - [x] **Phase 9: Payment Funnel & Failure Analysis** - Воронка `pending→paid→provisioning→provisioned`, `errorCode`, время до оплаты/выдачи, `expired` = pending-by-age (completed 2026-10-29)
 - [x] **Phase 10: Cohorts & Retention Analytics** - Когортная матрица, revenue retention, срезы по каналу и числу устройств, когорты по месяцу первой оплаты (completed 2026-10-29)
-- [ ] **Phase 11: RFM Segments & Targeting** - Ежедневный `user_rfm`, именованные сегменты, drill-down в список, сегмент как аудитория рассылки, настраиваемые пороги
+- [x] **Phase 11: RFM Segments & Targeting** - Ежедневный `user_rfm`, именованные сегменты, drill-down в список, сегмент как аудитория рассылки, настраиваемые пороги (completed 2026-10-31)
 
 ## Phase Details
 

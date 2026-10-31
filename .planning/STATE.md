@@ -4,17 +4,17 @@ milestone: v1.1
 milestone_name: Расширенная аналитика
 current_phase: 11
 current_phase_name: RFM Segments & Targeting
-status: planning
-stopped_at: Phase 11 UI-SPEC approved
-last_updated: "2026-10-29T07:34:00.076Z"
-last_activity: 2026-10-29
-last_activity_desc: Phase 10 complete, transitioned to Phase 11
-state_head: bbc7836f5506b394a80ef85153e0e71dec511629
+status: complete
+stopped_at: Phase 11 complete
+last_updated: "2026-10-31T12:00:00.000Z"
+last_activity: 2026-10-31
+last_activity_desc: Phase 11 complete — RFM segments & targeting shipped (3 plans)
+state_head: HEAD
 progress:
   total_phases: 5
-  completed_phases: 4
-  total_plans: 14
-  completed_plans: 14
+  completed_phases: 5
+  total_plans: 17
+  completed_plans: 17
 ---
 
 # Project State
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-29)
 
 **Core value:** Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
-**Current focus:** Phase 10 — Cohorts & Retention Analytics
+**Current focus:** Phase 11 — RFM Segments & Targeting (complete)
 
 ## Current Position
 
-Phase: 11 — RFM Segments & Targeting
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-10-29 — Phase 10 complete, transitioned to Phase 11
+Phase: 11 — RFM Segments & Targeting (complete)
+Plan: 3 of 3
+Status: Complete
+Last activity: 2026-10-31 — Phase 11 complete
 
 Progress: [██████████] 100% (11/11 plans)
 
@@ -51,6 +51,7 @@ Progress: [██████████] 100% (11/11 plans)
 | 8 | 3 | - | - |
 | 9 | 3 | - | - |
 | 10 | 3 | - | - |
+| 11 | 3 | - | - |
 
 **Recent Trend:**
 

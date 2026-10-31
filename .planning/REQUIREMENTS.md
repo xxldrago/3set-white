@@ -40,11 +40,11 @@ compensation/reply templates/requester context).
 
 ### SEG — RFM segments & targeting
 
-- [ ] **SEG-01**: Система считает для каждого пользователя Recency / Frequency / Monetary и сохраняет в `user_rfm` с ежедневным обновлением
-- [ ] **SEG-02**: Админ видит именованные сегменты (trial-only, new payer, active, at-risk, churned, sleeping, VIP) с размером каждого
-- [ ] **SEG-03**: Админ видит размер сегмента и может провалиться в список пользователей, отфильтрованный по сегменту
-- [ ] **SEG-04**: Админ выбирает сегмент как аудиторию рассылки с предпросмотром числа получателей
-- [ ] **SEG-05**: Пороги сегментов конфигурируемы (не захардкожены) и меняются без деплоя
+- [x] **SEG-01**: Система считает для каждого пользователя Recency / Frequency / Monetary и сохраняет в `user_rfm` с ежедневным обновлением
+- [x] **SEG-02**: Админ видит именованные сегменты (trial-only, new payer, active, at-risk, churned, sleeping, VIP) с размером каждого
+- [x] **SEG-03**: Админ видит размер сегмента и может провалиться в список пользователей, отфильтрованный по сегменту
+- [x] **SEG-04**: Админ выбирает сегмент как аудиторию рассылки с предпросмотром числа получателей
+- [x] **SEG-05**: Пороги сегментов конфигурируемы (не захардкожены) и меняются без деплоя
 
 ## Future Requirements (deferred — not in v1.1)
 
@@ -125,8 +125,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COH-03 | Phase 10 | Complete |
 | COH-04 | Phase 10 | Complete |
 | COH-05 | Phase 10 | Complete |
-| SEG-01 | Phase 11 | Pending |
-| SEG-02 | Phase 11 | Pending |
-| SEG-03 | Phase 11 | Pending |
-| SEG-04 | Phase 11 | Pending |
-| SEG-05 | Phase 11 | Pending |
+| SEG-01 | Phase 11 | Complete |
+| SEG-02 | Phase 11 | Complete |
+| SEG-03 | Phase 11 | Complete |
+| SEG-04 | Phase 11 | Complete |
+| SEG-05 | Phase 11 | Complete |

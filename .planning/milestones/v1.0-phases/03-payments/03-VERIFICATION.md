@@ -7,6 +7,7 @@ behavior_unverified: 4
 overrides_applied: 0
 gaps: []
 behavior_unverified_items:
+
   - truth: "SC1 live E2E: a real Platega card/СБП payment reaches CONFIRMED and the user receives a working subscription"
     test: "Run a live (test-merchant) payment through POST /api/orders → Platega hosted page → CONFIRMED callback; confirm the order reaches provisioned and the key is delivered"
     expected: "Order pending→paid→provisioning→provisioned with a real ARTEMIDA key; no live Platega test-mode payment has been executed (PLATEGA_* not in .env.local)"
@@ -25,6 +26,7 @@ behavior_unverified_items:
     why_human: "Real-time polling, terminal transition and QR presentation are visual/browser behaviors"
 coincidental_reliance_items: []
 human_verification:
+
   - test: "Live Platega test-mode payment (or a sandbox equivalent) through the hosted page to CONFIRMED"
     expected: "Order reaches provisioned; a real ARTEMIDA key is minted once under order:<id>:new; one notify-provisioned row is consumed"
     why_human: "External service integration; PLATEGA_* is absent from .env.local, so only the fake-fetch pipeline was exercised"
@@ -37,6 +39,10 @@ human_verification:
   - test: "Browser cabinet pass: tariff → pay → return page polls → provisioned sub-link + QR; trial card shows no renew/upgrade; history empty/one/many + long-key ellipsis"
     expected: "Rendered DOM matches UI-SPEC; provider-free rows; trial cards render only key.buyCta"
     why_human: "Visual/state coverage has no DOM-level automated test"
+audit_acknowledged:
+  milestone: v1.1
+  at: 2026-10-31
+  status: human_needed
 ---
 
 # Phase 3: Payments Verification Report

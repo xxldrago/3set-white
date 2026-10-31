@@ -724,8 +724,6 @@ export const ru = {
     ticketCloseBody: 'Пользователь сможет ответить и открыть обращение заново.',
     ticketCloseConfirm: 'Закрыть',
     ticketCloseError: 'Не удалось закрыть обращение. Попробуйте ещё раз.',
-    broadcastTitle: 'Рассылка',
-    broadcastRecipients: 'Получателей: {n}',
     broadcastLabel: 'Текст сообщения',
     broadcastPlaceholder: 'Напишите сообщение для пользователей…',
     broadcastCta: 'Подготовить рассылку',

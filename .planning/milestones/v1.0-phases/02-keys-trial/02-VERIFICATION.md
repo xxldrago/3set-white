@@ -17,6 +17,7 @@ re_verification:
 gaps: []
 deferred: []
 behavior_unverified_items:
+
   - truth: "Пользователь получает trial в один тап из бота и видит инструкции по подключению (TRIAL-01/TRIAL-03, bot half)"
     test: "Tap «Попробовать» / «Инструкции» in a real Telegram chat against the running bot"
     expected: "Trial key issued for that chat; a repeat tap shows the used-state copy; «Инструкции» shows v2rayNG/Streisand/Hiddify sections"
@@ -27,6 +28,7 @@ behavior_unverified_items:
     why_human: "02-01 probe account held 0 keys; these shapes remain UNKNOWN and are an accepted owner-pending caveat"
 coincidental_reliance_items: []
 human_verification:
+
   - test: "In a real Telegram chat, tap «Попробовать», then tap it again; tap «Инструкции»."
     expected: "First tap issues a trial key; second tap shows the used-state copy; «Инструкции» lists v2rayNG/Streisand/Hiddify."
     why_human: "Telegraf handlers cannot be unit-imported without launching polling."
@@ -36,6 +38,10 @@ human_verification:
   - test: "Visual/interaction pass over TariffPicker (live price, disabled-until-ready, error+retry), TrialButton used/error, SubscriptionCard badges, ConfirmPanel second-tap/Escape/focus trap; confirm the device floor is 2 (accepted owner decision) not 1."
     expected: "All dynamic states render per UI-SPEC; device selector minimum is 2 per provider minDevices."
     why_human: "Layout/interaction contracts and the provider-driven device clamp (2–10 vs roadmap's stated 1–10) are not covered by automated UI tests and are an accepted owner decision."
+audit_acknowledged:
+  milestone: v1.1
+  at: 2026-10-31
+  status: human_needed
 ---
 
 # Phase 2: Keys & Trial Verification Report
@@ -72,6 +78,7 @@ human_verification:
 | #7 CAB-04 null overwrite | `lib/keys-service.ts:223-235` — `...(links.subscriptionUrl !== null ? { subscriptionUrl: links.subscriptionUrl } : {})`; traffic/`lastSyncedAt` still refresh | `preserves a good cached subscription_url when a 2xx normalizes to null (gap #7)`; `refreshes the cached subscription_url when the provider returns a real URL` | ✓ CLOSED |
 
 **Prohibitions (ADR-550):** both 02-07 test-tier prohibitions are now backed by wired regression tests, so they resolve VERIFIED rather than flagged:
+
 - MUST NOT mirror another user's key/subscriptionUrl into the caller's cache — enforced by the three ownership vectors (filter present at the only population path).
 - MUST NOT overwrite a good cached `subscription_url` with null — enforced by the null-preservation vector (spread guard present).
 

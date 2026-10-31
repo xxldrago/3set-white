@@ -13,12 +13,14 @@ re_verification:
   gaps_remaining: []
   regressions: []
 behavior_unverified_items:
+
   - truth: "Clicking Telegram login on /login opens the bot, the user types the bot-delivered code, and the original tab returns the user logged in (06-07 truth 1, now with the 06-09 code step)"
     test: "On /login tap «Войти через Telegram»; confirm a new tab opens t.me/<bot>?start=login_<token>; press Start; copy the 6-digit code from the bot; enter it in the original tab and submit."
     expected: "A logged-in cabinet session is created exactly once; a wrong code shows the wrong-code copy; replay/expiry show retry/expired."
     why_human: "The server contract (issue/bind/consume incl. the CR-01 hijack vector and the attempt cap) is covered by tests/integration/telegram-bot-login.test.ts and the client code-entry state is present/wired, but the full browser tab->bot->code->callback round trip cannot be asserted in the vitest node environment."
 coincidental_reliance_items: []
 human_verification:
+
   - test: "Bot-redirect login click-through on /login: tap «Войти через Telegram», press Start in the bot, copy the 6-digit code, enter it in the original tab."
     expected: "The original tab becomes logged in exactly once; a wrong code shows the wrong-code copy; replay/expiry show retry/expired."
     why_human: "Server contract is integration-tested, but the browser tab->bot->code->callback round trip cannot be asserted in the vitest node environment (truth 11)."
@@ -34,6 +36,10 @@ human_verification:
   - test: "Claim the email-only trial from the cabinet once, then attempt it again."
     expected: "First tap issues a trial key; the second attempt is blocked cleanly (server-side)."
     why_human: "End-to-end UX confirmation; server logic is integration-tested."
+audit_acknowledged:
+  milestone: v1.1
+  at: 2026-10-31
+  status: human_needed
 ---
 
 # Phase 6: Email Auth Verification Report

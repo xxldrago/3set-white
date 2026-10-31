@@ -6,6 +6,7 @@ score: 3/3 must-haves verified
 behavior_unverified: 0
 overrides_applied: 0
 human_verification:
+
   - test: "Create test bot via BotFather, set BOT_TEST_TOKEN in .env.local, boot with BOT_MODE=polling, send /start to the test bot"
     expected: "Bot replies with RU greeting + keyboard buttons; users row holds telegram_id and chat_id"
     why_human: "BOT_TEST_TOKEN absent — no live Telegram API calls possible from automation; polling + real reply needs a real bot token and a human-driven chat"
@@ -18,6 +19,10 @@ human_verification:
   - test: "Owner reviews placeholder icons (public/icons/*.png) on a phone"
     expected: "Owner approves temporary artwork or supplies real logo at the same three paths"
     why_human: "Visual brand verdict is human judgment by definition"
+audit_acknowledged:
+  milestone: v1.1
+  at: 2026-10-31
+  status: human_needed
 ---
 
 # Phase 01: Foundation Verification Report
@@ -122,6 +127,7 @@ Secret scan over `git log --all -p` for private-key/token shapes: no hits. `.env
 ### Human Verification Required
 
 See frontmatter `human_verification` (5 items, all pre-declared in SUMMARIES as owner-pending — NOT new gaps):
+
 1. Live `/start` polling reply + chat_id persistence (needs BOT_TEST_TOKEN).
 2. Live Widget browser click-through (needs real bot username + human browser).
 3. Real-device install proof (Android + iOS).

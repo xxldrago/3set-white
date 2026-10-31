@@ -6,6 +6,7 @@ score: 14/14 must-haves verified
 behavior_unverified: 4
 re_verification: false
 behavior_unverified_items:
+
   - truth: "Live Telegram bot support flow: «Поддержка» menu → next text/photo creates a ticket with a downloaded screenshot"
     test: "In the real bot, tap «Поддержка», then send a text and (separately) a photo"
     expected: "A ticket appears in /support, the photo as an inline thumbnail; a caption-less photo gets the keyed fallback subject"
@@ -24,6 +25,7 @@ behavior_unverified_items:
     why_human: "Runtime/Docker boot behavior; not covered by unit tests"
 coincidental_reliance_items: []
 human_verification:
+
   - test: "Live bot support flow (menu arm → text/photo → ticket + screenshot)"
     expected: "Ticket in the unified queue with the photo attached; caption-less photo uses the keyed fallback subject"
     why_human: "Real Telegram Bot API getFileLink/file_id download; unit suite is node-only"
@@ -36,6 +38,10 @@ human_verification:
   - test: "Standalone worker / upload-dir boot"
     expected: "Worker + reminder tick start once; UPLOAD_DIR writable/persistent"
     why_human: "Runtime/Docker behavior"
+audit_acknowledged:
+  milestone: v1.1
+  at: 2026-10-31
+  status: human_needed
 ---
 
 # Phase 4: Support & Retention Verification Report

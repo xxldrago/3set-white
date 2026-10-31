@@ -13,12 +13,14 @@ re_verification:
   gaps_remaining: []
   regressions: []
 behavior_unverified_items:
+
   - truth: "Пользователь открывает кабинет по https://my.3set.online, бот и Platega-webhook работают через этот домен"
     test: "На 64.188.97.106: docker compose -f docker-compose.prod.yml build && up -d; curl -f https://my.3set.online/api/health → 200; nginx -t; setWebhook и Platega callback на my.3set.online"
     expected: "Кабинет отвечает по HTTPS, /api/health → 200 (worker:true), бот принимает webhook, Platega callback принимается"
     why_human: "Артефакты (Nginx TLS conf, Compose topology, deploy.sh, маршруты /api/telegram/webhook/[secret] и /api/platega/callback) присутствуют и связаны, но живой деплой требует сервера 64.188.97.106 и Docker — недоступны агенту (05-06 Task 5, blocking-human)."
 coincidental_reliance_items: []
 human_verification:
+
   - test: "Живой деплой на 64.188.97.106 (05-06 Task 5): build образа, nginx -t, curl -f https://my.3set.online/api/health → 200, выдача TLS, setWebhook, pg_dump restore dry-run, rollback dry-run, dig AAAA sub.my.3set.online пуст"
     expected: "Весь стек работает на my.3set.online; OPS-01 можно пометить complete"
     why_human: "Docker и сервер недоступны агенту; это явный блокирующий human-gate (05-06 SUMMARY фиксирует Task 5 как blocking-human)"
@@ -28,6 +30,10 @@ human_verification:
   - test: "Живой вход администратора/техподдержки/менеджера в /admin и фактическая рассылка broadcast в Telegram"
     expected: "Каждый видит только свои разделы; broadcast доставляется получателям с 403-terminal/429-retry и дедупликацией"
     why_human: "Рендеринг навигации, доставка в реальном Telegram и визуальные состояния требуют браузера/боевого бота — юнит-тесты пиннят структуру и логику, но не реальный UI/Telegram"
+audit_acknowledged:
+  milestone: v1.1
+  at: 2026-10-31
+  status: human_needed
 ---
 
 # Phase 5: Admin & Deploy Verification Report

@@ -1,283 +1,558 @@
-# Architecture Research
+# Architecture Research — v1.2 integration design
 
-**Domain:** Telegram-bot + PWA cabinet + API-wrapper + payments + tickets + admin (VPN subscription service, single VPS)
-**Researched:** 2026-09-30
-**Confidence:** MEDIUM (official docs cross-checked: nextjs.org, docs.platega.io OpenAPI, Telegraf npm/README, core.telegram.org; seam tier for web sources is MEDIUM/LOW — Platega contract details quoted verbatim from its official OpenAPI spec)
+**Domain:** Analytics/reporting additions to an existing single-server Next.js 16 App Router product (VPN subscriptions, RU/RUB)
+**Researched:** 2026-10-31
+**Confidence:** HIGH for integration points and layering (read directly from the codebase); MEDIUM for schema shape of the two new tables (design judgement, aligns with existing table conventions); LOW for the promo-click data gap resolution (product decision required).
+
+**Scope:** NEW features only. Existing v1.1 architecture (thin BFF over ARTEMIDA, `lib/analytics/*` pure modules + `service.ts` loaders, `daily_metrics`/`user_rfm`/`artemida_balance_snapshots`, cron routes gated by `CRON_SECRET`, outbox + `Notification` delivery, RSC admin pages) is taken as given.
+
+## Executive Summary
+
+Every v1.2 feature fits the existing three-layer discipline **pure module → DB loader → RSC page/cron route**. No new architectural concept is required. The two hard constraints that shape the design:
+
+1. `lib/analytics/*.ts` (except `service.ts`/`rfm-service.ts`) are **pure** — no `prisma`, no `next/*`, no React. Every new derivation must live in a pure module with unit tests, and every new DB read must live in a `*-service.ts`.
+2. Money/analytics numbers are **never re-derived in components, never SQL-side bucketed, never MSK-shifted inline**. `lib/analytics/time.ts` is the only calendar authority, `series.ts#cashOf` the only cash authority.
+
+Three genuinely new pieces of state are needed, and only three:
+
+- `alert_events` — alert history + dedupe + auditable thresholds-in-effect. `Setting` alone cannot satisfy "админ видит историю" or "не спамит".
+- `data_quality_events` — append-only degraded-response log per source/day/reason, needed to answer "сколько записей исключено" and to keep `daily_metrics` a pure value table.
+- `promo_clicks` — promo-code click beacon. **Data gap found:** `ReferralClick` only records referral-code clicks (`ownerUserId` is required and the route resolves `User.referralCode`), so promo-code click→register→pay funnels (PRM-01) have no top-of-funnel source today. This capture is forward-only, so it must ship *earlier* than the report that consumes it.
+
+Everything else is additive: `Setting` keys (following the existing `rfm.threshold.*` precedent), a `MetricCard` delta/quality slot, one cron route (`/api/cron/alerts`), one export route (`/api/admin/export/[report]`), and one dictionary page.
 
 ## Standard Architecture
 
 ### System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Client layer                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐   │
-│  │ Telegram app │  │ PWA cabinet  │  │ Admin panel (Next.js │   │
-│  │ (bot chat +  │  │ my.3set.     │  │ route group, same    │   │
-│  │ WebApp btn)  │  │ online)      │  │ origin, RBAC)        │   │
-│  └──────┬───────┘  └──────┬───────┘  └──────────┬───────────┘   │
-│         │ Telegram       │ HTTPS                │ HTTPS         │
-│         │ Bot API        │                      │               │
-├─────────┴────────────────┴──────────────────────┴───────────────┤
-│                     Edge (single VPS 64.188.97.106)              │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │ Nginx (TLS termination, reverse proxy, Certbot)          │  │
-│  │  /api/telegram/webhook ─┐  /api/platega/callback ─┐      │  │
-│  └──────────────┬──────────┴────────────┬────────────┘      │  │
-├─────────────────┴───────────────────────┴───────────────────┤
-│                   App layer (ONE Next.js process)              │
-│  ┌────────────┐  ┌─────────────────────┐  ┌───────────────┐  │
-│  │ Telegraf   │  │ Route Handlers BFF  │  │ Fulfillment / │  │
-│  │ bot instance│  │ /api/keys /orders  │  │ outbox worker │  │
-│  │ (handleUpd- │  │ /tickets /admin    │  │ (same proc,   │  │
-│  │ ate via     │  │ /auth + PWA pages  │  │ setInterval)  │  │
-│  │ route)      │  │                     │  │               │  │
-│  └─────┬──────┘  └──────────┬──────────┘  └───────┬───────┘  │
-│        │ shared services (server-only lib/)       │          │
-│        │  artemida.ts · platega.ts · auth.ts      │          │
-│        │  tickets.ts · notify.ts · prisma.ts      │          │
-├────────┴──────────────────────────────────────────┴──────────┤
-│                        Data layer                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐    │
-│  │ Postgres 16  │  │ ARTEMIDA API │  │ Platega.io       │    │
-│  │ (own state:  │  │ (source of   │  │ (payment links + │    │
-│  │ users/orders/│  │ truth: keys, │  │ status callbacks)│    │
-│  │ tickets/keys │  │ pricing, sub │  │                  │    │
-│  │ _cache/outbox│  │ links)       │  │                  │    │
-│  └──────────────┘  └──────────────┘  └──────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────┐
+│ Presentation — RSC pages + client islands (app/admin/**, components)  │
+│  /admin/analytics · /admin/retention · /admin/promos · /admin/referrals│
+│  /admin/analytics/dictionary · <a download> CSV links                 │
+└───────────────┬───────────────────────────────────────────────────────┘
+                │ server-side calls only (no fetch from the browser)
+┌───────────────▼───────────────────────────────────────────────────────┐
+│ Loaders — the ONLY DB readers for a report (*-service.ts)             │
+│  service.ts · rfm-service.ts · NEW: compare/quality/alerts/growth/    │
+│  actions service modules · lib/referral-stats.ts · lib/revenue.ts     │
+└───────────────┬───────────────────────────┬───────────────────────────┘
+                │ plain rows                │ typed reads/writes
+┌───────────────▼──────────────┐  ┌─────────▼───────────────────────────┐
+│ Derivation — PURE modules    │  │ Persistence — prisma                │
+│  series/mrr/waterfall/       │  │  orders · keys_cache · users ·      │
+│  economics/retention/funnel/ │  │  daily_metrics · user_rfm ·         │
+│  cohorts/rfm/time            │  │  promo_codes · wallet_tx ·          │
+│  NEW: compare/quality/       │  │  withdrawals · referral_clicks      │
+│  alerts/promo-roi/fraud/     │  │  NEW: alert_events ·                │
+│  save-list/upsell/dictionary │  │  data_quality_events · promo_clicks │
+└──────────────────────────────┘  └─────────────────────────────────────┘
+                │
+┌───────────────▼───────────────────────────────────────────────────────┐
+│ Async — cron routes (x-cron-secret) + worker process                   │
+│  cron/analytics 03:05 rollup → cron/alerts 03:10 evaluate             │
+│  cron/remind → Notification(remind-expiry) → worker drain             │
+│  NEW: Notification(alert) → worker drain → Telegram (admins)          │
+└───────────────────────────────────────────────────────────────────────┘
 ```
-
-**Core decision: one Next.js process serves everything.** PWA pages, BFF Route Handlers, admin panel, AND the Telegram bot webhook (via `bot.handleUpdate()` inside `app/api/telegram/webhook/route.ts`). One Docker container + one Postgres container + host Nginx. This is the standard shape for bot+PWA shops on a single VPS — it eliminates a second deployable, shares the Prisma client/session code, and both Telegram and Platega webhooks ride the same TLS endpoint.
 
 ### Component Responsibilities
 
-| Component | Responsibility | Typical Implementation |
+| Component | Responsibility | Typical implementation |
 |-----------|----------------|------------------------|
-| PWA cabinet | Key list/detail, sub-links, devices, traffic, buy/renew/upgrade, tickets UI, installable mobile shell | Next.js App Router pages + `app/manifest.ts`; Serwist service worker only if offline needed (v1: manifest alone is enough for installability) |
-| Telegram bot | Onboarding, trial, buy/renew buttons, key delivery, ticket creation with photos, support replies | Telegraf v4: Composer middleware, WizardScene/Stage for buy + ticket flows, `bot.handleUpdate` fed by webhook route |
-| BFF Route Handlers | Auth, validation (Zod), call ARTEMIDA/Platega with server secrets, own order/ticket state | `app/api/*/route.ts`; force-dynamic; never expose `ARTEMIDA_API_KEY`/Platega secret to client |
-| ARTEMIDA wrapper | Single server-only client: Bearer auth, `Idempotency-Key` per POST/DELETE, Retry-After/429/5xx retry, error-code mapping | `lib/artemida.ts`; Art­emida is source of truth for keys/pricing — local DB only caches |
-| Payment module | Order state machine `pending→confirmed/canceled/chargebacked`; link creation; callback verification; async fulfillment | `lib/platega.ts` + `orders` table + `outbox` for bot notifications; callback responds 200 fast, fulfills after |
-| Ticket core | Single queue: `tickets` + `ticket_messages`; channel-agnostic read/write; fan-out delivery to bot + cabinet | `lib/tickets.ts` + `lib/notify.ts`; attachments stored as Telegram `file_id` ↔ local file refs |
-| Admin panel | Same Next.js app, `(admin)` route group, role-gated queries: admin / support (tickets+key view) / manager (finance+stats) | `middleware.ts` + server-side role check per handler; no separate deployable |
-| Outbox worker | Reliable side-effects: send Telegram messages, retry fulfillment after callback | `outbox` table + `setInterval` loop in same process (v1); extract later if needed |
-| Postgres | Own state only: users, orders, tickets, keys_cache, outbox | Docker `postgres:16-alpine` + Prisma; volume-persisted |
+| Pure derivation module (`lib/analytics/x.ts`) | Owns every formula; input = plain rows/numbers, output = numbers or `null`. Never imports prisma/next/react. | Named exported functions, `denominator === 0 ? null` guard style, no rounding, no `|| 0` |
+| Loader (`lib/analytics/x-service.ts`) | Builds the SQL WHERE from MSK labels, selects the minimal row shape, calls the pure module, returns a serializable payload (all `number`, `::int` casts) | `prisma.*.findMany` + `Promise.all`, `mskDayStartInstant` for `timestamp`, `mskDateKey` for `@db.Date` |
+| RSC page / block | Enforces `requireRole`, parses `searchParams`, renders blocks each in its own `try/catch` + `Suspense` | `export const dynamic = 'force-dynamic'`, `notFound()` on role failure |
+| Cron route | `x-cron-secret` timing-safe gate → lazy `import()` of the service → returns ids/outcomes only | Copy of `app/api/cron/analytics/route.ts` |
+| Worker drain | Claims a `Notification` type atomically, dispatches to Telegram, marks done/retry | `drainNotificationType(TYPE, dispatcher, telegram)` in `lib/worker.ts` |
+| Setting keys | Lab-configurable thresholds/toggles, no deploy | `prisma.setting` upsert/get, parsed with fallbacks (`rfm-service.ts` pattern) |
 
-## Recommended Project Structure
+## Recommended Project Structure (delta only)
 
 ```
-src/ (Next.js App Router repo "3set-white")
-├── app/
-│   ├── manifest.ts               # PWA manifest (installability, no plugin needed)
-│   ├── layout.tsx page.tsx       # Cabinet shell (mobile-first)
-│   ├── keys/ tickets/ buy/       # Cabinet pages
-│   ├── (admin)/                  # Admin route group (role-gated layout)
-│   └── api/
-│       ├── auth/telegram/route.ts     # Login Widget + WebApp initData verify → session cookie
-│       ├── telegram/webhook/route.ts  # → bot.handleUpdate (secret path)
-│       ├── keys/[...]/route.ts        # list/detail/devices/traffic/renew/upgrade/trial
-│       ├── orders/route.ts            # create order → Platega link
-│       ├── platega/callback/route.ts  # CONFIRMED/CANCELED/CHARGEBACKED ingest
-│       ├── tickets/route.ts           # CRUD + messages + uploads
-│       └── admin/*/route.ts           # scoped by role
-├── bot/
-│   ├── index.ts        # Telegraf instance, Composer wiring (NO launch())
-│   ├── scenes/         # buy.ts, ticket.ts (WizardScene), start.ts, keys.ts
-│   └── keyboards.ts    # inline keyboards, WebApp button → PWA
-├── lib/ (server-only)
-│   ├── artemida.ts     # Bearer + Idempotency-Key + retry + error map
-│   ├── platega.ts      # X-MerchantId/X-Secret, create tx, verify callback hdrs
-│   ├── auth.ts         # HMAC verify (Widget + initData), session
-│   ├── tickets.ts      # queue ops (channel-agnostic)
-│   ├── notify.ts       # bot sendMessage/photo fan-out via outbox
-│   ├── prisma.ts       # singleton client
-│   └── validations.ts  # Zod schemas at every route boundary
-├── prisma/schema.prisma  # users/orders/tickets(+messages)/keys_cache/outbox
-├── public/icons/*        # PWA icons 192/512 (+maskable)
-├── docker-compose.yml    # web (next start standalone) + db
-└── nginx/my.3set.online.conf  # reverse proxy + Certbot
+lib/
+├── settings.ts                     # NEW tiny get/set + typed parsers (4th consumer of Setting)
+├── csv.ts                          # NEW pure RFC4180 + UTF-8 BOM serializer
+├── analytics/
+│   ├── time.ts                     # UNCHANGED (calendar authority)
+│   ├── windows.ts                  # NEW pure: windowBounds(period, anchor), previousWindow()
+│   ├── compare.ts                  # NEW pure: deltaOf / compareMetrics (ALR-01)
+│   ├── quality.ts                  # NEW pure: QualityStamp, classify, decorate, excludedCount
+│   ├── alerts.ts                   # NEW pure: rule defs + evaluateAlerts(snapshot, config)
+│   ├── promo-roi.ts                # NEW pure: discount cost, revenue, ROI, attribution precedence
+│   ├── fraud.ts                    # NEW pure: ip clusters, alias clusters, self-cycles, trial→no-pay
+│   ├── save-list.ts                # NEW pure: expiring-not-renewed selection + potential revenue
+│   ├── upsell.ts                   # NEW pure: heaviness score + suggested plan
+│   ├── dictionary.ts               # NEW pure: metric dictionary content (typed array)
+│   ├── service.ts                  # MODIFIED: window helpers extracted, quality decoration
+│   ├── compare-service.ts          # NEW loaders: loadKpisComparison etc.
+│   ├── quality-service.ts          # NEW: recordDegraded / loadQualityWindow
+│   ├── alerts-service.ts           # NEW: snapshot → evaluate → persist → enqueue
+│   ├── growth-service.ts           # NEW: promo/referral ROI + fraud aggregates
+│   └── actions-service.ts          # NEW: save-list + upsell loaders
+├── alert-notify.ts                 # NEW: dispatchAlert (parse target from dedupeKey)
+├── reminders-service.ts            # MODIFIED: windowDays param (Setting-driven)
+├── outbox.ts                       # MODIFIED: + ALERT type + enqueueAlertNotifications
+├── worker.ts                       # MODIFIED: + drainNotificationType(ALERT, …)
+├── referral-stats.ts               # MODIFIED: + recordPromoClick (or sibling module)
+└── promo.ts                        # UNCHANGED (validation/CRUD authority)
+
+app/
+├── api/cron/alerts/route.ts        # NEW (03:10, after rollup)
+├── api/admin/export/[report]/route.ts   # NEW (EXT-06)
+├── api/promo/click/route.ts        # NEW (public beacon, mirrors /api/referrals/click)
+├── admin/analytics/page.tsx        # MODIFIED: delta + quality wiring, export links
+├── admin/analytics/dictionary/page.tsx  # NEW (EXT-07)
+└── admin/retention/page.tsx        # NEW (save-list + upsell radar)
+
+components/admin/
+├── MetricCard.tsx                  # MODIFIED: optional `delta` + `quality` slots (all cards inherit)
+├── DeltaBadge.tsx                  # NEW
+├── QualityBadge.tsx                # NEW
+├── DataQualityBanner.tsx           # NEW
+├── ExportCsvLink.tsx               # NEW (server-rendered <a download>, no JS)
+├── AlertHistoryTable.tsx           # NEW
+├── AlertSettingsForm.tsx           # NEW (client island → /api/admin/alerts/settings)
+├── SaveListTable.tsx               # NEW
+└── UpsellTable.tsx                 # NEW
+
+prisma/schema.prisma                # MODIFIED: 3 new models + 1 nullable User column
+lib/i18n/messages/ru.ts             # MODIFIED: new admin.* keys (RU only)
+lib/admin-auth.ts                   # MODIFIED: AdminSection union + MATRIX ('retention','dictionary')
+components/admin/AdminNav.tsx + app/admin/layout.tsx  # MODIFIED: NAV_SECTIONS + labels
 ```
 
 ### Structure Rationale
 
-- **`bot/` without `launch()`:** the bot never opens its own port in production. The webhook Route Handler imports the shared instance and calls `handleUpdate`. Dev uses polling (`bot.launch()` only when `NODE_ENV=development`). This is Telegraf's documented `webhookCallback` pattern, adapted to a Route Handler.
-- **`lib/` server-only, Zod at every boundary:** Next.js BFF guidance — Route Handlers validate, transform, and proxy so secrets and upstream shape never leak to the client. One `artemida.ts` means retry/idempotency policy lives in exactly one place.
-- **`(admin)` group, not a second app:** three roles × small team = middleware + per-query scoping. A separate admin deployable doubles ops for zero v1 benefit.
-- **Own DB is thin:** users/orders/tickets/outbox + `keys_cache`. ARTEMIDA owns keys/pricing/traffic; we mirror what the UI needs to render fast and to survive ARTEMIDA 502/503.
+- **`windows.ts` separate from `time.ts`:** `time.ts` is a locked calendar primitive set (its header documents a one-day trap). Window *policy* (7/30/90, previous period, MSK boundaries) changes with this milestone; keeping it in a new pure module means `time.ts` stays untouched and its tests keep guarding the trap.
+- **`compare-service.ts` rather than more of `service.ts`:** `service.ts` is already 804 lines and documented as "the ONLY DB read module for that page". Comparisons double every window read; keeping them in a sibling module makes the 2× cost visible and keeps the regression surface of `service.ts` small (success criterion 5: v1.1 values must not change).
+- **One `MetricCard` change instead of per-report delta code:** every existing card is rendered through `MetricCard`/`AnalyticsSection`/`GRID`. An optional `delta` prop is a one-file change that every report inherits — the highest-leverage integration point in this milestone.
+- **`dictionary.ts` as data, not page copy:** the dictionary must "link to the dashboard section" and stay truthful; a typed array co-located with the pure modules is the only version that can be unit-tested for coverage (every metric key in `compare.ts` has an entry).
 
 ## Architectural Patterns
 
-### Pattern 1: BFF Route Handler as signed proxy
+### Pattern 1: Window-shift, not a second formula (ALR-01)
 
-**What:** every external call goes through a Route Handler that authenticates the user (session cookie), validates input with Zod, then calls the upstream with server secrets.
-**When to use:** all ARTEMIDA reads/writes and Platega link creation.
-**Trade-offs:** +secrets never ship to client, +single error-mapping point; −extra hop (negligible on same VPS).
+**What:** A comparison is the *same* derivation evaluated on a shifted MSK window. Never a parallel formula, never `daily_metrics` for one side and raw orders for the other.
+**When to use:** Every WoW/MoM delta on `/admin/analytics`.
+**Trade-offs:** Doubles query volume per block (two `loadPaidOrders()`-class reads). Acceptable at MVP scale (a few thousand rows); documented as the first scaling bottleneck.
 
-**Example:**
 ```typescript
-// app/api/keys/[id]/renew/route.ts
-export const dynamic = 'force-dynamic';
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await requireSession();          // cookie → telegram-id
-  const body = renewSchema.parse(await req.json()); // Zod at boundary
-  const key = await artemida.renewKey(params.id, body, session.telegramId); // Bearer + Idempotency-Key inside
-  await db.keysCache.upsert(...);                   // mirror for fast UI
-  return Response.json(key);
+// lib/analytics/windows.ts — PURE (no prisma)
+export interface WindowBounds { fromDay: string; fromInstant: Date }
+export function windowBounds(period: 7 | 30 | 90, anchorDay: string): WindowBounds {
+  // MSK labels only — never `new Date(Date.now() - n * DAY)` inline in a loader
+}
+export function previousWindow(period: 7 | 30 | 90, anchorDay: string): WindowBounds {
+  // week → shift 7 days, month → shift 30 days; boundaries land on MSK day starts
+}
+
+// lib/analytics/compare.ts — PURE
+export type DeltaBase = 'ok' | 'zero-base' | 'na';
+export interface Delta { abs: number | null; pct: number | null; base: DeltaBase }
+export function deltaOf(current: number | null, previous: number | null): Delta;
+```
+
+```typescript
+// lib/analytics/compare-service.ts — the ONLY place the shift happens
+export async function loadKpisComparison(period: 7 | 30 | 90): Promise<{
+  current: KpisData;
+  wow: Partial<Record<keyof KpisData, Delta>>;
+  mom: Partial<Record<keyof KpisData, Delta>>;
+}>;
+```
+
+**Zero-base rule:** `previous === 0` → `pct: null`, `abs: current`, `base: 'zero-base'` (UI renders «—» for %, never `∞` or `100%`). Both null → `base: 'na'`. **Point-in-time metrics (MRR/ARR/activeKeys) compare against `mrrAt(history, now - 7d | now - 30d)`, never against a `daily_metrics` row** — same engine, shifted anchor (the `service.ts` live-today contract D-12).
+
+### Pattern 2: Decorate at the boundary, keep the loader's type additive (EXT-05)
+
+**What:** Quality is metadata attached to a value, added as an **optional** field so existing payload shapes and tests keep passing.
+**When to use:** Any metric whose input includes an ARTEMIDA response (runway/balance, key-mirror-derived active keys, traffic-based radar).
+**Trade-offs:** Callers that ignore `quality` silently render a degraded number. Mitigate by making the banner page-level (reads the window once) plus per-card badges.
+
+```typescript
+// lib/analytics/quality.ts — PURE
+export type QualityStatus = 'ok' | 'partial' | 'degraded';
+export interface QualityStamp {
+  status: QualityStatus;
+  sources: { source: QualitySource; reason: QualityReason; count: number }[];
+  excluded: number;          // records dropped from the aggregate — answers SC #4
+  staleDays?: number;        // age of the mirror the value was built from
+}
+export const OK: QualityStamp = { status: 'ok', sources: [], excluded: 0 };
+export function mergeStamps(...parts: QualityStamp[]): QualityStamp;
+export function classifyArtemidaReason(code: ArtemidaCode | 'timeout'): QualityReason;
+```
+
+```typescript
+// service.ts — additive, non-breaking
+export interface BurnRunwayData {
+  /* …unchanged v1.1 fields… */
+  quality?: QualityStamp;   // NEW, optional → v1.1 assertions still pass
 }
 ```
 
-### Pattern 2: Payment callback — ingest fast, fulfill async (outbox)
+**Recording seam:** record at the *analytics consumption point*, not inside `lib/artemida.ts`. The client powers the money path (order provisioning); adding a DB write per provider call there would put a table write in the payment hot path. Record in `loadBurnRunway`'s `.catch()`, in `rollup.ts`'s balance capture, and in the key-mirror staleness check.
 
-**What:** the Platega callback handler only verifies headers (`X-MerchantId`/`X-Secret`), validates the Zod body, and idempotently upserts the order (`CONFIRMED`/`CANCELED`/`CHARGEBACKED` by transaction `id`). Fulfillment (create/renew ARTEMIDA key + notify user) happens after the 200 response via an `outbox` row processed by the in-process worker. Platega requires 200 within 60 s and retries ≤3× every 5 min — so the handler must never do slow work inline, and must dedupe by transaction id because retries redeliver.
-**When to use:** `/api/platega/callback` and any ARTEMIDA call chained off it.
-**Trade-offs:** +no lost/duplicate keys on retry storms; −needs a reconcile sweep for orders stuck `pending` (poll Platega status endpoint on interval).
-
-**Example:**
 ```typescript
-// app/api/platega/callback/route.ts
-export async function POST(req: Request) {
-  verifyPlategaHeaders(req.headers);                 // X-MerchantId + X-Secret, timing-safe compare
-  const cb = callbackSchema.parse(await req.json()); // { id, amount, currency, status, payload }
-  const order = await db.orders.upsertByTxId(cb);    // idempotent: same id → same state
-  if (cb.status === 'CONFIRMED' && order.prev === 'pending')
-    await db.outbox.add({ type: 'fulfill-order', orderId: order.id }); // worker does ARTEMIDA + notify
-  return new Response('OK');                          // fast 200, always
-}
+// lib/analytics/quality-service.ts — DB
+export async function recordDegraded(
+  source: QualitySource, reason: QualityReason, at?: Date,
+): Promise<void>;   // upsert on UNIQUE (source, day, reason), count += 1
+export async function loadQualityWindow(fromDay: string, toDay: string): Promise<QualityStamp>;
 ```
 
-### Pattern 3: One ticket queue, two heads (fan-out delivery)
+**Exclusion rule:** exclude *rows*, never silently. `excluded` is always the count actually dropped, and `daily_metrics` never stores a degraded-derived value — instead the day gets a `data_quality_events` row, and readers see `partial` for that day. `daily_metrics` stays a pure value table (a `dataQuality` JSON column was rejected: it mixes ops metadata into a metric rollup and cannot express non-day-scoped sources like a live balance check).
 
-**What:** bot scenes and cabinet handlers call the same `tickets.ts` write path (`tickets` + `ticket_messages` rows, `telegram_id` as owner). A support reply triggers fan-out: (a) outbox → `bot.telegram.sendMessage/sendPhoto` to the user's chat, (b) cabinet reads the same row. Attachments: bot side stores Telegram `file_id`; cabinet uploads are saved locally and forwarded via `sendDocument` using the stored `chat_id`.
-**When to use:** all support flows.
-**Trade-offs:** +no channel drift, support works from admin panel only; −need `chat_id` persisted on first contact (`users.chat_id` updated on every bot update).
+### Pattern 3: Pure rule engine + persisted events + Notification delivery (ALR-02..04)
 
-### Pattern 4: Telegram auth — Widget on web, initData from bot, one verifier
+**What:** Rules are pure functions over a numeric snapshot; persistence and delivery are separate, individually testable stages.
+**When to use:** Every alert type in Phase 13.
+**Trade-offs:** Three files instead of one cron body; the payoff is a unit-testable rule table and a UI that can show history without recomputation.
 
-**What:** canonical identity is `telegram_id`. Web login uses the Login Widget (verify `hash` = HMAC-SHA-256 of `data_check_string` with `SHA256(bot_token)` as key — core.telegram.org; `@grammyjs/validator`-style check). Entry from the bot's WebApp button sends `initData` instead (HMAC with `WebAppData` key chain — `@tma.js/init-data-node` pattern). Both verifiers live in `lib/auth.ts` and mint the same session cookie; `auth_date` freshness enforced (≤24 h).
-**When to use:** `/api/auth/telegram` accepts either payload shape.
-**Trade-offs:** +zero-password, bot↔PWA accounts unified by construction; −must keep `BOT_TOKEN` server-only and compare hashes timing-safely.
+```typescript
+// lib/analytics/alerts.ts — PURE
+export type AlertType = 'payments-drop' | 'failed-share-rise' | 'ticket-spike' | 'runway-low';
+export interface AlertRule { type: AlertType; metric: MetricKey; comparator: 'lt' | 'gt'; threshold: number }
+export interface AlertCandidate {
+  type: AlertType; metric: MetricKey;
+  current: number; baseline: number | null; threshold: number;
+  severity: 'warn' | 'critical';
+}
+export function evaluateAlerts(snapshot: AlertSnapshot, config: AlertConfig): AlertCandidate[];
+```
+
+Dedupe identity (unique index on `alert_events.dedupeKey`):
+`alert:{type}:{periodLabel}:{band}` — e.g. `alert:payments-drop:2026-W43:crit`. A second cron run in the same period is a no-op upsert; a *new* period legitimately alerts again. This mirrors the proven `remind:{keyId}:{YYYY-MM-DD}` and `balance:{date}:{band}:{telegramId}` keys.
+
+Delivery reuses the **balance-alert** shape exactly (it is the milestone's closest precedent for "admin-only durable DM"):
+
+```typescript
+// lib/outbox.ts
+export const ALERT = 'alert';
+export async function enqueueAlertNotifications(
+  eventId: string, telegramIds: number[],
+): Promise<number>;   // createMany skipDuplicates, dedupeKey `alert:{eventId}:{telegramId}`
+
+// lib/alert-notify.ts
+export async function dispatchAlert(
+  notificationId: string, send: TelegramSender,
+): Promise<NotifyDispatchResult>;   // parses telegramId from the dedupeKey
+
+// lib/worker.ts drainNotifications() — one added line
+await drainNotificationType(ALERT, dispatchAlert, telegram);
+```
+
+**Rejected alternative:** calling `notifyAdminsNewTicket`-style `pushAll` from the cron. It is fire-and-forget with no retry, no dedupe after a restart, and no history — it fails SC "дедуплицируются и не спамят при повторном запуске cron".
+
+### Pattern 4: Config in `Setting`, state in a table
+
+**What:** Thresholds/toggles are `Setting` rows (`alerts.runway.minDays`, `alerts.payments.dropPct`, `alerts.failed.sharePct`, `alerts.tickets.spikePct`, `alerts.{type}.enabled`, `remind.windowDays`); occurrences live in `alert_events`.
+**When to use:** All Phase 13/15 configuration.
+**Trade-offs:** A fourth hand-rolled Setting parser would appear; add `lib/settings.ts` first.
+
+```typescript
+// lib/settings.ts — tiny, typed, fallback-on-parse-failure (rfm-service.ts precedent)
+export async function getNumber(key: string, fallback: number): Promise<number>;
+export async function getBool(key: string, fallback: boolean): Promise<boolean>;
+export async function setMany(entries: Record<string, string>): Promise<void>; // $transaction of upserts
+```
+
+**Why not `Setting` for history:** `value String` has no room for (type, period, current, baseline, threshold-in-effect, notifiedAt, ack state) and no unique key to dedupe on. **Why not a table for config:** SC #3/#5 require "порог меняется без деплоя" and "отключить каждый тип без деплоя" — a table would work too, but `Setting` is the established, already-tested precedent and needs no migration.
+
+### Pattern 5: Export derives from the loader, never from the rendered output
+
+**What:** One `export-specs.ts` maps report slug → `{ load, columns, filename }`. The route calls the same loader the page calls, then serializes.
+**When to use:** EXT-06 for all eight reports.
+**Trade-offs:** The on-screen value is formatted (rubles, «—», `%`), the CSV holds raw values + a formatted label column; drift is possible in formatting but never in *numbers*, because both sides read one loader.
+
+```typescript
+// lib/analytics/export-specs.ts
+export interface ExportSpec {
+  role: 'administrator' | 'manager';
+  load: (q: ExportQuery) => Promise<Record<string, unknown>[]>;
+  columns: { key: string; header: string; kind: 'number' | 'money' | 'date' | 'text' }[];
+  filename: (q: ExportQuery) => string;
+}
+
+// app/api/admin/export/[report]/route.ts
+const csv = '\uFEFF' + toCsv(spec.columns, rows);   // BOM → Excel; CRLF; quote+double-quote escaping
+return new Response(csv, {
+  headers: {
+    'content-type': 'text/csv; charset=utf-8',
+    'content-disposition': `attachment; filename="${spec.filename(q)}"`,
+    'cache-control': 'no-store',
+  },
+});
+```
+
+`<a href={exportHref(report, searchParams)} download>` — no client JS, works in the installed PWA on mobile. A server action was rejected: it needs a client component wrapper and cannot stream a download in a plain `<a>`.
+
+### Pattern 6: Reuse existing derivation engines for the action lists (EXT-01/EXT-02)
+
+**What:** Save-list "not renewed" uses `retention.ts#buildKeyTermEvents` + `classifyTerm`; upsell uses the `keys_cache` mirror, never a per-key ARTEMIDA fan-out.
+**When to use:** Phase 15.
+**Trade-offs:** Both inherit the mirror's staleness — which is exactly why Phase 15 depends on Phase 12's quality work (`lastSyncedAt` age → `QualityStamp.staleDays`, stale keys excluded and counted).
+
+```typescript
+// lib/analytics/save-list.ts — PURE
+export function selectSaveList(
+  events: KeyTermEvent[], orders: PaidOrderRow[], w: { now: Date; horizonDays: number },
+): SaveListItem[];  // expiring in (now, now+H], non-trial, no later order for the same keyRef
+```
+
+**Reminder path change (behavioural, test-visible):** `lib/reminders-service.ts` currently hard-codes `WINDOW_DAYS = 3` and documents "the SAME window the cabinet badge uses". v1.2 requires a 7-day push (PROJECT.md). Parameterize `listExpiringKeys(now, windowDays = 7)` fed from `Setting remind.windowDays`, keep the dedupe key format unchanged (`remind:{keyId}:{utcDay}`), and align `EXPIRING_WINDOW_MS` in `keys-service.ts` so push and badge cannot disagree. Existing reminder tests will need the new default.
 
 ## Data Flow
 
-### Request Flow
+### Request flow — read (every report)
 
 ```
-Bot update:  Telegram → Nginx → POST /api/telegram/webhook → bot.handleUpdate
-               → scene middleware → lib/* → Prisma + ARTEMIDA → reply via Bot API
-Cabinet read:  PWA → GET /api/keys → requireSession → artemida.list (cache-first,
-               refresh async) → keys_cache → JSON → render
-Purchase:      PWA/bot → POST /api/orders → Zod → orders.insert(pending)
-               → Platega /v2/transaction/process (payload=orderId, metadata.userId=tgId)
-               → { url } → user pays on pay.platega.io
-Callback:      Platega → POST /api/platega/callback → verify → upsert → 200
-               → outbox → worker → ARTEMIDA create/renew → notify (bot + cabinet)
-Ticket:        bot photo/msg OR cabinet form → tickets.ts insert → admin replies
-               → fan-out: sendMessage to chat_id + row visible in cabinet
+Admin opens /admin/analytics?period=30
+      ↓
+RSC page: requireRole('administrator','manager') → notFound() on failure
+      ↓
+<AnalyticsKpi period={30}> (async RSC block, own try/catch + Suspense)
+      ↓
+loadKpisComparison(30)  →  windowBounds/previousWindow (pure, MSK)
+      ↓                         ↓
+loadPaidOrders()          loadPaidOrders() + window queries   (2× reads)
+      ↓                         ↓
+totalMrrAt / arrAt / computeArpu … (pure, unchanged)
+      ↓
+{ current: KpisData, wow: Delta, mom: Delta, quality?: QualityStamp }
+      ↓
+<MetricCard value delta quality />   ← single component change, all cards inherit
 ```
 
-### State Management
+### Request flow — write (alert evaluation)
 
 ```
-Source of truth split (deliberate):
-  ARTEMIDA  owns: keys, pricing, traffic, devices, subscription links
-  Postgres  owns: users, orders (payment state), tickets, outbox, keys_cache mirror
-Rule: never render key state from cache without a background revalidate;
-      never treat cache as authoritative for renew/upgrade (trial blocked: API 409 → UI disables buttons)
+host cron 03:10 → POST /api/cron/alerts (x-cron-secret, timing-safe)
+      ↓
+alerts-service.runAlertScan(now)
+      ├─ snapshot ← loadKpis* / loadFunnel / ticket count / loadBurnRunway   (reuse, no new queries)
+      ├─ config   ← Setting (alerts.*)  via lib/settings.ts
+      ├─ candidates ← evaluateAlerts(snapshot, config)      (PURE)
+      ├─ prisma.alertEvent.upsert(unique dedupeKey)          → history + dedupe
+      └─ enqueueAlertNotifications(eventId, adminTelegramIds)  → Notification rows
+                                                        ↓
+worker drainNotifications() → claimNextNotification('alert') → dispatchAlert
+      ↓                                     ↓ (Telegram 5xx/timeout)
+markNotificationDone           rescheduleNotification(backoff)
 ```
 
-### Key Data Flows
+### Data flow — degraded ARTEMIDA response
 
-1. **Purchase (pay-for-key, no user balance):** quote via `GET /pricing` → order(pending, txId) → Platega link → callback CONFIRMED → ARTEMIDA create/renew → deliver sub-link. Order↔tx linked by `payload=orderId`; user linked by `metadata.userId=telegram_id`.
-2. **Ticket round-trip:** inbound (either channel) → one row → admin reply → outbox → Telegram push + cabinet read. `users.chat_id` refreshed on each bot update so push never loses the target.
-3. **White Label:** brand domain `my.3set.online` stored in settings; ARTEMIDA White Label configured to it (A-record, DNS-Only, no AAAA — infra step, not code); subscription links rendered with the brand host.
+```
+loadBurnRunway() calls artemida.getBalance()
+      ├─ ok        → value unchanged, quality = OK
+      └─ ArtemidaError(code) / timeout
+              ├─ recordDegraded('artemida.balance', classifyArtemidaReason(code))     ← upsert (source, day, reason)
+              ├─ balance = null, runwayReason = 'no-balance'  (v1.1 behaviour preserved)
+              └─ quality = { status:'degraded', sources:[…], excluded: 1 }
 
-## Scaling Considerations
+Page-level: loadQualityWindow(periodStart, today) → <DataQualityBanner>  ("N записей исключено, источники: balance/timeout")
+```
 
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 0–1k users | As drawn: 1× Next.js + 1× Postgres on the single VPS. Nothing to split. |
-| 1k–100k users | First: add reconcile/poll tuning + Postgres indexes on (telegram_id, status); second: extract outbox worker to a tiny second process if callback latency grows. |
-| 100k+ users | Split bot webhook into its own service; read-replica or managed Postgres; CDN in front of PWA static. Not a v1 concern — do not pre-build. |
+**Why this seam:** the degraded fact must be visible even on a request that *succeeded* because the loader swallowed the error (`service.ts` documents that `getBalance` "is called exactly once here and never rejects the loader"). Without a persisted flag that swallow is invisible — which is exactly SC #3/#4.
 
-### Scaling Priorities
+### State changes — schema delta
 
-1. **First bottleneck:** ARTEMIDA rate limits (429 + `Retry-After`) and 502/503 blips — mitigated by cache-first reads, single retry-with-backoff wrapper, and serving cabinet from `keys_cache` during outages.
-2. **Second bottleneck:** duplicate fulfillment on Platega retry redelivery — mitigated by tx-id idempotent upsert + `pending→confirmed` transition guard (fulfill only on transition, never on repeat CONFIRMED).
+| Change | Kind | Necessity | Alternative rejected |
+|--------|------|-----------|----------------------|
+| `alert_events` (id, type, metric, periodLabel, band, current, baseline, threshold, dedupeKey UNIQUE, status open/ack/resolved, createdAt, notifiedAt) | NEW table | History + dedupe + "threshold in effect" audit (SC #4/#5) | `Setting` = no history; `Notification.dedupeKey` alone = no record of *what* fired at *what* level |
+| `data_quality_events` (id, source, day DATE, reason, count, firstSeenAt, lastSeenAt; UNIQUE(source, day, reason)) | NEW table | "сколько записей исключено" per metric/window (SC #3/#4) | JSON column on `daily_metrics` — cannot express non-day sources; silently couples ops metadata to value rollup |
+| `promo_clicks` (id, promoCode, ipHash, source, createdAt; index (promoCode, createdAt)) | NEW table | PRM-01 top-of-funnel — **does not exist today** (`referral_clicks.ownerUserId` is required and only referral codes are resolved) | Extending `referral_clicks` with nullable `ownerUserId` — relaxes a NOT NULL on a live public funnel, regresses `referral-stats.ts` semantics for zero gain |
+| `User.signupIpHash` (nullable, sha256) | NEW column | PRM-04 "trial-фермы по ipHash" — no account-level IP is stored today (`ipHash` exists only on `referral_clicks` / `telegram_login_tokens`) | Inferring from `referral_clicks` only — misses every organic trial, i.e. most farm accounts |
+| `Setting` keys `alerts.*`, `remind.windowDays` | CONFIG | No-deploy thresholds/toggles (SC #3/#5) | env vars (needs restart) |
+| `Notification` — no schema change | REUSE | `type` is a free `String`; `dedupeKey` already UNIQUE | — |
 
-## Anti-Patterns
-
-### Anti-Pattern 1: Calling ARTEMIDA/Platega from the client
-
-**What people do:** embed API keys in PWA code or call upstream directly from bot scenes.
-**Why it's wrong:** key leak = full wallet/key control compromise; no validation, no idempotency, no retry policy.
-**Do this instead:** everything through Route Handlers + `lib/`; scenes call the same service functions the routes call.
-
-### Anti-Pattern 2: Fulfilling the order inside the payment callback
-
-**What people do:** `await artemida.createKey()` before returning 200.
-**Why it's wrong:** ARTEMIDA slowness → callback timeout → Platega retries → double keys / double charges logic. (Same class of bug as double-processing Telegram updates without dedupe.)
-**Do this instead:** ingest + 200, fulfill from outbox, dedupe by transaction id, transition-guard fulfillment.
-
-### Anti-Pattern 3: Separate user tables for bot and cabinet
-
-**What people do:** `bot_users` + `web_users` with a later "merge".
-**Why it's wrong:** split identity breaks tickets, orders, and key ownership; merge migrations are where data loss happens.
-**Do this instead:** one `users` table keyed by `telegram_id` from day one; Widget and initData verifiers mint the same session.
-
-### Anti-Pattern 4: Bot as a second always-on server process from day one
-
-**What people do:** separate bot service + port + process manager + its own DB pool.
-**Why it's wrong on one VPS:** doubles deploy/secret/env drift surface for a workload the Next.js process can absorb via `handleUpdate`.
-**Do this instead:** bot-in-Next via webhook route; split only when update volume forces it (100k+ scale row).
+Notes:
+- `alert_events` and `data_quality_events` follow existing conventions: `String @id @default(cuid())`, `@map`ed snake_case columns, `@@map` plural table, `DateTime` timestamps, no PG enums (the schema deliberately uses TEXT + TS unions to keep `migrate deploy` non-transactional-safe).
+- `promo_clicks` and `User.signupIpHash` are **forward-only** — they cannot be backfilled. This is the single most important scheduling constraint in the milestone (see Build Order).
+- Explicit **no-change** list: `orders`, `keys_cache`, `daily_metrics`, `artemida_balance_snapshots`, `Outbox` (money path untouched — alerts must not enter `Outbox`, whose `(orderId, type)` uniqueness cannot carry non-order deliveries; that is precisely why `Notification` exists).
 
 ## Integration Points
 
-### External Services
-
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| ARTEMIDA Paid API V1 (`https://artemida.cc/v1`) | Server-only REST client; `Authorization: Bearer $API_KEY`; fresh `Idempotency-Key` (UUID) on every POST/DELETE; honor 429/`Retry-After`, retry 502/503 with backoff; map 401/402/409/429 | Trial `POST /trial` fixed (1 day/2 devices); trial keys reject renew/upgrade — disable in UI by `is_trial` flag, not by catching errors |
-| Platega.io (`https://app.platega.io`) | Create: `POST /v2/transaction/process` with `X-MerchantId`+`X-Secret`, body `{paymentDetails{amount,currency}, description, return, failedUrl, payload=orderId, metadata{userId: telegramId}}` → `{transactionId, url, expiresIn}`; no `id` in request (server-generated). Status: callback POST to LK-configured HTTPS URL, headers `X-MerchantId`/`X-Secret`, body `{id, amount, currency, status: CONFIRMED\|CANCELED (+CHARGEBACKED), paymentMethod, payload}`; must return 200 ≤60 s or ≤3 retries @5 min | Callback URL must be public HTTPS with trusted cert (no self-signed/private IP); `payload`+`metadata.userId` are the order↔user join — always set both |
-| Telegram Bot API | Inbound: webhook `POST /api/telegram/webhook/<secret>` → `handleUpdate` (secret-token verify); outbound: `sendMessage/sendPhoto/sendDocument` via outbox; auth: Login Widget hash + WebApp `initData` HMAC | HTTPS mandatory for webhooks; dev = long-polling, prod = webhook; persist `chat_id` per user on every update |
-
-### Internal Boundaries
+### Internal boundaries
 
 | Boundary | Communication | Notes |
 |----------|---------------|-------|
-| PWA ↔ Route Handlers | `fetch` + session cookie | Same origin — no CORS; Zod validates both directions |
-| Bot scenes ↔ services | Direct import of `lib/*` (same process) | Scenes never touch Prisma raw for cross-cutting flows — go through `tickets.ts`/`orders` helpers so invariants (outbox, fan-out) hold |
-| Callback ↔ fulfillment | `outbox` table rows | Only async bridge in the system; worker is `setInterval` loop, idempotent by `(type, refId)` |
-| Admin UI ↔ data | Route Handlers with `requireRole('admin'\|'support'\|'manager')` | Support: tickets + key read; manager: orders/stats read; admin: all + settings (White Label domain, topup) |
-| Web ↔ Postgres | Prisma singleton | One client instance (`lib/prisma.ts`) shared by routes, scenes, worker |
+| `service.ts` ↔ `compare-service.ts` | direct import of exported pure helpers + shared `loadPaidOrders` pattern | Extract `windowStartDay` into `windows.ts`; do **not** duplicate the MSK bound math |
+| `compare-service.ts` ↔ `MetricCard` | props (`delta`, `quality`) | Additive optional props only — no new card component |
+| `loaders` ↔ `quality-service` | `recordDegraded()` on the catch path; `loadQualityWindow()` on the read path | Never inside `lib/artemida.ts` (money hot path) |
+| `alerts-service` ↔ `outbox.ts` | `enqueueAlertNotifications(eventId, ids)` | Producer must not send Telegram inline |
+| `outbox.ts` ↔ `worker.ts` | new `ALERT` const + one `drainNotificationType` line | Claim discipline is already atomic per-row; do not invent a second claim |
+| `alert-notify.ts` ↔ `bot-payments.TelegramSender` | `dispatchAlert(id, send)` returning `NotifyDispatchResult` | Same contract as `dispatchBalanceAlert` (`skipped` / `pushed` / `retryable_error`) |
+| `growth-service` ↔ `referral-stats.ts` / `promo.ts` / `revenue.ts` | read-only reuse; new aggregates only | `cashOf` from `series.ts` is the single cash authority — do not re-write `finalAmount - balanceUsed` (note: `reference-stats.ts` and `revenue.ts` each already carry a private copy; new code should import `cashOf`) |
+| `reminders-service` ↔ `cron/remind` ↔ `Setting` | `listExpiringKeys(now, windowDays)` | Dedupe key format frozen; changing it would re-send already-delivered reminders |
+| `export route` ↔ loaders | `export-specs.ts` indirection | One spec per report; the route holds zero SQL |
+| `dictionary.ts` ↔ `compare.ts`/`alerts.ts` metric keys | shared `MetricKey` union | Compile-time guarantee that every compared metric has a dictionary entry |
 
-## Suggested Build Order (dependencies)
+### Cross-cutting registration checklist (recurring 4-file touchpoint)
+
+Adding an admin section (`retention`, `dictionary`) touches exactly four places that must change together or the nav silently hides the page:
+
+1. `lib/admin-auth.ts` — `AdminSection` union + `MATRIX` (administrator; `manager` too if finance-only)
+2. `app/admin/layout.tsx` — `NAV_SECTIONS` order
+3. `components/admin/AdminNav.tsx` — `NavSection` type + `ITEMS` + `itemLabel` switch
+4. `lib/i18n/messages/ru.ts` — `admin.navX` + all new copy keys (RU only, no interpolation in keys)
+
+### External services
+
+| Service | Integration pattern | Notes |
+|---------|---------------------|-------|
+| ARTEMIDA Paid API | existing typed client; **analytics reads only** — `getBalance` in `loadBurnRunway`, balance capture in `rollup` | Map `ArtemidaCode` → `QualityReason`; honour `Retry-After` (already done in client); never add per-key `getTraffic` fan-out for the radar (429/502 risk) |
+| Telegram Bot API | via `Notification` queue + worker only | Admin targets resolve from `admin_users` (role=administrator) ∪ `ADMIN_TELEGRAM_IDS` — reuse `adminChatIds()` semantics; never cache ids across requests |
+| Platega | untouched | — |
+
+## Build Order (Phases 12 → 16)
+
+Roadmap order (12→13→14→15→16) is correct and the dependency claims hold. Two adjustments are recommended.
+
+### Phase 12 — Period Comparison & Data-Quality Foundation (ALR-01, EXT-05)
+
+Recommended intra-phase order:
+
+1. `windows.ts` + `compare.ts` + unit tests (pure, zero risk, unblocks every UI delta)
+2. `MetricCard` delta slot + `DeltaBadge`; wire KPI → unit economics → retention → funnel (one block per commit, so a regression is trivially bisectable)
+3. **`promo_clicks` beacon + `User.signupIpHash` capture** ← pulled forward from 14 (see adjustment A)
+4. `data_quality_events` migration + `quality-service` + `recordDegraded` at the two analytics call sites + `QualityStamp` on affected loaders
+5. `DataQualityBanner` + `QualityBadge`; regression test "healthy-data values identical to v1.1"
+
+Rationale: comparisons are additive and independent of schema, so they land first and de-risk the phase; quality needs a migration, so it lands last with the regression test as the gate.
+
+### Phase 13 — Anomaly Alerts (ALR-02..04)
+
+Depends on 12 for two concrete reasons: alert baselines are `previousWindow` values, and the runway rule must not fire on a degraded balance read.
+
+1. `lib/settings.ts` + `Setting` key namespace + validation (0 rows written until the UI exists)
+2. `alerts.ts` pure rule table + `evaluateAlerts` tests (boundary: exactly-at-threshold, zero baseline, missing metric)
+3. `alert_events` migration + `alerts-service.runAlertScan` (dedupe via unique upsert)
+4. `ALERT` const + `enqueueAlertNotifications` + `alert-notify.ts` + worker line (delivery proven before any UI reads it)
+5. `app/api/cron/alerts/route.ts` (copy the gate verbatim; schedule 03:10)
+6. `/admin/analytics` alert history block + `AlertSettingsForm` + `/api/admin/alerts/settings`
+
+### Phase 14 — Promo & Referral Quality + Fraud (PRM-01..04)
+
+Depends on 12 (MSK windows, quality exclusion). Does not depend on 13 — correct as written.
+
+1. `promo-roi.ts` (discount cost = `amount - finalAmount`, attribution precedence) + `fraud.ts` (ip clusters, `emailCanonical` clusters, self-cycles, trial→no-pay by source) — pure + tests
+2. `growth-service.ts` loaders (promo clicks/orders, partner wallet credits vs approved `Withdrawal`, fraud signals)
+3. `/admin/promos` + `/admin/referrals` quality sections (drill-down to existing user cards)
+4. Wire `quality` stamps; add `clicks` column that degrades gracefully when the beacon has no history yet
+
+### Phase 15 — Expiry Save-List & Upsell Radar (EXT-01, EXT-02)
+
+Depends on 13 (Notification dispatch for bulk reminders/broadcast preview) and 14 (source/segment filters). Both are genuinely used.
+
+1. `save-list.ts` pure (reuse `buildKeyTermEvents`) + `actions-service` loader
+2. `reminders-service` `windowDays` parameterization + `Setting remind.windowDays` + badge alignment (**behaviour change — plan the test updates explicitly**)
+3. `upsell.ts` pure scoring with `lastSyncedAt` staleness gate → `QualityStamp.staleDays`
+4. `/admin/retention` page (save-list + upsell tabs) + registration checklist
+5. Bulk action via existing `Broadcast` + `enqueueBroadcastNotifications` with recipient preview count
+
+### Phase 16 — CSV Export & Metric Dictionary (EXT-06, EXT-07)
+
+Depends on 12–15 (exports cover every report). Correct as written.
+
+1. `lib/csv.ts` + tests (quoting, embedded newlines, BOM, CRLF, BigInteger→string safety)
+2. `export-specs.ts` + `app/api/admin/export/[report]/route.ts` (requireRole + zod + one spec per report)
+3. `ExportCsvLink` on all eight reports (respects `searchParams` — period/filters flow into the href)
+4. `dictionary.ts` + `/admin/analytics/dictionary` + nav entry + deep links back to sections
+
+**Draft the dictionary early.** Entries can be authored from Phase 12 onward (formulas are decided then) and the coverage test ("every `MetricKey` has an entry") fails the build until they are complete — that is the cheapest way to keep documentation truthful.
+
+### Adjustment A (scheduling, high impact) — move data capture earlier
+
+`promo_clicks` and `User.signupIpHash` are **append-only, forward-looking**. If they ship in Phase 14 week, PRM-01's click→register→pay funnel and PRM-04's farm detection show near-zero history for the first weeks, and the phase's own success criteria ("воронка видна по каждому коду") look broken. Ship the beacon + column in Phase 12 (≈ half a plan: a route mirroring `/api/referrals/click`, one migration, one `recordPromoClick`). The *report* still lands in Phase 14 as planned.
+
+### Adjustment B (sequencing, medium impact) — one dispatch abstraction, not four
+
+`balance-alert.ts`, `broadcast.ts`, `ticket-notify.ts`, `reminders-service.ts` each carry their own small dispatch. Phase 13 should add `alert-notify.ts` as a *typed sibling* (same `NotifyDispatchResult` contract) rather than refactoring the existing four — a refactor there risks the money-adjacent delivery path for no milestone requirement. If a shared helper is desired, do it in Phase 16 when export work is low-risk.
+
+### Dependency summary
 
 ```
-1. DB + auth skeleton      (users, session; Widget/initData verifier)      ← everything keys off telegram_id
-2. ARTEMIDA wrapper        (lib/artemida.ts + error/retry policy)          ← all key flows depend on it
-3. Bot webhook plumbing    (route → handleUpdate, /start, chat_id capture) ← cheapest E2E slice
-4. Keys read path          (cabinet list/detail + bot "my keys", cache)    ← proves wrapper + auth + UI
-5. Orders + Platega link   (pending orders, callback ingest + 200)         ← money in, fulfillment deferred
-6. Fulfillment worker      (outbox → ARTEMIDA create/renew → notify)       ← money → value; needs 2+5
-7. Trial + renew/upgrade   (scenes + cabinet buttons, trial guards)        ← needs 2+4+6
-8. Tickets both channels   (queue + fan-out + attachments)                 ← needs 1+3, independent of payments
-9. Admin panel + roles     (tickets triage, finance/stats, settings)       ← needs 5+8
-10. PWA polish + deploy    (manifest, icons, Docker+Nginx+TLS, webhooks)   ← needs 3+5 (public HTTPS for callbacks)
+12 (compare, quality) ──► 13 (alerts) ──► 15 (save-list/upsell)
+      │                                    ▲
+      └────► 14 (promo/referral/fraud) ────┘
+                                   16 (CSV + dictionary) ◄── all
 ```
 
-**Ordering rationale:** identity (1) and the upstream wrapper (2) are load-bearing — every other component imports them. Bot plumbing (3) before cabinet depth because `/start` + chat_id capture unblocks notifications for everything later. Payments split into ingest (5) then fulfill (6) so the risky money path is testable without key-minting side effects. Tickets (8) parallelize after (1–3). Deploy (10) last but requires zero architecture changes because webhooks were designed for one public origin from the start.
+## Risks & Open Questions
+
+| # | Risk / gap | Impact | Recommendation |
+|---|-----------|--------|----------------|
+| R1 | Promo-code clicks are not recorded anywhere today | PRM-01 cannot be satisfied without new capture | `promo_clicks` table + public beacon, shipped in Phase 12 (Adjustment A) |
+| R2 | No account-level IP hash exists | PRM-04 "trial-фермы по ipHash" is unbuildable on current data | `User.signupIpHash` written at register/trial paths; document that history is forward-only |
+| R3 | Upsell radar depends on `keys_cache` freshness (`lastSyncedAt` only advances on `revalidateKeys`) | Radar can show month-old traffic | Staleness gate + `QualityStamp.staleDays`; never fan out `getTraffic` per key from a page |
+| R4 | Comparison doubles loader queries per block | Slower `/admin/analytics` at scale | Acceptable at MVP; measure before adding caching; the rollup-precompute path is a later milestone |
+| R5 | `reminders-service` window 3 → 7 days changes shipped behaviour | Existing reminder tests + user-visible nagging | Make it a `Setting`, keep dedupe key format, update tests deliberately in Phase 15 |
+| R6 | Alert permissions: `manager` sees `/admin/analytics` but not broadcast/roles | An alert DM to a manager could expose what they cannot open | Decide recipient set explicitly (recommend: `administrator` only for alert DMs, matching `balance-alert`) |
+| R7 | `daily_metrics` has no quality dimension | Historical days cannot be retro-flagged | Accepted: flags are forward-only too; the banner only claims what it knows |
+
+## Anti-Patterns (specific to this milestone)
+
+### Anti-Pattern 1: Computing the delta in the component
+
+**What people do:** `const pct = (cur - prev) / prev * 100` in JSX, or `new Date(Date.now() - 7*86400000)` in a loader.
+**Why it's wrong:** duplicate formula authority, and an inline `Date.now()` shift lands on the wrong MSK day around midnight (the exact trap `time.ts` documents); zero-base yields `Infinity`/`NaN`.
+**Do this instead:** `compare.ts#deltaOf` + `windows.ts` bounds; `pct: null` on zero base.
+
+### Anti-Pattern 2: Third cash formula
+
+**What people do:** writing `finalAmount - balanceUsed` again in `promo-roi.ts` / `growth-service.ts` (two copies already exist in `referral-stats.ts` and `revenue.ts`).
+**Why it's wrong:** three authoritative cash definitions will diverge on the first refund/balance edge case.
+**Do this instead:** import `cashOf` from `analytics/series.ts`; new code never re-derives it.
+
+### Anti-Pattern 3: Alert delivery through `admin-notify.pushAll`
+
+**What people do:** call the fire-and-forget DM helper from the cron.
+**Why it's wrong:** no durability, no retry, no dedupe across restarts, no history — fails three success criteria at once.
+**Do this instead:** `alert_events` → `Notification` → worker drain.
+
+### Anti-Pattern 4: Excluding degraded data invisibly
+
+**What people do:** `rows.filter(r => r.valid)` inside a pure module, returning a smaller number.
+**Why it's wrong:** the metric silently changes value with no explanation; SC #4 ("значение можно объяснить") fails.
+**Do this instead:** filter in the loader, count what was dropped, carry it as `QualityStamp.excluded`, render it.
+
+### Anti-Pattern 5: Recomputing an export from formatted screen strings
+
+**What people do:** scraping the rendered table or re-implementing the query in the export route.
+**Why it's wrong:** two SQL paths drift; filters are applied twice or not at all.
+**Do this instead:** `export-specs.ts` → the same loader → `toCsv`.
+
+### Anti-Pattern 6: Fan-out to ARTEMIDA from a page render
+
+**What people do:** `Promise.all(keys.map(k => artemida.getTraffic(k.id)))` for the upsell radar.
+**Why it's wrong:** N provider calls inside an RSC request; 429/502 storms, `Retry-After` stalls, and the page fails for everyone.
+**Do this instead:** `keys_cache` mirror + staleness flag; refresh only on the existing per-user `revalidateKeys` path.
+
+## Scaling Considerations
+
+| Scale | Architecture adjustments |
+|-------|--------------------------|
+| 0–1k users (current) | Everything as designed: one process, cron routes, loaders reading a few thousand rows. Comparison's 2× read is invisible. |
+| 1k–100k users | First: precompute comparisons/alerts snapshots in the nightly `rollup` into a derived table, so page reads are O(1). Second: partial indexes on `orders(status, paid_at)` and `promo_clicks(promo_code, created_at)`. Third: cap drill-down lists (top-N + "export for full"). |
+| 100k+ | Alert scan and rollup move to a real queue/worker (already out of scope per PROJECT.md); exports switch to streaming; `daily_metrics`-based reads replace raw-order derivation for all windowed metrics. |
+
+**First bottleneck:** unbounded paid-order loads (`loadPaidOrders()` is deliberately unbounded-below for term chains). It is loaded 2× per card set with comparisons — that is the first thing to measure.
 
 ## Sources
 
-- Next.js official: Backend-for-Frontend guide + Route Handlers (`nextjs.org/docs/app/guides/backend-for-frontend`, `…/getting-started/route-handlers`) — BFF/proxy pattern, public-endpoint auth warning (HIGH relevance, official)
-- Next.js official PWA guide (v15/v16, `…/guides/progressive-web-apps`) — `app/manifest.ts`, Serwist for offline (HIGH relevance, official)
-- Platega.io official OpenAPI (`docs.platega.io/llms.txt` + auth/callback/create-transaction pages) — headers, callback contract, retry policy, HTTPS constraints (HIGH relevance, official; quoted verbatim)
-- Platega SDK refs (github.com/VeyDlin/Platega.SDK, ploki1337/plategaio) — webhook verify + `payload`/`metadata.userId` linkage pattern (MEDIUM, cross-check)
-- Telegraf npm README + telegraf.js.org (v4.16.x, Bot API 7.1) — `launch({webhook})`, `createWebhook`/`webhookCallback`, middleware/scenes model (HIGH relevance, official)
-- core.telegram.org (Login Widget hash check), Telegram Mini Apps init-data docs + `@tma.js/init-data-node`, grammy `@grammyjs/validator` — dual auth verification (MEDIUM-HIGH, official + ecosystem)
-- VPS deploy guides (Stackademic/Medium 2026, Docker+Nginx+Certbot flows) — single-server reverse-proxy shape (MEDIUM, multi-source convergent)
+- `.planning/PROJECT.md`, `.planning/ROADMAP.md` (phases 12–16), `.planning/REQUIREMENTS.md` — milestone scope and success criteria
+- `lib/analytics/service.ts`, `time.ts`, `rollup.ts`, `rfm-service.ts`, `economics.ts` (headers + signatures) — layer discipline, MSK rules, loader contracts, Setting precedent
+- `lib/outbox.ts`, `lib/admin-notify.ts`, `lib/balance-alert.ts`, `lib/worker.ts` — delivery path, dedupe-key patterns, `drainNotificationType` registry
+- `lib/reminders-service.ts` — existing 3-day reminder window and `remind:{keyId}:{day}` idempotency
+- `lib/referral-stats.ts`, `app/api/referrals/click/route.ts`, `lib/revenue.ts`, `lib/promo.ts` — funnel data availability (and the promo-click gap)
+- `prisma/schema.prisma` — models, indexes, enum-vs-TEXT convention, `Notification` shape
+- `app/api/cron/analytics/route.ts`, `app/api/cron/rfm/route.ts`, `app/api/admin/segments/[name]/count/route.ts`, `app/api/admin/referrals/stats/route.ts` — cron gate + admin API route shapes
+- `app/admin/analytics/page.tsx`, `components/admin/MetricCard.tsx`, `app/admin/layout.tsx`, `lib/admin-auth.ts`, `components/admin/AdminNav.tsx` — UI composition and the section-registration touchpoint
+- `lib/artemida.ts` — `ArtemidaCode` taxonomy for degraded-reason classification
 
 ---
-*Architecture research for: bot-artemida (Telegram-bot + PWA + API-wrapper + Platega + tickets + admin, single VPS)*
-*Researched: 2026-09-30*
+*Architecture research for: 3set-white v1.2 (analytics stabilization milestone)*
+*Researched: 2026-10-31*

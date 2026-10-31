@@ -3,6 +3,7 @@
 // Owns all Prisma reads/writes for the user_rfm snapshot + Setting thresholds.
 // Pure derivation lives in ./rfm.ts; this module feeds plain rows into it.
 import { prisma } from "../prisma";
+import { cashOf } from "./series";
 import {
   DEFAULT_THRESHOLDS,
   SEGMENT_SLUGS,
@@ -129,7 +130,7 @@ export async function recomputeAllRfm(): Promise<{
   for (const o of paidOrders) {
     if (!o.paidAt) continue;
     const list = ordersByUser.get(o.userId) ?? [];
-    list.push({ paidAt: o.paidAt, cash: Math.max(0, o.finalAmount - o.balanceUsed) });
+    list.push({ paidAt: o.paidAt, cash: cashOf({ finalAmount: o.finalAmount, balanceUsed: o.balanceUsed }) });
     ordersByUser.set(o.userId, list);
   }
 

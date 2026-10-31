@@ -149,6 +149,8 @@ Cron (daily), as root:
 0 3 * * * cd /opt/3set-white && scripts/backup.sh
 # analytics nightly rollup (D-13): 03:05 — 03:00 belongs to pg_dump
 5 3 * * * curl -fsS -X POST -H "x-cron-secret: $CRON_SECRET" https://dash.3set.online/api/cron/analytics
+# RFM nightly recompute (D-11): 03:10 — after analytics rollup
+10 3 * * * curl -fsS -X POST -H "x-cron-secret: $CRON_SECRET" https://dash.3set.online/api/cron/rfm
 ```
 
 - DB: `pg_dump` gzip to `/opt/3set-white/backups/db-<stamp>.sql.gz`.

@@ -108,6 +108,9 @@ model User {
   // Bot-deep-link Telegram linking tokens (one row per request).
   telegramLinkTokens TelegramLinkToken[]
 
+  // Phase 11 RFM snapshot (D-10): nightly recomputed per-user R/F/M + segment.
+  rfm UserRfm?
+
   @@map("users")
 }
 
@@ -218,6 +221,20 @@ model Outbox {
 }
 
 // ARTEMIDA mirror only — ARTEMIDA owns the truth (D-07/D-29).
+// Phase 11 RFM snapshot (D-10): nightly recomputed per-user R/F/M + segment.
+model UserRfm {
+  userId      Int      @id @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recencyDays Int      @map("recency_days")
+  frequency   Int
+  monetary    Int?
+  segment     String
+  computedAt  DateTime @default(now()) @map("computed_at")
+
+  @@index([segment])
+  @@map("user_rfm")
+}
+
 model KeyCache {
   id                Int       @id @default(autoincrement())
   userId            Int       @map("user_id")

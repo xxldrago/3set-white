@@ -1,20 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Расширенная аналитика
-status: Awaiting next milestone
-stopped_at: Phase 11 complete
-last_updated: "2026-10-31T11:51:12.130Z"
+milestone: v1.2
+milestone_name: Стабилизация и качество
+status: planning
+last_updated: "2026-10-31T12:08:44.215Z"
 last_activity: 2026-10-31
-last_activity_desc: Milestone v1.1 completed and archived
-state_head: e39891248b8c1a7d7aaf97ab9b17de268b0dc929
 progress:
   total_phases: 5
-  completed_phases: 4
-  total_plans: 17
-  completed_plans: 17
-current_phase: 11
-current_phase_name: RFM Segments & Targeting
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -24,14 +20,14 @@ current_phase_name: RFM Segments & Targeting
 See: .planning/PROJECT.md (updated 2026-10-31)
 
 **Core value:** Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
-**Current focus:** v1.1 shipped; planning next milestone
+**Current focus:** v1.2 Стабилизация и качество (Phases 12-16) — roadmap defined
 
 ## Current Position
 
-Phase: Milestone v1.1 complete
+Phase: 12 — Period Comparison & Data-Quality Foundation (not started)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-10-31 — Milestone v1.1 completed and archived
+Status: Roadmap defined; ready for discuss/plan
+Last activity: 2026-10-31 — v1.2 roadmap created (5 phases, 13 requirements)
 
 ## Performance Metrics
 
@@ -123,9 +119,9 @@ Items acknowledged and deferred at milestone close, most recent first:
 ## Session Continuity
 
 Last session: 2026-10-31
-Stopped at: v1.1 milestone complete
-Resume file: (none)
+Stopped at: v1.2 roadmap created
+Resume file: .planning/ROADMAP.md
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Phase 12: run `/gsd-discuss-phase 12` (or `/gsd-plan-phase 12` to go straight to planning)

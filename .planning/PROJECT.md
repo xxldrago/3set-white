@@ -8,9 +8,18 @@
 
 Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
 
-## Current Milestone: v1.1 Расширенная аналитика ✅ SHIPPED 2026-10-31
+## Current Milestone: v1.2 Стабилизация и качество
 
-**Goal (achieved):** Дать владельцу измеримую картину бизнеса — выручка, юнит-экономика и удержание — с историей, когортами и сегментами, а не одним числом за период.
+**Goal:** Закрыть техдолг и стабилизировать аналитику: исправить pre-existing failing тесты, добавить алерты и WoW/MoM-сравнения, CSV-экспорт и expiry save-list, promo/referral quality & fraud-сигналы, метрический словарь и upsell-радар.
+
+**Target features:**
+- Закрыть pre-existing failing tests: analytics-mrr.test.ts:190, auth-widget/auth-flow (Postgres), i18n gate
+- Алерты (ALR-01..04): WoW/MoM-сравнения, алерты на падение оплат/рост failed/всплеск тикетов/runway ниже порога, доставка через outbox/Telegram
+- CSV-экспорт списков (EXT-06) + expiry save-list (EXT-08) с push-напоминанием за 7 дней
+- Promo/referral quality & fraud (PRM-01..04): воронка click→register→pay, ROI промокодов, partner ROI, fraud-сигналы
+- Метрический словарь (EXT-02) + upsell-радар (EXT-05)
+
+**Out of this milestone (deferred):** multi-server/queue/monitoring infra, английская локализация, лимитные тарифы трафика, пополнение баланса юзера.
 
 **Shipped (5 phases, 17 plans):**
 - Phase 7: Analytics Foundation & Revenue Metrics (MRR/ARR, waterfall, ARPU/ARPPU, daily_metrics rollup, backfill, providerCost)
@@ -99,4 +108,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-31 — v1.1 milestone shipped (Phases 7-11)*
+*Last updated: 2026-10-31 — v1.2 milestone started*

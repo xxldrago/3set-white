@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Расширенная аналитика
-current_phase: 11
-current_phase_name: RFM Segments & Targeting
-status: complete
+status: Awaiting next milestone
 stopped_at: Phase 11 complete
-last_updated: "2026-10-31T12:00:00.000Z"
+last_updated: "2026-10-31T11:51:12.130Z"
 last_activity: 2026-10-31
-last_activity_desc: Phase 11 complete — RFM segments & targeting shipped (3 plans)
-state_head: HEAD
+last_activity_desc: Milestone v1.1 completed and archived
+state_head: e39891248b8c1a7d7aaf97ab9b17de268b0dc929
 progress:
   total_phases: 5
-  completed_phases: 5
+  completed_phases: 4
   total_plans: 17
   completed_plans: 17
+current_phase: 11
+current_phase_name: RFM Segments & Targeting
 ---
 
 # Project State
@@ -28,12 +28,10 @@ See: .planning/PROJECT.md (updated 2026-10-29)
 
 ## Current Position
 
-Phase: 11 — RFM Segments & Targeting (complete)
-Plan: 3 of 3
-Status: Complete
-Last activity: 2026-10-31 — Phase 11 complete
-
-Progress: [██████████] 100% (11/11 plans)
+Phase: Milestone v1.1 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-10-31 — Milestone v1.1 completed and archived
 
 ## Performance Metrics
 
@@ -127,3 +125,7 @@ Items acknowledged and deferred at milestone close, most recent first:
 Last session: 2026-10-29T07:33:59.868Z
 Stopped at: Phase 11 UI-SPEC approved
 Resume file: .planning/phases/11-rfm-segments-targeting/11-UI-SPEC.md
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone

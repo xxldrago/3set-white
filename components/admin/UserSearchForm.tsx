@@ -38,7 +38,7 @@ function SkeletonRows() {
   );
 }
 
-export default function UserSearchForm() {
+export default function UserSearchForm({ segment }: { segment?: string }) {
   const [query, setQuery] = useState('');
   const [rows, setRows] = useState<AdminSearchResult[]>([]);
   const [count, setCount] = useState(0);
@@ -60,7 +60,7 @@ export default function UserSearchForm() {
     abortRef.current = controller;
     setState('loading');
     try {
-      const res = await fetch(`/api/admin/users/search?q=${encodeURIComponent(value)}`, {
+      const res = await fetch(`/api/admin/users/search?q=${encodeURIComponent(value)}${segment ? `&segment=${encodeURIComponent(segment)}` : ''}`, {
         signal: controller.signal,
       });
       if (!res.ok) throw new Error('admin_search_failed');
@@ -78,7 +78,7 @@ export default function UserSearchForm() {
       setTruncated(false);
       setState('error');
     }
-  }, [trimmed]);
+  }, [trimmed, segment]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -136,7 +136,7 @@ export default function UserSearchForm() {
       )}
 
       {state === 'results' && (
-        <UserSearchResults rows={rows} count={count} truncated={truncated} />
+        <UserSearchResults rows={rows} count={count} truncated={truncated} segment={segment} />
       )}
     </div>
   );

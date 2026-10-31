@@ -8,6 +8,7 @@
 // `title`; the telegram id is `tabular-nums`.
 import Link from 'next/link';
 import RoleChip from './RoleChip';
+import SegmentBadge from './SegmentBadge';
 import { t, tp } from '@/lib/i18n';
 import type { AdminSearchResult } from '@/lib/admin-service';
 
@@ -17,10 +18,12 @@ export default function UserSearchResults({
   rows,
   count,
   truncated,
+  segment,
 }: {
   rows: AdminSearchResult[];
   count: number;
   truncated: boolean;
+  segment?: string;
 }) {
   return (
     <section className="flex flex-col gap-4">
@@ -51,6 +54,7 @@ export default function UserSearchResults({
                     {label}
                   </span>
                   {row.staffRole && <RoleChip role={row.staffRole} />}
+                  {segment && <SegmentBadge label={segment} />}
                 </div>
                 {row.username && (
                   <span className="text-sm text-muted">

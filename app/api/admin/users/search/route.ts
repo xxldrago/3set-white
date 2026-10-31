@@ -30,13 +30,23 @@ export async function GET(req: Request): Promise<Response> {
   }
 
   const raw = new URL(req.url).searchParams.get("q") ?? "";
+  const segmentRaw = new URL(req.url).searchParams.get("segment");
   const parsed = querySchema.safeParse(raw);
   if (!parsed.success) {
     return Response.json({ error: "bad_request" }, { status: 400 });
   }
+  // whitelist segment against SEGMENT_SLUGS
+  let segment: string | undefined;
+  if (segmentRaw) {
+    const { SEGMENT_SLUGS } = await import("../../../../../lib/analytics/rfm");
+    if (!(SEGMENT_SLUGS as readonly string[]).includes(segmentRaw)) {
+      return Response.json({ error: "bad_request" }, { status: 400 });
+    }
+    segment = segmentRaw;
+  }
 
   try {
-    const { rows, count, truncated } = await adminSearchUsers(parsed.data);
+    const { rows, count, truncated } = await adminSearchUsers(parsed.data, segment);
     return Response.json({ rows, count, truncated });
   } catch {
     logger.error({ route: "admin-users-search", outcome: "unexpected_error" });

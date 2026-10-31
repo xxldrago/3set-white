@@ -40,7 +40,8 @@ export type AdminSection =
   | "promos"
   | "referrals"
   | "partner"
-  | "roles";
+  | "roles"
+  | "segments";
 
 /** UI-SPEC §1 role matrix — the single literal source of truth. */
 const MATRIX: Record<AdminRole, readonly AdminSection[]> = {
@@ -57,9 +58,10 @@ const MATRIX: Record<AdminRole, readonly AdminSection[]> = {
     "promos",
     "referrals",
     "roles",
+    "segments",
   ],
   support: ["users", "profileKeys", "profileTickets", "tickets"],
-  manager: ["overview", "analytics", "users", "profilePayments"],
+  manager: ["overview", "analytics", "users", "profilePayments", "segments"],
   // Partners see ONLY their own dashboard. They never enter the shared
   // queues (users/tickets/roles) — чужі дані недоступні. Support contact
   // stays in the cabinet (/support), linked from the dashboard.

@@ -152,7 +152,7 @@ function parseTelegramId(value: string): bigint | null {
  * the PII-minimal row shape leaves this function (T-05-05, scoped by the
  * explicit admin directory requirement to identity fields).
  */
-export async function adminSearchUsers(q: string): Promise<AdminSearchResponse> {
+export async function adminSearchUsers(q: string, segment?: string): Promise<AdminSearchResponse> {
   const trimmed = q.trim();
   if (trimmed.length === 0) return { rows: [], count: 0, truncated: false };
 
@@ -229,10 +229,17 @@ export async function adminSearchUsers(q: string): Promise<AdminSearchResponse> 
   }
 
   const all = [...results.values()];
-  const count = all.length;
+  let filtered = all;
+  if (segment) {
+    const ids = all.map((r) => r.userId);
+    const rfms = await prisma.userRfm.findMany({ where: { userId: { in: ids } }, select: { userId: true, segment: true } });
+    const segMap = new Map(rfms.map((r) => [r.userId, r.segment]));
+    filtered = all.filter((r) => segMap.get(r.userId) === segment);
+  }
+  const count = filtered.length;
   const truncated = count > ADMIN_SEARCH_LIMIT;
   return {
-    rows: truncated ? all.slice(0, ADMIN_SEARCH_LIMIT) : all,
+    rows: truncated ? filtered.slice(0, ADMIN_SEARCH_LIMIT) : filtered,
     count,
     truncated,
   };
@@ -421,10 +428,16 @@ export interface AdminUserTableRow {
   keysCount: number;
   ordersCount: number;
   createdAt: Date;
+  segment: string | null;
+  recencyDays: number | null;
+  frequency: number | null;
+  monetary: number | null;
 }
 
-export async function loadAdminUsersTable(): Promise<AdminUserTableRow[]> {
+export async function loadAdminUsersTable(segment?: string): Promise<AdminUserTableRow[]> {
+  const where = segment ? { rfm: { segment } } : {};
   const users = await prisma.user.findMany({
+    where,
     orderBy: { createdAt: "desc" },
     take: 50,
     select: {
@@ -435,6 +448,7 @@ export async function loadAdminUsersTable(): Promise<AdminUserTableRow[]> {
       firstName: true,
       lastName: true,
       createdAt: true,
+      rfm: { select: { segment: true, recencyDays: true, frequency: true, monetary: true } },
     },
   });
   const roles = await prisma.adminUser.findMany({
@@ -442,7 +456,6 @@ export async function loadAdminUsersTable(): Promise<AdminUserTableRow[]> {
     select: { telegramId: true, role: true },
   });
   const roleByTid = new Map(roles.map((r) => [String(r.telegramId), r.role]));
-  // Approximate counts via groupBy (no _count on aggregate per-id needed for MVP table)
   const keysById = new Map<number, number>();
   const ordersById = new Map<number, number>();
 
@@ -460,6 +473,10 @@ export async function loadAdminUsersTable(): Promise<AdminUserTableRow[]> {
     keysCount: keysById.get(u.id) ?? 0,
     ordersCount: ordersById.get(u.id) ?? 0,
     createdAt: u.createdAt,
+    segment: u.rfm?.segment ?? null,
+    recencyDays: u.rfm?.recencyDays ?? null,
+    frequency: u.rfm?.frequency ?? null,
+    monetary: u.rfm?.monetary ?? null,
   }));
 }
 

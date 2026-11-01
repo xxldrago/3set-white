@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Стабилизация и качество
-current_phase: 13
-current_phase_name: Anomaly Alerts
-status: complete
-stopped_at: Phase 13 complete — all 4 tasks done, 18/18 tests passing
-last_updated: "2026-11-02T07:55:00.000Z"
+current_phase: 16
+current_phase_name: CSV Export & Metric Dictionary
+status: planning
+stopped_at: Phase 16 scaffolding created
+last_updated: "2026-11-02T08:50:00.000Z"
 last_activity: 2026-11-02
-last_activity_desc: Phase 13 Anomaly Alerts implemented (detection, outbox, cron, admin UI)
-state_head: 638f518
+last_activity_desc: Phases 13-16 implemented (alerts, promo/referral quality, retention pages, CSV export)
+state_head: c0dede4
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 4
   total_plans: 5
   completed_plans: 5
 ---

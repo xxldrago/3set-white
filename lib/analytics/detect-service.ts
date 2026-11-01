@@ -55,17 +55,22 @@ async function createAlertEvent(input: {
       severity: input.severity,
       message: input.message,
       firedAt: new Date(),
-      thresholdAtFiring: input.thresholdAtFiring,
-      actualValue: input.actualValue,
+      thresholdAtFiring: String(input.thresholdAtFiring),
+      actualValue: String(input.actualValue),
     },
   });
   // Enqueue notification for all admins
-  const admins = await prisma.user.findMany({
-    where: { role: "administrator" },
-    select: { id: true },
-  });
-  if (admins.length > 0) {
-    await enqueueAnomalyAlert(input.type, input.windowLabel, admins.map((a) => a.id));
+  try {
+    const admins = await (prisma as any).adminUser?.findMany({
+      where: { role: "administrator" },
+      select: { telegramId: true },
+    }) || [];
+    const userIds = admins.map((a: any) => Number(a.telegramId)).filter((id: number) => !isNaN(id));
+    if (userIds.length > 0) {
+      await enqueueAnomalyAlert(input.type, input.windowLabel, userIds);
+    }
+  } catch (e) {
+    // Best effort
   }
 }
 

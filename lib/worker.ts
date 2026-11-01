@@ -672,13 +672,11 @@ async function drainAnomalyAlerts(telegram: TelegramSender): Promise<void> {
       } else if (result.outcome === 'retryable_error') {
         // Already rescheduled in dispatchAnomalyAlert if daily limit hit
         // Otherwise, schedule with backoff
-        if (job.lastError !== 'daily_limit') {
-          await rescheduleNotification(
-            job.id,
-            new Date(Date.now() + backoffMs(job.attempts + 1)),
-            'telegram',
-          );
-        }
+        await rescheduleNotification(
+          job.id,
+          new Date(Date.now() + backoffMs(job.attempts + 1)),
+          'telegram',
+        );
       } else {
         await markNotificationFailed(job.id, 'skipped');
       }

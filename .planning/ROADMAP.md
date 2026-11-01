@@ -68,6 +68,17 @@ Numbering continues from v1.1 (last phase = 11).
 **Plans**: TBD
 **UI hint**: yes
 
+### Phase 13.1: Anomaly Alerts (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 13
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 13.1 to break down)
+
 ### Phase 14: Promo & Referral Quality + Fraud
 
 **Goal**: Владелец видит, какие промокоды и партнёры реально приносят деньги, и какие источники трафика выглядят как fraud

@@ -79,3 +79,56 @@ export function notifyAdminsSupportIntake(payload: {
     }
   })();
 }
+
+/**
+ * Phase 13: Anomaly alert broadcast to all administrators.
+ * Enqueues ALERT_ANOMALY notifications with dedupe key.
+ */
+export async function notifyAdminsAnomalyAlert(
+  type: string,
+  windowLabel: string,
+  message: string,
+  severity: 'warning' | 'critical',
+): Promise<void> {
+  const { enqueueAnomalyAlertNotifications } = await import('./outbox');
+  const { prisma } = await import('./prisma');
+  
+  const rows = await prisma.adminUser
+    .findMany({
+      where: { role: 'administrator' },
+      select: { telegramId: true },
+    })
+    .catch(() => []);
+  
+  const telegramIds = rows.map((r) => Number(r.telegramId));
+  const envIds = parseAdminTelegramIds(env.ADMIN_TELEGRAM_IDS);
+  for (const id of envIds) {
+    telegramIds.push(id);
+  }
+  
+  // Dedupe by unique set
+  const uniqueIds = [...new Set(telegramIds)];
+  
+  if (uniqueIds.length === 0) {
+    logger.warn({ route: 'admin-notify', outcome: 'no_admins_for_anomaly_alert' });
+    return;
+  }
+  
+  const emoji = severity === 'critical' ? '🚨' : '⚠️';
+  const fullMessage = `${emoji} ${message}`;
+  
+  // Enqueue notifications (dedupe key prevents duplicates)
+  const enqueued = await enqueueAnomalyAlertNotifications(
+    type,
+    windowLabel,
+    uniqueIds,
+  );
+  
+  logger.info({
+    route: 'admin-notify',
+    outcome: 'anomaly_alert_enqueued',
+    type,
+    windowLabel,
+    enqueued,
+  });
+}

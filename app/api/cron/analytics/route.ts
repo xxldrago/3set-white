@@ -111,6 +111,15 @@ export async function POST(req: Request): Promise<Response> {
   }
   
   const result = await rollupDays(fromDay, toDay);
+  
+  // Phase 13: anomaly detection
+  try {
+    const { detectAnomalies } = await import("../../../../lib/analytics/detect-service");
+    await detectAnomalies();
+  } catch (e) {
+    logger.warn({ route: "cron_analytics", outcome: "detect_failed", err: (e as any)?.message });
+  }
+  
   logger.info({ route: "cron_analytics", outcome: "rollup", ...result });
   return Response.json({ ok: true, ...result });
 }

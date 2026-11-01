@@ -32,6 +32,7 @@ import {
   REMIND_EXPIRY,
   BROADCAST,
   BALANCE_ALERT,
+  ALERT_ANOMALY,
   claimNextJob,
   claimNextNotification,
   enqueueNotifyFailed,
@@ -425,6 +426,8 @@ async function drainDeliveryNotifications(telegram: TelegramSender): Promise<voi
   await drainNotificationType(REMIND_EXPIRY, dispatchReminder, telegram);
   await drainNotificationType(BROADCAST, dispatchBroadcast, telegram);
   await drainNotificationType(BALANCE_ALERT, dispatchBalanceAlert, telegram);
+  // Phase 13: anomaly alerts with quiet hours deferral
+  await drainAnomalyAlerts(telegram);
 }
 
 export type ReconcileOutcome = { scanned: number; recovered: number };
@@ -525,6 +528,165 @@ export async function runBalanceAlert(): Promise<void> {
   logger[level]({ route: 'worker', outcome: 'low_balance', band: status });
   const date = new Date().toISOString().slice(0, 10);
   await enqueueBalanceAlertNotifications(date, status, parseAdminTelegramIds(env.ADMIN_TELEGRAM_IDS));
+}
+
+// ---------------------------------------------------------------------------
+// Phase 13: Anomaly alert delivery with quiet hours deferral
+// ---------------------------------------------------------------------------
+
+const QUIET_HOURS_START_MSK = 22; // 22:00 MSK
+const QUIET_HOURS_END_MSK = 9;    // 09:00 MSK
+const DAILY_DM_LIMIT = 3;         // Max DMs per admin per day
+
+/**
+ * Check if current time is within quiet hours (22:00–09:00 MSK).
+ */
+export function isQuietHoursMSK(now: Date = new Date()): boolean {
+  const mskHour = new Date(now.getTime() + 3 * 60 * 60 * 1000).getUTCHours();
+  return mskHour >= QUIET_HOURS_START_MSK || mskHour < QUIET_HOURS_END_MSK;
+}
+
+/**
+ * Get next delivery time: if in quiet hours, return 09:00 MSK today/tomorrow.
+ * Otherwise return now.
+ */
+export function getNextDeliveryTime(now: Date = new Date()): Date {
+  if (!isQuietHoursMSK(now)) {
+    return now;
+  }
+  
+  // Schedule for 09:00 MSK
+  const mskOffset = 3 * 60 * 60 * 1000;
+  const mskDate = new Date(now.getTime() + mskOffset);
+  mskDate.setUTCHours(9, 0, 0, 0);
+  const target = new Date(mskDate.getTime() - mskOffset);
+  
+  // If target time is in the past (early morning case), it's same day
+  // If target time is in the past relative to when we want (late evening), add a day
+  if (target <= now) {
+    target.setDate(target.getDate() + 1);
+  }
+  
+  return target;
+}
+
+/**
+ * Count DMs sent to an admin today (for daily limit enforcement).
+ */
+async function countDmsSentToday(telegramId: number, now: Date = new Date()): Promise<number> {
+  const todayStart = new Date(now);
+  todayStart.setUTCHours(0, 0, 0, 0);
+  
+  const count = await prisma.notification.count({
+    where: {
+      type: ALERT_ANOMALY,
+      userId: telegramId,
+      status: 'done',
+      processedAt: { gte: todayStart },
+    },
+  });
+  
+  return count;
+}
+
+/**
+ * Dispatch one anomaly alert notification to its target admin.
+ * Returns outcome for worker state management.
+ */
+async function dispatchAnomalyAlert(
+  notificationId: string,
+  send: TelegramSender,
+): Promise<{ outcome: 'pushed' | 'retryable_error' | 'skipped' }> {
+  const notification = await prisma.notification.findUnique({
+    where: { id: notificationId },
+    select: { dedupeKey: true, userId: true },
+  });
+  
+  if (!notification) {
+    return { outcome: 'skipped' };
+  }
+  
+  // Extract telegram ID from dedupe key: alert:type:windowLabel:telegramId
+  const parts = notification.dedupeKey.split(':');
+  const telegramId = parts[parts.length - 1];
+  
+  if (!telegramId) {
+    return { outcome: 'skipped' };
+  }
+  
+  // Check daily DM limit
+  const dmsToday = await countDmsSentToday(Number(telegramId));
+  if (dmsToday >= DAILY_DM_LIMIT) {
+    // Defer until tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setUTCHours(0, 0, 0, 0);
+    await rescheduleNotification(notificationId, tomorrow, 'daily_limit');
+    return { outcome: 'retryable_error' };
+  }
+  
+  // Get alert message from AlertEvent
+  const alert = await prisma.alertEvent.findFirst({
+    where: {
+      type: { startsWith: parts[1] }, // Match type from dedupe key
+      windowLabel: parts[2],
+    },
+    select: { message: true, severity: true },
+  });
+  
+  if (!alert) {
+    return { outcome: 'skipped' };
+  }
+  
+  const emoji = alert.severity === 'critical' ? '🚨' : '⚠️';
+  const message = `${emoji} ${alert.message}`;
+  
+  try {
+    await send.sendMessage(telegramId, message);
+    return { outcome: 'pushed' };
+  } catch {
+    return { outcome: 'retryable_error' };
+  }
+}
+
+/**
+ * Drain anomaly alert notifications with quiet hours deferral.
+ */
+async function drainAnomalyAlerts(telegram: TelegramSender): Promise<void> {
+  for (let i = 0; i < DRAIN_BATCH; i += 1) {
+    const job = await claimNextNotification(ALERT_ANOMALY);
+    if (!job) break;
+    
+    try {
+      // Check quiet hours at delivery time
+      if (isQuietHoursMSK()) {
+        const nextAttemptAt = getNextDeliveryTime();
+        await rescheduleNotification(job.id, nextAttemptAt, 'quiet_hours');
+        continue;
+      }
+      
+      const result = await dispatchAnomalyAlert(job.id, telegram);
+      
+      if (result.outcome === 'pushed') {
+        await markNotificationDone(job.id);
+      } else if (result.outcome === 'retryable_error') {
+        // Already rescheduled in dispatchAnomalyAlert if daily limit hit
+        // Otherwise, schedule with backoff
+        if (job.lastError !== 'daily_limit') {
+          await rescheduleNotification(
+            job.id,
+            new Date(Date.now() + backoffMs(job.attempts + 1)),
+            'telegram',
+          );
+        }
+      } else {
+        await markNotificationFailed(job.id, 'skipped');
+      }
+    } catch {
+      logger.error({ route: 'worker', outcome: 'alert_job_error', jobId: job.id });
+      await markNotificationFailed(job.id, 'unexpected');
+    }
+  }
 }
 
 export function startBalanceAlertTick(): NodeJS.Timeout {

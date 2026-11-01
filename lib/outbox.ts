@@ -139,7 +139,32 @@ export const REMIND_EXPIRY = "remind-expiry";
 export const BROADCAST = "broadcast";
 /** Deliver a deduplicated low-balance alert to one configured administrator. */
 export const BALANCE_ALERT = "balance-alert";
-/** Deliver an anomaly alert (business metric anomaly) to administrators. */
+/** Deliver anomaly alerts to administrators (Phase 13). */
+export const ALERT_ANOMALY = "alert-anomaly";
+
+export async function enqueueAnomalyAlert(
+  type: string,
+  windowLabel: string,
+  userIds: number[],
+): Promise<number> {
+  if (userIds.length === 0) return 0;
+  try {
+    const result = await prisma.notification.createMany({
+      data: userIds.map((userId) => ({
+        type: ALERT_ANOMALY,
+        dedupeKey: `alert-anomaly:${type}:${windowLabel}:${userId}`,
+        userId,
+        status: "pending",
+        attempts: 0,
+        nextAttemptAt: new Date(),
+      })),
+      skipDuplicates: true,
+    });
+    return result.count;
+  } catch {
+    return 0;
+  }
+}/** Deliver an anomaly alert (business metric anomaly) to administrators. */
 export const ALERT_ANOMALY = "alert-anomaly";
 
 export interface NotificationInput {

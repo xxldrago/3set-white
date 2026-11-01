@@ -445,10 +445,13 @@ export async function hasPaidSubscriptionByUserId(userId: number): Promise<boole
  * (`updateMany`) makes the race safe (D-22): `count === 1` means we won the
  * claim, `count === 0` means the flag was already set (or the row is absent).
  */
-export async function claimTrial(telegramId: bigint): Promise<boolean> {
+export async function claimTrial(
+  telegramId: bigint,
+  trialIpHash?: string | null,
+): Promise<boolean> {
   const { count } = await prisma.user.updateMany({
     where: { telegramId, trialUsed: false },
-    data: { trialUsed: true },
+    data: { trialUsed: true, trialIpHash: trialIpHash || undefined },
   });
   return count === 1;
 }
@@ -472,10 +475,13 @@ export async function releaseTrialOnFailure(telegramId: bigint): Promise<void> {
  * `trialUsed` flag stays the single source of truth (trialUsed OR on merge
  * in plan 06-02 keeps it that way).
  */
-export async function claimTrialByUserId(userId: number): Promise<boolean> {
+export async function claimTrialByUserId(
+  userId: number,
+  trialIpHash?: string | null,
+): Promise<boolean> {
   const { count } = await prisma.user.updateMany({
     where: { id: userId, trialUsed: false },
-    data: { trialUsed: true },
+    data: { trialUsed: true, trialIpHash: trialIpHash || undefined },
   });
   return count === 1;
 }
@@ -538,7 +544,10 @@ export async function upsertCachedKey(userId: number, key: NormalizedKey): Promi
  * so we keep the claim and surface `already_used` rather than reopening a
  * retry loop (RESEARCH Open Q3, D-24).
  */
-export async function startTrial(telegramId: bigint): Promise<StartTrialResult> {
+export async function startTrial(
+  telegramId: bigint,
+  trialIpHash?: string | null,
+): Promise<StartTrialResult> {
   // Paying customers never see a trial: any non-trial key row closes the
   // path before the claim (no trialUsed flag is burned on this refusal).
   const owner = await prisma.user.findUnique({
@@ -548,7 +557,7 @@ export async function startTrial(telegramId: bigint): Promise<StartTrialResult> 
   if (owner && (await hasPaidSubscriptionByUserId(owner.id))) {
     return { kind: "already_used" };
   }
-  if (!(await claimTrial(telegramId))) {
+  if (!(await claimTrial(telegramId, trialIpHash))) {
     return { kind: "already_used" };
   }
 
@@ -585,11 +594,14 @@ export async function startTrial(telegramId: bigint): Promise<StartTrialResult> 
  * `releaseTrialOnFailureByUserId` (guarded on `trialKeyId: null`, Pitfall 5).
  * A provider `conflict` (409) is terminal: keep the claim, report `already_used`.
  */
-export async function startTrialByUserId(userId: number): Promise<StartTrialResult> {
+export async function startTrialByUserId(
+  userId: number,
+  trialIpHash?: string | null,
+): Promise<StartTrialResult> {
   if (await hasPaidSubscriptionByUserId(userId)) {
     return { kind: "already_used" };
   }
-  if (!(await claimTrialByUserId(userId))) {
+  if (!(await claimTrialByUserId(userId, trialIpHash))) {
     return { kind: "already_used" };
   }
 

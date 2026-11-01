@@ -32,11 +32,14 @@ export function clientIp(req: Request): string {
 
 export function hashClientIp(req: Request): string | null {
   const ip = clientIp(req);
-  if (ip === "direct") return null;
-  return createHash("sha256").update(ip).digest("hex");
+  return hashIpString(ip);
 }
 
-export function hashIp(ip: string): string {
-  if (ip === "direct") return createHash("sha256").update(ip).digest("hex");
+export function hashIp(ip: string): string | null {
+  return hashIpString(ip);
+}
+
+export function hashIpString(ip: string): string | null {
+  if (!ip || ip === "direct") return null;
   return createHash("sha256").update(ip).digest("hex");
 }

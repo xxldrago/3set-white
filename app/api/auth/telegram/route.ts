@@ -16,7 +16,9 @@ import {
   verifyInitData,
   verifyWidget,
 } from "../../../../lib/auth";
+import { clientIp } from "../../../../lib/client-ip";
 import { env } from "../../../../lib/env";
+import { getSignupIpHash } from "../../../../lib/ip-hash";
 import { logger } from "../../../../lib/logger";
 import { prisma } from "../../../../lib/prisma";
 import { consumeWidgetHash } from "../../../../lib/replay";
@@ -48,6 +50,8 @@ export async function POST(req: Request): Promise<Response> {
   } catch {
     return Response.json({ error: "bad_request" }, { status: 400 });
   }
+
+  const signupIpHash = getSignupIpHash(req);
 
   // initData shape takes precedence; anything else must satisfy the Widget
   // shape (validated separately so the loose Widget index signature cannot
@@ -85,6 +89,7 @@ export async function POST(req: Request): Promise<Response> {
           firstName: typeof user.first_name === "string" ? user.first_name : undefined,
           lastName: typeof user.last_name === "string" ? user.last_name : undefined,
           username: typeof user.username === "string" ? user.username : undefined,
+          signupIpHash: signupIpHash || undefined,
         },
         select: { id: true },
       });
@@ -133,6 +138,7 @@ export async function POST(req: Request): Promise<Response> {
         firstName: widget.first_name,
         lastName: widget.last_name,
         username: widget.username,
+        signupIpHash: signupIpHash || undefined,
       },
       select: { id: true },
     });

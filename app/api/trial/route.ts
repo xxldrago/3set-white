@@ -9,6 +9,8 @@
 // a clean `{ok:false, reason:"trial_used"}` — the provider message/code is
 // never proxied (D-24 / T-02-11).
 import { ArtemidaError } from "../../../lib/artemida";
+import { clientIp } from "../../../lib/client-ip";
+import { getTrialIpHash } from "../../../lib/ip-hash";
 import {
   hasPaidSubscriptionByUserId,
   startTrial,
@@ -53,7 +55,7 @@ export async function GET(): Promise<Response> {
   }
 }
 
-export async function POST(): Promise<Response> {
+export async function POST(req: Request): Promise<Response> {
   let userId: number;
   let telegramId: number | null;
   try {
@@ -65,6 +67,8 @@ export async function POST(): Promise<Response> {
     logger.error({ route: "trial", outcome: "session_error" });
     return Response.json({ error: "internal" }, { status: 500 });
   }
+
+  const trialIpHash = getTrialIpHash(req);
 
   try {
     // Email-only sessions (no linked Telegram) must verify the mailbox
@@ -83,8 +87,8 @@ export async function POST(): Promise<Response> {
     // sessions use the userId-keyed claim + `email:{userId}` customerRef.
     const result =
       telegramId !== null
-        ? await startTrial(BigInt(telegramId))
-        : await startTrialByUserId(userId);
+        ? await startTrial(BigInt(telegramId), trialIpHash)
+        : await startTrialByUserId(userId, trialIpHash);
     if (result.kind === "already_used") {
       // Clean RU response; the UI maps this to the "already used" copy + CTA.
       return Response.json({ ok: false, reason: "trial_used" }, { status: 409 });

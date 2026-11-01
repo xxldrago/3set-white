@@ -19,6 +19,7 @@ import { requestVerification } from "../../../../../lib/email-verify";
 import { hashPassword } from "../../../../../lib/password";
 import { prisma } from "../../../../../lib/prisma";
 import { pinReferrer } from "../../../../../lib/referrals";
+import { getSignupIpHash } from "../../../../../lib/ip-hash";
 
 export const dynamic = "force-dynamic";
 
@@ -89,10 +90,11 @@ export async function POST(req: Request): Promise<Response> {
     } catch {
       return Response.json({ error: "bad_request" }, { status: 400 });
     }
+    const signupIpHash = getSignupIpHash(req);
     let user;
     try {
       user = await prisma.user.create({
-        data: { email, emailCanonical, passwordHash },
+        data: { email, emailCanonical, passwordHash, signupIpHash: signupIpHash || undefined },
         select: { id: true },
       });
     } catch (err: unknown) {

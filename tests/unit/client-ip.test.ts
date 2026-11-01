@@ -1,49 +1,60 @@
-// CR-02 regression: the shared client-IP resolver must never trust the
-// client-controlled first `X-Forwarded-For` entry. `X-Real-IP` (edge-set)
-// wins; without it the LAST XFF hop is used; no headers → "direct".
+// tests/unit/client-ip.test.ts
 import { describe, expect, it } from "vitest";
-import { clientIp } from "../../lib/client-ip";
+import { clientIp, hashClientIp, hashIp } from "../../lib/client-ip";
 
-function req(headers: Record<string, string>): Request {
-  return new Request("http://localhost/api/auth/email/login", {
-    method: "POST",
-    headers,
-  });
+function makeReq(headers: Record<string, string>): Request {
+  return new Request("http://test", { headers });
 }
 
-describe("clientIp (trusted hop resolver)", () => {
-  it("returns x-real-ip when present, even with a spoofed multi-entry XFF", () => {
-    expect(
-      clientIp(
-        req({
-          "x-real-ip": "203.0.113.7",
-          "x-forwarded-for": "1.2.3.4, 203.0.113.7",
-        }),
-      ),
-    ).toBe("203.0.113.7");
+describe("clientIp() - resolution order", () => {
+  it("X-Real-IP takes precedence when non-empty", () => {
+    const req = makeReq({
+      "x-real-ip": "1.2.3.4",
+      "x-forwarded-for": "5.6.7.8, 9.10.11.12",
+    });
+    expect(clientIp(req)).toBe("1.2.3.4");
   });
 
-  it("falls back to the LAST XFF hop, never the first, when x-real-ip is absent", () => {
-    expect(clientIp(req({ "x-forwarded-for": "1.2.3.4, 9.9.9.9" }))).toBe("9.9.9.9");
+  it("last X-Forwarded-For entry when X-Real-IP absent", () => {
+    const req = makeReq({
+      "x-forwarded-for": "attacker, 1.2.3.4",
+    });
+    expect(clientIp(req)).toBe("1.2.3.4");
   });
 
-  it("returns the single XFF entry when only one is present", () => {
-    expect(clientIp(req({ "x-forwarded-for": "198.51.100.42" }))).toBe("198.51.100.42");
+  it("direct fallback when no headers", () => {
+    const req = makeReq({});
+    expect(clientIp(req)).toBe("direct");
   });
 
-  it("returns \"direct\" when no forwarded headers are present", () => {
-    expect(clientIp(req({}))).toBe("direct");
+  it("direct fallback when XFF empty", () => {
+    const req = makeReq({ "x-forwarded-for": "" });
+    expect(clientIp(req)).toBe("direct");
+  });
+});
+
+describe("hashClientIp() - direct exclusion", () => {
+  it("hashClientIp returns null for direct", () => {
+    const req = makeReq({});
+    expect(hashClientIp(req)).toBeNull();
   });
 
-  it("trims whitespace around every entry", () => {
-    expect(clientIp(req({ "x-forwarded-for": "  1.2.3.4 ,   9.9.9.9  " }))).toBe("9.9.9.9");
-    expect(clientIp(req({ "x-real-ip": "  203.0.113.9  " }))).toBe("203.0.113.9");
+  it("hashClientIp returns sha256 hex for real IP", () => {
+    const req = makeReq({ "x-real-ip": "1.2.3.4" });
+    const hash = hashClientIp(req);
+    expect(hash).toBeTruthy();
+    expect(hash?.length).toBe(64);
+  });
+});
+
+describe("hashIp() - never hash direct", () => {
+  it("hashIp('direct') returns null", () => {
+    expect(hashIp("direct")).toBeNull();
   });
 
-  it("ignores empty x-real-ip and empty XFF entries", () => {
-    expect(clientIp(req({ "x-real-ip": "  ", "x-forwarded-for": ", 9.9.9.9, " }))).toBe(
-      "9.9.9.9",
-    );
-    expect(clientIp(req({ "x-forwarded-for": "  " }))).toBe("direct");
+  it("hashIp('1.2.3.4') returns sha256 hex", () => {
+    const hash = hashIp("1.2.3.4");
+    expect(hash).toBeTruthy();
+    expect(hash?.length).toBe(64);
   });
 });

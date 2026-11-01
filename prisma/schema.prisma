@@ -645,3 +645,24 @@ model DataQualityEvent {
   @@index([resolvedAt])
   @@map("data_quality_events")
 }
+
+// Phase 13 anomaly alerts: business metric anomaly events with lifecycle (firing → sent → resolved).
+// Dedupe key on Notification prevents duplicate enqueue; status tracks delivery state.
+model AlertEvent {
+  id               String    @id @default(cuid())
+  type             String    // "payment_drop" | "failed_spike" | "ticket_spike" | "runway_low"
+  status           String    // "firing" | "sent" | "resolved" | "muted"
+  windowLabel      String    @map("window_label") // MSK day label (YYYY-MM-DD) when detected
+  severity         String    // "warning" | "critical"
+  message          String    // Human-readable alert message
+  firedAt          DateTime  @default(now()) @map("fired_at")
+  resolvedAt       DateTime? @map("resolved_at")
+  thresholdAtFiring String   @map("threshold_at_firing") // JSON snapshot of thresholds at firing time
+  actualValue      String    @map("actual_value") // JSON snapshot of actual metric values
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  @@index([status, firedAt])
+  @@index([type, firedAt])
+  @@index([windowLabel])
+  @@map("alert_events")
+}

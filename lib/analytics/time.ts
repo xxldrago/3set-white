@@ -76,3 +76,12 @@ export function addMonths(label: string, n: number): string {
   const nextMonth = index - nextYear * 12 + 1;
   return `${String(nextYear).padStart(4, '0')}-${String(nextMonth).padStart(2, '0')}-01`;
 }
+
+/**
+ * Shift a day label by delta days: `shiftDays("2026-10-20", -1)` → `"2026-10-19"`.
+ * Pure JS date math with MSK offset.
+ */
+export function shiftDays(label: string, delta: number): string {
+  const d = new Date(mskDayStartInstant(label).getTime() + delta * 86_400_000);
+  return mskDayLabel(d);
+}

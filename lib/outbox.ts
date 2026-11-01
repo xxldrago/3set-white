@@ -139,6 +139,8 @@ export const REMIND_EXPIRY = "remind-expiry";
 export const BROADCAST = "broadcast";
 /** Deliver a deduplicated low-balance alert to one configured administrator. */
 export const BALANCE_ALERT = "balance-alert";
+/** Deliver an anomaly alert (business metric anomaly) to administrators. */
+export const ALERT_ANOMALY = "alert-anomaly";
 
 export interface NotificationInput {
   type: string;
@@ -199,6 +201,27 @@ export async function enqueueBalanceAlertNotifications(
       type: BALANCE_ALERT,
       dedupeKey: `balance:${date}:${band}:${telegramId}`,
       userId: null,
+    })),
+    skipDuplicates: true,
+  });
+  return result.count;
+}
+
+/**
+ * Enqueue anomaly alert notifications for all administrators.
+ * Dedupe key = `${type}:${windowLabel}` prevents duplicate alerts for same anomaly.
+ */
+export async function enqueueAnomalyAlertNotifications(
+  type: string,
+  windowLabel: string,
+  telegramIds: number[],
+): Promise<number> {
+  if (telegramIds.length === 0) return 0;
+  const result = await prisma.notification.createMany({
+    data: telegramIds.map((telegramId) => ({
+      type: ALERT_ANOMALY,
+      dedupeKey: `alert:${type}:${windowLabel}:${telegramId}`,
+      userId: null, // admin broadcast
     })),
     skipDuplicates: true,
   });

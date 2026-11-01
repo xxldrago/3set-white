@@ -42,7 +42,8 @@ export type AdminSection =
   | "partner"
   | "roles"
   | "segments"
-  | "alerts";
+  | "alerts"
+  | "fraud";
 
 /** UI-SPEC §1 role matrix — the single literal source of truth. */
 const MATRIX: Record<AdminRole, readonly AdminSection[]> = {
@@ -61,6 +62,7 @@ const MATRIX: Record<AdminRole, readonly AdminSection[]> = {
     "roles",
     "segments",
     "alerts",
+    "fraud",
   ],
   support: ["users", "profileKeys", "profileTickets", "tickets"],
   manager: ["overview", "analytics", "users", "profilePayments", "segments"],

@@ -587,7 +587,7 @@ describe("email-only trial via /api/trial + cabinet read (G-06-9)", () => {
   const KEY_TG = `key-tg-trial-${RUN4}`;
 
   function postTrial(): Promise<Response> {
-    return trialPOST();
+    return trialPOST(new Request("http://test/api/trial", { method: "POST" }));
   }
 
   async function purge(): Promise<void> {

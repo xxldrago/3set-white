@@ -162,7 +162,7 @@ describe("trial gate", () => {
 
   it("rejects an unverified email-only account with 403", async () => {
     await authorize();
-    const res = await trialPOST();
+    const res = await trialPOST(new Request("http://test/api/trial", { method: "POST" }));
     expect(res.status).toBe(403);
     expect(await res.json()).toEqual({ ok: false, reason: "email_unverified" });
   });
@@ -175,7 +175,7 @@ describe("trial gate", () => {
     const spy = vi.spyOn(artemida, "createTrial").mockResolvedValue(fakeTrialKey(KEY));
     try {
       await authorize();
-      const res = await trialPOST();
+      const res = await trialPOST(new Request("http://test/api/trial", { method: "POST" }));
       expect(res.status).toBe(200);
       expect(spy).toHaveBeenCalledWith({ customerRef: `email:${userId}` });
     } finally {
@@ -191,7 +191,7 @@ describe("trial gate", () => {
     const spy = vi.spyOn(artemida, "createTrial").mockResolvedValue(fakeTrialKey(`${KEY}-tg`));
     try {
       session.token = await signSession(tg.id, Number(TG), SECRET);
-      const res = await trialPOST();
+      const res = await trialPOST(new Request("http://test/api/trial", { method: "POST" }));
       expect(res.status).toBe(200);
     } finally {
       spy.mockRestore();

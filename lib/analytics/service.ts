@@ -116,6 +116,12 @@ export interface KpisData {
   arppuDenominator: number;
   coverageKnown: number;
   coverageTotal: number;
+  // Phase 12 comparison data
+  comparison?: {
+    period: 7 | 30 | 90;
+    currentWindow: { start: string; end: string };
+    baseWindow: { start: string; end: string };
+  };
 }
 
 /** First MSK day label of the window of `period` days ending yesterday (D-04). */
@@ -128,6 +134,14 @@ function getTodayStartMSK(): Date {
   const now = new Date();
   const todayLabel = mskDayLabel(now);
   return mskDayStartInstant(todayLabel);
+}
+
+export function getComparisonWindows(period: 7 | 30 | 90): { current: { start: string; end: string }, base: { start: string; end: string } } {
+  const w = comparisonWindows(period, new Date());
+  return {
+    current: { start: w.fromDay, end: w.toDay },
+    base: { start: w.baseFromDay, end: w.baseToDay },
+  };
 }
 
 async function loadPaidOrders(): Promise<PaidOrderRow[]> {
@@ -143,7 +157,9 @@ async function loadPaidOrders(): Promise<PaidOrderRow[]> {
  */
 export async function loadKpis(period: 7 | 30 | 90): Promise<KpisData> {
   const now = new Date();
-  const fromDay = windowStartDay(period);
+  const windows = comparisonWindows(period, now);
+  const fromDay = windows.fromDay;
+  const toDay = windows.toDay;
   const fromInstant = mskDayStartInstant(fromDay);
   const todayStart = getTodayStartMSK();
 
@@ -186,6 +202,11 @@ export async function loadKpis(period: 7 | 30 | 90): Promise<KpisData> {
     arppuDenominator,
     coverageKnown,
     coverageTotal,
+    comparison: {
+      period,
+      currentWindow: { start: fromDay, end: toDay },
+      baseWindow: { start: windows.baseFromDay, end: windows.baseToDay },
+    },
   };
 }
 

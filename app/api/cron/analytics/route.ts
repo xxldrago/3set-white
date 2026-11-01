@@ -8,6 +8,8 @@
 // provisioned at 00:10 self-heals its providerCost (Pitfall 9); the upsert
 // is absolute-value, which makes re-rolling free. The response carries
 // ids/outcomes only — never DATABASE_URL or provider payloads.
+//
+// Phase 12: 3-day retry for open degraded events, event closure, 13-month click retention.
 import { timingSafeEqual } from "node:crypto";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +50,66 @@ export async function POST(req: Request): Promise<Response> {
   const fromDay = mskDayLabel(new Date(now.getTime() - 7 * 86_400_000));
 
   const { rollupDays } = await import("../../../../lib/analytics/rollup");
+  const { prisma } = await import("../../../../lib/prisma");
+  
+  // Phase 12: find last 3 MSK days with open degraded events and retry
+  try {
+    const threeDaysAgo = mskDayLabel(new Date(now.getTime() - 3 * 86_400_000));
+    const openEvents = await prisma.dataQualityEvent.findMany({
+      where: {
+        resolvedAt: null,
+        mskDay: {
+          gte: new Date(threeDaysAgo + "T00:00:00.000Z"),
+        },
+      },
+    });
+    
+    if (openEvents.length > 0) {
+      const retryDays = new Set<string>();
+      for (const ev of openEvents) {
+        const d = ev.mskDay;
+        // mskDay is stored as Date
+        const dayLabel = mskDayLabel(d);
+        retryDays.add(dayLabel);
+      }
+      // Re-roll those specific days
+      const retryArr = Array.from(retryDays).sort();
+      if (retryArr.length > 0) {
+        await rollupDays(retryArr[0], retryArr[retryArr.length - 1], "cron", {
+          degradedDays: new Set(),
+        });
+        // Close events if successful
+        await prisma.dataQualityEvent.updateMany({
+          where: {
+            resolvedAt: null,
+            mskDay: {
+              in: Array.from(retryDays).map(d => new Date(d + "T00:00:00.000Z")),
+            },
+          },
+          data: { resolvedAt: new Date() },
+        });
+      }
+    }
+  } catch (e) {
+    logger.warn({ route: "cron_analytics", outcome: "retry_failed", err: (e as any)?.message });
+  }
+  
+  // 13-month click retention sweep
+  try {
+    const cutoff = new Date(now.getTime() - 13 * 30 * 86_400_000); // approx 13 months
+    // More accurately ~395 days
+    const cutoff13m = new Date(now.getTime() - 395 * 86_400_000);
+    await (prisma as any).referralClick?.deleteMany({
+      where: {
+        createdAt: {
+          lt: cutoff13m,
+        },
+      },
+    });
+  } catch (e) {
+    logger.warn({ route: "cron_analytics", outcome: "retention_failed", err: (e as any)?.message });
+  }
+  
   const result = await rollupDays(fromDay, toDay);
   logger.info({ route: "cron_analytics", outcome: "rollup", ...result });
   return Response.json({ ok: true, ...result });

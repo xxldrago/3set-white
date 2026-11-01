@@ -12,6 +12,8 @@
 //
 // Pure module by design: no env import, no next/headers, no DB — importable
 // from vitest's node environment without a Next runtime.
+import { createHash } from "node:crypto";
+
 export function clientIp(req: Request): string {
   const real = req.headers.get("x-real-ip")?.trim();
   if (real) return real;
@@ -26,4 +28,15 @@ export function clientIp(req: Request): string {
   // chain resolves to the last hop, which the edge appended over the client's.
   if (parts && parts.length > 0) return parts[parts.length - 1];
   return "direct";
+}
+
+export function hashClientIp(req: Request): string | null {
+  const ip = clientIp(req);
+  if (ip === "direct") return null;
+  return createHash("sha256").update(ip).digest("hex");
+}
+
+export function hashIp(ip: string): string {
+  if (ip === "direct") return createHash("sha256").update(ip).digest("hex");
+  return createHash("sha256").update(ip).digest("hex");
 }

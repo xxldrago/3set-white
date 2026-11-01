@@ -10,6 +10,10 @@
 // same range is a no-op on values; twelve concurrent runs of the same day
 // cannot double-count — the last writer's computed values simply win.
 //
+// D-08 (write-guard): a degraded run can never overwrite a healthy daily_metrics
+// row. If a day is marked degraded and already has a row, skip update. If degraded
+// and missing a row, insert a row (no hole) and record a data quality event.
+//
 // ORDER WINDOW — deliberately NOT bounded below by fromDay: the term-chain
 // ledger needs the whole history of every key active inside the window, or
 // the nightly re-roll would overwrite a full backfill's active_keys with
@@ -31,6 +35,12 @@ import { buildDailySeries, nextDayLabel } from "./series";
 // Mirrors lib/revenue.ts:10 — the same money pipeline, never a second enum.
 const PAID = ["paid", "provisioning", "provisioned"] as const;
 
+export interface RollupOptions {
+  degradedDays?: Set<string>;
+  degradedReason?: string;
+  degradedSource?: string;
+}
+
 /**
  * Recompute MSK days [fromDay, toDay] (inclusive) from source rows and
  * upsert absolute values into daily_metrics. Returns ids/outcomes only —
@@ -40,6 +50,7 @@ export async function rollupDays(
   fromDay: string,
   toDay: string,
   source: "cron" | "backfill" = "cron",
+  options: RollupOptions = {},
 ): Promise<{ days: number; upserted: number; balance: "ok" | "skipped" }> {
   // Window bounds are INSTANTS for timestamp(3) columns; the adapter writes
   // them as UTC wall clock. The lower bound is intentionally absent — see the
@@ -82,8 +93,69 @@ export async function rollupDays(
     toDay,
   );
 
+  const degradedDays = options.degradedDays || new Set<string>();
+  const degradedReason = options.degradedReason || "5xx";
+  const degradedSource = options.degradedSource || "artemida";
+  
   let upserted = 0;
   for (const a of series) {
+    const isDegraded = degradedDays.has(a.day);
+    
+    if (isDegraded) {
+      // Check if healthy row already exists
+      const existing = await prisma.dailyMetric.findUnique({
+        where: { day: new Date(a.day + "T00:00:00.000Z") },
+      });
+      
+      if (existing) {
+        // Degraded run can never overwrite a healthy day - skip
+        // Still record the event
+        try {
+          await prisma.dataQualityEvent.create({
+            data: {
+              source: degradedSource,
+              reason: degradedReason,
+              details: "degraded rollup skipped existing healthy row",
+              mskDay: new Date(a.day + "T00:00:00.000Z"),
+            },
+          });
+        } catch (e) {
+          // Best effort
+        }
+        continue;
+      } else {
+        // Degraded day has no row yet - write row (no hole) and record event
+        upserted += await prisma.$executeRaw`
+          INSERT INTO daily_metrics (
+            day, paid_orders, paid_cash_rub, new_orders, renew_orders,
+            upgrade_orders, provider_cost_rub, provider_cost_orders,
+            active_keys, new_users, goodwill_days, computed_at
+          )
+          VALUES (
+            ${a.day}::date, ${a.paidOrders}, ${a.paidCashRub}, ${a.newOrders},
+            ${a.renewOrders}, ${a.upgradeOrders}, ${a.providerCostRub},
+            ${a.providerCostOrders}, ${a.activeKeys}, ${a.newUsers},
+            ${a.goodwillDays}, now()
+          )
+          ON CONFLICT (day) DO NOTHING
+        `;
+        try {
+          await prisma.dataQualityEvent.create({
+            data: {
+              source: degradedSource,
+              reason: degradedReason,
+              details: "degraded rollup inserted missing row",
+              mskDay: new Date(a.day + "T00:00:00.000Z"),
+            },
+          });
+        } catch (e) {
+          // Best effort
+        }
+        continue;
+      }
+    }
+    
+    // Healthy run - normal upsert
     // Per-day single-row statement; the day is ALWAYS a 'YYYY-MM-DD' string
     // cast ::date (a JS Date here would land one day earlier — adapter rule).
     upserted += await prisma.$executeRaw`

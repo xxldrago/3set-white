@@ -110,6 +110,9 @@ model User {
 
   // Phase 11 RFM snapshot (D-10): nightly recomputed per-user R/F/M + segment.
   rfm UserRfm?
+  // Phase 12 IP capture (D-14): sha256 of quasi-IP, never raw IP, "direct" -> null
+  signupIpHash String? @map("signup_ip_hash")
+  trialIpHash  String? @map("trial_ip_hash")
 
   @@map("users")
 }
@@ -544,15 +547,18 @@ model WalletTx {
 // refresh-spam out of the numbers; determined inflation is out of scope
 // (documented, same as public page-view counters).
 model ReferralClick {
-  id          String   @id @default(cuid())
-  ownerUserId Int      @map("owner_user_id")
-  owner       User     @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
-  code        String?
-  ipHash      String   @map("ip_hash")
-  source      String   @default("link")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id           String   @id @default(cuid())
+  ownerUserId  Int?     @map("owner_user_id")
+  owner        User?    @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  promoCodeId  String?  @map("promo_code_id")
+  kind         String   @default("referral") // referral | promo
+  code         String?
+  ipHash       String   @map("ip_hash")
+  source       String   @default("link")
+  createdAt    DateTime @default(now()) @map("created_at")
 
   @@index([ownerUserId, createdAt])
+  @@index([ipHash, createdAt])
   @@map("referral_clicks")
 }
 
@@ -624,4 +630,18 @@ model ArtemidaBalanceSnapshot {
   capturedFrom String?
 
   @@map("artemida_balance_snapshots")
+}
+
+model DataQualityEvent {
+  id        String    @id @default(cuid())
+  source    String
+  reason    String
+  details   String?
+  mskDay    DateTime  @map("msk_day") @db.Date
+  createdAt DateTime  @default(now()) @map("created_at")
+  resolvedAt DateTime? @map("resolved_at")
+
+  @@index([mskDay])
+  @@index([resolvedAt])
+  @@map("data_quality_events")
 }

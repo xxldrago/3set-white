@@ -34,20 +34,42 @@ function hashIp(ip: string): string {
  * but the count stays honest).
  */
 export async function recordClick(
-  ownerUserId: number,
+  ownerUserId: number | null,
   code: string | null,
   ip: string,
   source: string,
+  options: { kind?: "referral" | "promo"; promoCodeId?: string | null } = {},
 ): Promise<boolean> {
+  if (ip === "direct") {
+    return false;
+  }
   const ipHash = hashIp(ip);
   const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  const where: any = { ipHash, createdAt: { gt: hourAgo } };
+  if (ownerUserId !== null && ownerUserId !== undefined) {
+    where.ownerUserId = ownerUserId;
+  } else if (options.promoCodeId || options.kind === "promo") {
+    // For promo/generic, dedupe by ipHash and maybe promoCodeId
+    if (options.promoCodeId) {
+      where.promoCodeId = options.promoCodeId;
+    } else {
+      where.ownerUserId = null;
+    }
+  }
   const recent = await prisma.referralClick.findFirst({
-    where: { ownerUserId, ipHash, createdAt: { gt: hourAgo } },
+    where,
     select: { id: true },
   });
   if (recent) return false;
   await prisma.referralClick.create({
-    data: { ownerUserId, code, ipHash, source: source.slice(0, 32) },
+    data: {
+      ownerUserId,
+      promoCodeId: options.promoCodeId || null,
+      kind: options.kind || (ownerUserId ? "referral" : "promo"),
+      code,
+      ipHash,
+      source: source.slice(0, 32),
+    },
   });
   return true;
 }

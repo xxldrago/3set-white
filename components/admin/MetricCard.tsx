@@ -12,17 +12,35 @@ export const GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3';
 // the skeleton does not reflow into the grid on hydration.
 export const FUNNEL_GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4';
 
+export interface MetricCardDelta {
+  abs?: string | number;
+  pct?: string | number | null;
+  status?: 'ok' | 'no-base' | 'incomparable';
+  baselineLabel?: string;
+}
+
+export interface MetricCardQuality {
+  excluded: number;
+  events?: any[];
+}
+
 export function MetricCard({
   label,
   value,
   sub,
   size = 'default',
+  delta,
+  quality,
 }: {
   label: string;
   value: string;
   sub?: string;
   size?: 'hero' | 'default' | 'compact';
+  delta?: MetricCardDelta;
+  quality?: MetricCardQuality;
 }) {
+  const hasQualityBadge = quality && quality.excluded > 0;
+  
   if (size === 'hero') {
     return (
       <div className={`${CARD} sm:col-span-2 sm:flex-row sm:items-end sm:justify-between`}>
@@ -30,7 +48,27 @@ export function MetricCard({
           <span className="text-sm text-muted">{label}</span>
           {sub && <span className="text-xs text-muted">{sub}</span>}
         </div>
-        <span className="text-3xl font-semibold tabular-nums text-foreground">{value}</span>
+        <div className="flex flex-col items-end gap-1">
+          <span className="text-3xl font-semibold tabular-nums text-foreground">{value}</span>
+          {delta && delta.status === 'ok' && delta.abs !== undefined && (
+            <span className="text-xs tabular-nums text-muted">
+              {typeof delta.abs === 'number' ? (delta.abs >= 0 ? `+${delta.abs}` : delta.abs) : delta.abs}
+              {delta.pct !== null && delta.pct !== undefined && ` (${delta.pct})`}
+              {delta.baselineLabel ? ` ${delta.baselineLabel}` : ''}
+            </span>
+          )}
+          {delta && delta.status === 'no-base' && (
+            <span className="text-xs text-muted">— нет базы</span>
+          )}
+          {delta && delta.status === 'incomparable' && (
+            <span className="text-xs text-muted">сравнение недоступно</span>
+          )}
+          {hasQualityBadge && (
+            <span className="rounded-lg px-2 py-1 text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200" title={quality.events?.[0]?.reason}>
+              Данные неполные ({quality.excluded})
+            </span>
+          )}
+        </div>
       </div>
     );
   }
@@ -46,7 +84,25 @@ export function MetricCard({
       >
         {value}
       </span>
-      {sub && <span className="text-xs text-muted">{sub}</span>}
+      {delta && delta.status === 'ok' && delta.abs !== undefined && (
+        <span className="text-xs tabular-nums text-muted">
+          {typeof delta.abs === 'number' ? (delta.abs >= 0 ? `+${delta.abs}` : delta.abs) : delta.abs}
+          {delta.pct !== null && delta.pct !== undefined && ` (${delta.pct})`}
+          {delta.baselineLabel ? ` ${delta.baselineLabel}` : ''}
+        </span>
+      )}
+      {delta && delta.status === 'no-base' && (
+        <span className="text-xs text-muted">— нет базы</span>
+      )}
+      {delta && delta.status === 'incomparable' && (
+        <span className="text-xs text-muted">сравнение недоступно</span>
+      )}
+      {sub && !hasQualityBadge && <span className="text-xs text-muted">{sub}</span>}
+      {hasQualityBadge && (
+        <span className="rounded-lg px-2 py-1 text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200 w-fit" title={quality.events?.[0]?.reason}>
+          Данные неполные ({quality.excluded})
+        </span>
+      )}
     </div>
   );
 }

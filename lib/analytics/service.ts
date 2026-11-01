@@ -50,6 +50,7 @@ import {
   mskMonthLabel,
   pgTimestamp,
 } from "./time";
+import { comparisonWindows } from "./windows";
 import {
   buildKeyTermEvents,
   classifyTerm,
@@ -117,9 +118,16 @@ export interface KpisData {
   coverageTotal: number;
 }
 
-/** First MSK day label of the inclusive window of `period` days ending today. */
+/** First MSK day label of the window of `period` days ending yesterday (D-04). */
 function windowStartDay(period: 7 | 30 | 90): string {
-  return mskDayLabel(new Date(Date.now() - (period - 1) * DAY_MS));
+  const w = comparisonWindows(period, new Date());
+  return w.fromDay;
+}
+
+function getTodayStartMSK(): Date {
+  const now = new Date();
+  const todayLabel = mskDayLabel(now);
+  return mskDayStartInstant(todayLabel);
 }
 
 async function loadPaidOrders(): Promise<PaidOrderRow[]> {
@@ -129,7 +137,7 @@ async function loadPaidOrders(): Promise<PaidOrderRow[]> {
 /**
  * KPI row for /admin/analytics (§5.3). MRR/ARR/active keys are point-in-time
  * (t = now); ARPU/ARPPU/window cash and the cost-coverage sums are windowed
- * over the LAST `period` MSK days (inclusive of today). D-05 "без
+ * over the LAST `period` MSK days (exclusive of today, D-04). D-05 "без
  * заблокированных" is a documented no-op: the User model has no blocked field
  * (07-04), so the ARPU denominator is plain prisma.user.count().
  */
@@ -137,11 +145,12 @@ export async function loadKpis(period: 7 | 30 | 90): Promise<KpisData> {
   const now = new Date();
   const fromDay = windowStartDay(period);
   const fromInstant = mskDayStartInstant(fromDay);
+  const todayStart = getTodayStartMSK();
 
   const [history, windowOrders, userCount, payerRows] = await Promise.all([
     loadPaidOrders(),
     prisma.order.findMany({
-      where: { status: { in: [...PAID] }, paidAt: { gte: fromInstant } },
+      where: { status: { in: [...PAID] }, paidAt: { gte: fromInstant, lt: todayStart } },
       select: { finalAmount: true, balanceUsed: true, providerCost: true },
     }),
     prisma.user.count(),
@@ -153,6 +162,7 @@ export async function loadKpis(period: 7 | 30 | 90): Promise<KpisData> {
       FROM orders
       WHERE status IN ('paid', 'provisioning', 'provisioned')
         AND paid_at >= ${pgTimestamp(fromInstant)}
+        AND paid_at < ${pgTimestamp(todayStart)}
     `,
   ]);
 

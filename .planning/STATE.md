@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Стабилизация и качество
-current_phase: 12
-current_phase_name: Period Comparison & Data-Quality Foundation
-status: planning
-stopped_at: Phase 12 complete
-last_updated: "2026-11-01T11:22:59.469Z"
-last_activity: 2026-10-31
-last_activity_desc: v1.2 roadmap created (5 phases, 13 requirements)
-state_head: a6ecb946a50c1d0a850f90073028f4fe8a7f8a87
+current_phase: 13
+current_phase_name: Anomaly Alerts
+status: complete
+stopped_at: Phase 13 complete — all 4 tasks done, 18/18 tests passing
+last_updated: "2026-11-02T07:55:00.000Z"
+last_activity: 2026-11-02
+last_activity_desc: Phase 13 Anomaly Alerts implemented (detection, outbox, cron, admin UI)
+state_head: 638f518
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 5
   completed_plans: 5
 ---
@@ -94,6 +94,11 @@ Recent decisions affecting current work:
 - [Phase 09]: Phase 09 loaders: funnel/error/timing share the loadKpis createdAt cohort window — a paidAt window would drop pending orders from the funnel base; loadExpired is the only point-in-time read and derives windowHours from PAYMENT_WINDOW_MS
 - [Phase 09]: Phase 09 DB loader tests use the identity pattern (re-run the loader's own WHERE/SELECT, derive via lib/analytics/funnel.ts) because funnel/expired counts are global across the shared test Postgres
 - [Phase 09]: Phase 9 UI: funnel step labels go through a literal switch (a Record map fails the i18n unused-key scan); ErrorTable renders raw error codes verbatim with the i18n «unknown» label for the null group; shared formatDuration exported from TimeToPayCards and imported by TimeToProvisionCards
+- [Phase 13]: AlertEvent.thresholdAtFiring и actualValue — TEXT (не DOUBLE), т.к. пороги могут быть JSON-снимком; миграция использует TEXT
+- [Phase 13]: Quiet hours 22:00–09:00 MSK enforced на уровне worker (delivery time), не только UI
+- [Phase 13]: Daily DM limit ≤3/admin enforced at delivery time via countDmsSentToday + reschedule
+- [Phase 13]: Dedupe key формата `${type}:${windowLabel}:${userId}` предотвращает спам при повторных запусках cron
+- [Phase 13]: Auto-resolve firing alerts для предыдущих дней — маркер resolvedAt без повторной проверки метрики (упрощённая логика)
 
 ### Pending Todos
 
@@ -122,10 +127,16 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-01T11:22:59.416Z
-Stopped at: Phase 12 complete
-Resume file: .planning/phases/12-period-comparison-data-quality-foundation/12-PLAN.md
+Last session: 2026-11-02T07:55:00.000Z
+Stopped at: Phase 13 complete — ready for deployment
+Resume file: .planning/phases/13-anomaly-alerts/13-PLAN-SUMMARY.md
 
 ## Operator Next Steps
 
+- Deploy Phase 13: `npx prisma migrate deploy` on server
+- Configure thresholds in Setting model (4 keys: paymentDropPercent, failedPaymentRatio, ticketSpikePercent, runwayDays)
+- Verify cron at 03:05 MSK triggers detection
+- Test Telegram DM delivery to admins
+- Test quiet hours deferral (22:00–09:00 MSK)
+- Test `/admin/alerts` UI (filters, mute toggle, test button)
 - Phase 12: run `/gsd-discuss-phase 12` (or `/gsd-plan-phase 12` to go straight to planning)

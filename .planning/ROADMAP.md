@@ -133,3 +133,14 @@ Phases execute in numeric order: 12 → 13 → 14 → 15 → 16
 | 14. Promo & Referral Quality + Fraud | 0/TBD | Not started | - |
 | 15. Expiry Save-List & Upsell Radar | 0/TBD | Not started | - |
 | 16. CSV Export & Metric Dictionary | 0/TBD | Not started | - |
+
+### Phase 17: Anomaly Alerts Админ получает алерты когда бизнес-метрики выходят за порог а не узнаёт об этом из ручного просмотра дашборда
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 16
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 17 to break down)

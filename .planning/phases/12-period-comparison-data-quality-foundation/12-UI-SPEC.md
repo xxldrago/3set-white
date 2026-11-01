@@ -1,10 +1,11 @@
 ---
 phase: "12"
 slug: "period-comparison-data-quality-foundation"
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: "2026-11-01"
+reviewed_at: "2026-11-01"
 ---
 
 # Phase 12 — UI Design Contract
@@ -36,7 +37,7 @@ created: "2026-11-01"
 
 - **Light-only by construction.** No `prefers-color-scheme` override, no `dark:` variants. Add none.
 - **Tokens** (`app/globals.css`): dominant `--background` `#f6f4ee`; secondary `--panel` `#ffffff`; `--line` `#e4dfd1` (card border); `--line-2` `#cec7b4` (passive reference only); `--muted` `#5b645e` (labels/meta); `--dim` `#8f968f` (never text/mark); `--lime` `#b7ff45`; `--green` `#0c4f36`; `--foreground` `#0e1512`.
-- **Radii:** `rounded-2xl` (16px) = cards; `rounded-lg` (8px) = period segments and nav pills. No other radii on this surface.
+- **Radii:** `rounded-2xl` (16px) = cards; `rounded-lg` (8px) = period segments, nav pills, and badge pills. No other radii on this surface.
 - **Headings** are Unbounded automatically (`h1,h2,h3`); numbers, labels and body are Manrope. Never set `font-display` on a number.
 
 ---
@@ -139,8 +140,8 @@ baseline semantically (wrap only moves the trailing baseline).
 - Rendered when `quality.excluded > 0`; copy `t('admin.analyticsDataIncomplete', { n })` →
   «данные неполные (N)».
 - **Placement:** sub-row slot (the `sub` position in `MetricCard`), rendered before any existing sub
-  line; pill styling `inline-flex items-center rounded-full border border-line bg-panel px-2.5 py-1
-  text-xs text-muted`.
+  line; pill styling `inline-flex items-center rounded-lg border border-line bg-panel px-2
+  py-1 text-xs text-muted`.
 - **Size:** `text-xs` (12px) / weight 400 / muted — same micro-label family as subs and legends; pill
   padding per class string above.
 - **Tooltip vs inline:** badge text (count) is inline and always visible; reason + event list live in
@@ -279,7 +280,7 @@ strings ever reach the DOM (reasons render as raw tokens verbatim, like ErrorTab
 > zero-one-many / long-text). Empty- and error-state COPY lives in `## Copywriting Contract`; this
 > section covers state coverage and references those rows.
 
-Applicable state considerations resolved: **6 covered, 0 backstop, 0 unresolved**.
+Applicable state considerations resolved: **7 covered, 0 backstop, 0 unresolved**.
 
 | Category | Element(s) | Status | Resolution / Reason |
 |----------|------------|--------|---------------------|
@@ -306,12 +307,12 @@ No shadcn and no third-party registries are in scope. The vetting gate is not ap
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-11-01

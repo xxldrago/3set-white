@@ -14,7 +14,7 @@ import { creditReferralForPaidOrder, pinReferrer, walletBalance } from "./referr
 import { env } from "./env";
 import { getKeyForUser, getKeyForUserId, type RenderedKey } from "./keys-service";
 import { enqueueFulfillJob } from "./outbox";
-import { PlategaError, platega } from "./platega";
+import { getPaymentClient, getActiveProviderName, PaymentCode, PaymentProvider, PaymentError } from "./payments";
 import { prisma } from "./prisma";
 
 export type OrderKind = "new" | "renew" | "upgrade";
@@ -75,8 +75,8 @@ export interface CreateOrderInput {
 }
 
 export type CreateOrderResult =
-  | { kind: "created"; order: Order; url: string }
-  | { kind: "provider_error"; code: PlategaError["code"] };
+  | { kind: "created"; order: Order; url: string; provider: PaymentProvider }
+  | { kind: "provider_error"; code: PaymentCode; provider: PaymentProvider };
 
 /** Typed promo failure at order time (route maps to 400 `promo_invalid`). */
 export class OrderPromoError extends Error {
@@ -209,7 +209,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
   const chargeAmount = finalAmount - balanceUsed;
   if (chargeAmount <= 0) {
-    // Fully covered by balance (or a 100% promo): no Platega leg. The SAME
+    // Fully covered by balance (or a 100% promo): no payment provider leg. The SAME
     // paid claim + fulfill enqueue the callback uses, so referral credit and
     // provisioning behave identically. The UI lands on the order status page
     // instead of a payment page (same `{url}` shape, relative URL).
@@ -219,15 +219,18 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       throw new Error("orders:claim_failed");
     }
     const settled = await prisma.order.findUnique({ where: { id: order.id } });
+    const activeProvider = getActiveProviderName();
     return {
       kind: "created",
       order: settled ?? order,
       url: `${env.APP_BASE_URL}/payments/${order.id}`,
+      provider: activeProvider,
     };
   }
 
   try {
-    const tx = await platega.createTransaction({
+    const paymentClient = getPaymentClient();
+    const paymentResult = await paymentClient.createPayment({
       amount: chargeAmount,
       currency,
       description: `Order ${order.id}`,
@@ -242,16 +245,14 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
     const updated = await prisma.order.update({
       where: { id: order.id },
-      data: { plategaTxId: tx.transactionId, paymentUrl: tx.url },
+      data: { plategaTxId: paymentResult.paymentId, paymentUrl: paymentResult.url, provider: paymentResult.provider },
     });
 
-    return { kind: "created", order: updated, url: tx.url };
+    return { kind: "created", order: updated, url: paymentResult.url, provider: paymentResult.provider };
   } catch (err) {
-    if (err instanceof PlategaError) {
-      logger.warn({ route: "orders", code: err.code, outcome: "platega_create_failed" });
+    if (err instanceof PaymentError) {
+      logger.warn({ route: "orders", code: err.code, provider: err.provider, outcome: "payment_create_failed" });
       if (balanceUsed > 0) {
-        // Money never moved — refund the reserved balance so it is spendable
-        // again. Append-only ledger: a compensating credit, never a delete.
         await prisma.walletTx.create({
           data: {
             userId: user.id,
@@ -261,7 +262,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
           },
         });
       }
-      return { kind: "provider_error", code: err.code };
+      return { kind: "provider_error", code: err.code, provider: err.provider };
     }
     throw err;
   }

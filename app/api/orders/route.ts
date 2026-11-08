@@ -115,9 +115,9 @@ export async function POST(req: Request): Promise<Response> {
           : result.code === "bad_request"
             ? 400
             : 502;
-      return Response.json({ error: result.code }, { status });
+      return Response.json({ error: result.code, provider: result.provider }, { status });
     }
-    return Response.json({ url: result.url });
+    return Response.json({ url: result.url, provider: result.provider });
   } catch (err) {
     if (err instanceof OrderRequestError) {
       return Response.json({ error: err.code }, { status: err.status });

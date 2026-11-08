@@ -13,7 +13,20 @@ import type { AdminSection } from '@/lib/admin-auth';
 
 type NavSection = Extract<
   AdminSection,
-  'overview' | 'analytics' | 'users' | 'tickets' | 'broadcast' | 'pricing' | 'promos' | 'referrals' | 'partner' | 'roles' | 'segments' | 'alerts'
+  | 'overview'
+  | 'analytics'
+  | 'users'
+  | 'tickets'
+  | 'broadcast'
+  | 'pricing'
+  | 'promos'
+  | 'referrals'
+  | 'partner'
+  | 'roles'
+  | 'segments'
+  | 'alerts'
+  | 'fraud'
+  | 'providers'
 >;
 
 const ITEMS: { section: NavSection; href: string }[] = [
@@ -29,6 +42,8 @@ const ITEMS: { section: NavSection; href: string }[] = [
   { section: 'roles', href: '/admin/roles' },
   { section: 'segments', href: '/admin/segments' },
   { section: 'alerts', href: '/admin/alerts' },
+  { section: 'fraud', href: '/admin/fraud' },
+  { section: 'providers', href: '/admin/providers' },
 ];
 
 const ITEM_BASE = 'flex h-11 items-center justify-center rounded-lg px-4 text-sm transition-colors';
@@ -62,6 +77,10 @@ function itemLabel(section: NavSection): string {
       return t('admin.navSegments');
     case 'alerts':
       return t('admin.navAlerts');
+    case 'fraud':
+      return t('admin.navFraud');
+    case 'providers':
+      return t('admin.navProviders');
   }
 }
 

@@ -199,6 +199,7 @@ model Order {
   // quote" and drives the D-08 coverage flag ("себестоимость известна для N
   // из M"). Never default 0 — that would erase the null gap and pose as fact.
   providerCost     Int?        @map("provider_cost")
+  provider         String?     @map("provider") // platega | oneplat — active payment provider
   outbox           Outbox[]
 
   @@index([userId, createdAt])

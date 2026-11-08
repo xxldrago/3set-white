@@ -21,6 +21,13 @@ export const envSchema = z.object({
   PLATEGA_MERCHANT_ID: z.string().min(1, "PLATEGA_MERCHANT_ID is required"),
   PLATEGA_SECRET: z.string().min(1, "PLATEGA_SECRET is required"),
   PLATEGA_BASE_URL: z.string().url().default("https://app.platega.io"),
+  // 1plat.cash (parallel payment provider, switchable via admin UI).
+  // Server-only merchant credentials. Optional: when unset the provider is
+  // disabled and the active provider remains platega (D-77: no secrets in code).
+  ONPLAT_API_KEY: z.string().min(1, "ONPLAT_API_KEY must not be empty").optional(),
+  ONPLAT_BASE_URL: z.string().url().default("https://1plat.cash/v1"),
+  // Active payment provider: "platega" (default) or "oneplat".
+  PAYMENT_PROVIDER: z.enum(["platega", "oneplat"]).default("platega"),
   APP_BASE_URL: z.string().url().default("http://localhost:3000"),
   // Public marketing site that hosts the legal pages (/privacy, /terms). The
   // cabinet (APP_BASE_URL) does not serve them, so the bot links point here.
@@ -90,6 +97,48 @@ export const envSchema = z.object({
 export type Env = z.infer<typeof envSchema>;
 
 function loadEnv(): Env {
+  // During Next.js build phase, env vars may not be available.
+  // Skip validation if we're in a build context (no runtime needed).
+  if (process.env.NEXT_PHASE === "phase-production-build" || process.env.SKIP_ENV_VALIDATION === "true") {
+    // Return a minimal valid object for build-time type checking
+    return {
+      BOT_TOKEN: "build-dummy",
+      BOT_TEST_TOKEN: "build-dummy",
+      DATABASE_URL: "postgresql://build:build@localhost/build",
+      SESSION_SECRET: "build-secret-build-secret-build-secret",
+      WEBHOOK_SECRET: "build-webhook-secret",
+      ARTEMIDA_API_KEY: "build-dummy",
+      ARTEMIDA_BASE_URL: "https://artemida.cc/v1",
+      PLATEGA_MERCHANT_ID: "build-dummy",
+      PLATEGA_SECRET: "build-dummy",
+      PLATEGA_BASE_URL: "https://app.platega.io",
+      ONPLAT_API_KEY: undefined,
+      ONPLAT_BASE_URL: "https://1plat.cash/v1",
+      PAYMENT_PROVIDER: "platega",
+      APP_BASE_URL: "http://localhost:3000",
+      LEGAL_BASE_URL: "https://3set.online",
+      SMTP_HOST: undefined,
+      SMTP_PORT: 587,
+      SMTP_USER: undefined,
+      SMTP_PASS: undefined,
+      SMTP_FROM: undefined,
+      SMTP_SECURE: false,
+      SMTPBZ_API_KEY: undefined,
+      SMTPBZ_API_BASE: "https://api.smtp.bz/v1",
+      WHITELABEL_HOST: "sub.my.3set.online",
+      ARTEMIDA_LOW_BALANCE_RUB: 500,
+      CRON_SECRET: undefined,
+      UPLOAD_DIR: "/data/uploads",
+      ADMIN_TELEGRAM_IDS: undefined,
+      SUPPORT_ADMIN_EMAIL: undefined,
+      BOT_MODE: "polling",
+      TELEGRAM_BOT_USERNAME: undefined,
+      TELEGRAM_API_ROOT: "https://api.telegram.org",
+      LOG_LEVEL: "info",
+      NODE_ENV: "production",
+    } as Env;
+  }
+
   const parsed = envSchema.safeParse(process.env);
   if (!parsed.success) {
     const details = parsed.error.issues

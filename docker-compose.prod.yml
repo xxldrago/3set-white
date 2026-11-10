@@ -95,6 +95,9 @@ services:
       - ./landing:/var/www/landing:ro
       - certs:/etc/letsencrypt:ro
       - certbot_www:/var/www/certbot:ro
+    networks:
+      - 3set-white_default
+      - limove-os_default
     depends_on:
       - web
     restart: unless-stopped
@@ -127,3 +130,9 @@ volumes:
   uploads:
   certs:
   certbot_www:
+
+networks:
+  default:
+    name: 3set-white_default
+  limove-os_default:
+    external: true

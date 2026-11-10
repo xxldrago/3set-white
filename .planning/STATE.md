@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Стабилизация и качество
-current_phase: 16
-current_phase_name: CSV Export & Metric Dictionary
+current_phase: 13
+current_phase_name: Anomaly Alerts
 status: planning
-stopped_at: Phase 16 scaffolding created
-last_updated: "2026-11-02T08:50:00.000Z"
-last_activity: 2026-11-02
-last_activity_desc: Phases 13-16 implemented (alerts, promo/referral quality, retention pages, CSV export)
-state_head: c0dede4
+stopped_at: Phase 12 completed (Period Comparison & Data-Quality Foundation)
+last_updated: "2026-11-10T00:00:00.000Z"
+last_activity: 2026-11-10
+last_activity_desc: Phase 12 completed (Period Comparison & Data-Quality Foundation) — 5 plans executed, all code committed
+state_head: 3bef50b
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 1
   total_plans: 5
   completed_plans: 5
 ---
@@ -28,10 +28,10 @@ See: .planning/PROJECT.md (updated 2026-10-31)
 
 ## Current Position
 
-Phase: 12 — Period Comparison & Data-Quality Foundation (not started)
-Plan: —
-Status: Roadmap defined; ready for discuss/plan
-Last activity: 2026-10-31 — v1.2 roadmap created (5 phases, 13 requirements)
+Phase: 12 — Period Comparison & Data-Quality Foundation (completed)
+Plan: 5/5 complete
+Status: All plans executed; code committed
+Last activity: 2026-11-10 — Phase 12 completed (windows, compare, quality, metric-registry, rollup write-guard, referral clicks, IP capture, MetricCard delta/quality)
 
 ## Performance Metrics
 

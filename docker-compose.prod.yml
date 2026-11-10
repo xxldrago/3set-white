@@ -96,7 +96,7 @@ services:
       - certs:/etc/letsencrypt:ro
       - certbot_www:/var/www/certbot:ro
     networks:
-      - 3set-white_default
+      - default
       - limove-os_default
     depends_on:
       - web
@@ -136,3 +136,4 @@ networks:
     name: 3set-white_default
   limove-os_default:
     external: true
+    name: limove-os_default

@@ -513,9 +513,9 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
                 <p>Рукопожатие занимает 1 RTT (Round Trip Time). После установки соединения — оверхед менее 0.3% CPU. Идеально для игр, видеозвонков и трейдинга.</p>
             </div>
             <div class="bcard b4 rv d2 in">
-                <span class="tag">МОБИЛЬНОСТЬ</span>
+                <span class="tag">СТАБИЛЬНОСТЬ</span>
                 <h3>Мгновенное переподключение</h3>
-                <p>WireGuard не «обрывается» при смене сети — он просто продолжает работать с новым IP. Переключение Wi-Fi ↔ LTE происходит незаметно, без разрыва сессии.</p>
+                <p>WireGuard не «обрывается» при смене сети — он просто продолжает работать с новым IP. Переключение между сетями происходит незаметно, без разрыва сессии.</p>
             </div>
         </div>
     </div>
@@ -663,8 +663,8 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
         <div class="cmp-row">
             <span class="param">Лучше всего для</span>
             <span class="val hl">Игры · стриминг · торренты</span>
-            <span class="val hl">Россия · мобильные сети</span>
-            <span class="val hl">Мобильные сети · 4G/5G</span>
+            <span class="val hl">Россия · нестабильные сети</span>
+            <span class="val hl">Нестабильные сети · высокая нагрузка</span>
         </div>
     </div>
 </div>
@@ -724,7 +724,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2L4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4z"/></svg>
             </div>
             <div>
-                <h3>Мобильные и нестабильные сети</h3>
+                <h3>Нестабильные сети</h3>
                 <p>WireGuard использует характерный UDP-handshake, поэтому в некоторых сетях его стабильность ниже. Для повышенной стабильности используйте VLESS Reality как основной протокол.</p>
                 <span class="verdict bad">✗ ЛУЧШЕ VLESS REALITY</span>
             </div>
@@ -992,7 +992,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
     function botReply(q){
         var t = q.toLowerCase(), r;
         if(/wireguard|wg|скорость|пинг|игра|стрим|торрент/.test(t)) r = 'WireGuard — самый быстрый VPN-протокол. 980+ Мбит/с на гигабитном канале, пинг 18–25 мс до Европы. Идеален для игр, 4K-стриминга и торрентов. В 3set доступен на всех 34 серверах ✅';
-        if(/vless|reality|выбор|что лучше|какой протокол/.test(t)) r = 'Для России — VLESS Reality (защищённое соединение на TLS 1.3). Для игр и стриминга — WireGuard (максимальная скорость). Для мобильных сетей — Shadowsocks. В 3set все три доступны, переключение в один тап.';
+        if(/vless|reality|выбор|что лучше|какой протокол/.test(t)) r = 'Для России — VLESS Reality (защищённое соединение на TLS 1.3). Для игр и стриминга — WireGuard (максимальная скорость). Для нестабильных сетей — Shadowsocks. В 3set все три доступны, переключение в один тап.';
         if(/работ|блок|росси|dpi/.test(t)) r = 'Для максимальной стабильности в России используйте VLESS Reality как основной протокол. WireGuard — как резервный, он даёт максимальную скорость.';
         if(/безопас|крипт|шифр|chacha|curve/.test(t)) r = 'WireGuard использует только современные примитивы: ChaCha20-Poly1305 (шифрование), Curve25519 (обмен ключами), BLAKE2s (хеширование), Noise IK (рукопожатие). Код прошёл независимый аудит. Криптография уровня NSA-grade.';
         if(/быстрее|openvpn|почему быстрее/.test(t)) r = 'WireGuard работает в ядре ОС (kernel-mode), OpenVPN — в user-space. WireGuard использует UDP и минималистичный крипто-стек, OpenVPN — TLS с множеством слоёв. Результат: WireGuard в 2–5 раз быстрее OpenVPN.';

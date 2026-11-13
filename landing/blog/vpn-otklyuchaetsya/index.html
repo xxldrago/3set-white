@@ -396,7 +396,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 <span>7 ПРИЧИН · ПОШАГОВЫЕ РЕШЕНИЯ</span>
 </div>
 <h1 class="rv in">Почему VPN <span class="accent">постоянно отключается</span>: 7 причин и решения</h1>
-<p class="article-lead rv in">VPN подключается — и через 10 минут отключается сам. Или обрывается, когда гаснет экран. Или «отваливается» в метро при переключении между вышками. Разбираем <b>7 основных причин</b> и даём пошаговые решения для Android, iOS, Windows, macOS и роутеров.</p>
+<p class="article-lead rv in">VPN подключается — и через 10 минут отключается сам. Или обрывается, когда гаснет экран. Или «отваливается» при переключении между сетями. Разбираем <b>7 основных причин</b> и даём пошаговые решения для Android, iOS, Windows, macOS и роутеров.</p>
 <div class="article-author rv in">
 <div class="author-av">А</div>
 <div class="author-info">
@@ -431,7 +431,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 <div class="diag-step">
 <div class="ds-num">1</div>
 <h5>Когда отключается?</h5>
-<p>При блокировке экрана · в фоне · при смене Wi-Fi ↔ LTE · случайно в течение дня</p>
+<p>При блокировке экрана · в фоне · при смене сети · случайно в течение дня</p>
 </div>
 <div class="diag-step">
 <div class="ds-num">2</div>
@@ -504,9 +504,9 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 <div class="cause rv d1 in">
 <span class="cause-num">06</span>
 <div class="cause-ic">📡</div>
-<span class="plat">МОБИЛЬНЫЕ СЕТИ · WI-FI</span>
+<span class="plat">СМЕНА СЕТИ · WI-FI</span>
 <h4>Смена сети обрывает соединение</h4>
-<p>При переключении Wi-Fi ↔ LTE, в метро между вышками, в роуминге — некоторые клиенты не умеют «переезжать» без разрыва. Особенно старые версии OpenVPN.</p>
+<p>При переключении между сетями — некоторые клиенты не умеют «переезжать» без разрыва. Особенно старые версии OpenVPN.</p>
 <div class="fix"><b>РЕШЕНИЕ:</b>Использовать клиентов с поддержкой seamless handover: INCY, Happ, FlClashX. В WireGuard «переезд» происходит автоматически. В VLESS Reality — тоже.</div>
 </div>
 <div class="cause rv d2 in">
@@ -610,7 +610,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 <ul>
 <li>VLESS Reality — для России и нестабильных сетей</li>
 <li>WireGuard — для игр и стриминга (максимальная скорость)</li>
-<li>Shadowsocks 2022 — для мобильных сетей и слабых устройств</li>
+<li>Shadowsocks 2022 — для нестабильных сетей и слабых устройств</li>
 </ul>
 </div>
 
@@ -644,7 +644,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 </div>
 <div class="rec-feat">
 <div class="rf-ic">03</div>
-<div><b>Seamless handover</b><span>Клиенты INCY, Happ, FlClashX умеют «переезжать» между сетями без разрыва. Wi-Fi ↔ LTE — незаметно.</span></div>
+<div><b>Seamless handover</b><span>Клиенты INCY, Happ, FlClashX умеют «переезжать» между сетями без разрыва. Смена сети — незаметно.</span></div>
 </div>
 <div class="rec-feat">
 <div class="rf-ic">04</div>
@@ -671,7 +671,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 
 <ol>
 <li><b>В 80% случаев дело в настройках устройства.</b> Экономия батареи, брандмауэр, системное расширение — эти проблемы решаются за 2–5 минут.</li>
-<li><b>На Android отключите экономию батареи для клиента.</b> Это решает 70% всех обрывов на мобильных.</li>
+<li><b>На Android отключите экономию батареи для клиента.</b> Это решает 70% всех обрывов на телефонах.</li>
 <li><b>На Windows/macOS проверьте антивирус и системное расширение.</b> Добавить клиент в исключения, переустановите расширение.</li>
 <li><b>Если ничего не помогло — попробуйте другой протокол.</b> VLESS Reality, WireGuard и Shadowsocks используют разные транспорты — один из них точно пройдёт.</li>
 <li><b>Если проблема массовая — меняйте сервис.</b> Хороший VPN даёт авто-ротацию серверов, все три протокола и живую поддержку. 3set.online — именно такой.</li>
@@ -688,11 +688,11 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 <div class="rv in" style="text-align:center"><span class="kicker">faq · траблшутинг</span><h2 data-scr="" data-orig="Вопросы по отключению VPN" class="in">Вопросы по отключению VPN</h2></div>
 <div class="faq-wrap">
 <div class="acc-item rv in"><button class="acc-q">VPN отключается, когда гаснет экран на Android. Что делать?<span class="ic">+</span></button><div class="acc-a"><p>Это работа системного оптимизатора батареи. Зайдите в Настройки → Приложения → INCY/Happ → Батарея → выберите «Без ограничений». На Xiaomi/Huawei/Samsung дополнительно отключите «адаптивную батарею» для клиента и добавьте его в автозагрузку. Подробная инструкция — в разделе «По платформам → Android» выше.</p></div></div>
-<div class="acc-item rv in"><button class="acc-q">VPN отключается при переключении Wi-Fi ↔ LTE. Почему?<span class="ic">+</span></button><div class="acc-a"><p>Не все клиенты умеют «переезжать» между сетями без разрыва. Используйте INCY, Happ или FlClashX — они поддерживают seamless handover. В WireGuard и VLESS Reality «переезд» происходит автоматически. Если используете старый OpenVPN-клиент — замените его на современный.</</p></div></div>
+<div class="acc-item rv in"><button class="acc-q">VPN отключается при смене сети. Почему?<span class="ic">+</span></button><div class="acc-a"><p>Не все клиенты умеют «переезжать» между сетями без разрыва. Используйте INCY, Happ или FlClashX — они поддерживают seamless handover. В WireGuard и VLESS Reality «переезд» происходит автоматически. Если используете старый OpenVPN-клиент — замените его на современный.</</p></div></div>
 <div class="acc-item rv in"><button class="acc-q">Антивирус блокирует VPN. Как разрешить?<span class="ic">+</span></button><div class="acc-a"><p>Добавьте папку клиента в исключения антивируса (Касперский, ESET, Avast, Dr.Web). Разрешите создание виртуального сетевого адаптера (Wintun / tun2socks). Если проблема осталась — временно отключите антивирус для диагностики. В 90% случаев после добавления в исключения всё работает стабильно.</p></div></div>
 <div class="acc-item rv in"><button class="acc-q">На macOS VPN отключается после обновления системы. Что делать?<span class="ic">+</span></button><div class="acc-a"><p>После обновления macOS системное расширение клиента может «слететь». Зайдите в Системные настройки → Конфиденциальность и безопасность → разрешите расширение клиента. В самом клиенте нажмите «Reinstall System Extension». Перезагрузите Mac. После этого VPN будет работать стабильно.</p></div></div>
 <div class="acc-item rv in"><button class="acc-q">VPN отключается у всех пользователей одновременно. Это проблема сервиса?<span class="ic">+</span></button><div class="acc-a"><p>Да, скорее всего. Проверьте статус серверов в Telegram-канале сервиса или на сайте статуса. Если там «авария» — ждите, пока провайдер починит. Если статуса нет или он всегда «зелёный» — это плохой знак: провайдер не мониторит ситуацию. В 3set мы публикуем статус в реальном времени и автоматически ротируем серверы при проблемах.</p></div></div>
-<div class="acc-item rv in"><button class="acc-q">Какой протокол выбрать, если VPN постоянно обрывается?<span class="ic">+</span></button><div class="acc-a"><p>Переключитесь на другой протокол. VLESS Reality, WireGuard и Shadowsocks используют разные транспорты (TCP/UDP, TLS/чистый UDP). Если один протокол работает нестабильно — другой может оказаться устойчивее. Для России рекомендуем VLESS Reality, для игр — WireGuard, для мобильных сетей — Shadowsocks 2022.</p></div></div>
+<div class="acc-item rv in"><button class="acc-q">Какой протокол выбрать, если VPN постоянно обрывается?<span class="ic">+</span></button><div class="acc-a"><p>Переключитесь на другой протокол. VLESS Reality, WireGuard и Shadowsocks используют разные транспорты (TCP/UDP, TLS/чистый UDP). Если один протокол работает нестабильно — другой может оказаться устойчивее. Для России рекомендуем VLESS Reality, для игр — WireGuard, для нестабильных сетей — Shadowsocks 2022.</p></div></div>
 <div class="acc-item rv in"><button class="acc-q">На роутере OpenWrt VPN отключается через несколько часов. Почему?<span class="ic">+</span></button><div class="acc-a"><p>Скорее всего, перегрузка CPU или устаревшие геобазы. Проверьте загрузку через <code>top</code> — если CPU &gt; 80%, роутер не справляется. Обновите геобазы (в HomeProxy: «Auto-update geodata»). Если роутер слабый — упростите правила PBR или перейдите на более лёгкий клиент (Shadowsocks вместо VLESS).</p></div></div>
 <div class="acc-item rv in"><button class="acc-q">Ничего не помогло. Что делать?<span class="ic">+</span></button><div class="acc-a"><p>Напишите в поддержку — разберёмся вместе. Telegram-бот @threeSet_bot или чат на сайте (кнопка в правом нижнем углу). Опишите устройство, клиент, протокол и что именно не работает. В 95% случаев проблему удаётся решить за один диалог.</p></div></div>
 </div>
@@ -877,7 +877,7 @@ if(/ios|iphone|ipad|apple/.test(t)) r = 'На iOS VPN обрывается из-
 if(/windows|defender|касперск|eset|avast|антивирус/.test(t)) r = 'На Windows VPN обрывается из-за брандмауэра или антивируса. Решение: (1) Параметры → Брандмауэр → Разрешённые приложения → отметить «Частные» и «Публичные», (2) добавить папку клиента в исключения антивируса, (3) разрешить создание TUN-адаптера (Wintun).';
 if(/macos|mac|мак|apple silicon|системное расширение|extension/.test(t)) r = 'На macOS VPN обрывается из-за системного расширения. Решение: Системные настройки → Конфиденциальность и безопасность → разрешить расширение клиента. В клиенте: «Reinstall System Extension». Перезагрузить Mac.';
 if(/роутер|openwrt|immortalwrt|homeproxy|sing-box/.test(t)) r = 'На роутере VPN обрывается из-за перегрузки CPU или устаревших геобаз. Проверьте загрузку через `top`. Если CPU > 80% — упростите правила PBR или перейдите на более лёгкий клиент. Обновите геобазы: в HomeProxy — «Auto-update geodata».';
-if(/протокол|vless|wireguard|shadowsocks|переключ/.test(t)) r = 'Если один протокол обрывается — попробуйте другой. VLESS Reality, WireGuard и Shadowsocks используют разные транспорты. Для России — VLESS Reality, для игр — WireGuard, для мобильных — Shadowsocks. В 3set все три доступны на всех серверах.';
+if(/протокол|vless|wireguard|shadowsocks|переключ/.test(t)) r = 'Если один протокол обрывается — попробуйте другой. VLESS Reality, WireGuard и Shadowsocks используют разные транспорты. Для России — VLESS Reality, для игр — WireGuard, для нестабильных сетей — Shadowsocks. В 3set все три доступны на всех серверах.';
 if(/сервер|авария|статус|массово|у всех/.test(t)) r = 'Если VPN отключается у всех одновременно — дело в сервере. Проверьте статус в Telegram-канале сервиса. В 3set мы публикуем статус в реальном времени и автоматически ротируем серверы при проблемах.';
 if(/куп|подписк|оплат|тариф|цен|сколько стоит|стоит|3set/.test(t)) r = 'Попробуйте 3set.online: все три протокола, авто-ротация серверов, seamless handover, живая поддержка 24/7. 7 дней гарантии возврата. Оплата картой МИР, СБП или криптой. Ключ за 1 минуту ⚡';
 if(/привет|здравств|добр/.test(t)) r = 'Привет! 👋 Прочитали статью про отключение VPN? Могу помочь с конкретной проблемой — опишите устройство и что именно происходит.';

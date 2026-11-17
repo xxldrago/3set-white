@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 current_phase: 16
 status: completed
-last_updated: "2026-11-17T06:53:06.227Z"
+last_updated: "2026-11-17T06:54:12.567Z"
 last_activity: 2026-11-17
 last_activity_desc: Phase 16 complete
-state_head: 6abfce62f2c03ca60c7bb81eef0182e68ffe2eae
+state_head: 03338b90ae2dfe52e37e74029f42071988444033
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 9
+  completed_plans: 9
 milestone_name: Стабилизация и качество
 stopped_at: Phase 12 completed (Period Comparison & Data-Quality Foundation) — milestone v1.2 complete
 ---
@@ -36,7 +36,7 @@ Last activity: 2026-11-17 — Phase 16 complete
 
 **Velocity:**
 
-- Total plans completed: 17
+- Total plans completed: 21
 - Average duration: -
 - Total execution time: -
 
@@ -49,10 +49,10 @@ Last activity: 2026-11-17 — Phase 16 complete
 | 9 | 3 | - | - |
 | 10 | 3 | - | - |
 | 11 | 3 | - | - |
-| 13 | 0 | - | - |
-| 14 | 0 | - | - |
-| 15 | 0 | - | - |
-| 16 | 0 | - | - |
+| 13 | 1 | - | - |
+| 14 | 1 | - | - |
+| 15 | 1 | - | - |
+| 16 | 1 | - | - |
 
 **Recent Trend:**
 

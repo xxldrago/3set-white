@@ -54,17 +54,17 @@ Phase 12 is the only phase of milestone v1.2.
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 12. Period Comparison & Data-Quality Foundation | 5/5 | Completed | 2026-11-10 |
-| 13. Alerts: падение оплат, рост failed, всплеск тикетов, runway баланса ниже порога, доставка админам через outbox/Telegram | 0/0 | Complete    | 2026-11-17 |
-| 14. Promo/referral quality & fraud: воронка click→register→pay по кодам/партнёрам, ROI скидки, Partner ROI с выплатами, fraud-сигналы | 0/0 | Complete    | 2026-11-17 |
-| 15. Save-list истекающих ключей с push T-7/T-3/T-1 и upsell-radar по тяжёлым пользователям на низком тарифе | 0/0 | Complete    | 2026-11-17 |
-| 16. CSV-экспорт отчётов и metric dictionary (страница с определениями формул) | 0/0 | Complete    | 2026-11-17 |
+| 13. Alerts: падение оплат, рост failed, всплеск тикетов, runway баланса ниже порога, доставка админам через outbox/Telegram | 1/1 | Complete    | 2026-11-17 |
+| 14. Promo/referral quality & fraud: воронка click→register→pay по кодам/партнёрам, ROI скидки, Partner ROI с выплатами, fraud-сигналы | 1/1 | Complete    | 2026-11-17 |
+| 15. Save-list истекающих ключей с push T-7/T-3/T-1 и upsell-radar по тяжёлым пользователям на низком тарифе | 1/1 | Complete    | 2026-11-17 |
+| 16. CSV-экспорт отчётов и metric dictionary (страница с определениями формул) | 1/1 | Complete    | 2026-11-17 |
 
 ### Phase 13: Alerts: падение оплат, рост failed, всплеск тикетов, runway баланса ниже порога, доставка админам через outbox/Telegram
 
 **Goal:** [To be planned]
 **Requirements**: TBD
 **Depends on:** Phase 12
-**Plans:** 0/0 plans complete
+**Plans:** 1/1 plans complete
 
 Plans:
 
@@ -75,7 +75,7 @@ Plans:
 **Goal:** [To be planned]
 **Requirements**: TBD
 **Depends on:** Phase 13
-**Plans:** 0/0 plans complete
+**Plans:** 1/1 plans complete
 
 Plans:
 
@@ -86,7 +86,7 @@ Plans:
 **Goal:** [To be planned]
 **Requirements**: TBD
 **Depends on:** Phase 14
-**Plans:** 0/0 plans complete
+**Plans:** 1/1 plans complete
 
 Plans:
 
@@ -97,7 +97,7 @@ Plans:
 **Goal:** [To be planned]
 **Requirements**: TBD
 **Depends on:** Phase 15
-**Plans:** 0/0 plans complete
+**Plans:** 1/1 plans complete
 
 Plans:
 

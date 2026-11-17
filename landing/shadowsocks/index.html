@@ -663,7 +663,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
                 <span class="val dim"><b>62%</b><span class="bar-mini"><i style="width:62%"></i></span></span>
             </div>
             <div class="cmp-row">
-                <span class="param">Стабильность в РФ</span>
+                <span class="param">Стабильность</span>
                 <span class="val"><b>85%</b><span class="bar-mini"><i style="width:85%"></i></span></span>
                 <span class="val hl"><b>96%</b><span class="bar-mini"><i style="width:96%"></i></span></span>
                 <span class="val dim"><b>70%</b><span class="bar-mini"><i style="width:70%"></i></span></span>
@@ -695,7 +695,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
             <div class="cmp-row">
                 <span class="param">Лучше всего для</span>
                 <span class="val hl">Нестабильные сети · высокая нагрузка</span>
-                <span class="val hl">Россия · нестабильные сети</span>
+                <span class="val hl">Максимальная защита</span>
                 <span class="val hl">Игры · низкий пинг</span>
             </div>
         </div>
@@ -800,7 +800,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
                 <p>В нестабильных сетях Shadowsocks 2022 работает, но его устойчивость ниже. VLESS Reality в таких условиях стабильнее за счёт TLS 1.3.</p>
                 <ul>
                     <li>Устойчивость ниже, чем у VLESS Reality</li>
-                    <li>В РФ рекомендуем VLESS Reality как основной</li>
+                    <li>Рекомендуем VLESS Reality как основной</li>
                     <li>Shadowsocks — как резервный протокол</li>
                 </ul>
             </div>
@@ -865,7 +865,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
             <div class="acc-item rv in"><button class="acc-q">Shadowsocks — это VPN?<span class="ic">+</span></button><div class="acc-a"><p>Технически — нет. Shadowsocks это зашифрованный прокси (SOCKS5), а не полноценный VPN. Он не создаёт виртуальный сетевой адаптер и не пропускает через себя весь трафик системы по умолчанию. Но в связке с TUN-режимом в клиенте (INCY, Happ, FlClashX) он работает как полноценный VPN — весь трафик идёт через зашифрованный туннель.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">В чём разница между Shadowsocks и VLESS Reality?<span class="ic">+</span></button><div class="acc-a"><p>VLESS Reality использует TLS 1.3 с валидным сертификатом и обеспечивает повышенную защиту соединения. Shadowsocks шифрует трафик и отличается минимальными накладными расходами. В нестабильных сетях VLESS Reality стабильнее, в обычных сетях Shadowsocks быстрее и легче.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">Какую версию Shadowsocks использовать?<span class="ic">+</span></button><div class="acc-a"><p>Только Shadowsocks 2022 с шифром 2022-blake3-aes-256-gcm. Классические версии (SS, SS-AEAD) считаются небезопасными — они уязвимы к replay-атакам и active probing. В 3set по умолчанию используется именно SS-2022 на всех серверах.</p></div></div>
-            <div class="acc-item rv in"><button class="acc-q">Shadowsocks работает в России?<span class="ic">+</span></button><div class="acc-a"><p>Да, работает стабильно в большинстве сетей. В нестабильных сетях рекомендуем VLESS Reality как основной протокол, а Shadowsocks — как резервный.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Shadowsocks работает в России?<span class="ic">+</span></button><div class="acc-a"><p>Да. Shadowsocks 2022 подходит для повседневных задач. VLESS Reality обеспечивает более высокую защиту за счёт TLS 1.3 — его рекомендуем как основной, Shadowsocks — как резервный.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">Можно ли использовать Shadowsocks для торрентов?<span class="ic">+</span></button><div class="acc-a"><p>Да, Shadowsocks поддерживает UDP и работает с торрент-трафиком. Но для P2P лучше WireGuard — у него ниже накладные расходы и выше скорость на больших объёмах. Shadowsocks подойдёт, если WireGuard недоступен в вашей сети.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">Почему Shadowsocks быстрее VLESS Reality?<span class="ic">+</span></button><div class="acc-a"><p>Не всегда быстрее, но часто — да. VLESS Reality добавляет overhead на TLS-рукопожатие. Shadowsocks — минималистичный протокол с меньшим количеством слоёв. На слабых CPU (роутеры, старые телефоны) Shadowsocks даёт выигрыш 10–15%.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">Какой шифр выбрать — AES-256-GCM или ChaCha20?<span class="ic">+</span></button><div class="acc-a"><p>На современных устройствах (с AES-NI) — AES-256-GCM, он быстрее. На старых ARM-процессорах без аппаратного AES — ChaCha20-IETF-Poly1305, он не зависит от AES-NI и работает стабильнее. В Shadowsocks 2022 по умолчанию используется 2022-blake3-aes-256-gcm — это оптимальный выбор для большинства устройств.</p></div></div>
@@ -1004,12 +1004,12 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
     }
     function botReply(q){
         var t = q.toLowerCase(), r;
-        if(/shadowsocks|ss|аес|chacha|шифр/.test(t)) r = 'Shadowsocks 2022 — лёгкий зашифрованный прокси. Отлично работает в нестабильных сетях и на слабых устройствах. В 3set используем шифр 2022-blake3-aes-256-gcm. Для максимальной стабильности в РФ лучше VLESS Reality ✅';
+        if(/shadowsocks|ss|аес|chacha|шифр/.test(t)) r = 'Shadowsocks 2022 — лёгкий зашифрованный прокси. Отлично работает в нестабильных сетях и на слабых устройствах. В 3set используем шифр 2022-blake3-aes-256-gcm. Для максимальной защиты лучше VLESS Reality ✅';
         if(/vless|reality|выбор|что лучше|какой протокол/.test(t)) r = 'Для России — VLESS Reality (защищённое соединение на TLS 1.3). Для нестабильных сетей и слабых устройств — Shadowsocks 2022. Для игр — WireGuard. В 3set все три доступны на всех серверах, переключение в один тап.';
-        if(/работ|росси|стабильн/.test(t)) r = 'Shadowsocks 2022 работает в РФ. В нестабильных сетях VLESS Reality стабильнее за счёт TLS 1.3. Рекомендуем VLESS как основной, SS как резервный.';
+        if(/работ|росси|стабильн/.test(t)) r = 'Shadowsocks 2022 — лёгкий протокол для повседневных задач. VLESS Reality обеспечивает более высокую защиту за счёт TLS 1.3. Рекомендуем VLESS как основной, SS как резервный.';
         if(/верси|2022|aead|классическ/.test(t)) r = 'Используйте только Shadowsocks 2022 с шифром 2022-blake3-aes-256-gcm. Классические версии (SS, SS-AEAD) устарели — уязвимы к replay-атакам. В 3set по умолчанию SS-2022 на всех серверах.';
         if(/aes|chacha20|шифр|алгоритм/.test(t)) r = 'На современных CPU (с AES-NI) — AES-256-GCM, он быстрее. На старых ARM без AES-NI — ChaCha20-IETF-Poly1305. В SS-2022 по умолчанию 2022-blake3-aes-256-gcm — оптимум для большинства устройств.';
-        if(/скорость|быстр|производ/.test(t)) r = 'Shadowsocks быстрее VLESS Reality на 10-15% в обычных сетях (меньше overhead). Но WireGuard ещё быстрее — у него минимальные накладные расходы. Для игр — WireGuard, для нестабильных сетей — Shadowsocks, для РФ — VLESS.';
+        if(/скорость|быстр|производ/.test(t)) r = 'Shadowsocks быстрее VLESS Reality на 10-15% в обычных сетях (меньше overhead). Но WireGuard ещё быстрее — у него минимальные накладные расходы. Для игр — WireGuard, для нестабильных сетей — Shadowsocks, для максимальной защиты — VLESS.';
         if(/торрент|p2p|udp/.test(t)) r = 'Да, Shadowsocks поддерживает UDP и работает с торрентами. Но для P2P лучше WireGuard — выше скорость на больших объёмах. SS подойдёт, если WireGuard недоступен.';
         if(/куп|подписк|оплат|тариф|цен/.test(t)) r = 'Купить подписку можно на dash.3set.online или в Telegram-боте @threeSet_bot. Оплата картой МИР, СБП или криптой. Ключ приходит за 1 минуту ⚡';
         if(/привет|здравств|добр/.test(t)) r = 'Привет! 👋 Подсказать по Shadowsocks, выбору протокола или подписке?';

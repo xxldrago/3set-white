@@ -631,7 +631,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
             <span class="val"><b>88%</b><span class="bar-mini"><i style="width:88%"></i></span></span>
         </div>
         <div class="cmp-row">
-            <span class="param">Стабильность в РФ</span>
+            <span class="param">Стабильность</span>
             <span class="val dim"><b>70%</b><span class="bar-mini"><i style="width:70%"></i></span></span>
             <span class="val hl"><b>96%</b><span class="bar-mini"><i style="width:96%"></i></span></span>
             <span class="val"><b>85%</b><span class="bar-mini"><i style="width:85%"></i></span></span>
@@ -663,7 +663,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
         <div class="cmp-row">
             <span class="param">Лучше всего для</span>
             <span class="val hl">Игры · стриминг · торренты</span>
-            <span class="val hl">Россия · нестабильные сети</span>
+            <span class="val hl">Максимальная защита</span>
             <span class="val hl">Нестабильные сети · высокая нагрузка</span>
         </div>
     </div>
@@ -769,7 +769,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
             <ul>
                 <li>UDP-handshake имеет характерный формат</li>
                 <li>Не использует TLS</li>
-                <li>В РФ — только как резервный протокол</li>
+                <li>Рекомендуется как резервный протокол</li>
             </ul>
         </div>
         <div class="alert info rv d2 in">
@@ -841,7 +841,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
         <div class="faq-wrap">
             <div class="acc-item rv in"><button class="acc-q">WireGuard — это VPN или прокси?<span class="ic">+</span></button><div class="acc-a"><p>WireGuard — это полноценный VPN-протокол. Он создаёт виртуальный сетевой интерфейс (wg0) на уровне ядра ОС и пропускает через себя весь трафик системы. В отличие от Shadowsocks (прокси), WireGuard работает как классический VPN: весь трафик идёт через зашифрованный туннель.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">Почему WireGuard быстрее OpenVPN?<span class="ic">+</span></button><div class="acc-a"><p>OpenVPN работает в user-space и использует TLS-стек с множеством слоёв. WireGuard — в ядре ОС, использует UDP и минималистичный крипто-стек (ChaCha20 + Curve25519). Результат: WireGuard выдаёт 980+ Мбит/с на гигабитном канале, OpenVPN — 200–400 Мбит/с. Разница в 2–5 раз.</p></div></div>
-            <div class="acc-item rv in"><button class="acc-q">WireGuard работает в России?<span class="ic">+</span></button><div class="acc-a"><p>WireGuard использует характерный UDP-handshake. В большинстве сетей он работает стабильно и быстро. Для максимальной стабильности в РФ используйте VLESS Reality.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">WireGuard работает в России?<span class="ic">+</span></button><div class="acc-a"><p>WireGuard использует характерный UDP-handshake. В большинстве сетей он работает стабильно и быстро. Если нужна максимальная защита — используйте VLESS Reality.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">В чём разница между WireGuard и VLESS Reality?<span class="ic">+</span></button><div class="acc-a"><p>WireGuard — самый быстрый протокол. VLESS Reality медленнее на 5–10%, но обеспечивает повышенную защиту соединения на основе TLS 1.3. В 3set оба протокола доступны на всех серверах, переключение — в один тап.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">WireGuard безопасен?<span class="ic">+</span></button><div class="acc-a"><p>Да. WireGuard использует только современные криптографические примитивы: ChaCha20-Poly1305 (шифрование), Curve25519 (обмен ключами), BLAKE2s (хеширование), Noise IK (рукопожатие). Код прошёл независимый аудит и формальную верификацию. Криптография уровня NSA-grade.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">Можно ли использовать WireGuard для торрентов?<span class="ic">+</span></button><div class="acc-a"><p>Да, WireGuard — один из лучших протоколов для P2P-трафика. Максимальная скорость, поддержка UDP, минимальная нагрузка на CPU. На гигабитном канале торренты раскрываются полностью — никаких «режущихся» скоростей, как у OpenVPN.</p></div></div>
@@ -993,7 +993,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
         var t = q.toLowerCase(), r;
         if(/wireguard|wg|скорость|пинг|игра|стрим|торрент/.test(t)) r = 'WireGuard — самый быстрый VPN-протокол. 980+ Мбит/с на гигабитном канале, пинг 18–25 мс до Европы. Идеален для игр, 4K-стриминга и торрентов. В 3set доступен на всех 34 серверах ✅';
         if(/vless|reality|выбор|что лучше|какой протокол/.test(t)) r = 'Для России — VLESS Reality (защищённое соединение на TLS 1.3). Для игр и стриминга — WireGuard (максимальная скорость). Для нестабильных сетей — Shadowsocks. В 3set все три доступны, переключение в один тап.';
-        if(/работ|росси|доступ/.test(t)) r = 'Для максимальной стабильности в России используйте VLESS Reality как основной протокол. WireGuard — как резервный, он даёт максимальную скорость.';
+        if(/работ|росси|доступ/.test(t)) r = 'Для максимальной защиты используйте VLESS Reality. WireGuard — как резервный, он даёт максимальную скорость.';
         if(/безопас|крипт|шифр|chacha|curve/.test(t)) r = 'WireGuard использует только современные примитивы: ChaCha20-Poly1305 (шифрование), Curve25519 (обмен ключами), BLAKE2s (хеширование), Noise IK (рукопожатие). Код прошёл независимый аудит. Криптография уровня NSA-grade.';
         if(/быстрее|openvpn|почему быстрее/.test(t)) r = 'WireGuard работает в ядре ОС (kernel-mode), OpenVPN — в user-space. WireGuard использует UDP и минималистичный крипто-стек, OpenVPN — TLS с множеством слоёв. Результат: WireGuard в 2–5 раз быстрее OpenVPN.';
         if(/udp|tcp/.test(t)) r = 'WireGuard работает поверх UDP — это даёт минимальную задержку. TCP-трафик (браузер, видеозвонки) инкапсулируется внутрь UDP-пакетов WireGuard — для приложений это прозрачно. Проблем с TCP-трафиком не будет.';

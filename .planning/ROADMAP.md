@@ -8,7 +8,7 @@
 
 ## Overview
 
-Milestone v1.2 завершена Phase 12 — фундамент корректности аналитики: сравнение периодов (WoW/MoM) и флаги качества данных, чтобы ни один отчёт не опирался на degraded-ответы ARTEMIDA.
+Milestone v1.2 завершена: фазы 12-16 — фундамент корректности аналитики (сравнение периодов, degraded-флаги), алерты, промо/реферал и fraud-сигналы, save-list/upsell, CSV-экспорт и словарь метрик.
 
 ## Phases
 
@@ -49,7 +49,7 @@ Numbering continues from v1.1 (last phase = 11).
 ## Progress
 
 **Execution Order:**
-Phase 12 is the only phase of milestone v1.2.
+Phases 12-16 of milestone v1.2.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -61,8 +61,8 @@ Phase 12 is the only phase of milestone v1.2.
 
 ### Phase 13: Alerts: падение оплат, рост failed, всплеск тикетов, runway баланса ниже порога, доставка админам через outbox/Telegram
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** Админ получает алерты по падению оплат, росту failed, всплеску тикетов и runway баланса ниже порога через outbox/Telegram.
+**Requirements**: ALR-02, ALR-03, ALR-04
 **Depends on:** Phase 12
 **Plans:** 1/1 plans complete
 
@@ -72,8 +72,8 @@ Plans:
 
 ### Phase 14: Promo/referral quality & fraud: воронка click→register→pay по кодам/партнёрам, ROI скидки, Partner ROI с выплатами, fraud-сигналы
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** Аналитика промокодов/рефералов: воронка, ROI, fraud-сигналы.
+**Requirements**: PRM-01, PRM-02, PRM-03, PRM-04
 **Depends on:** Phase 13
 **Plans:** 1/1 plans complete
 
@@ -83,8 +83,8 @@ Plans:
 
 ### Phase 15: Save-list истекающих ключей с push T-7/T-3/T-1 и upsell-radar по тяжёлым пользователям на низком тарифе
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** Save-list истекающих ключей с push-напоминаниями и upsell-radar.
+**Requirements**: EXT-01, EXT-02
 **Depends on:** Phase 14
 **Plans:** 1/1 plans complete
 
@@ -94,8 +94,8 @@ Plans:
 
 ### Phase 16: CSV-экспорт отчётов и metric dictionary (страница с определениями формул)
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** CSV-экспорт отчётов и словарь метрик.
+**Requirements**: EXT-06, EXT-07
 **Depends on:** Phase 15
 **Plans:** 1/1 plans complete
 

@@ -5,7 +5,7 @@ current_phase: 16
 status: completed
 last_updated: "2026-11-17T06:54:12.567Z"
 last_activity: 2026-11-17
-last_activity_desc: Phase 16 complete
+last_activity_desc: Phases 12-16 complete (alerts, promo/referral quality, save-list/upsell, CSV/dictionary) — milestone v1.2 complete
 state_head: 03338b90ae2dfe52e37e74029f42071988444033
 progress:
   total_phases: 5
@@ -127,9 +127,9 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-10 — milestone v1.2 complete (Phase 12 only phase)
+Last session: 2026-11-17 — milestone v1.2 complete (Phases 12-16 all complete)
 Milestone v1.2 complete — no remaining phases.
 
 ## Operator Next Steps
 
-Milestone v1.2 complete — no remaining phases. Phase 12 code committed and pushed (108bc87).
+Milestone v1.2 complete — all phases 12-16 committed and pushed.

@@ -7,25 +7,25 @@
 
 ### ALR — Period comparison & anomaly alerts
 
-- [ ] **ALR-01**: WoW/MoM-сравнение для каждой метрики (дельта и %)
-- [ ] **ALR-02**: Алерты: падение оплат, рост `failed`, всплеск тикетов
-- [ ] **ALR-03**: Алерт на runway баланса ниже порога
-- [ ] **ALR-04**: Доставка алертов админам через существующий outbox/Telegram
+- [x] **ALR-01**: WoW/MoM-сравнение для каждой метрики (дельта и %)
+- [x] **ALR-02**: Алерты: падение оплат, рост `failed`, всплеск тикетов
+- [x] **ALR-03**: Алерт на runway баланса ниже порога
+- [x] **ALR-04**: Доставка алертов админам через существующий outbox/Telegram
 
 ### PRM — Promo / referral quality & fraud
 
-- [ ] **PRM-01**: Воронка click → register → pay по каждому коду и партнёру
-- [ ] **PRM-02**: Стоимость скидки против выручки и ROI по каждому промокоду
-- [ ] **PRM-03**: Partner ROI с учётом выплат (`Withdrawal`)
-- [ ] **PRM-04**: Fraud-сигналы: self-dealing промокод, mutual referral pairs, кластеры заблокированных регистраций по email, trial→no-pay ratio по источнику (наблюдение, без авто-банов). IP-кластеры по `signupIpHash` — P2, после накопления данных (сбор начинается в Phase 12)
+- [x] **PRM-01**: Воронка click → register → pay по каждому коду и партнёру
+- [x] **PRM-02**: Стоимость скидки против выручки и ROI по каждому промокоду
+- [x] **PRM-03**: Partner ROI с учётом выплат (`Withdrawal`)
+- [x] **PRM-04**: Fraud-сигналы: self-dealing промокод, mutual referral pairs, кластеры заблокированных регистраций по email, trial→no-pay ratio по источнику (наблюдение, без авто-банов). IP-кластеры по `signupIpHash` — P2, после накопления данных (сбор начинается в Phase 12)
 
 ### EXT — Extra analytics
 
-- [ ] **EXT-01**: Save-list истекающих ключей (≤7 дней без продления) с push-напоминанием T-7 / T-3 / T-1 через `cron/remind` (MSK-ключ дня, стадийная идемпотентность)
-- [ ] **EXT-02**: Upsell-radar — тяжёлые по трафику/устройствам пользователи на низком тарифе
-- [ ] **EXT-05**: Data-quality флаги (degraded-ответы ARTEMIDA исключаются из агрегатов; degraded-прогон rollup не перезаписывает здоровые значения)
-- [ ] **EXT-06**: CSV-экспорт по каждому отчёту
-- [ ] **EXT-07**: Metric dictionary — страница с определением каждой формулы
+- [x] **EXT-01**: Save-list истекающих ключей (≤7 дней без продления) с push-напоминанием T-7 / T-3 / T-1 через `cron/remind` (MSK-ключ дня, стадийная идемпотентность)
+- [x] **EXT-02**: Upsell-radar — тяжёлые по трафику/устройствам пользователи на низком тарифе
+- [x] **EXT-05**: Data-quality флаги (degraded-ответы ARTEMIDA исключаются из агрегатов; degraded-прогон rollup не перезаписывает здоровые значения)
+- [x] **EXT-06**: CSV-экспорт по каждому отчёту
+- [x] **EXT-07**: Metric dictionary — страница с определением каждой формулы
 
 ## Milestone Decisions (owner, 2026-10-31)
 
@@ -47,19 +47,19 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ALR-01 | 12 | Pending |
-| ALR-02 | 13 | Pending |
-| ALR-03 | 13 | Pending |
-| ALR-04 | 13 | Pending |
-| PRM-01 | 14 | Pending |
-| PRM-02 | 14 | Pending |
-| PRM-03 | 14 | Pending |
-| PRM-04 | 14 | Pending |
-| EXT-01 | 15 | Pending |
-| EXT-02 | 15 | Pending |
-| EXT-05 | 12 | Pending |
-| EXT-06 | 16 | Pending |
-| EXT-07 | 16 | Pending |
+| ALR-01 | 12 | Complete |
+| ALR-02 | 13 | Complete |
+| ALR-03 | 13 | Complete |
+| ALR-04 | 13 | Complete |
+| PRM-01 | 14 | Complete |
+| PRM-02 | 14 | Complete |
+| PRM-03 | 14 | Complete |
+| PRM-04 | 14 | Complete |
+| EXT-01 | 15 | Complete |
+| EXT-02 | 15 | Complete |
+| EXT-05 | 12 | Complete |
+| EXT-06 | 16 | Complete |
+| EXT-07 | 16 | Complete |
 
 ---
 *Last updated: 2026-10-31 — v1.2 requirements defined*

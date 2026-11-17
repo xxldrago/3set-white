@@ -5,7 +5,7 @@
 <title>Почему VPN постоянно отключается: 7 причин и решения — Блог 3set.online</title>
 <meta name="description" content="VPN отключается сам по себе? Разбираем 7 основных причин: экономия батареи, брандмауэр, системное расширение, перегрузка сервера. Решения для Android, iOS, Windows, macOS, роутеров.">
 <meta property="og:title" content="Почему VPN постоянно отключается: 7 причин и решения">
-<meta property="og:description" content="Траблшутинг-гайд: почему VPN отключается в фоне, при блокировке экрана, на Android и iOS. Пошаговые решения для каждой платформы.">
+<meta property="og:description" content="Траблшутинг-гайд: почему VPN отключается в фоне, когда экран гаснет, на Android и iOS. Пошаговые решения для каждой платформы.">
 <meta property="og:type" content="article">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e1512'/%3E%3Cpath d='M16 5l9 4v7c0 6-4 9.5-9 11-5-1.5-9-5-9-11V9l9-4z' fill='none' stroke='%23b7ff45' stroke-width='2.4'/%3E%3Cpath d='M11.5 16l3 3 6-6' fill='none' stroke='%23b7ff45' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="/assets/fonts.css">
@@ -431,7 +431,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 <div class="diag-step">
 <div class="ds-num">1</div>
 <h5>Когда отключается?</h5>
-<p>При блокировке экрана · в фоне · при смене сети · случайно в течение дня</p>
+<p>Когда экран гаснет · в фоне · при смене сети · случайно в течение дня</p>
 </div>
 <div class="diag-step">
 <div class="ds-num">2</div>
@@ -473,7 +473,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 <span class="cause-num">02</span>
 <div class="cause-ic">📱</div>
 <span class="plat">IOS · IPADOS</span>
-<h4>iOS обрывает VPN при блокировке</h4>
+<h4>iOS обрывает VPN, когда экран гаснет</h4>
 <p>iOS агрессивнее Android в управлении фоновыми процессами. Если клиент не в «избранных» или не имеет разрешения на фоновое обновление — система его заморозит.</p>
 <div class="fix"><b>РЕШЕНИЕ:</b>Настройки → Основные → Обновление контента → разрешить для клиента. Настройки → VPN → включить «Подключаться по требованию».</div>
 </div>
@@ -481,8 +481,8 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 <span class="cause-num">03</span>
 <div class="cause-ic">🛡</div>
 <span class="plat">WINDOWS · DEFENDER · КАСПЕРСКИЙ · ESET</span>
-<h4>Брандмауэр или антивирус блокирует</h4>
-<p>Windows Defender, Касперский, ESET, Avast могут блокировать создание TUN-адаптера или обрывать соединение, считая его «подозрительным». Особенно часто — после обновления антивируса.</p>
+<h4>Брандмауэр или антивирус мешает</h4>
+<p>Windows Defender, Касперский, ESET, Avast могут мешать созданию TUN-адаптера или обрывать соединение, считая его «подозрительным». Особенно часто — после обновления антивируса.</p>
 <div class="fix"><b>РЕШЕНИЕ:</b>Добавить папку клиента в исключения антивируса. Разрешить TUN-адаптер (Wintun). В Windows Defender: «Разрешённые приложения» → отметить «Частные» и «Публичные».</div>
 </div>
 <div class="cause rv d3 in">
@@ -513,7 +513,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 <span class="cause-num">07</span>
 <div class="cause-ic">🖥</div>
 <span class="plat">СЕРВЕР · ПРОВАЙДЕР</span>
-<h4>Сервер перегружен или заблокирован</h4>
+<h4>Сервер перегружен или недоступен</h4>
 <p>Если VPN отключается у всех пользователей одновременно — дело в сервере. Он либо перегружен, либо стал нестабильным. Решение — переключиться на другой сервер той же локации.</p>
 <div class="fix"><b>РЕШЕНИЕ:</b>В клиенте: «Обновить подписку» → подтянутся актуальные серверы. Выбрать другой сервер из той же страны. В 3set серверы ротируются автоматически.</div>
 </div>
@@ -542,20 +542,20 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 
 
 <div class="plat-panel is-on" id="p-android">
-<h4>Android: отключение в фоне и при блокировке экрана</h4>
+<h4>Android: отключение в фоне и когда экран гаснет</h4>
 <p>Android-производители добавляют собственные оптимизаторы батареи, которые «замораживают» фоновые приложения. Решение — отключить экономию батареи для клиента и добавить его в автозагрузку.</p>
 <div class="steps-list">
 <div class="ps"><span class="n">01</span><div><b>Чистый Android (Pixel, Motorola)</b><span>Настройки → Приложения → INCY / Happ → Батарея → «Без ограничений».</span></div></div>
 <div class="ps"><span class="n">02</span><div><b>Xiaomi / Redmi / POCO (MIUI, HyperOS)</b><span>Настройки → Приложения → Все приложения → INCY → Экономия батареи → «Нет ограничений». Плюс: Безопасность → Автозагрузка → разрешить для клиента.</span></div></div>
 <div class="ps"><span class="n">03</span><div><b>Samsung (One UI)</b><span>Настройки → Обслуживание устройства → Батарея → Ограничения в фоне → убрать INCY/Happ из «Глубокого сна» и «Спящего режима».</span></div></div>
 <div class="ps"><span class="n">04</span><div><b>Huawei / Honor (EMUI, MagicOS)</b><span>Настройки → Батарея → Запуск приложений → INCY → включить все три тумблера: «Автозапуск», «Косвенный запуск», «Работа в фоне».</span></div></div>
-<div class="ps"><span class="n">05</span><div><b>Проверка</b><span>Запустите клиент, заблокируйте экран на 10 минут, разблокируйте. VPN должен остаться подключённым. Если нет — напишите в поддержку, подскажем под вашу модель.</span></div></div>
+<div class="ps"><span class="n">05</span><div><b>Проверка</b><span>Запустите клиент, погасите экран на 10 минут, затем включите. VPN должен остаться подключённым. Если нет — напишите в поддержку, подскажем под вашу модель.</span></div></div>
 </div>
 </div>
 
 
 <div class="plat-panel" id="p-ios">
-<h4>iOS: обрыв при блокировке и переключении сетей</h4>
+<h4>iOS: обрыв, когда экран гаснет, и при переключении сетей</h4>
 <p>iOS агрессивно управляет фоновыми процессами. Решение — разрешить фоновое обновление для клиента и включить «Подключаться по требованию» в настройках VPN.</p>
 <div class="steps-list">
 <div class="ps"><span class="n">01</span><div><b>Разрешите фоновое обновление</b><span>Настройки → Основные → Обновление контента в фоне → включить для INCY / Happ.</span></div></div>
@@ -689,7 +689,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 <div class="faq-wrap">
 <div class="acc-item rv in"><button class="acc-q">VPN отключается, когда гаснет экран на Android. Что делать?<span class="ic">+</span></button><div class="acc-a"><p>Это работа системного оптимизатора батареи. Зайдите в Настройки → Приложения → INCY/Happ → Батарея → выберите «Без ограничений». На Xiaomi/Huawei/Samsung дополнительно отключите «адаптивную батарею» для клиента и добавьте его в автозагрузку. Подробная инструкция — в разделе «По платформам → Android» выше.</p></div></div>
 <div class="acc-item rv in"><button class="acc-q">VPN отключается при смене сети. Почему?<span class="ic">+</span></button><div class="acc-a"><p>Не все клиенты умеют «переезжать» между сетями без разрыва. Используйте INCY, Happ или FlClashX — они поддерживают seamless handover. В WireGuard и VLESS Reality «переезд» происходит автоматически. Если используете старый OpenVPN-клиент — замените его на современный.</</p></div></div>
-<div class="acc-item rv in"><button class="acc-q">Антивирус блокирует VPN. Как разрешить?<span class="ic">+</span></button><div class="acc-a"><p>Добавьте папку клиента в исключения антивируса (Касперский, ESET, Avast, Dr.Web). Разрешите создание виртуального сетевого адаптера (Wintun / tun2socks). Если проблема осталась — временно отключите антивирус для диагностики. В 90% случаев после добавления в исключения всё работает стабильно.</p></div></div>
+<div class="acc-item rv in"><button class="acc-q">Антивирус мешает VPN. Как разрешить?<span class="ic">+</span></button><div class="acc-a"><p>Добавьте папку клиента в исключения антивируса (Касперский, ESET, Avast, Dr.Web). Разрешите создание виртуального сетевого адаптера (Wintun / tun2socks). Если проблема осталась — временно отключите антивирус для диагностики. В 90% случаев после добавления в исключения всё работает стабильно.</p></div></div>
 <div class="acc-item rv in"><button class="acc-q">На macOS VPN отключается после обновления системы. Что делать?<span class="ic">+</span></button><div class="acc-a"><p>После обновления macOS системное расширение клиента может «слететь». Зайдите в Системные настройки → Конфиденциальность и безопасность → разрешите расширение клиента. В самом клиенте нажмите «Reinstall System Extension». Перезагрузите Mac. После этого VPN будет работать стабильно.</p></div></div>
 <div class="acc-item rv in"><button class="acc-q">VPN отключается у всех пользователей одновременно. Это проблема сервиса?<span class="ic">+</span></button><div class="acc-a"><p>Да, скорее всего. Проверьте статус серверов в Telegram-канале сервиса или на сайте статуса. Если там «авария» — ждите, пока провайдер починит. Если статуса нет или он всегда «зелёный» — это плохой знак: провайдер не мониторит ситуацию. В 3set мы публикуем статус в реальном времени и автоматически ротируем серверы при проблемах.</p></div></div>
 <div class="acc-item rv in"><button class="acc-q">Какой протокол выбрать, если VPN постоянно обрывается?<span class="ic">+</span></button><div class="acc-a"><p>Переключитесь на другой протокол. VLESS Reality, WireGuard и Shadowsocks используют разные транспорты (TCP/UDP, TLS/чистый UDP). Если один протокол работает нестабильно — другой может оказаться устойчивее. Для России рекомендуем VLESS Reality, для игр — WireGuard, для нестабильных сетей — Shadowsocks 2022.</p></div></div>
@@ -769,7 +769,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 <div id="chatPanel" role="dialog" aria-label="Чат поддержки">
 <div class="chat-hd"><span class="av">А</span><div>Аня · поддержка 3set<small>онлайн · отвечает ~5 мин</small></div></div>
 <div id="chatMsgs"></div>
-<div class="chat-chips"><button data-q="VPN отключается на Android">Android</button><button data-q="VPN отключается на iOS">iOS</button><button data-q="Антивирус блокирует">Антивирус</button></div>
+<div class="chat-chips"><button data-q="VPN отключается на Android">Android</button><button data-q="VPN отключается на iOS">iOS</button><button data-q="Антивирус мешает">Антивирус</button></div>
 <div class="chat-in"><input id="chatInput" type="text" placeholder="Напишите сообщение…" aria-label="Сообщение"><button id="chatSend" aria-label="Отправить">➤</button></div>
 </div>
 
@@ -871,7 +871,7 @@ return m;
 }
 function botReply(q){
 var t = q.toLowerCase(), r;
-if(/отключ|обрыв|фон|экран|блокир|sleep|background/.test(t)) r = 'В 80% случаев это экономия батареи (Android) или системные ограничения (iOS). На Android: Настройки → Приложения → клиент → Батарея → «Без ограничений». На iOS: Настройки → VPN → «Подключаться по требованию». Подробнее — в статье выше ⚡';
+if(/отключ|обрыв|фон|экран|sleep|background/.test(t)) r = 'В 80% случаев это экономия батареи (Android) или системные ограничения (iOS). На Android: Настройки → Приложения → клиент → Батарея → «Без ограничений». На iOS: Настройки → VPN → «Подключаться по требованию». Подробнее — в статье выше ⚡';
 if(/android|ми|miui|hyperos|xiaomi|redmi|poco|samsung|huawei|honor|emui|one ui/.test(t)) r = 'На Android VPN отключается из-за экономии батареи. Решение: Настройки → Приложения → клиент → Батарея → «Без ограничений». На MIUI/HyperOS — добавить в автозагрузку. На Samsung — убрать из «Глубокого сна». На Huawei — включить все три тумблера в «Запуск приложений».';
 if(/ios|iphone|ipad|apple/.test(t)) r = 'На iOS VPN обрывается из-за системных ограничений. Решение: (1) Настройки → Основные → Обновление контента → разрешить для клиента, (2) Настройки → VPN → включить «Подключаться по требованию», (3) отключить Low Power Mode во время VPN.';
 if(/windows|defender|касперск|eset|avast|антивирус/.test(t)) r = 'На Windows VPN обрывается из-за брандмауэра или антивируса. Решение: (1) Параметры → Брандмауэр → Разрешённые приложения → отметить «Частные» и «Публичные», (2) добавить папку клиента в исключения антивируса, (3) разрешить создание TUN-адаптера (Wintun).';

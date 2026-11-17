@@ -1,6 +1,6 @@
 ---
 phase: 15-save-list-istekayuschih-klyuchey-s-push-t-7-t-3-t-1-i-upsell
-verified: 2026-11-17T00:00:00Z
+verified: 2026-11-17T12:00:00Z
 status: passed
 score: 2/2 requirements verified
 overrides_applied: 0

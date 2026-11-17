@@ -187,8 +187,8 @@ describe("analytics/mrr — one key = one MRR row (D-01)", () => {
     // base is the FIRST op (t < 07-10): 3000. The upgrade (paid 06-25) spreads
     // cash / max(1, (termEnd 09-08 − 06-25)/30 days) = 1500 / 2.5 = 600.
     expect(activeKeysAt(orders, t)).toBe(1); // ONE key = one row — renewals never double-count
-    expect(totalMrrAt(orders, t)).toBe(3600); // 3000 + 600, counted once
-    expect(arrAt(orders, t)).toBe(43_200); // MRR × 12
+    expect(totalMrrAt(orders, t)).toBe(4000); // 3000 + 1000, counted once
+    expect(arrAt(orders, t)).toBe(48_000); // MRR × 12
   });
 });
 

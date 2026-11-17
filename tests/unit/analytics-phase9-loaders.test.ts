@@ -32,6 +32,7 @@ import {
   type FunnelRow,
 } from "../../lib/analytics/funnel";
 import { mskDayLabel, mskDayStartInstant } from "../../lib/analytics/time";
+import { windowStartDay } from "../../lib/analytics/windows";
 import { prisma } from "../../lib/prisma";
 
 const OWNER = BigInt("200000442"); // plan 09-02 fixture range
@@ -145,8 +146,8 @@ async function makeOrder(userId: number, overrides: OrderOverrides = {}): Promis
 }
 
 /** The loader's own window bound, re-derived in the test (identity contract). */
-function windowStart(period: number): Date {
-  return mskDayStartInstant(mskDayLabel(new Date(Date.now() - (period - 1) * 86_400_000)));
+function windowStart(period: 7 | 30 | 90): Date {
+  return mskDayStartInstant(windowStartDay(period));
 }
 
 /** Re-run loadFunnelOrderRows' query — the identity scan. */
@@ -209,26 +210,28 @@ afterAll(async () => {
 
 describe("analytics phase9 loaders — Task 1 (funnel / expired)", () => {
   it("Test 1: loadFunnel — 4 fixed steps + createdAt cohort window identity", async () => {
+    const ws = mskDayStartInstant(windowStartDay(30));
+    const d = (n: number) => new Date(ws.getTime() + n * 86_400_000);
     const inWindow = [
-      await makeOrder(ownerId, { status: "pending", createdAt: daysAgo(3) }),
-      await makeOrder(ownerId, { status: "paid", createdAt: daysAgo(5), paidAt: daysAgo(5) }),
+      await makeOrder(ownerId, { status: "pending", createdAt: d(1) }),
+      await makeOrder(ownerId, { status: "paid", createdAt: d(3), paidAt: d(3) }),
       await makeOrder(payer2Id, {
         status: "provisioned",
-        createdAt: daysAgo(7),
-        paidAt: daysAgo(7),
+        createdAt: d(5),
+        paidAt: d(5),
         provisionedKeyId: "p9-t1-prov",
-        updatedAt: daysAgo(7),
+        updatedAt: d(5),
       }),
       await makeOrder(payer3Id, {
         status: "failed",
-        createdAt: daysAgo(9),
-        paidAt: daysAgo(9),
+        createdAt: d(7),
+        paidAt: d(7),
         errorCode: "api_down",
-        updatedAt: daysAgo(9),
+        updatedAt: d(7),
       }),
     ];
     // Outside the 30-day MSK window → must not appear in any step's cohort.
-    const outOfWindow = await makeOrder(ownerId, { status: "pending", createdAt: daysAgo(40) });
+    const outOfWindow = await makeOrder(ownerId, { status: "pending", createdAt: new Date(ws.getTime() - 5 * 86_400_000) });
 
     const data = await loadFunnel(30);
 

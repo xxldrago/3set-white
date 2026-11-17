@@ -564,7 +564,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
     <div class="wrap">
         <div class="rv in"><span class="kicker">03 · как работает</span>
         <h2 data-scr="" data-orig="Путь пакета через WireGuard" class="in">Путь пакета через WireGuard</h2>
-        <p class="sub">От клика в игре до ответа сервера — четыре шага, каждый из которых происходит на уровне ядра. Внешний наблюдатель видит только UDP-пакеты с зашифрованной полезной нагрузкой.</p>
+        <p class="sub">От клика в игре до ответа сервера — четыре шага, каждый из которых происходит на уровне ядра. Передаваемые данные защищены шифрованием.</p>
     </div>
 
 
@@ -603,7 +603,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
     <div class="wrap">
         <div class="rv in"><span class="kicker">04 · сравнение</span>
         <h2 data-scr="" data-orig="WireGuard vs VLESS Reality vs Shadowsocks" class="in">WireGuard vs VLESS Reality vs Shadowsocks</h2>
-        <p class="sub">Три протокола — три сценария. WireGuard — самый быстрый, но не самый скрытный. Выбирайте под свою задачу.</p>
+        <p class="sub">Три протокола — три сценария. WireGuard — самый быстрый, но не универсальный. Выбирайте под свою задачу.</p>
     </div>
     <div class="cmp-wrap rv in">
         <div class="cmp-row hd">
@@ -643,10 +643,10 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
             <span class="val">AES-256-GCM · ChaCha20</span>
         </div>
         <div class="cmp-row">
-            <span class="param">Маскировка под HTTPS</span>
+            <span class="param">TLS-шифрование</span>
             <span class="val dim">Нет</span>
-            <span class="val hl">Полная · с валидным TLS</span>
-            <span class="val">Частичная</span>
+            <span class="val hl">Полное · TLS 1.3</span>
+            <span class="val">Частичное</span>
         </div>
         <div class="cmp-row">
             <span class="param">Накладные расходы CPU</span>
@@ -676,7 +676,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
     <div class="wrap">
         <div class="rv in"><span class="kicker">05 · сценарии</span>
         <h2 data-scr="" data-orig="Когда выбирать WireGuard" class="in">Когда выбирать WireGuard</h2>
-        <p class="sub">WireGuard — король скорости, но не король скрытности. Честно разбираем, где он показывает себя лучше всего, а где лучше взять VLESS Reality.</p>
+        <p class="sub">WireGuard — король скорости, но не универсальное решение. Честно разбираем, где он показывает себя лучше всего, а где лучше взять VLESS Reality.</p>
     </div>
     <div class="scenarios">
         <div class="scen rv in">
@@ -768,7 +768,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
             <p>WireGuard-пакеты имеют характерный формат handshake. В некоторых сетях это снижает стабильность — для повышенной устойчивости используйте VLESS Reality.</p>
             <ul>
                 <li>UDP-handshake имеет характерный формат</li>
-                <li>Нет маскировки под легитимный трафик</li>
+                <li>Не использует TLS</li>
                 <li>В РФ — только как резервный протокол</li>
             </ul>
         </div>
@@ -993,7 +993,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
         var t = q.toLowerCase(), r;
         if(/wireguard|wg|скорость|пинг|игра|стрим|торрент/.test(t)) r = 'WireGuard — самый быстрый VPN-протокол. 980+ Мбит/с на гигабитном канале, пинг 18–25 мс до Европы. Идеален для игр, 4K-стриминга и торрентов. В 3set доступен на всех 34 серверах ✅';
         if(/vless|reality|выбор|что лучше|какой протокол/.test(t)) r = 'Для России — VLESS Reality (защищённое соединение на TLS 1.3). Для игр и стриминга — WireGuard (максимальная скорость). Для нестабильных сетей — Shadowsocks. В 3set все три доступны, переключение в один тап.';
-        if(/работ|росси|dpi|доступ/.test(t)) r = 'Для максимальной стабильности в России используйте VLESS Reality как основной протокол. WireGuard — как резервный, он даёт максимальную скорость.';
+        if(/работ|росси|доступ/.test(t)) r = 'Для максимальной стабильности в России используйте VLESS Reality как основной протокол. WireGuard — как резервный, он даёт максимальную скорость.';
         if(/безопас|крипт|шифр|chacha|curve/.test(t)) r = 'WireGuard использует только современные примитивы: ChaCha20-Poly1305 (шифрование), Curve25519 (обмен ключами), BLAKE2s (хеширование), Noise IK (рукопожатие). Код прошёл независимый аудит. Криптография уровня NSA-grade.';
         if(/быстрее|openvpn|почему быстрее/.test(t)) r = 'WireGuard работает в ядре ОС (kernel-mode), OpenVPN — в user-space. WireGuard использует UDP и минималистичный крипто-стек, OpenVPN — TLS с множеством слоёв. Результат: WireGuard в 2–5 раз быстрее OpenVPN.';
         if(/udp|tcp/.test(t)) r = 'WireGuard работает поверх UDP — это даёт минимальную задержку. TCP-трафик (браузер, видеозвонки) инкапсулируется внутрь UDP-пакетов WireGuard — для приложений это прозрачно. Проблем с TCP-трафиком не будет.';

@@ -61,8 +61,7 @@ the repo, otherwise the next `--delete` deploy removes them again.
 Server files were last modified 2026-10-22; the repo's landing content was from
 2026-10-19. Per page 26–54 lines differed beyond the counter: meta description,
 FAQ JSON-LD, the Telegram handle (`@threeSet_bot` on the server vs
-`@3set_online_bot` in the repo), the hero badge («РАБОТАЕТ В РОССИИ» vs
-«РАБОТАЕТ В РОССИИ · ОБХОД DPI») and a few `.f-bot` CSS rules.
+`@3set_online_bot` in the repo), the hero badge («РАБОТАЕТ В РОССИИ» в обоих вариантах) and a few `.f-bot` CSS rules.
 
 **Resolution:** the owner declared the live server copy canonical. `landing/` was
 re-synced **from** the host (`e113217`), so repo ↔ live diff is now empty across

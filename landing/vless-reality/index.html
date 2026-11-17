@@ -5,7 +5,7 @@
 <title>VLESS Reality — Современный защищённый протокол (3set.online)</title>
 <meta name="description" content="VLESS Reality: современный защищённый VPN-протокол. Использует TLS 1.3 и надёжное шифрование для стабильного соединения в России.">
 <meta property="og:title" content="VLESS Reality — Современный защищённый протокол · 3set.online">
-<meta property="og:description" content="VLESS + Reality: современное шифрование TLS 1.3 и X25519. Стабильное соединение в России, Иране, Китае.">
+<meta property="og:description" content="VLESS + Reality: современное шифрование TLS 1.3 и X25519. Стабильное соединение в России и Европе.">
 <meta property="og:type" content="article">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e1512'/%3E%3Cpath d='M16 5l9 4v7c0 6-4 9.5-9 11-5-1.5-9-5-9-11V9l9-4z' fill='none' stroke='%23b7ff45' stroke-width='2.4'/%3E%3Cpath d='M11.5 16l3 3 6-6' fill='none' stroke='%23b7ff45' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="/assets/fonts.css">
@@ -105,6 +105,14 @@ h1 .l2::after{content:"";position:absolute;left:0;right:0;bottom:4px;height:.34e
 h1 .l3{display:block;font-family:var(--body);font-weight:600;font-size:clamp(.95rem,1.6vw,1.15rem);color:var(--mut);margin-top:16px;line-height:1.55}
 .hero-p{color:var(--mut);max-width:520px;margin-bottom:32px;font-size:16.5px}
 .hero-p b{color:var(--ink)}
+.hero-card{position:relative;border:1px solid #1c2620;border-radius:14px;background:linear-gradient(180deg,#111a16,#0c1210);padding:26px 22px;box-shadow:0 40px 90px -30px rgba(14,21,18,.45)}
+.hero-card .hc-k{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:#6d7a71;margin-bottom:18px}
+.hero-card .hc-k b{color:var(--lime)}
+.hc-row{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid #1d2822;font-size:13px}
+.hc-row:last-of-type{border-bottom:none}
+.hc-row span{color:#5d6b62;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.hc-row b{color:#fff;font-weight:600}
+.hero-card p{margin:16px 0 0;font-size:12.5px;color:#6d7a71;line-height:1.55}
 .hero-actions{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:34px}
 .hero-stats{display:flex;gap:clamp(18px,3vw,40px);margin-top:38px;padding-top:26px;border-top:1px solid var(--line);flex-wrap:wrap}
 .hstat b{font-family:var(--disp);font-size:clamp(1.2rem,2.4vw,1.7rem);color:var(--ink);display:block}
@@ -112,41 +120,12 @@ h1 .l3{display:block;font-family:var(--body);font-weight:600;font-size:clamp(.95
 .hstat span{font-size:12px;color:var(--dim);font-family:var(--mono);letter-spacing:.06em}
 
 
-/* DPI flow visualization */
-.dpi-flow{position:relative;border:1px solid #1c2620;border-radius:14px;background:linear-gradient(180deg,#111a16,#0c1210);padding:26px 18px;box-shadow:0 40px 90px -30px rgba(14,21,18,.45);overflow:hidden;min-height:380px}
-.dpi-flow::before,.dpi-flow::after{content:"";position:absolute;width:16px;height:16px;border:2px solid var(--lime);z-index:3}
-.dpi-flow::before{top:-2px;left:-2px;border-right:none;border-bottom:none;border-radius:14px 0 0 0}
-.dpi-flow::after{bottom:-2px;right:-2px;border-left:none;border-top:none;border-radius:0 0 14px 0}
-.dpi-flow-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;position:relative;z-index:2}
-.dpi-flow-title{font-family:var(--mono);font-size:11px;color:#6d7a71;letter-spacing:.1em}
-.dpi-flow-title b{color:var(--lime);font-weight:600}
-.dpi-flow-live{font-family:var(--mono);font-size:10px;color:var(--lime);display:flex;align-items:center;gap:6px;letter-spacing:.14em}
-.dpi-flow-live .pulse-dot{background:var(--lime);box-shadow:0 0 0 0 rgba(183,255,69,.5)}
 
 
-.dpi-layers{display:grid;grid-template-columns:1fr;gap:14px;position:relative;z-index:2}
-.dpi-layer{display:grid;grid-template-columns:100px minmax(0,1fr) 100px;gap:12px;align-items:center;padding:14px 16px;border:1px solid #1d2822;border-radius:10px;background:rgba(255,255,255,.03)}
-.dpi-layer .lbl{font-family:var(--mono);font-size:10px;color:#5d6b62;letter-spacing:.12em;text-align:center}
-.dpi-layer .lbl b{color:var(--lime);display:block;font-size:12px;margin-top:2px;letter-spacing:.04em}
-.dpi-layer .stream{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-family:var(--mono);font-size:11px;min-width:0;justify-content:center}
-.dpi-layer .stream .chunk{padding:5px 10px;border-radius:6px;white-space:nowrap;flex:none}
-.dpi-layer.real .stream .chunk{background:rgba(95,214,232,.1);color:#5fd6e8;border:1px solid rgba(95,214,232,.3)}
-.dpi-layer.mask .stream .chunk{background:rgba(183,255,69,.1);color:var(--lime);border:1px solid rgba(183,255,69,.3)}
-.dpi-layer.dpi .stream .chunk{background:rgba(217,154,43,.1);color:var(--amber);border:1px solid rgba(217,154,43,.3)}
-.dpi-layer .arrow{color:#5d6b62;font-size:14px;flex:none}
 
 
-.dpi-verdict{margin-top:18px;padding:16px 20px;border:1px solid rgba(183,255,69,.3);border-radius:10px;background:rgba(183,255,69,.05);display:flex;align-items:center;gap:14px;position:relative;z-index:2}
-.dpi-verdict .v-ic{width:42px;height:42px;border-radius:50%;background:var(--lime);color:var(--ink);display:flex;align-items:center;justify-content:center;font-size:20px;flex:none}
-.dpi-verdict b{font-family:var(--disp);font-size:14px;color:#fff;display:block;margin-bottom:3px}
-.dpi-verdict span{font-family:var(--mono);font-size:11px;color:#6d7a71;letter-spacing:.06em}
 
 
-.dpi-foot{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid #1d2822;position:relative;z-index:2;font-family:var(--mono);font-size:10px}
-.dpi-foot span{display:block;color:#5d6b62;letter-spacing:.1em;margin-bottom:4px;font-size:9px}
-.dpi-foot b{color:var(--lime);font-weight:600;font-size:12px}
-.dpi-foot b.cy{color:#5fd6e8}
-.dpi-foot b.am{color:var(--amber)}
 
 
 /* bento */
@@ -165,7 +144,6 @@ h1 .l3{display:block;font-family:var(--body);font-weight:600;font-size:clamp(.95
 
 
 /* dest cards */
-.dest-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:44px}
 .dest{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:22px;text-align:center;transition:transform .3s,border-color .3s,box-shadow .3s;position:relative;overflow:hidden}
 .dest:hover{transform:translateY(-4px);border-color:var(--green);box-shadow:var(--shadow)}
 .dest .dest-logo{width:52px;height:52px;border-radius:12px;background:var(--ink);color:var(--lime);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-family:var(--disp);font-weight:700;font-size:14px}
@@ -325,30 +303,22 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 
 
 @media(max-width:1180px){
-    .dpi-layer{grid-template-columns:1fr;gap:8px;text-align:center}
-    .dpi-layer .stream{justify-content:center}
 }
 
 @media(max-width:1020px){
     .hero-grid{grid-template-columns:1fr}
-    .dpi-flow{margin-top:20px}
-    .dpi-layer{grid-template-columns:1fr;gap:8px;text-align:center}
     .b7,.b5,.b4,.b6,.b8{grid-column:span 12}
-    .dest-grid{grid-template-columns:repeat(2,1fr)}
     .scenarios{grid-template-columns:1fr}
     .alerts{grid-template-columns:1fr}
     .setup-grid{grid-template-columns:1fr}
     .cmp-row{grid-template-columns:1.4fr 1fr 1fr 1fr;font-size:12px;padding:14px 16px}
-    .dpi-foot{grid-template-columns:repeat(2,1fr)}
     .f-grid{grid-template-columns:repeat(2,1fr)}
 }
 @media(max-width:860px){nav.desk{display:none}#burger{display:flex}.hdr-cta .btn{display:none}}
 @media(max-width:640px){
-    .dest-grid{grid-template-columns:1fr}
     .cmp-row{grid-template-columns:1fr 1fr;gap:8px}
     .cmp-row .param{grid-column:span 2}
     .cmp-row.hd{display:none}
-    .dpi-foot{grid-template-columns:1fr}
     .f-grid{grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce){
@@ -449,59 +419,13 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
                 <div class="hstat"><b>TLS 1.3</b><span>валидный сертификат</span></div>
             </div>
         </div>
-        <div class="dpi-flow rv in">
-            <div class="dpi-flow-head">
-                <span class="dpi-flow-title"><b>VLESS REALITY</b> · TLS HANDSHAKE FLOW</span>
-                <span class="dpi-flow-live"><span class="pulse-dot"></span>LIVE</span>
-            </div>
-            <div class="dpi-layers">
-                <div class="dpi-layer real">
-                    <div class="lbl">РЕАЛЬНЫЙ ЗАПРОС<b>instagram.com</b></div>
-                    <div class="stream">
-                        <span class="chunk">GET /</span>
-                        <span class="arrow">→</span>
-                        <span class="chunk">Host: instagram.com</span>
-                        <span class="arrow">→</span>
-                        <span class="chunk">157.240.22.174</span>
-                    </div>
-                    <div class="lbl">ВАШ ЗАПРОС<b>ПЛАТФОРМА</b></div>
-                </div>
-                <div class="dpi-layer mask">
-                    <div class="lbl">ШИФРОВАНИЕ REALITY<b>TLS + VLESS</b></div>
-                    <div class="stream">
-                        <span class="chunk">ClientHello</span>
-                        <span class="arrow">→</span>
-                        <span class="chunk">SNI: cloudflare.com</span>
-                        <span class="arrow">→</span>
-                        <span class="chunk">ALPN: h2, http/1.1</span>
-                    </div>
-                    <div class="lbl">ВИДИТ ВНЕШНИЙ НАБЛЮДАТЕЛЬ<b>TLS 1.3 HANDSHAKE</b></div>
-                </div>
-                <div class="dpi-layer dpi">
-                    <div class="lbl">СЕТЬ<b>СОЕДИНЕНИЕ</b></div>
-                    <div class="stream">
-                        <span class="chunk">✓ валидный TLS</span>
-                        <span class="arrow">→</span>
-                        <span class="chunk">✓ SNI: cloudflare.com</span>
-                        <span class="arrow">→</span>
-                        <span class="chunk">✓ легитимный трафик</span>
-                    </div>
-                    <div class="lbl">СТАТУС<b>TLS 1.3 · ЗАЩИЩЕНО</b></div>
-                </div>
-            </div>
-            <div class="dpi-verdict">
-                <div class="v-ic">✓</div>
-                <div>
-                    <b>TLS 1.3 · защищённое соединение</b>
-                    <span>Валидный TLS-сертификат и современное шифрование</span>
-                </div>
-            </div>
-            <div class="dpi-foot">
-                <div><span>ПРОТОКОЛ</span><b>VLESS + REALITY</b></div>
-                <div><span>DEST</span><b class="cy">cloudflare.com</b></div>
-                <div><span>SNI</span><b>cloudflare.com</b></div>
-                <div><span>TLS</span><b class="am">1.3 ✓</b></div>
-            </div>
+        <div class="hero-card rv in">
+            <span class="hc-k"><b>VLESS REALITY</b> · TLS 1.3</span>
+            <div class="hc-row"><span>Протокол</span><b>VLESS + Reality</b></div>
+            <div class="hc-row"><span>Шифрование</span><b>TLS 1.3</b></div>
+            <div class="hc-row"><span>Сертификат</span><b>валидный</b></div>
+            <div class="hc-row"><span>Транспорт</span><b>TCP</b></div>
+            <p>Современное шифрование и проверяемый TLS-сертификат для стабильного соединения.</p>
         </div>
     </div>
 </section>
@@ -518,10 +442,10 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
             <div class="bcard b7 rv in">
                 <span class="tag">ПРИНЦИП РАБОТЫ</span>
                 <h3>Защищённое TLS-соединение</h3>
-                <p>Когда вы подключаетесь к серверу 3set по VLESS Reality, ваш клиент устанавливает TLS-соединение с <b style="color:var(--green)">валидным сертификатом</b> доверенного сайта (Cloudflare, Microsoft, Apple). Соединение защищено современным шифрованием TLS 1.3 и устойчиво к анализу трафика.</p>
+                <p>Когда вы подключаетесь к серверу 3set по VLESS Reality, клиент устанавливает защищённое TLS-соединение с <b style="color:var(--green)">валидным сертификатом</b>. Соединение использует современное шифрование TLS 1.3, стабильно и защищено от перехвата.</p>
                 <div class="chiprow">
                     <span class="chip lm">TLS 1.3</span>
-                    <span class="chip lm">REALITY MASKING</span>
+                    <span class="chip lm">REALITY TLS</span>
                     <span class="chip">VALID CERTIFICATE</span>
                     <span class="chip">ENCRYPTED</span>
                 </div>
@@ -529,7 +453,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
             <div class="bcard b5 rv d1 in">
                 <span class="tag">ОТЛИЧИЕ ОТ ОБЫЧНОГО VLESS</span>
                 <h3>Не нужен домен и сертификат</h3>
-                <p>Классический VLESS + XTLS-Vision требует реального домена и TLS-сертификата (Let's Encrypt). Reality использует TLS-сертификат доверенного сайта — вам не нужно покупать домен, настраивать DNS и обновлять сертификаты. Всё работает «из коробки».</p>
+                <p>Классический VLESS + XTLS-Vision требует реального домена и TLS-сертификата (Let's Encrypt). Reality работает с современным TLS 1.3 — вам не нужно покупать домен, настраивать DNS и обновлять сертификаты. Всё работает «из коробки».</p>
                 <div class="chiprow">
                     <span class="chip">NO DOMAIN NEEDED</span>
                     <span class="chip lm">ZERO CONFIG</span>
@@ -547,12 +471,12 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
             </div>
             <div class="bcard b4 rv d2 in">
                 <span class="tag">ГДЕ РАБОТАЕТ</span>
-                <h3>Россия, Иран, Китай</h3>
+                <h3>Россия и Европа</h3>
                 <p>VLESS Reality обеспечивает стабильное соединение даже в нестабильных сетях за счёт современного шифрования TLS 1.3.</p>
                 <div class="chiprow">
                     <span class="chip lm">РФ · 96%</span>
-                    <span class="chip lm">ИРАН · 94%</span>
-                    <span class="chip lm">КИТАЙ · 92%</span>
+                    <span class="chip lm">ФИНЛЯНДИЯ</span>
+                    <span class="chip lm">ГЕРМАНИЯ</span>
                 </div>
             </div>
         </div>
@@ -560,41 +484,6 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 </section>
 
 
-<!-- ═══════════ DEST SITES ═══════════ -->
-<section id="dest" style="padding-top:0">
-    <div class="wrap">
-        <div class="rv in"><span class="kicker">02 · защита</span>
-            <h2 data-scr="" data-orig="Доверенные TLS-сертификаты" class="in">Доверенные TLS-сертификаты</h2>
-            <p class="sub">Reality использует TLS-сертификат крупного доверенного сайта. Соединение защищено валидным сертификатом и современным шифрованием.</p>
-        </div>
-        <div class="dest-grid">
-            <div class="dest rv in">
-                <div class="dest-logo">CF</div>
-                <h4>Cloudflare</h4>
-                <p>Крупнейший CDN-провайдер. За ним стоят миллионы сайтов.</p>
-                <span class="sni">SNI: cloudflare.com</span>
-            </div>
-            <div class="dest rv d1 in">
-                <div class="dest-logo">MS</div>
-                <h4>Microsoft</h4>
-                <p>Azure, Office 365, LinkedIn. Корпоративные сервисы с валидными TLS-сертификатами.</p>
-                <span class="sni">SNI: microsoft.com</span>
-            </div>
-            <div class="dest rv d2 in">
-                <div class="dest-logo">AP</div>
-                <h4>Apple</h4>
-                <p>iCloud, App Store, Apple Music. Трафик Apple-устройств — приоритетный для провайдеров.</p>
-                <span class="sni">SNI: apple.com</span>
-            </div>
-            <div class="dest rv d3 in">
-                <div class="dest-logo">GG</div>
-                <h4>Google / AWS</h4>
-                <p>Google Cloud, AWS, YouTube. Крупнейшие облачные провайдеры с валидными TLS-сертификатами.</p>
-                <span class="sni">SNI: google.com</span>
-            </div>
-        </div>
-    </div>
-</section>
 
 
 <!-- ═══════════ HOW IT WORKS ═══════════ -->
@@ -607,7 +496,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
 
 
     <div class="console rv in">
-        <div class="console-bar"><i></i><i></i><i></i><span class="ttl">vless-reality · packet flow · tls 1.3 · reality masking</span></div>
+        <div class="console-bar"><i></i><i></i><i></i><span class="ttl">vless-reality · packet flow · tls 1.3</span></div>
         <div class="console-body" id="term">
             <div class="tl cmd">$ xray -c config.json -v</div>
             <div class="tl ok">→ VLESS + REALITY · X25519 · TLS 1.3</div>
@@ -694,7 +583,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
         </div>
         <div class="cmp-row">
             <span class="param">Нужен ли домен</span>
-            <span class="val hl">Нет · Reality маскирует</span>
+            <span class="val hl">Нет</span>
             <span class="val">Нет</span>
             <span class="val">Нет</span>
         </div>
@@ -763,7 +652,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
             </div>
             <div>
                 <h3>Онлайн-игры с минимальным пингом</h3>
-                <p>Для игр, где критичен каждый миллисекунд пинга, лучше WireGuard — у него минимальные накладные расходы. VLESS Reality добавляет ~5–10 мс на TLS-handshake и маскировку.</p>
+                <p>Для игр, где критичен каждый миллисекунд пинга, лучше WireGuard — у него минимальные накладные расходы. VLESS Reality добавляет ~5–10 мс на TLS-handshake.</p>
                 <span class="verdict mid">~ ЛУЧШЕ WIREGUARD</span>
             </div>
         </div>
@@ -793,7 +682,7 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
         <div class="alert tip rv in">
             <span class="tag">✓ СИЛЬНАЯ СТОРОНА</span>
             <h3>Повышенная устойчивость соединения</h3>
-            <p>VLESS Reality использует современное шифрование TLS 1.3 и валидный сертификат доверенного сайта, что повышает устойчивость соединения.</p>
+            <p>VLESS Reality использует современное шифрование TLS 1.3 и валидный TLS-сертификат, что повышает стабильность соединения.</p>
             <ul>
                 <li>Валидный TLS-сертификат</li>
                 <li>Современное шифрование TLS 1.3</li>
@@ -877,13 +766,13 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
     <div class="wrap">
         <div class="rv in" style="text-align:center"><span class="kicker">faq · vless reality</span><h2 data-scr="" data-orig="Частные вопросы про VLESS Reality" class="in">Частные вопросы про VLESS Reality</h2></div>
         <div class="faq-wrap">
-            <div class="acc-item rv in"><button class="acc-q">Что такое Reality и чем он отличается от обычного VLESS?<span class="ic">+</span></button><div class="acc-a"><p>VLESS — это транспортный протокол (эволюция VMess). Reality — дополнение к VLESS, которое обеспечивает защищённое TLS-соединение с валидным сертификатом. Без Reality VLESS просто шифрует трафик. С Reality соединение защищено современным шифрованием TLS 1.3 и устойчиво к анализу трафика.</p></div></div>
-            <div class="acc-item rv in"><button class="acc-q">Почему VLESS Reality считается надёжным протоколом?<span class="ic">+</span></button><div class="acc-a"><p>Потому что VLESS Reality использует валидный TLS-handshake с сертификатом доверенного сайта (Cloudflare, Microsoft, Apple) и современное шифрование TLS 1.3. Это обеспечивает высокую устойчивость и стабильность соединения.</p></div></div>
-            <div class="acc-item rv in"><button class="acc-q">Нужен ли мне домен и сертификат для VLESS Reality?<span class="ic">+</span></button><div class="acc-a"><p>Нет. Это главное отличие Reality от классического VLESS + XTLS-Vision. Reality «одалживает» TLS-сертификат у чужого доверенного сайта (Cloudflare, Microsoft). Вам не нужно покупать домен, настраивать DNS и обновлять сертификаты. В 3set всё настроено автоматически — вы получаете готовый ключ.</p></div></div>
-            <div class="acc-item rv in"><button class="acc-q">VLESS Reality медленнее WireGuard?<span class="ic">+</span></button><div class="acc-a"><p>Да, на 5–10%. TLS-handshake и маскировка добавляют накладные расходы: ~1.2% CPU против 0.3% у WireGuard, +25 мс на рукопожатие. На гигабитном канале VLESS Reality выдаёт ~920 Мбит/с против 980+ Мбит/с у WireGuard. Для большинства задач разница незаметна, но для игр и 8K-стриминга может быть критична.</p></div></div>
-            <div class="acc-item rv in"><button class="acc-q">Что такое dest и shortId в настройках VLESS Reality?<span class="ic">+</span></button><div class="acc-a"><p>dest (destination) — доверенный сайт, под который маскируется трафик (cloudflare.com, microsoft.com). shortId — короткий идентификатор, который помогает серверу отличить ваш трафик от обычного трафика к dest-сайту. Оба параметра уже настроены в ключе, который вы получаете от 3set — вам не нужно их менять.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Что такое Reality и чем он отличается от обычного VLESS?<span class="ic">+</span></button><div class="acc-a"><p>VLESS — это транспортный протокол (эволюция VMess). Reality — дополнение к VLESS, которое обеспечивает защищённое TLS-соединение с валидным сертификатом. Без Reality VLESS просто шифрует трафик. С Reality соединение защищено современным шифрованием TLS 1.3 и обеспечивает стабильную работу.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Почему VLESS Reality считается надёжным протоколом?<span class="ic">+</span></button><div class="acc-a"><p>Потому что VLESS Reality использует валидный TLS-handshake с современным сертификатом и шифрование TLS 1.3. Это обеспечивает высокую устойчивость и стабильность соединения.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Нужен ли мне домен и сертификат для VLESS Reality?<span class="ic">+</span></button><div class="acc-a"><p>Нет. Это главное отличие Reality от классического VLESS + XTLS-Vision. Reality использует современный TLS 1.3 и готовую конфигурацию сертификата. Вам не нужно покупать домен, настраивать DNS и обновлять сертификаты. В 3set всё настроено автоматически — вы получаете готовый ключ.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">VLESS Reality медленнее WireGuard?<span class="ic">+</span></button><div class="acc-a"><p>Да, на 5–10%. TLS-handshake добавляет накладные расходы: ~1.2% CPU против 0.3% у WireGuard, +25 мс на рукопожатие. На гигабитном канале VLESS Reality выдаёт ~920 Мбит/с против 980+ Мбит/с у WireGuard. Для большинства задач разница незаметна, но для игр и 8K-стриминга может быть критична.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">Что такое dest и shortId в настройках VLESS Reality?<span class="ic">+</span></button><div class="acc-a"><p>dest (destination) — адрес сайта, с которым устанавливается TLS-соединение (например, cloudflare.com). shortId — короткий идентификатор подключения, который помогает серверу корректно маршрутизировать запросы. Оба параметра уже настроены в ключе, который вы получаете от 3set — вам не нужно их менять.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">Может ли провайдер узнать, что я использую VPN?<span class="ic">+</span></button><div class="acc-a"><p>При использовании VLESS Reality соединение защищено современным шифрованием TLS 1.3. Провайдер видит только зашифрованный TLS-трафик. В 3set также не ведём логов — даже мы не знаем, какие сайты вы посещаете.</p></div></div>
-            <div class="acc-item rv in"><button class="acc-q">VLESS Reality работает в Китае и Иране?<span class="ic">+</span></button><div class="acc-a"><p>Да. VLESS Reality стабильно работает в Китае, Иране и других странах. Стабильность: ~92% в Китае, ~94% в Иране, ~96% в России. Это один из самых надёжных современных протоколов.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q">VLESS Reality работает в России?<span class="ic">+</span></button><div class="acc-a"><p>Да. VLESS Reality — основной протокол для России. Стабильность соединения — около 96%. Это один из самых надёжных современных протоколов.</p></div></div>
             <div class="acc-item rv in"><button class="acc-q">Можно ли переключаться между протоколами на лету?<span class="ic">+</span></button><div class="acc-a"><p>Да. В клиентах INCY, Happ и FlClashX можно добавить несколько профилей: VLESS Reality как основной, WireGuard для игр, Shadowsocks для нестабильных сетей. Переключение — в один тап, без переустановки ключа. Если соединение станет нестабильным — сразу переходите на другой протокол.</p></div></div>
         </div>
     </div>
@@ -1019,11 +908,11 @@ footer{background:var(--ink);color:#b6c3b7;padding:60px 0 30px}
     }
     function botReply(q){
         var t = q.toLowerCase(), r;
-        if(/vless|reality|маскир|dpi|скрыт/.test(t)) r = 'VLESS Reality — современный защищённый протокол. Использует TLS 1.3 и надёжное шифрование. Рекомендован для России, Ирана, Китая ✅';
+        if(/vless|reality|tls|шифр/.test(t)) r = 'VLESS Reality — современный защищённый протокол. Использует TLS 1.3 и надёжное шифрование. Рекомендован для России и Европы ✅';
         if(/wireguard|wg|скорость|пинг|игра|стрим|торрент/.test(t)) r = 'WireGuard — самый быстрый протокол. 980+ Мбит/с, пинг 18–25 мс. Идеален для игр и стриминга. Для максимальной стабильности используйте VLESS Reality как основной.';
         if(/shadowsocks|\bss\b|нестабильн/.test(t)) r = 'Shadowsocks 2022 — лёгкий протокол для нестабильных сетей. Отлично работает при смене сети. В 3set используем шифр 2022-blake3-aes-256-gcm.';
         if(/выбор|что лучше|какой протокол|что выбрать| или /.test(t)) r = 'Для России — VLESS Reality (защищённое соединение на TLS 1.3). Для игр и стриминга — WireGuard (максимальная скорость). Для нестабильных сетей — Shadowsocks. В 3set все три доступны на всех серверах, переключение в один тап.';
-        if(/работ|росси|dpi|great firewall|китай|иран/.test(t)) r = 'VLESS Reality стабильно работает в РФ (96%), Иране (94%), Китае (92%). WireGuard в РФ работает менее стабильно.';
+        if(/работ|росси|стабильн/.test(t)) r = 'VLESS Reality стабильно работает в РФ (96%). WireGuard в РФ работает менее стабильно.';
         if(/dest|sni|shortid|cloudflare|microsoft/.test(t)) r = 'dest — доверенный сайт, с которым устанавливается TLS-соединение (cloudflare.com, microsoft.com). SNI — имя сайта в TLS-соединении. shortId — идентификатор для отличия вашего трафика от обычного. В 3set всё настроено автоматически в ключе.';
         if(/домен|сертификат|let's encrypt/.test(t)) r = 'Для VLESS Reality НЕ нужен домен и сертификат. Reality использует TLS-сертификат Cloudflare/Microsoft. В классическом VLESS + XTLS-Vision нужен свой домен и сертификат — в Reality нет.';
         if(/куп|подписк|оплат|тариф|цен/.test(t)) r = 'Купить подписку можно на dash.3set.online или в Telegram-боте @threeSet_bot. Оплата картой МИР, СБП или криптой. Ключ приходит за 1 минуту ⚡';

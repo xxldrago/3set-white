@@ -127,7 +127,7 @@ export const ru = {
     verifyTitle: 'Подтверждение email',
     verifyIntro: 'Проверяем ссылку из письма…',
     verifyCta: 'Подтвердить email',
-    verifyDone: 'Email подтверждён! Пробный период разблокирован.',
+    verifyDone: 'Email подтверждён! Пробный период активирован.',
     verifyToCabinet: 'В кабинет',
     verifyInvalid: 'Ссылка недействительна',
     verifyInvalidBody: 'Ссылка истекла или уже использована. Запросите новую на странице входа.',

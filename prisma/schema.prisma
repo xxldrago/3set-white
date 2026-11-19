@@ -200,6 +200,7 @@ model Order {
   // из M"). Never default 0 — that would erase the null gap and pose as fact.
   providerCost     Int?        @map("provider_cost")
   provider         String?     @map("provider") // platega | oneplat — active payment provider
+  plategaMerchant  String?     @map("platega_merchant") // "site" | "bot" — which Platega merchant
   outbox           Outbox[]
 
   @@index([userId, createdAt])

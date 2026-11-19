@@ -4,7 +4,15 @@
 // is NEVER auto-retried (no idempotency contract). Fetch is injected — no
 // network is ever touched.
 import { describe, expect, it } from "vitest";
-import { createPlategaClient, PlategaError, verifyPlategaHeaders } from "../../lib/platega";
+import {
+  createPlategaClient,
+  detectPlategaMerchant,
+  PlategaError,
+  platega,
+  plategaBot,
+  plategaClientFor,
+  verifyPlategaHeaders,
+} from "../../lib/platega";
 import {
   capturingFetch,
   createRedirectResponse,
@@ -46,6 +54,20 @@ describe("platega client — createTransaction", () => {
     expect(body.paymentDetails).toEqual({ amount: 49, currency: "RUB" });
     expect(body.payload).toBe("order_1");
     expect(body.metadata).toEqual({ userId: "424242", userName: "424242" });
+  });
+
+  it("sends metadata.user_email only when a real mailbox is supplied", async () => {
+    const withEmail = capturingFetch([createResponse()]);
+    const client = createPlategaClient({ fetch: withEmail.fetch, retry: FAST });
+    await client.createTransaction({
+      ...CREATE_INPUT,
+      metadata: { ...CREATE_INPUT.metadata, userEmail: "buyer@example.com" },
+    });
+    expect(JSON.parse(withEmail.calls[0]?.body ?? "{}").metadata).toEqual({
+      userId: "424242",
+      userName: "424242",
+      user_email: "buyer@example.com",
+    });
   });
 
   it("normalizes `redirect` (method-specified endpoint shape)", async () => {
@@ -188,5 +210,50 @@ describe("verifyPlategaHeaders (T-03-forge)", () => {
         }),
       ),
     ).toBe(false);
+  });
+});
+
+describe("detectPlategaMerchant (dual merchant)", () => {
+  it("returns site for the site pair, bot for the bot pair", () => {
+    expect(
+      detectPlategaMerchant(
+        new Headers({
+          "x-merchantid": "unit-test-merchant-id",
+          "x-secret": "unit-test-platega-secret",
+        }),
+      ),
+    ).toBe("site");
+    expect(
+      detectPlategaMerchant(
+        new Headers({
+          "x-merchantid": "unit-test-bot-merchant-id",
+          "x-secret": "unit-test-bot-platega-secret",
+        }),
+      ),
+    ).toBe("bot");
+  });
+
+  it("returns null for unknown pairs, mixed pairs, and missing headers", () => {
+    expect(
+      detectPlategaMerchant(
+        new Headers({ "x-merchantid": "attacker", "x-secret": "unit-test-platega-secret" }),
+      ),
+    ).toBeNull();
+    // A valid merchant id with the other account's secret must not match.
+    expect(
+      detectPlategaMerchant(
+        new Headers({
+          "x-merchantid": "unit-test-bot-merchant-id",
+          "x-secret": "unit-test-platega-secret",
+        }),
+      ),
+    ).toBeNull();
+    expect(detectPlategaMerchant(new Headers())).toBeNull();
+  });
+
+  it("plategaClientFor defaults to site and picks bot only for 'bot'", () => {
+    expect(plategaClientFor(null)).toBe(platega);
+    expect(plategaClientFor("site")).toBe(platega);
+    expect(plategaClientFor("bot")).toBe(plategaBot);
   });
 });

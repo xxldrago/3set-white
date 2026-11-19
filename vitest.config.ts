@@ -33,6 +33,8 @@ export default defineConfig({
       ARTEMIDA_BASE_URL: 'https://artemida.test/v1',
       PLATEGA_MERCHANT_ID: 'unit-test-merchant-id',
       PLATEGA_SECRET: 'unit-test-platega-secret',
+      PLATEGA_BOT_MERCHANT_ID: 'unit-test-bot-merchant-id',
+      PLATEGA_BOT_SECRET: 'unit-test-bot-platega-secret',
       PLATEGA_BASE_URL: 'https://app.platega.test',
       APP_BASE_URL: 'http://localhost:3000',
       CRON_SECRET: 'unit-test-cron-secret-000000000000',

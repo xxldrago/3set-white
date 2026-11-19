@@ -53,6 +53,32 @@ export interface PlategaClientOptions {
   /** Inject a fake fetch in tests; defaults to the runtime global fetch. */
   fetch?: typeof globalThis.fetch;
   retry?: PlategaRetryOptions;
+  /**
+   * Explicit credentials override (tests + the bot merchant account). Defaults
+   * to the site pair from env. Never log these.
+   */
+  credentials?: PlategaCredentials;
+}
+
+/** Which Platega merchant account a call runs under. */
+export type PlategaMerchant = "site" | "bot";
+
+export interface PlategaCredentials {
+  merchantId: string;
+  secret: string;
+}
+
+/** The bot pair, when configured, is a full second merchant — never a half. */
+function botCredentials(): PlategaCredentials | null {
+  const id = env.PLATEGA_BOT_MERCHANT_ID;
+  const secret = env.PLATEGA_BOT_SECRET;
+  if (id === undefined || secret === undefined) return null;
+  return { merchantId: id, secret };
+}
+
+/** True when a separate bot merchant account is configured. */
+export function hasBotMerchant(): boolean {
+  return botCredentials() !== null;
 }
 
 /** Only 5xx are retryable, and only for safe GETs. */
@@ -156,13 +182,17 @@ export interface PlategaClient {
     returnUrl: string;
     failedUrl: string;
     payload: string;
-    metadata: { userId: string; userName: string };
+    metadata: { userId: string; userName: string; userEmail?: string };
   }): Promise<CreateTransactionResult>;
   getTransaction(id: string): Promise<TransactionStatus>;
 }
 
 export function createPlategaClient(options: PlategaClientOptions = {}): PlategaClient {
   const retry: Required<PlategaRetryOptions> = { ...DEFAULT_RETRY, ...options.retry };
+  const credentials = options.credentials ?? {
+    merchantId: env.PLATEGA_MERCHANT_ID,
+    secret: env.PLATEGA_SECRET,
+  };
   const doFetch: typeof globalThis.fetch = (input, init) =>
     (options.fetch ?? globalThis.fetch)(input, init);
 
@@ -180,8 +210,8 @@ export function createPlategaClient(options: PlategaClientOptions = {}): Platega
       }
     }
     const headers: Record<string, string> = {
-      "X-MerchantId": env.PLATEGA_MERCHANT_ID,
-      "X-Secret": env.PLATEGA_SECRET,
+      "X-MerchantId": credentials.merchantId,
+      "X-Secret": credentials.secret,
       Accept: "application/json",
     };
     if (opts.body !== undefined) headers["Content-Type"] = "application/json";
@@ -239,7 +269,16 @@ export function createPlategaClient(options: PlategaClientOptions = {}): Platega
             return: input.returnUrl,
             failedUrl: input.failedUrl,
             payload: input.payload,
-            metadata: input.metadata,
+            // `metadata.user_email` is how Platega stitches one payer's history
+            // together (and keeps the payment form from asking for it). Omitted
+            // for Telegram-only accounts — there is no mailbox to supply.
+            metadata: {
+              userId: input.metadata.userId,
+              userName: input.metadata.userName,
+              ...(input.metadata.userEmail === undefined
+                ? {}
+                : { user_email: input.metadata.userEmail }),
+            },
           },
         },
         (data) => {
@@ -310,5 +349,26 @@ export function verifyPlategaHeaders(headers: Headers): boolean {
   );
 }
 
+/** Determine which merchant the headers represent (bot|site|null). */
+export function detectPlategaMerchant(headers: Headers): PlategaMerchant | null {
+  const siteMatch = verifyPlategaHeaders(headers);
+  if (siteMatch) return "site";
+  // Check bot pair against headers
+  const botCreds = botCredentials();
+  if (botCreds) {
+    const botMatch = safeEq(headers.get("x-merchantid"), botCreds.merchantId) &&
+                     safeEq(headers.get("x-secret"), botCreds.secret);
+    if (botMatch) return "bot";
+  }
+  return null;
+}
+
 /** Default server-side singleton used by BFF routes and the worker. */
 export const platega = createPlategaClient();
+
+export const plategaBot = createPlategaClient({ credentials: botCredentials() ?? undefined });
+
+/** Pick the singleton for a merchant. "site" is the default for legacy rows. */
+export function plategaClientFor(merchant: PlategaMerchant | null | undefined): PlategaClient {
+  return merchant === "bot" ? plategaBot : platega;
+}

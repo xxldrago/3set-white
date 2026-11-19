@@ -15,6 +15,8 @@ import { env } from "./env";
 import { getKeyForUser, getKeyForUserId, type RenderedKey } from "./keys-service";
 import { enqueueFulfillJob } from "./outbox";
 import { getPaymentClient, getActiveProviderName, PaymentCode, PaymentProvider, PaymentError } from "./payments";
+import { type PlategaMerchant, hasBotMerchant } from "./platega";
+import { resolveBotUsername } from "./telegram-login";
 import { prisma } from "./prisma";
 
 export type OrderKind = "new" | "renew" | "upgrade";
@@ -46,6 +48,22 @@ export function isTrialConflict(code: string): boolean {
   return code === "conflict";
 }
 
+/**
+ * Does a provider-charged amount settle an order for `expected`?
+ *
+ * Platega bills the SBP fee ON TOP of the order (live-verified upstream: a 5.00
+ * RUB order is paid as 5.40, the callback carries 5.40, and the merchant
+ * balance is credited exactly 5.00). So a charge in `[expected, expected+20%]`
+ * settles the order; anything below `expected` is underpayment, and anything
+ * far above is a genuine anomaly that needs owner review. Exact equality is the
+ * normal case for card payments.
+ */
+export function amountMatches(charged: number, expected: number): boolean {
+  if (charged === expected) return true;
+  if (charged < expected) return false;
+  return charged <= Math.round(expected * 1.2 * 100) / 100;
+}
+
 export interface CreateOrderInput {
   /**
    * Local `users.id` — the preferred resolve path (email-only accounts have no
@@ -72,6 +90,8 @@ export interface CreateOrderInput {
   promoCode?: string | null;
   /** Spend the referral wallet balance against this order (remainder via Platega). */
   useBalance?: boolean;
+  /** Checkout origin: "bot" routes payment through the bot Platega merchant. */
+  channel?: "web" | "bot";
 }
 
 export type CreateOrderResult =
@@ -100,12 +120,12 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     input.userId !== undefined
       ? await prisma.user.findUnique({
           where: { id: input.userId },
-          select: { id: true, telegramId: true },
+          select: { id: true, telegramId: true, email: true },
         })
       : input.telegramId !== undefined
         ? await prisma.user.findUnique({
             where: { telegramId: BigInt(input.telegramId) },
-            select: { id: true, telegramId: true },
+            select: { id: true, telegramId: true, email: true },
           })
         : null;
   if (!user) {
@@ -185,6 +205,11 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     balanceUsed = Math.max(0, Math.min(balance, finalAmount));
   }
 
+  // Merchant selection: "bot" only when a separate bot account is actually
+  // configured — otherwise the bot charges through the site pair and the order
+  // must be labelled "site" so the callback's merchant check still matches.
+  const plategaMerchant: PlategaMerchant =
+    input.channel === "bot" && hasBotMerchant() ? "bot" : "site";
   const order = await prisma.order.create({
     data: {
       userId: user.id,
@@ -198,6 +223,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       promoCode,
       finalAmount,
       balanceUsed,
+      plategaMerchant,
     },
   });
 
@@ -229,17 +255,29 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   }
 
   try {
-    const paymentClient = getPaymentClient();
+    const paymentClient = getPaymentClient(plategaMerchant);
+    // Return target: bot orders come back to the Telegram chat (the cabinet
+    // payment page needs a web session the bot buyer may not have); web orders
+    // land on their own order-status page.
+    let returnUrl = `${env.APP_BASE_URL}/payments/${order.id}`;
+    if (plategaMerchant === "bot") {
+      const botUsername = await resolveBotUsername().catch(() => null);
+      if (botUsername !== null) returnUrl = `https://t.me/${botUsername}`;
+    }
     const paymentResult = await paymentClient.createPayment({
       amount: chargeAmount,
       currency,
       description: `Order ${order.id}`,
-      returnUrl: `${env.APP_BASE_URL}/payments/${order.id}`,
-      failedUrl: `${env.APP_BASE_URL}/payments/${order.id}`,
+      returnUrl,
+      failedUrl: returnUrl,
       payload: order.id,
       metadata: {
         userId: customerRef,
         userName: input.userName ?? customerRef,
+        // Only a REAL mailbox is forwarded: a synthesized address would look
+        // like per-order fakery to Platega's antifraud. Telegram-only buyers
+        // simply get asked for an email on the payment page.
+        ...(user.email === null ? {} : { userEmail: user.email }),
       },
     });
 

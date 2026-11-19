@@ -6,7 +6,7 @@
 // a spied `platega.getTransaction` so no network is hit.
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "../../app/api/platega/callback/route";
-import { platega, type TransactionStatus } from "../../lib/platega";
+import { platega, plategaBot, type TransactionStatus } from "../../lib/platega";
 import { prisma } from "../../lib/prisma";
 import { callbackBody } from "../helpers/fake-platega";
 
@@ -247,5 +247,95 @@ describe("POST /api/platega/callback (PAY-01)", () => {
       }),
     );
     expect(res.status).toBe(401);
+  });
+
+  it("settles a CONFIRMED order when SBP added its fee on top (charged > expected)", async () => {
+    const order = await makeOrder({ plategaTxId: "tx_sbp_fee" });
+    // Live Platega behaviour: a 49 RUB order is paid as 52.92 by the payer,
+    // while the merchant is credited exactly 49.
+    vi.spyOn(platega, "getTransaction").mockResolvedValue(
+      confirmedTx({ id: "tx_sbp_fee", amount: 52.92 }),
+    );
+
+    const res = await POST(
+      request(callbackBody({ id: "tx_sbp_fee", amount: 52.92 })),
+    );
+
+    expect(res.status).toBe(200);
+    const row = await prisma.order.findUnique({ where: { id: order.id } });
+    expect(row?.status).toBe("paid");
+    expect(await prisma.outbox.count({ where: { orderId: order.id } })).toBe(1);
+  });
+
+  it("rejects an underpayment (charged < expected)", async () => {
+    const order = await makeOrder({ plategaTxId: "tx_under" });
+    vi.spyOn(platega, "getTransaction").mockResolvedValue(
+      confirmedTx({ id: "tx_under", amount: ORDER_AMOUNT - 1 }),
+    );
+
+    const res = await POST(request(callbackBody({ id: "tx_under", amount: ORDER_AMOUNT - 1 })));
+
+    expect(res.status).toBe(200);
+    const row = await prisma.order.findUnique({ where: { id: order.id } });
+    expect(row?.status).toBe("pending");
+  });
+
+  it("rejects an absurd overpayment beyond the SBP fee band", async () => {
+    const order = await makeOrder({ plategaTxId: "tx_way_over" });
+    vi.spyOn(platega, "getTransaction").mockResolvedValue(
+      confirmedTx({ id: "tx_way_over", amount: ORDER_AMOUNT * 3 }),
+    );
+
+    const res = await POST(
+      request(callbackBody({ id: "tx_way_over", amount: ORDER_AMOUNT * 3 })),
+    );
+
+    expect(res.status).toBe(200);
+    const row = await prisma.order.findUnique({ where: { id: order.id } });
+    expect(row?.status).toBe("pending");
+  });
+
+  it("routes a bot-merchant callback through the bot client (dual merchant)", async () => {
+    const order = await makeOrder({ plategaTxId: "tx_bot" });
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { plategaMerchant: "bot" },
+    });
+    const botSpy = vi
+      .spyOn(plategaBot, "getTransaction")
+      .mockResolvedValue(confirmedTx({ id: "tx_bot" }));
+    const siteSpy = vi.spyOn(platega, "getTransaction");
+
+    const res = await POST(
+      request(callbackBody({ id: "tx_bot" }), {
+        "content-type": "application/json",
+        "x-merchantid": process.env["PLATEGA_BOT_MERCHANT_ID"] ?? "unit-test-bot-merchant-id",
+        "x-secret": process.env["PLATEGA_BOT_SECRET"] ?? "unit-test-bot-platega-secret",
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(botSpy).toHaveBeenCalledWith("tx_bot");
+    expect(siteSpy).not.toHaveBeenCalled();
+    const row = await prisma.order.findUnique({ where: { id: order.id } });
+    expect(row?.status).toBe("paid");
+  });
+
+  it("refuses a site-merchant callback that targets a bot order (merchant mismatch)", async () => {
+    const order = await makeOrder({ plategaTxId: "tx_bot_mismatch" });
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { plategaMerchant: "bot" },
+    });
+    const siteSpy = vi.spyOn(platega, "getTransaction");
+
+    // Valid SITE headers, but the order belongs to the bot merchant.
+    const res = await POST(request(callbackBody({ id: "tx_bot_mismatch" })));
+
+    expect(res.status).toBe(200); // acked, never redelivered
+    expect(siteSpy).not.toHaveBeenCalled();
+    const row = await prisma.order.findUnique({ where: { id: order.id } });
+    expect(row?.status).toBe("pending");
+    expect(await prisma.outbox.count({ where: { orderId: order.id } })).toBe(0);
   });
 });

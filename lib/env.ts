@@ -18,8 +18,12 @@ export const envSchema = z.object({
   // Platega.io (D-36/D-37). Server-only merchant credentials. Two-mode
   // separation is env-only: `.env.local` holds the test merchant pair, prod
   // holds the live pair — nothing in code branches on mode.
+  // The bot runs on a SEPARATE merchant account: PLATEGA_BOT_* is the pair the
+  // Telegram flow creates transactions under (site pair stays on web checkout).
   PLATEGA_MERCHANT_ID: z.string().min(1, "PLATEGA_MERCHANT_ID is required"),
   PLATEGA_SECRET: z.string().min(1, "PLATEGA_SECRET is required"),
+  PLATEGA_BOT_MERCHANT_ID: z.string().min(1).optional(),
+  PLATEGA_BOT_SECRET: z.string().min(1).optional(),
   PLATEGA_BASE_URL: z.string().url().default("https://app.platega.io"),
   // 1plat.cash (parallel payment provider, switchable via admin UI).
   // Server-only merchant credentials. Optional: when unset the provider is
@@ -92,7 +96,19 @@ export const envSchema = z.object({
     .default("https://api.telegram.org"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
-});
+})
+  // The bot Platega pair is all-or-nothing: a half-configured pair means the
+  // bot would silently charge through the site merchant — fail at boot instead.
+  .superRefine((val, ctx) => {
+    const hasId = val.PLATEGA_BOT_MERCHANT_ID !== undefined;
+    const hasSecret = val.PLATEGA_BOT_SECRET !== undefined;
+    if (hasId !== hasSecret) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "PLATEGA_BOT_MERCHANT_ID and PLATEGA_BOT_SECRET must be set together",
+      });
+    }
+  });
 
 export type Env = z.infer<typeof envSchema>;
 
@@ -111,6 +127,8 @@ function loadEnv(): Env {
       ARTEMIDA_BASE_URL: "https://artemida.cc/v1",
       PLATEGA_MERCHANT_ID: "build-dummy",
       PLATEGA_SECRET: "build-dummy",
+      PLATEGA_BOT_MERCHANT_ID: undefined,
+      PLATEGA_BOT_SECRET: undefined,
       PLATEGA_BASE_URL: "https://app.platega.io",
       ONPLAT_API_KEY: undefined,
       ONPLAT_BASE_URL: "https://1plat.cash/v1",

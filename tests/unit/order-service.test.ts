@@ -9,6 +9,7 @@ import { ArtemidaError, artemida, type NormalizedKey } from "../../lib/artemida"
 import { FULFILL_JOB, enqueueFulfillJob } from "../../lib/outbox";
 import {
   TRIAL_ERROR_CODE,
+  amountMatches,
   applyConfirmedPayment,
   listReconcilableOrders,
   loadOrderForUser,
@@ -333,5 +334,19 @@ describe("shared confirmed-payment transition (D-39)", () => {
     expect(await applyConfirmedPayment(order.id)).toBe(true);
     expect(await applyConfirmedPayment(order.id)).toBe(false);
     expect(await prisma.outbox.count({ where: { orderId: order.id, type: FULFILL_JOB } })).toBe(1);
+  });
+});
+
+describe("amountMatches (SBP fee-on-top tolerance)", () => {
+  it("accepts exact and over-paid amounts within the 20% fee band", () => {
+    expect(amountMatches(49, 49)).toBe(true);
+    expect(amountMatches(52.92, 49)).toBe(true); // observed live SBP +8%
+    expect(amountMatches(58.8, 49)).toBe(true); // band ceiling
+  });
+
+  it("rejects underpayment and absurd overpayment", () => {
+    expect(amountMatches(48.99, 49)).toBe(false);
+    expect(amountMatches(0, 49)).toBe(false);
+    expect(amountMatches(147, 49)).toBe(false);
   });
 });

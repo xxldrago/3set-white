@@ -76,6 +76,7 @@ export async function runAutoRenewScan(
         keyId: key.keyId,
         userName: null,
         useBalance: true,
+        channel: "bot",
       });
       if (result.kind === "provider_error") {
         outcome.skipped += 1;

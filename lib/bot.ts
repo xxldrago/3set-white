@@ -401,6 +401,7 @@ async function createBotOrderAndReply(
       keyId: input.keyId ?? null,
       userName: from.id ? String(from.id) : null,
       promoCode: stashed?.pendingPromo ?? null,
+      channel: "bot",
     });
     if (result.kind === "provider_error") {
       await ctx.reply(t("bot.payError"));

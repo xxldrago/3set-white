@@ -2,12 +2,14 @@
 //
 // This route is the public internet boundary: it holds NO session and is
 // authenticated ONLY by the X-MerchantId/X-Secret headers (Platega has no
-// signature). The order of operations is load-bearing:
+// signature). Two merchant accounts exist (site + bot), so the header pair also
+// selects WHICH merchant called. The order of operations is load-bearing:
 //   1. verify headers (timing-safe) BEFORE body parse → 401 on mismatch
 //   2. zod-parse the body (CHARGEBACKED accepted)
-//   3. resolve our order (plategaTxId first, else payload=orderId)
-//   4. D-34 server-side re-query GET /transaction/{id} — the callback is never
-//      the source of truth
+//   3. resolve our order (plategaTxId first, else payload=orderId) and require
+//      the calling merchant to match the order's merchant
+//   4. D-34 server-side re-query GET /transaction/{id} through that merchant's
+//      client — the callback is never the source of truth
 //   5. require CONFIRMED; D-35 compare re-queried amount+currency to the stored
 //      order; mismatch → alert + 200, NO transition
 //   6. atomic pending→paid claim + one outbox row
@@ -19,8 +21,13 @@ import {
   applyConfirmedPayment,
   resolveOrderByTxOrPayload,
   transitionOrder,
+  amountMatches,
 } from "../../../../lib/orders-service";
-import { PlategaError, platega, verifyPlategaHeaders } from "../../../../lib/platega";
+import {
+  PlategaError,
+  detectPlategaMerchant,
+  plategaClientFor,
+} from "../../../../lib/platega";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +47,10 @@ function ack(): Response {
 
 export async function POST(req: Request): Promise<Response> {
   // 1. Header authentication is mandatory and precedes any body read (T-03-forge).
-  if (!verifyPlategaHeaders(req.headers)) {
+  // Two merchant accounts exist (site + bot): the pair identifies which one
+  // called, and that merchant's client does the authoritative re-query.
+  const merchant = detectPlategaMerchant(req.headers);
+  if (merchant === null) {
     logger.warn({ route: "platega_callback", outcome: "unauthorized" });
     return new Response("Unauthorized", { status: 401 });
   }
@@ -66,8 +76,22 @@ export async function POST(req: Request): Promise<Response> {
       return ack();
     }
 
+    // 3a. The calling merchant must own the order. Legacy rows carry no
+    // merchant — they were all created on the site pair, so only a site
+    // callback may settle them. A mismatch is a misrouted/forged call: ack
+    // (never redeliver) but never transition.
+    const orderMerchant = order.plategaMerchant ?? "site";
+    if (orderMerchant !== merchant) {
+      logger.error({
+        route: "platega_callback",
+        outcome: "merchant_mismatch",
+        orderId: order.id,
+      });
+      return ack();
+    }
+
     // 4. D-34: independently re-query Platega. The callback body is a hint only.
-    const tx = await platega.getTransaction(parsed.data.id);
+    const tx = await plategaClientFor(merchant).getTransaction(parsed.data.id);
 
     // CHARGEBACKED refunds an already-captured order; money is never in
     // question for a pending order (never captured), so only captured states
@@ -82,7 +106,7 @@ export async function POST(req: Request): Promise<Response> {
       return ack();
     }
 
-    // 5. CONFIRMED + amount/currency equality are both mandatory (D-35).
+    // 5. CONFIRMED + amount/currency checks are both mandatory (D-35).
     if (tx.status !== "CONFIRMED") {
       return ack(); // PENDING/CANCELED: nothing to issue, ack anyway
     }
@@ -91,7 +115,7 @@ export async function POST(req: Request): Promise<Response> {
     // list amount. Fully covered orders never reach Platega, so a zero
     // finalAmount here always means legacy.
     const expected = order.finalAmount > 0 ? order.finalAmount : order.amount;
-    if (tx.amount !== expected || tx.currency !== order.currency) {
+    if (!amountMatches(tx.amount, expected) || tx.currency !== order.currency) {
       // Financial anomaly: never issue; flag for owner review, still ack.
       logger.error({
         route: "platega_callback",
@@ -99,6 +123,16 @@ export async function POST(req: Request): Promise<Response> {
         orderId: order.id,
       });
       return ack();
+    }
+    if (tx.amount > expected) {
+      // SBP bills its fee on top of the order: the payer is charged more than
+      // we asked, while our merchant balance is credited exactly `expected`.
+      // Not an anomaly — the order is still settled for `expected`.
+      logger.info({
+        route: "platega_callback",
+        outcome: "amount_over_paid_fee",
+        orderId: order.id,
+      });
     }
 
     // 6. Atomic pending→paid claim + one fulfill enqueue — the SAME shared

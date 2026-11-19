@@ -60,6 +60,7 @@ import { runAutoRenewScan } from "./autorenew";
 import {
   TRIAL_ERROR_CODE,
   applyConfirmedPayment,
+  amountMatches,
   isTrialConflict,
   listReconcilableOrders,
   markProvisionError,
@@ -68,7 +69,7 @@ import {
   transitionToProvisioning,
 } from "./orders-service";
 import { upsertCachedKey } from "./keys-service";
-import { PlategaError, platega } from "./platega";
+import { PlategaError, plategaClientFor } from "./platega";
 import { prisma } from "./prisma";
 
 const DRAIN_INTERVAL_MS = 5_000;
@@ -447,10 +448,12 @@ export async function reconcileOnce(
     // listReconcilableOrders already excludes null tx ids; guard for type-safety.
     if (!order.plategaTxId) continue;
     try {
-      const tx = await platega.getTransaction(order.plategaTxId);
+      const tx = await plategaClientFor(
+        order.plategaMerchant === "bot" ? "bot" : "site",
+      ).getTransaction(order.plategaTxId);
       if (tx.status !== "CONFIRMED") continue;
       const expected = order.finalAmount > 0 ? order.finalAmount : order.amount;
-      if (tx.amount !== expected || tx.currency !== order.currency) {
+      if (!amountMatches(tx.amount, expected) || tx.currency !== order.currency) {
         logger.error({
           route: "worker",
           outcome: "reconcile_amount_mismatch",

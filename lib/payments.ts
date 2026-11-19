@@ -4,7 +4,13 @@
 // on lib/platega.ts or lib/payment-1plat.ts directly.
 
 import { env } from "./env";
-import { PlategaError, platega } from "./platega";
+import {
+  PlategaError,
+  platega,
+  plategaBot,
+  type PlategaClient,
+  type PlategaMerchant,
+} from "./platega";
 import { OneplatError, oneplat } from "./payment-1plat";
 
 export type PaymentProvider = "platega" | "oneplat";
@@ -83,8 +89,8 @@ function mapError(
   return new PaymentError(err.code, err.status, provider, err.retryAfterSec);
 }
 
-/** Get the active provider client — returns { create, getStatus }. */
-export function getPaymentClient() {
+/** Get the active provider client, optionally scoped to a Platega merchant. */
+export function getPaymentClient(merchant?: PlategaMerchant) {
   const provider: PaymentProvider = env.PAYMENT_PROVIDER;
 
   if (provider === "oneplat") {
@@ -97,7 +103,7 @@ export function getPaymentClient() {
         returnUrl: string;
         failedUrl: string;
         payload: string;
-        metadata: { userId: string; userName: string };
+        metadata: { userId: string; userName: string; userEmail?: string };
       }): Promise<CreatePaymentResult> {
         try {
           const res = await oneplat.createPayment(input);
@@ -126,7 +132,8 @@ export function getPaymentClient() {
     };
   }
 
-  // Default: platega
+  // Default: platega, possibly scoped to a merchant (bot|site).
+  const plategaClient: PlategaClient = merchant === "bot" ? plategaBot : platega;
   return {
     provider: "platega" as PaymentProvider,
     async createPayment(input: {
@@ -136,10 +143,10 @@ export function getPaymentClient() {
       returnUrl: string;
       failedUrl: string;
       payload: string;
-      metadata: { userId: string; userName: string };
+      metadata: { userId: string; userName: string; userEmail?: string };
     }): Promise<CreatePaymentResult> {
       try {
-        const res = await platega.createTransaction(input);
+        const res = await plategaClient.createTransaction(input);
         return {
           paymentId: res.transactionId,
           url: res.url,
@@ -153,7 +160,7 @@ export function getPaymentClient() {
     },
     async getPaymentStatus(id: string): Promise<PaymentStatusResult> {
       try {
-        const res = await platega.getTransaction(id);
+        const res = await plategaClient.getTransaction(id);
         return {
           id: res.id,
           status: normalizeStatus("platega", res.status),

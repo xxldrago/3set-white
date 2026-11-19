@@ -19,7 +19,7 @@
         :root{
             --bg:#f6f4ee; --bg2:#eeebe1; --panel:#ffffff; --panel2:#fbfaf5;
             --line:#e4dfd1; --line2:#cec7b4;
-            --ink:#0e1512; --mut:#5b645e; --dim:#8f968f;
+            --ink:#0e1512; --mut:#5b645e; --dim:#636b63;
             --lime:#b7ff45; --lime-dk:#8fd41f; --lime-soft:rgba(143,212,31,.14);
             --green:#0c4f36; --green-soft:rgba(12,79,54,.08);
             --cyan:#0d8a96; --amber:#d99a2b; --red:#d84a3f;
@@ -36,11 +36,11 @@
         img{max-width:100%;display:block}
         a{color:inherit;text-decoration:none}
         button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+        :focus-visible{outline:2px solid var(--green);outline-offset:2px}
         .wrap{max-width:1180px;margin:0 auto;padding:0 22px}
         h1,h2,h3{font-family:var(--disp);font-weight:700;line-height:1.15;color:var(--ink)}
         .mono{font-family:var(--mono)}
-        .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--green);display:inline-flex;align-items:center;gap:8px;margin-bottom:16px}
-        .kicker::before{content:"//";color:var(--dim)}
+        .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--green);display:inline-flex;align-items:center;gap:8px;margin-bottom:16px}
         h2{font-size:clamp(1.35rem,3.4vw,2.2rem);margin-bottom:14px}
         .sub{color:var(--mut);max-width:640px}
         section{padding:clamp(70px,9vw,110px) 0;position:relative}
@@ -51,7 +51,7 @@
         .btn-lime{background:var(--lime);color:var(--ink);box-shadow:0 14px 34px -12px rgba(143,212,31,.55)}
         .btn-lime:hover{transform:translateY(-3px);box-shadow:0 20px 44px -12px rgba(143,212,31,.7)}
         .btn-ghost{border:1px solid var(--line2);color:var(--ink);background:rgba(255,255,255,.5)}
-        .btn-ghost:hover{border-color:var(--green);color:var(--green);transform:translateY(-3px)}
+        .btn-ghost:hover{border-color:var(--green);color:var(--green)}
         /* ---------- top ticker ---------- */
         .topline{background:var(--ink);color:#c9d2c9;border-bottom:1px solid var(--ink);font-family:var(--mono);font-size:11px;letter-spacing:.1em;overflow:hidden;padding:8px 0}
         .topline .dotg{color:var(--lime)}
@@ -93,7 +93,7 @@
             background-size:46px 46px;mask-image:radial-gradient(ellipse 80% 70% at 60% 30%,#000 0%,transparent 70%)}
         .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(30px,4vw,60px);align-items:center;position:relative}
         .hero-badge{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--green);border:1px solid rgba(12,79,54,.35);background:var(--lime-soft);padding:7px 14px;border-radius:100px;margin-bottom:26px}
-        .pulse-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(12,79,54,.5);animation:pulse 2s infinite}
+        .pulse-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(12,79,54,.5)}
         @keyframes pulse{70%{box-shadow:0 0 0 9px rgba(12,79,54,0)}100%{box-shadow:0 0 0 0 rgba(12,79,54,0)}}
         h1{font-size:clamp(1.5rem,4.4vw,3rem);margin-bottom:22px}
         h1 .l2{color:var(--green);display:block;position:relative}
@@ -129,7 +129,6 @@
         .console-body .globe{position:absolute;right:-40px;top:-30px;width:78%;opacity:.3;mix-blend-mode:screen;mask-image:radial-gradient(circle at 50% 45%,#000 30%,transparent 75%);pointer-events:none}
         #term{position:relative;font-family:var(--mono);font-size:12.5px;line-height:2.05;z-index:2}
         #term .tl.cmd{color:#eaf2e6}
-        #term .tl.cmd::first-letter{color:var(--lime)}
         #term .tl.ok{color:var(--lime)}
         #term .tl.dim{color:#5d6b62}
         #term .tl.live{color:#5fd6e8}
@@ -144,7 +143,7 @@
         /* ---------- bento benefits ---------- */
         .bento{display:grid;grid-template-columns:repeat(12,1fr);gap:18px;margin-top:44px}
         .bcard{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:28px;position:relative;overflow:hidden;transition:transform .3s,border-color .3s,box-shadow .3s}
-        .bcard:hover{transform:translateY(-5px);border-color:var(--line2);box-shadow:var(--shadow)}
+        .bcard:hover{border-color:var(--line2);box-shadow:var(--shadow)}
         .bcard h3{font-size:16px;margin-bottom:10px}
         .bcard p{color:var(--mut);font-size:14px}
         .bcard .tag{font-family:var(--mono);font-size:10px;color:var(--green);letter-spacing:.14em;display:block;margin-bottom:14px}
@@ -163,7 +162,7 @@
         .wave path{stroke-dasharray:300;stroke-dashoffset:300;animation:draw 3.4s ease forwards infinite}
         @keyframes draw{60%{stroke-dashoffset:0}100%{stroke-dashoffset:0;opacity:0}}
         .chiprow{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
-        .chip{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--cyan);border:1px solid rgba(13,138,150,.3);background:rgba(13,138,150,.07);padding:5px 11px;border-radius:100px}
+        .chip{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--green);border:1px solid rgba(13,138,150,.3);background:rgba(13,138,150,.07);padding:5px 11px;border-radius:100px}
         .chip.lm{color:var(--green);border-color:rgba(12,79,54,.3);background:var(--lime-soft)}
         /* ---------- how (sticky) ---------- */
         .how-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:clamp(30px,5vw,70px);align-items:start}
@@ -187,7 +186,7 @@
         .seg button:not(.is-on) .save-tag{color:var(--green)}
         .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch}
         .plan{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:34px 30px;display:flex;flex-direction:column;position:relative;transition:transform .3s,border-color .3s,box-shadow .3s}
-        .plan:hover{transform:translateY(-6px);border-color:var(--line2);box-shadow:var(--shadow)}
+        .plan:hover{border-color:var(--line2);box-shadow:var(--shadow)}
         .plan.hot{border-color:var(--ink);background:var(--ink);color:#e6efe4;box-shadow:0 30px 70px -26px rgba(14,21,18,.5)}
         .plan.hot h3{color:#fff}
         .plan.hot .pfor{color:#8fa094}
@@ -208,7 +207,7 @@
         body[data-period="y"] .save{display:inline-block}
         .plan ul{list-style:none;margin:22px 0 28px;display:grid;gap:11px;flex:1}
         .plan li{font-size:13.5px;color:var(--mut);display:flex;gap:10px}
-        .plan li::before{content:"→";color:var(--green);font-family:var(--mono)}
+        .plan li::before{content:"•";color:var(--green);font-family:var(--mono)}
         .plan.hot li::before{color:var(--lime)}
         .plan li.no{opacity:.4}
         .plan li.no::before{content:"✕";color:var(--dim)}
@@ -219,7 +218,7 @@
         /* ---------- devices ---------- */
         .dev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px}
         .dev{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:28px;position:relative;transition:transform .3s,border-color .3s,box-shadow .3s;display:flex;flex-direction:column;gap:12px}
-        .dev:hover{transform:translateY(-5px);border-color:rgba(12,79,54,.4);box-shadow:var(--shadow)}
+        .dev:hover{border-color:rgba(12,79,54,.4);box-shadow:var(--shadow)}
         .dev .path{font-family:var(--mono);font-size:10.5px;color:var(--dim);letter-spacing:.06em}
         .dev svg{width:34px;height:34px;stroke:var(--green);fill:none;stroke-width:1.6;transition:transform .3s}
         .dev:hover svg{transform:rotate(-6deg) scale(1.08)}
@@ -264,7 +263,7 @@
         .srow .nm{display:flex;align-items:center;gap:10px;font-weight:600}
         .sdot{width:8px;height:8px;border-radius:50%;background:var(--lime-dk);box-shadow:0 0 0 0 rgba(143,212,31,.55);animation:pulse-l 2.4s infinite}
         @keyframes pulse-l{70%{box-shadow:0 0 0 9px rgba(143,212,31,0)}100%{box-shadow:0 0 0 0 rgba(143,212,31,0)}}
-        .srow .pr{font-family:var(--mono);font-size:11px;color:var(--cyan)}
+        .srow .pr{font-family:var(--mono);font-size:11px;color:var(--green)}
         .srow .up{font-family:var(--mono);font-size:12px;color:var(--mut)}
         .srow .pg{font-family:var(--mono);font-size:12px;color:var(--green);text-align:right}
         .sside{display:flex;flex-direction:column;gap:22px}
@@ -277,7 +276,7 @@
         /* ---------- blog ---------- */
         .blog-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:44px}
         .post{border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden;display:flex;flex-direction:column;transition:transform .3s,border-color .3s,box-shadow .3s}
-        .post:hover{transform:translateY(-6px);border-color:var(--line2);box-shadow:var(--shadow)}
+        .post:hover{border-color:var(--line2);box-shadow:var(--shadow)}
         .post .thumb{aspect-ratio:16/10;overflow:hidden}
         .post .thumb img{width:100%;height:100%;object-fit:cover;transition:transform 1.4s cubic-bezier(.2,.7,.2,1)}
         .post:hover .thumb img{transform:scale(1.08)}
@@ -333,7 +332,7 @@
         .chat-chips button{font-family:var(--mono);font-size:10.5px;color:var(--green);border:1px solid rgba(12,79,54,.3);border-radius:100px;padding:6px 12px;transition:.2s}
         .chat-chips button:hover{background:var(--lime-soft)}
         .chat-in{display:flex;gap:10px;padding:12px 14px;border-top:1px solid var(--line);background:var(--panel)}
-        .chat-in input{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:11px 14px;color:var(--ink);font-family:var(--body);font-size:13px;outline:none}
+        .chat-in input{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:11px 14px;color:var(--ink);font-family:var(--body);font-size:13px}
         .chat-in input:focus{border-color:var(--green)}
         .chat-in button{background:var(--ink);color:var(--lime);border-radius:8px;width:42px;display:flex;align-items:center;justify-content:center;font-size:16px}
         /* ---------- reveal ---------- */
@@ -363,6 +362,7 @@
             .console-foot{grid-template-columns:1fr}
             .cfoot{border-right:none;border-bottom:1px solid #1d2822}
             .f-grid{grid-template-columns:1fr}
+            .topline{display:none}
         }
         @media(prefers-reduced-motion:reduce){
             *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
@@ -440,11 +440,10 @@
             <h1>
                 <span class="l1" data-scr="" data-orig="Высокоскоростной">Высокоскоростной</span>
                 <span class="l2" data-scr="" data-orig="VPN для России">VPN для России</span>
-                <span class="l3">Приватный и стабильный доступ. Виртуальная частная сеть нового поколения: VLESS Reality, Shadowsocks, WireGuard — безопасное соединение на всех ваших устройствах.</span>
             </h1>
-            <p class="hero-p">Серверы держат до <b>1 Гбит/с</b>, соединение защищено современным шифрованием, а ключ выдаётся автоматически через <b>1 минуту</b> после оплаты — картой РФ или криптой.</p>
+            <p class="hero-p">Приватный и стабильный доступ. Виртуальная частная сеть нового поколения: VLESS Reality, Shadowsocks, WireGuard — безопасное соединение на всех ваших устройствах. Серверы держат до <b>1 Гбит/с</b>, соединение защищено современным шифрованием, а ключ выдаётся автоматически через <b>1 минуту</b> после оплаты — картой РФ или криптой.</p>
             <div class="hero-actions">
-                <a class="btn btn-solid" href="https://dash.3set.online/signup" target="_blank" rel="noopener">Подключить сейчас →</a> <!-- ИЗМЕНЕНО -->
+                <a class="btn btn-solid" href="https://dash.3set.online/signup" target="_blank" rel="noopener">Подключить сейчас</a> <!-- ИЗМЕНЕНО -->
                 <a class="btn btn-ghost" href="#how">Как это работает</a>
             </div>
             <div class="os-row">
@@ -457,7 +456,6 @@
                 <span class="os-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="12" rx="1.5"></rect><path d="M9 21h6m-3-4v4"></path></svg><span>TV</span></span>
             </div>
             <div class="hero-stats">
-                <div class="hstat"><b><i>+</i><span id="liveUsers">923</span></b><span>подключено сегодня</span></div>
                 <div class="hstat"><b>34</b><span>сервера</span></div>
                 <div class="hstat"><b>99.98<i>%</i></b><span>аптайм за 90 дней</span></div>
             </div>
@@ -485,11 +483,11 @@
     <div class="wrap">
         <div class="rv in"><span class="kicker">01 · преимущества</span>
             <h2 data-scr="" data-done="1" data-orig="Почему 3set, а не «бесплатный впн из стора»" class="in">Почему 3set, а не «бесплатный впн из стора»</h2>
-            <p class="sub">Мы строили сервис для стабильной и защищённой работы: протоколы нового поколения, собственная сеть серверов и нулевое хранение логов.</p>
+            <p class="sub">Для стабильной и защищённой работы: протоколы нового поколения, собственная сеть серверов и нулевое хранение логов.</p>
         </div>
         <div class="bento">
             <div class="bcard b7 rv in">
-                <span class="tag">СКОРОСТЬ СЕТИ</span>
+                <span class="tag">Скорость сети</span>
                 <div class="gauge-wrap">
                     <div class="gauge go" id="gaugeBox">
                         <svg viewBox="0 0 200 118" width="190">
@@ -505,9 +503,9 @@
                 </div>
             </div>
             <div class="bcard b5 rv d1 in">
-                <span class="tag">ПРИВАТНОСТЬ</span>
+                <span class="tag">Приватность</span>
                 <h3>Политика отсутствия логов</h3>
-                <p>Мы технически не можем ничего передать третьим лицам — потому что не храним это.</p>
+                <p>Передать третьим лицам нечего — данные не хранятся.</p>
                 <ul class="nolog-list">
                     <li>Не пишем историю трафика и DNS-запросы</li>
                     <li>Не храним реальный IP и метаданные сессий</li>
@@ -515,14 +513,14 @@
                 </ul>
             </div>
             <div class="bcard b4 rv in">
-                <span class="tag">БЕЗОПАСНОСТЬ</span>
+                <span class="tag">Безопасность</span>
                 <h3>Современное шифрование</h3>
                 <p>VLESS Reality использует TLS 1.3 и надёжное шифрование для защиты соединения.</p>
                 <svg class="wave" width="100%" height="34" viewBox="0 0 260 34" fill="none"><path d="M0 17h30l8-12 8 24 8-12h40l6-8 6 16 6-8h50l8-12 8 24 8-12h74" stroke="#0c4f36" stroke-width="1.6"></path></svg>
                 <div class="chiprow"><span class="chip lm">VLESS</span><span class="chip lm">REALITY</span><span class="chip">SHADOWSOCKS</span></div>
             </div>
             <div class="bcard b4 rv d1 in">
-                <span class="tag">ГЕОГРАФИЯ</span>
+                <span class="tag">География</span>
                 <h3>34 сервера на выбор</h3>
                 <p>От Хельсинки до Токио. Автоматический выбор ближайшего сервера с минимальным пингом.</p>
                 <div class="chiprow"><span class="chip">NL</span><span class="chip">DE</span><span class="chip">FI</span><span class="chip">TR</span><span class="chip">KZ</span><span class="chip">US</span><span class="chip lm">+42</span></div>
@@ -582,9 +580,9 @@
         <div class="rv in" style="text-align:center">
             <span class="kicker">03 · тарифы</span>
             <h2 data-scr="" data-done="1" data-orig="Честные цены. Выгодно на год" class="in">Честные цены. Выгодно на 3 месяца</h2>
-            <div class="seg" role="tablist" aria-label="Период оплаты">
-                <button class="is-on" data-period="m">Помесячно</button>
-                <button data-period="y" class="">На 3 месяца</button>
+            <div class="seg" role="group" aria-label="Период оплаты">
+                <button class="is-on" data-period="m" aria-pressed="true">Помесячно</button>
+                <button data-period="y" class="" aria-pressed="false">На 3 месяца</button>
             </div>
         </div>
         <div class="plans">
@@ -678,10 +676,10 @@
             <h2 data-scr="" data-done="1" data-orig="Протоколы нового поколения" class="in">Протоколы нового поколения</h2>
             <p class="sub">Мы не используем устаревший OpenVPN — только современные транспортные технологии.</p>
         </div>
-        <div class="ptabs rv in">
-            <button class="ptab is-on" data-p="vless">VLESS Reality</button>
-            <button class="ptab" data-p="shadow">Shadowsocks</button>
-            <button class="ptab" data-p="wg">WireGuard</button>
+        <div class="ptabs rv in" role="tablist" aria-label="Протоколы">
+            <button class="ptab is-on" data-p="vless" role="tab" aria-selected="true">VLESS Reality</button>
+            <button class="ptab" data-p="shadow" role="tab" aria-selected="false">Shadowsocks</button>
+            <button class="ptab" data-p="wg" role="tab" aria-selected="false">WireGuard</button>
         </div>
         <div class="ppanel rv in is-on" id="p-vless">
             <div>
@@ -821,12 +819,12 @@
     <div class="wrap">
         <div class="rv in" style="text-align:center"><span class="kicker">09 · faq</span><h2 data-scr="" data-done="1" data-orig="Вопросы и ответы" class="in">Вопросы и ответы</h2></div>
         <div class="faq-wrap">
-            <div class="acc-item rv in"><button class="acc-q">VPN работает в России?<span class="ic">+</span></button><div class="acc-a"><p>Да, сервис работает на территории России. Протокол VLESS Reality обеспечивает защищённое соединение с высокой скоростью, а серверы автоматически балансируются.</p></div></div>
-            <div class="acc-item rv in"><button class="acc-q">Как оплатить российской картой?<span class="ic">+</span></button><div class="acc-a"><p>Принимаем карты МИР, Visa/MC российских банков, СБП, а также криптовалюты USDT и TON. Ключ выдаётся автоматически в течение минуты после оплаты.</p></div></div>
-            <div class="acc-item rv in"><button class="acc-q">Сколько устройств можно подключить?<span class="ic">+</span></button><div class="acc-a"><p>От 1 до 10 устройств в зависимости от тарифа. «Максимум» поддерживает настройку на роутере — так защищается вся домашняя сеть одним подключением.</p></div></div>
-            <div class="acc-item rv in"><button class="acc-q">Будет ли падать скорость?<span class="ic">+</span></button><div class="acc-a"><p>Серверы держат до 1 Гбит/с. Ближайшие локации (Финляндия, Германия, Турция) дают пинг 20–40 мс — этого достаточно для 4K-стриминга и онлайн-игр.</p></div></div>
-            <div class="acc-item rv in"><button class="acc-q">Можно ли вернуть деньги?<span class="ic">+</span></button><div class="acc-a"><p>Да, у нас 7 дней гарантии на проверку. Если сервис не подошёл — вернём полную сумму без вопросов, достаточно написать в поддержку.</p></div></div>
-            <div class="acc-item rv in"><button class="acc-q">Есть ли Telegram-бот?<span class="ic">+</span></button><div class="acc-a"><p>Да, @threeSet_bot: выдаёт ключи, принимает оплату и присылает пошаговые инструкции для любого устройства. Это самый быстрый способ подключения с телефона.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q" aria-expanded="false" aria-controls="faq-1">VPN работает в России?<span class="ic">+</span></button><div class="acc-a" id="faq-1" role="region"><p>Да, сервис работает на территории России. Протокол VLESS Reality обеспечивает защищённое соединение с высокой скоростью, а серверы автоматически балансируются.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q" aria-expanded="false" aria-controls="faq-2">Как оплатить российской картой?<span class="ic">+</span></button><div class="acc-a" id="faq-2" role="region"><p>Принимаем карты МИР, Visa/MC российских банков, СБП, а также криптовалюты USDT и TON. Ключ выдаётся автоматически в течение минуты после оплаты.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q" aria-expanded="false" aria-controls="faq-3">Сколько устройств можно подключить?<span class="ic">+</span></button><div class="acc-a" id="faq-3" role="region"><p>От 1 до 10 устройств в зависимости от тарифа. «Максимум» поддерживает настройку на роутере — так защищается вся домашняя сеть одним подключением.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q" aria-expanded="false" aria-controls="faq-4">Будет ли падать скорость?<span class="ic">+</span></button><div class="acc-a" id="faq-4" role="region"><p>Серверы держат до 1 Гбит/с. Ближайшие локации (Финляндия, Германия, Турция) дают пинг 20–40 мс — этого достаточно для 4K-стриминга и онлайн-игр.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q" aria-expanded="false" aria-controls="faq-5">Можно ли вернуть деньги?<span class="ic">+</span></button><div class="acc-a" id="faq-5" role="region"><p>Да, у нас 7 дней гарантии на проверку. Если сервис не подошёл — вернём полную сумму без вопросов, достаточно написать в поддержку.</p></div></div>
+            <div class="acc-item rv in"><button class="acc-q" aria-expanded="false" aria-controls="faq-6">Есть ли Telegram-бот?<span class="ic">+</span></button><div class="acc-a" id="faq-6" role="region"><p>Да, @threeSet_bot: выдаёт ключи, принимает оплату и присылает пошаговые инструкции для любого устройства. Это самый быстрый способ подключения с телефона.</p></div></div>
         </div>
     </div>
 </section>
@@ -906,10 +904,13 @@
 
 
         /* mobile nav */
-        var mnav = document.getElementById('mnav');
-        document.getElementById('burger').addEventListener('click', function(){ mnav.classList.add('open'); });
-        document.getElementById('mclose').addEventListener('click', function(){ mnav.classList.remove('open'); });
-        mnav.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', function(){ mnav.classList.remove('open'); }); });
+var mnav = document.getElementById('mnav');
+        function openMnav(){ mnav.classList.add('open'); mnav.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; }
+        function closeMnav(){ mnav.classList.remove('open'); mnav.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+        document.getElementById('burger').addEventListener('click', openMnav);
+        document.getElementById('mclose').addEventListener('click', closeMnav);
+        mnav.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', closeMnav); });
+        document.addEventListener('keydown', function(e){ if(e.key==='Escape' && mnav.classList.contains('open')) closeMnav(); });
 
 
 
@@ -1002,17 +1003,6 @@
 
 
 
-        /* live users */
-        var lu = document.getElementById('liveUsers'), luV = 145;
-        setInterval(function(){
-            if(document.hidden) return;
-            luV += 1 + (Math.random()*3|0);
-            lu.textContent = luV;
-        }, 5000);
-
-
-
-
         /* terminal */
         var TERM = [
             {c:'cmd', t:'$ 3set connect --proto vless-reality'},
@@ -1064,7 +1054,7 @@
         segBtns.forEach(function(b){
             b.addEventListener('click', function(){
                 if(b.classList.contains('is-on')) return;
-                segBtns.forEach(function(x){ x.classList.toggle('is-on'); });
+                segBtns.forEach(function(x){ x.classList.toggle('is-on'); x.setAttribute('aria-pressed', x.classList.contains('is-on') ? 'true' : 'false'); });
                 var per = b.dataset.period;
                 document.body.dataset.period = per;
                 document.querySelectorAll('.price-num').forEach(function(n){
@@ -1095,7 +1085,7 @@
         }
         ptabs.forEach(function(t){
             t.addEventListener('click', function(){
-                ptabs.forEach(function(x){ x.classList.toggle('is-on', x === t); });
+                ptabs.forEach(function(x){ x.classList.toggle('is-on', x === t); x.setAttribute('aria-selected', x === t ? 'true' : 'false'); });
                 document.querySelectorAll('.ppanel').forEach(function(p){ p.classList.toggle('is-on', p.id === 'p-' + t.dataset.p); });
                 fillBars(document.getElementById('p-' + t.dataset.p));
             });
@@ -1109,15 +1099,16 @@
 
 
         /* accordion */
-        document.querySelectorAll('.acc-q').forEach(function(q){
+document.querySelectorAll('.acc-q').forEach(function(q){
             q.addEventListener('click', function(){
                 var item = q.parentElement, body = item.querySelector('.acc-a');
                 var accs = document.querySelectorAll('.acc-item');
                 for(var i=0;i<accs.length;i++){
-                    if(accs[i] !== item){ accs[i].classList.remove('open'); accs[i].querySelector('.acc-a').style.maxHeight = '0'; }
+                    if(accs[i] !== item){ accs[i].classList.remove('open'); accs[i].querySelector('.acc-a').style.maxHeight = '0'; var bq = accs[i].querySelector('.acc-q'); if(bq) bq.setAttribute('aria-expanded','false'); }
                 }
                 var open = item.classList.toggle('open');
                 body.style.maxHeight = open ? body.scrollHeight + 'px' : '0';
+                q.setAttribute('aria-expanded', open ? 'true' : 'false');
             });
         });
 

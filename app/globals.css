@@ -11,10 +11,13 @@
   --line: #e4dfd1;
   --line-2: #cec7b4;
   --muted: #5b645e;
-  --dim: #8f968f;
+  --dim: #636b63;
   --lime: #b7ff45;
   --lime-dk: #8fd41f;
   --green: #0c4f36;
+  --danger: #b91c1c;
+  --warning: #b45309;
+  --shadow: 0 24px 60px -28px rgba(24, 30, 24, 0.22);
 }
 
 @theme inline {
@@ -29,6 +32,8 @@
   --color-lime: var(--lime);
   --color-lime-dk: var(--lime-dk);
   --color-green: var(--green);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
   --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-unbounded), var(--font-manrope), sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -51,6 +56,21 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Global focus ring — keeps keyboard navigation visible across the cabinet. */
+:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+/* Respect reduced motion for utility animations (e.g. animate-pulse). */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse,
+  .animate-spin,
+  .animate-bounce {
+    animation: none !important;
+  }
+}
+
 /* Subtle paper-grain overlay from the landing (fixed, non-interactive). */
 body::after {
   content: "";
@@ -67,11 +87,9 @@ body::after {
   color: var(--lime);
 }
 
-h1,
-h2,
-h3 {
-  font-family: var(--font-display);
-  letter-spacing: -0.01em;
+/* Utility: brand shadow (matches the landing page --shadow). */
+.shadow-brand {
+  box-shadow: var(--shadow);
 }
 
 /* FAQ answer HTML (ported from the ARTΞMIDA FAQ, rebranded) — brand styling. */

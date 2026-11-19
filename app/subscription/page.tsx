@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { after } from 'next/server';
 import { redirect } from 'next/navigation';
-import { LifeBuoy, PlugZap, RotateCcw, ShoppingCart } from 'lucide-react';
+import { KeyRound, LifeBuoy, PlugZap, RotateCcw, ShoppingCart } from 'lucide-react';
 import Nav from '@/components/Nav';
 import SubscriptionCard from '@/components/SubscriptionCard';
 import TariffPicker from '@/components/TariffPicker';
@@ -62,7 +62,7 @@ function KeysGrid({
     return (
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-line bg-panel p-10 text-center">
         <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-lime/20 text-2xl text-green">
-          ⚿
+          <KeyRound className="h-6 w-6" aria-hidden />
         </span>
         <h3 className="text-lg font-semibold text-foreground">Пока нет подписок</h3>
         <p className="max-w-sm text-sm text-muted">
@@ -159,12 +159,7 @@ export default async function SubscriptionPage() {
 
         {/* Keys */}
         <section className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <span className="font-mono text-xs uppercase tracking-[0.14em] text-green">
-              Подписки
-            </span>
-            <h2 className="text-2xl font-semibold text-foreground">Подключения 3set</h2>
-          </div>
+          <h2 className="text-2xl font-semibold text-foreground">Подключения 3set</h2>
           <KeysSection telegramId={telegramId} userId={userId} />
         </section>
 
@@ -183,9 +178,6 @@ export default async function SubscriptionPage() {
         {/* Support strip */}
         <section className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-panel p-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-1">
-            <span className="font-mono text-xs uppercase tracking-[0.14em] text-green">
-              Поддержка 3set
-            </span>
             <h3 className="text-lg font-semibold text-foreground">Поможем разобраться</h3>
             <p className="text-sm text-muted">
               Если подписка не обновилась, серверы не появились или устройство не отвязывается —

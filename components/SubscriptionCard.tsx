@@ -22,7 +22,7 @@ const SECONDARY =
 
 const STATUS_PILL: Record<StatusKind, string> = {
   active: 'bg-green/10 text-green',
-  expiring: 'bg-amber-500/15 text-amber-600',
+  expiring: 'bg-warning/15 text-warning',
   expired: 'bg-foreground/10 text-dim',
   pending: 'bg-foreground/10 text-dim',
   unknown: 'bg-foreground/10 text-dim',
@@ -72,7 +72,7 @@ export default function SubscriptionCard({
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           {item.isTrial && (
-            <span className="inline-flex items-center rounded-lg bg-amber-500/15 px-3 py-1 text-xs font-semibold text-amber-600">
+            <span className="inline-flex items-center rounded-lg bg-warning/15 px-3 py-1 text-xs font-semibold text-warning">
               {t('trial.badge')}
             </span>
           )}
@@ -87,17 +87,17 @@ export default function SubscriptionCard({
       {/* Metrics */}
       <div className="grid grid-cols-3 gap-3">
         <div className="flex flex-col gap-1 rounded-xl border border-line bg-panel-2 p-3">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-dim">Осталось</span>
+          <span className="font-mono text-[11px] uppercase tracking-widest text-dim">Осталось</span>
           <b className="text-sm text-foreground">
             {daysLeft === null ? '—' : `${daysLeft} дн.`}
           </b>
         </div>
         <div className="flex flex-col gap-1 rounded-xl border border-line bg-panel-2 p-3">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-dim">Устройства</span>
+          <span className="font-mono text-[11px] uppercase tracking-widest text-dim">Устройства</span>
           <b className="text-sm tabular-nums text-foreground">{devicesText}</b>
         </div>
         <div className="flex flex-col gap-1 rounded-xl border border-line bg-panel-2 p-3">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-dim">До даты</span>
+          <span className="font-mono text-[11px] uppercase tracking-widest text-dim">Действует до</span>
           <b className="text-sm text-foreground">{expiry}</b>
         </div>
       </div>
@@ -106,7 +106,7 @@ export default function SubscriptionCard({
       {item.subscriptionUrl && (
         <div className="flex flex-col gap-2 rounded-xl border border-line bg-panel-2 p-3">
           <div className="flex items-center justify-between gap-3">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-dim">
+            <span className="font-mono text-[11px] uppercase tracking-widest text-dim">
               {t('key.linkTitle')}
             </span>
             <CopyButton value={item.subscriptionUrl} />

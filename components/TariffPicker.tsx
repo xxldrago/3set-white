@@ -80,7 +80,7 @@ export default function TariffPicker() {
   return (
     <section
       id="tariff"
-      className="relative flex flex-col gap-5 overflow-hidden rounded-2xl border-2 border-foreground/15 bg-panel p-6 shadow-[0_24px_60px_-30px_rgba(14,21,18,.35)]"
+      className="relative flex flex-col gap-5 overflow-hidden rounded-2xl border border-line bg-panel p-6 shadow-brand"
     >
       {loading && (
         <div
@@ -139,8 +139,7 @@ export default function TariffPicker() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              aria-label={t('pricing.devicesLabel')}
-              disabled={controlsDisabled || devices <= MIN_DEVICES}
+              aria-label="Уменьшить число устройств"
               onClick={() => stepDevices(-1)}
               className="flex h-11 w-11 items-center justify-center rounded-lg border border-line text-muted transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line "
             >
@@ -151,8 +150,7 @@ export default function TariffPicker() {
             </span>
             <button
               type="button"
-              aria-label={t('pricing.devicesLabel')}
-              disabled={controlsDisabled || devices >= MAX_DEVICES}
+              aria-label="Увеличить число устройств"
               onClick={() => stepDevices(1)}
               className="flex h-11 w-11 items-center justify-center rounded-lg border border-line text-muted transition-colors hover:bg-foreground/5 disabled:opacity-50 border-line "
             >
@@ -188,11 +186,11 @@ export default function TariffPicker() {
 
       {error && (
         <div className="flex flex-col gap-2" role="alert">
-          <p className="text-sm text-red-600">{t('pricing.error')}</p>
+          <p className="text-sm text-danger">{t('pricing.error')}</p>
           <button
             type="button"
             onClick={() => void fetchPrice(days, devices)}
-            className="flex h-12 min-h-12 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5 border-line "
+            className="flex h-12 min-h-12 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-4 transition-colors hover:bg-foreground/5"
           >
             <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
             {t('common.retry')}

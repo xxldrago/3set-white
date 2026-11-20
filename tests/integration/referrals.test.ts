@@ -420,6 +420,66 @@ describe("withdrawals", () => {
     // Self-pin is a silent no-op.
     expect(await pin.json()).toEqual({ ok: true, pinned: false });
   });
+
+  it("the pin route actually pins an inviter for the session account", async () => {
+    // A fresh, unpinned account arriving from someone else's ?ref= link. This
+    // is the regression guard: an earlier revision turned the route into a
+    // click-beacon copy, so signed-in visitors were never attributed.
+    const inviterTg = BigInt("920000397");
+    const newcomerTg = BigInt("920000398");
+    const inviter = await prisma.user.create({
+      data: { telegramId: inviterTg },
+      select: { id: true },
+    });
+    const newcomer = await prisma.user.create({
+      data: { telegramId: newcomerTg },
+      select: { id: true },
+    });
+    try {
+      const inviterCode = await ensureReferralCode(inviter.id);
+      await authorize(newcomerTg);
+
+      const res = await pinPOST(
+        new Request("http://localhost/api/referrals/pin", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ code: inviterCode }),
+        }),
+      );
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ ok: true, pinned: true });
+      const row = await prisma.user.findUnique({
+        where: { id: newcomer.id },
+        select: { referredById: true },
+      });
+      expect(row?.referredById).toBe(inviter.id);
+    } finally {
+      await prisma.user.deleteMany({ where: { telegramId: { in: [inviterTg, newcomerTg] } } });
+    }
+  });
+
+  it("the pin route 401s for a signed-out caller and pins nothing", async () => {
+    session.token = undefined;
+    const inviterTg = BigInt("920000396");
+    const inviter = await prisma.user.create({
+      data: { telegramId: inviterTg },
+      select: { id: true },
+    });
+    try {
+      const inviterCode = await ensureReferralCode(inviter.id);
+      const res = await pinPOST(
+        new Request("http://localhost/api/referrals/pin", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ code: inviterCode }),
+        }),
+      );
+      expect(res.status).toBe(401);
+    } finally {
+      await prisma.user.deleteMany({ where: { telegramId: inviterTg } });
+    }
+  });
 });
 
 describe("sub-partner residuals (multi-level)", () => {

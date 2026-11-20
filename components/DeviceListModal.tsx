@@ -9,6 +9,10 @@ import { RotateCcw, Smartphone, X } from 'lucide-react';
 import type { Device } from '@/lib/artemida';
 import { t } from '@/lib/i18n';
 import ConfirmPanel from './ConfirmPanel';
+import LabelEditor from './LabelEditor';
+
+/** A device row as returned by our BFF: provider fields + our local label. */
+type LabelledDevice = Device & { label?: string | null };
 
 interface DeviceListModalProps {
   keyId: string;
@@ -19,7 +23,7 @@ export default function DeviceListModal({ keyId, deviceLimit }: DeviceListModalP
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [failure, setFailure] = useState(false);
-  const [devices, setDevices] = useState<Device[]>([]);
+  const [devices, setDevices] = useState<LabelledDevice[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
 
@@ -36,7 +40,7 @@ export default function DeviceListModal({ keyId, deviceLimit }: DeviceListModalP
         const body = (await response.json()) as { devices?: unknown };
         if (!body || !Array.isArray(body.devices)) throw new Error('devices_shape_invalid');
         const rows = body.devices.filter(
-          (entry): entry is Device =>
+          (entry): entry is LabelledDevice =>
             typeof entry === 'object' &&
             entry !== null &&
             typeof (entry as { token?: unknown }).token === 'string' &&
@@ -165,23 +169,36 @@ export default function DeviceListModal({ keyId, deviceLimit }: DeviceListModalP
               ) : (
                 <ul className="flex flex-col gap-2">
                   {devices.map((device) => {
-                    const label = device.name ?? device.token;
+                    const label = device.label ?? device.name ?? device.token;
                     const deleteUrl = `/api/keys/${encodeURIComponent(keyId)}/devices/${encodeURIComponent(device.token)}`;
                     return (
                       <li
                         key={device.token}
-                        className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-panel-2 p-3"
+                        className="flex flex-col gap-2 rounded-xl border border-line bg-panel-2 p-3"
                       >
-                        <span className="min-w-0 flex-1 truncate text-sm text-foreground" title={label}>
-                          {label}
-                        </span>
-                        <ConfirmPanel
-                          kind="delete"
-                          method="DELETE"
-                          deviceName={label}
-                          url={deleteUrl}
-                          onDone={() => void loadDevices()}
-                        />
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <span className="min-w-0 flex-1 truncate text-sm text-foreground" title={label}>
+                            {label}
+                          </span>
+                          <div className="flex shrink-0 items-center gap-2">
+                            <LabelEditor
+                              url={`/api/keys/${encodeURIComponent(keyId)}/devices/${encodeURIComponent(device.token)}`}
+                              value={device.label ?? null}
+                              triggerLabel={t('key.renameDevice')}
+                              title={t('key.renameDeviceTitle')}
+                              hint={t('key.renameDeviceHint')}
+                              compact
+                              onSaved={() => void loadDevices()}
+                            />
+                            <ConfirmPanel
+                              kind="delete"
+                              method="DELETE"
+                              deviceName={label}
+                              url={deleteUrl}
+                              onDone={() => void loadDevices()}
+                            />
+                          </div>
+                        </div>
                       </li>
                     );
                   })}

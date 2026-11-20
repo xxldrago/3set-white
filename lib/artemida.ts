@@ -315,6 +315,30 @@ export interface Balance {
   unlimited: boolean;
 }
 
+/** A Platega-backed top-up invoice for the provider API balance. */
+export interface WalletTopup {
+  operationId: string | null;
+  paymentId: string;
+  amount: number;
+  currency: string;
+  /** Hosted payment page; null when the provider omitted it. */
+  url: string | null;
+  status: string;
+}
+
+/** Top-up payment state plus the balance after a confirmed payment. */
+export interface WalletTopupStatus {
+  paymentId: string;
+  amount: number;
+  currency: string;
+  status: string;
+  paid: boolean;
+  processed: boolean;
+  processing: boolean;
+  /** API balance reported after this check (null when omitted). */
+  balance: number | null;
+}
+
 function asString(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
@@ -422,6 +446,38 @@ function normalizeBalance(data: unknown): Balance {
   };
 }
 
+/** `POST /wallet/topups` → a hosted Platega invoice for the API balance. */
+function normalizeWalletTopup(data: unknown): WalletTopup {
+  const d = asRecord(data);
+  const payment = asRecord(d.payment);
+  return {
+    operationId: asString(d.operationId),
+    // A top-up without a payment id cannot be polled, so it is a hard failure
+    // rather than a silently unusable record.
+    paymentId: asString(payment.id) ?? "",
+    amount: pickNumber(payment.amount) ?? 0,
+    currency: asString(payment.currency) ?? "RUB",
+    url: asString(payment.url),
+    status: asString(payment.status) ?? "CREATED",
+  };
+}
+
+/** `GET /wallet/topups/{paymentId}` → payment state + resulting balance. */
+function normalizeWalletTopupStatus(data: unknown): WalletTopupStatus {
+  const d = asRecord(data);
+  const payment = asRecord(d.payment);
+  return {
+    paymentId: asString(payment.id) ?? "",
+    amount: pickNumber(payment.amount) ?? 0,
+    currency: asString(payment.currency) ?? "RUB",
+    status: asString(payment.status) ?? "UNKNOWN",
+    paid: asBool(payment.paid),
+    processed: asBool(payment.processed),
+    processing: asBool(payment.processing),
+    balance: pickNumber(d.balance),
+  };
+}
+
 /** Full ARTEMIDA V1 surface (D-17). Methods are authored here even where a
  *  later phase owns the route/UI wiring (see COVERAGE.md). */
 export interface ArtemidaClient {
@@ -453,6 +509,12 @@ export interface ArtemidaClient {
   deleteDevice(id: string, token: string): Promise<void>;
   clearDevices(id: string): Promise<void>;
   getTraffic(id: string): Promise<Traffic>;
+  /** Set the key's total traffic limit in GB. `0` means unlimited. Free. */
+  setTrafficLimit(
+    id: string,
+    input: { trafficLimitGb: number },
+    opts?: ArtemidaWriteOptions,
+  ): Promise<void>;
   resetTraffic(id: string): Promise<void>;
   renewKey(
     id: string,
@@ -471,6 +533,13 @@ export interface ArtemidaClient {
   enableKey(id: string): Promise<void>;
   deleteKey(id: string, input?: { permanent?: boolean }): Promise<void>;
   getBalance(): Promise<Balance>;
+  /** Create a Platega invoice that tops up the provider API balance. */
+  createWalletTopup(
+    input: { amount: number },
+    opts?: ArtemidaWriteOptions,
+  ): Promise<WalletTopup>;
+  /** Poll a top-up; a CONFIRMED payment credits the balance exactly once. */
+  getWalletTopup(paymentId: string): Promise<WalletTopupStatus>;
 }
 
 /**
@@ -484,7 +553,7 @@ export function createArtemidaClient(options: ArtemidaClientOptions = {}): Artem
     (options.fetch ?? globalThis.fetch)(input, init);
 
   async function request<T>(
-    method: "GET" | "POST" | "DELETE",
+    method: "GET" | "POST" | "PATCH" | "DELETE",
     path: string,
     opts: RequestOptions<T>,
   ): Promise<T> {
@@ -498,7 +567,7 @@ export function createArtemidaClient(options: ArtemidaClientOptions = {}): Artem
       Authorization: `Bearer ${env.ARTEMIDA_API_KEY}`,
       Accept: "application/json",
     };
-    if (method === "POST" || method === "DELETE") {
+    if (method === "POST" || method === "PATCH" || method === "DELETE") {
       headers["Idempotency-Key"] = opts.idempotencyKey ?? randomUUID();
     }
     if (opts.body !== undefined) headers["Content-Type"] = "application/json";
@@ -609,6 +678,14 @@ export function createArtemidaClient(options: ArtemidaClientOptions = {}): Artem
     getTraffic: (id) =>
       request("GET", `${keyPath(id)}/traffic`, { normalize: normalizeTraffic }),
 
+    // PATCH /traffic sets the limit; `trafficLimitGb: 0` means unlimited.
+    setTrafficLimit: (id, { trafficLimitGb }, opts) =>
+      request("PATCH", `${keyPath(id)}/traffic`, {
+        body: { trafficLimitGb },
+        idempotencyKey: opts?.idempotencyKey,
+        normalize: () => undefined,
+      }),
+
     resetTraffic: (id) =>
       request("POST", `${keyPath(id)}/traffic/reset`, { normalize: () => undefined }),
 
@@ -639,6 +716,18 @@ export function createArtemidaClient(options: ArtemidaClientOptions = {}): Artem
       }),
 
     getBalance: () => request("GET", "/balance", { normalize: normalizeBalance }),
+
+    createWalletTopup: (input, opts) =>
+      request("POST", "/wallet/topups", {
+        body: { amount: input.amount },
+        idempotencyKey: opts?.idempotencyKey,
+        normalize: normalizeWalletTopup,
+      }),
+
+    getWalletTopup: (paymentId) =>
+      request("GET", `/wallet/topups/${encodeURIComponent(paymentId)}`, {
+        normalize: normalizeWalletTopupStatus,
+      }),
   };
 }
 

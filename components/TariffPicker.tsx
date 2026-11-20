@@ -8,18 +8,21 @@ import { Minus, Plus, RotateCcw } from 'lucide-react';
 import PayCta from './PayCta';
 import PromoField from './PromoField';
 import { t } from '@/lib/i18n';
+import type { I18nKey } from '@/lib/i18n';
+import {
+  TARIFF_DAYS,
+  TARIFF_MAX_DEVICES,
+  TARIFF_MIN_DEVICES,
+  tariffDaysLabel,
+} from '@/lib/tariff-grid';
 
-const DAYS = [7, 30, 90] as const;
-// Provider minDevices=2 (contract lock 02-01); requirement clamps 2..10.
-const MIN_DEVICES = 2;
-const MAX_DEVICES = 10;
 const DEBOUNCE_MS = 300;
 
 const priceFormatter = new Intl.NumberFormat('ru-RU');
 
 export default function TariffPicker() {
   const [days, setDays] = useState<number>(30);
-  const [devices, setDevices] = useState<number>(MIN_DEVICES);
+  const [devices, setDevices] = useState<number>(TARIFF_MIN_DEVICES);
   const [price, setPrice] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -74,7 +77,18 @@ export default function TariffPicker() {
   const controlsDisabled = price === null;
 
   const stepDevices = (delta: number) => {
-    setDevices((current) => Math.min(MAX_DEVICES, Math.max(MIN_DEVICES, current + delta)));
+    setDevices((current) =>
+      Math.min(TARIFF_MAX_DEVICES, Math.max(TARIFF_MIN_DEVICES, current + delta)),
+    );
+  };
+
+  // Typed input for large counts: stepping to 9999 is impractical, so the
+  // number is editable directly. Non-numeric/empty input keeps the last valid
+  // value rather than pricing an invalid selection.
+  const onDevicesTyped = (raw: string) => {
+    const parsed = Number.parseInt(raw, 10);
+    if (!Number.isFinite(parsed)) return;
+    setDevices(Math.min(TARIFF_MAX_DEVICES, Math.max(TARIFF_MIN_DEVICES, parsed)));
   };
 
   return (
@@ -101,15 +115,10 @@ export default function TariffPicker() {
         <span className="text-sm text-muted">
           {t('pricing.daysLabel')}
         </span>
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          {DAYS.map((value) => {
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3">
+          {TARIFF_DAYS.map((value) => {
             const selected = value === days;
-            const label =
-              value === 7
-                ? t('pricing.days7')
-                : value === 30
-                  ? t('pricing.days30')
-                  : t('pricing.days90');
+            const label = tariffDaysLabel(value);
             return (
               <button
                 key={value}
@@ -136,7 +145,7 @@ export default function TariffPicker() {
           <span className="text-sm text-muted">
             {t('pricing.devicesLabel')}
           </span>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               aria-label="Уменьшить число устройств"
@@ -145,9 +154,16 @@ export default function TariffPicker() {
             >
               <Minus className="h-4 w-4 shrink-0" aria-hidden />
             </button>
-            <span className="min-w-11 text-center text-xl font-semibold tabular-nums text-foreground">
-              {devices}
-            </span>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={TARIFF_MIN_DEVICES}
+              max={TARIFF_MAX_DEVICES}
+              value={devices}
+              onChange={(event) => onDevicesTyped(event.target.value)}
+              aria-label="Число устройств"
+              className="h-11 w-20 rounded-lg border border-line bg-transparent text-center text-xl font-semibold tabular-nums text-foreground outline-none focus:border-lime"
+            />
             <button
               type="button"
               aria-label="Увеличить число устройств"

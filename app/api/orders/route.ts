@@ -20,12 +20,13 @@ import {
   keyDeviceLimit,
   precheckOwnedKeyByUserId,
 } from "../../../lib/orders-service";
+import { TARIFF_DAYS } from "../../../lib/tariff-grid";
 import { logger } from "../../../lib/logger";
 import { requireSession, SessionError } from "../../../lib/session";
 
 export const dynamic = "force-dynamic";
 
-const ALLOWED_DAYS = [7, 30, 90] as const;
+const ALLOWED_DAYS = TARIFF_DAYS;
 
 const bodySchema = z
   .object({

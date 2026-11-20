@@ -225,11 +225,13 @@ describe("POST /api/orders — upgrade (PAY-03, D-42..D-45)", () => {
     });
   });
 
-  it("rejects an upgrade pushing past the 10-device ceiling with 400 and no provider call", async () => {
+  it("rejects an upgrade pushing past the 9999-device ceiling with 400 and no provider call", async () => {
     await authorize(Number(OWNER));
     const fetchSpy = installFetch();
 
-    const res = await post({ kind: "upgrade", keyId: OWNED_KEY, addDevices: 9 });
+    // Key limit is 2, so 9999 added devices would land at 10001 — past the
+    // provider ceiling (maxDevices=9999).
+    const res = await post({ kind: "upgrade", keyId: OWNED_KEY, addDevices: 9999 });
 
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: "bad_request" });

@@ -95,13 +95,14 @@ describe('GET /api/pricing upgrade quote (PAY-03)', () => {
     expect(await res.json()).toEqual({ error: 'bad_request' });
   });
 
-  it('bounds addDevices (min 1) and the 10-device ceiling', async () => {
+  it('bounds addDevices (min 1) and the 9999-device ceiling', async () => {
     await authorize();
     const fetchSpy = vi.fn(async () => jsonResponse({ body: upgradePricingEnvelope() }));
     vi.stubGlobal('fetch', fetchSpy);
 
     expect((await request('days=30&devices=2&kind=upgrade&addDevices=0')).status).toBe(400);
-    expect((await request('days=30&devices=10&kind=upgrade&addDevices=1')).status).toBe(400);
+    // 9999 current + 1 added = 10000 → past the provider ceiling.
+    expect((await request('days=30&devices=9999&kind=upgrade&addDevices=1')).status).toBe(400);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 

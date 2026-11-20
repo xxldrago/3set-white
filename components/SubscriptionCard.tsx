@@ -7,13 +7,12 @@ import { PlugZap, ShoppingCart } from 'lucide-react';
 import BonusDaysButton from './BonusDaysButton';
 import CopyButton from './CopyButton';
 import DeviceListModal from './DeviceListModal';
+import LabelEditor from './LabelEditor';
 import RenewPanel from './RenewPanel';
+import UpgradePanel from './UpgradePanel';
 import { daysUntilExpiry, formatKeyDate, statusLabel, type RenderedKey, type StatusKind } from '@/lib/keys-service';
 import { t } from '@/lib/i18n';
-
-// App-locked device bounds (mirror lib/orders-service MIN/MAX_DEVICES).
-const MIN_DEVICES = 2;
-const MAX_DEVICES = 10;
+import { TARIFF_MAX_DEVICES } from '@/lib/tariff-grid';
 
 const PRIMARY =
   'flex h-12 items-center justify-center gap-2 rounded-lg bg-foreground px-4 text-sm font-bold tracking-wide text-lime transition-colors hover:opacity-90';
@@ -48,12 +47,14 @@ export default function SubscriptionCard({
   const expiry = item.expiresAt ? formatKeyDate(item.expiresAt) : '—';
   const daysLeft = daysUntilExpiry(item.expiresAt);
   const deviceLimit = Math.max(
-    MIN_DEVICES,
-    Math.min(MAX_DEVICES, item.deviceLimit ?? item.devices ?? MIN_DEVICES),
+    1,
+    Math.min(TARIFF_MAX_DEVICES, item.deviceLimit ?? item.devices ?? 1),
   );
   const connectedDevices = manageableDevices ?? item.devices;
   const devicesText =
     connectedDevices !== null ? `${connectedDevices}/${item.deviceLimit ?? deviceLimit}` : '—';
+  // Display name: the owner's label wins, then the provider name, then the id.
+  const displayName = item.label ?? item.name ?? item.id;
 
   return (
     <article className="flex flex-col gap-5 rounded-2xl border border-line bg-panel p-6">
@@ -64,8 +65,8 @@ export default function SubscriptionCard({
             <KeyIcon />
           </span>
           <div className="flex min-w-0 flex-col">
-            <h3 className="truncate font-semibold text-foreground" title={item.name ?? item.id}>
-              {item.name ?? item.id}
+            <h3 className="truncate font-semibold text-foreground" title={displayName}>
+              {displayName}
             </h3>
             <p className="font-mono text-[11px] uppercase tracking-widest text-dim">3set VPN</p>
           </div>
@@ -83,6 +84,14 @@ export default function SubscriptionCard({
           </span>
         </div>
       </div>
+
+      {/* Rename: local-only label (the provider offers no rename endpoint). */}
+      <LabelEditor
+        url={`/api/keys/${encodeURIComponent(item.id)}`}
+        value={item.label ?? null}
+        triggerLabel={t('key.renameKey')}
+        title={t('key.renameKeyTitle')}
+      />
 
       {/* Metrics */}
       <div className="grid grid-cols-3 gap-3">
@@ -131,6 +140,8 @@ export default function SubscriptionCard({
         ) : (
           <RenewPanel keyId={item.id} deviceLimit={deviceLimit} />
         )}
+        {/* Add devices (upgrade) — trial keys cannot be upgraded (D-44). */}
+        {!item.isTrial && <UpgradePanel keyId={item.id} deviceLimit={deviceLimit} />}
         {!item.isTrial && <BonusDaysButton keyId={item.id} />}
         <DeviceListModal keyId={item.id} deviceLimit={deviceLimit} />
       </div>

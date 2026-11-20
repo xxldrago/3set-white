@@ -14,8 +14,9 @@ import AutoRenewToggle from './AutoRenewToggle';
 import PayCta from './PayCta';
 import PromoField from './PromoField';
 import { t } from '@/lib/i18n';
+import type { I18nKey } from '@/lib/i18n';
+import { TARIFF_DAYS, tariffDaysLabel } from '@/lib/tariff-grid';
 
-const DAYS = [7, 30, 90] as const;
 const DEBOUNCE_MS = 300;
 
 const CARD =
@@ -103,15 +104,10 @@ export default function RenewPanel({
         <span className="text-sm text-muted">
           {t('pricing.daysLabel')}
         </span>
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          {DAYS.map((value) => {
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3">
+          {TARIFF_DAYS.map((value) => {
             const selected = value === days;
-            const label =
-              value === 7
-                ? t('pricing.days7')
-                : value === 30
-                  ? t('pricing.days30')
-                  : t('pricing.days90');
+            const label = tariffDaysLabel(value);
             return (
               <button
                 key={value}

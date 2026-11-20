@@ -2,19 +2,22 @@
 
 // Upgrade panel (UI-SPEC §4, PAY-03). Rendered only for NON-trial keys — the
 // parent (`SubscriptionCard`) keeps it out of the DOM entirely for a trial key
-// (D-44). An integer stepper chooses devices to add within `1 … (10 − current
-// limit)`; the live prorated quote comes from `GET /api/pricing` (the provider
-// exposes no upgrade-quote endpoint — D-43). Controls stay disabled until the
-// first quote lands and a failed quote clears the last-good price, matching
-// `TariffPicker`. The browser sends no price (T-03-amount/T-03-upgrade-amount).
+// (D-44). Devices to add are chosen within `1 … (9999 − current limit)` via
+// presets, a stepper, or a typed number (stepping to thousands is impractical);
+// the live prorated quote comes from `GET /api/pricing` (the provider exposes no
+// upgrade-quote endpoint — D-43). Controls stay disabled until the first quote
+// lands and a failed quote clears the last-good price, matching `TariffPicker`.
+// The browser sends no price (T-03-amount/T-03-upgrade-amount).
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Minus, Plus, RotateCcw, X } from 'lucide-react';
 import PayCta from './PayCta';
 import PromoField from './PromoField';
 import { t } from '@/lib/i18n';
+import { TARIFF_MAX_DEVICES } from '@/lib/tariff-grid';
 
-const MAX_DEVICES = 10;
 const DEBOUNCE_MS = 300;
+/** One-tap amounts for the common cases; any other count is typed. */
+const ADD_PRESETS = [1, 2, 3, 5] as const;
 
 const CARD =
   'flex flex-col gap-4 rounded-2xl border border-line p-6 border-line';
@@ -34,7 +37,7 @@ export default function UpgradePanel({
   keyId: string;
   deviceLimit: number;
 }) {
-  const maxAdd = MAX_DEVICES - deviceLimit;
+  const maxAdd = TARIFF_MAX_DEVICES - deviceLimit;
   const [open, setOpen] = useState(false);
   const [addDevices, setAddDevices] = useState(1);
   const [price, setPrice] = useState<number | null>(null);
@@ -82,8 +85,15 @@ export default function UpgradePanel({
   useEffect(() => () => abortRef.current?.abort(), []);
 
   // At the device ceiling there is nothing to add — render no control at all
-  // (server also rejects currentLimit + add > 10, T-03-device-ceiling).
+  // (the server rejects currentLimit + add > 9999, T-03-device-ceiling).
   if (maxAdd < 1) return null;
+
+  /** Clamp a typed amount into the legal range (empty/invalid keeps current). */
+  const onAddDevicesTyped = (raw: string) => {
+    const parsed = Number.parseInt(raw, 10);
+    if (!Number.isFinite(parsed)) return;
+    setAddDevices(Math.min(maxAdd, Math.max(1, parsed)));
+  };
 
   if (!open) {
     return (
@@ -105,7 +115,26 @@ export default function UpgradePanel({
         <span className="text-sm text-muted">
           {t('upgrade.addLabel')}
         </span>
-        <div className="flex items-center gap-3">
+
+        <div className="flex flex-wrap items-center gap-2">
+          {ADD_PRESETS.filter((preset) => preset <= maxAdd).map((preset) => (
+            <button
+              key={preset}
+              type="button"
+              onClick={() => setAddDevices(preset)}
+              aria-pressed={addDevices === preset}
+              className={
+                addDevices === preset
+                  ? 'h-10 rounded-lg bg-foreground px-4 text-sm font-bold text-lime'
+                  : 'h-10 rounded-lg border border-line px-4 text-sm text-muted transition-colors hover:bg-foreground/5'
+              }
+            >
+              +{preset}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2">
           <button
             type="button"
             aria-label={t('upgrade.addLabel')}
@@ -115,9 +144,16 @@ export default function UpgradePanel({
           >
             <Minus className="h-4 w-4 shrink-0" aria-hidden />
           </button>
-          <span className="min-w-11 text-center text-xl font-semibold tabular-nums">
-            {addDevices}
-          </span>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={maxAdd}
+            value={addDevices}
+            onChange={(event) => onAddDevicesTyped(event.target.value)}
+            aria-label={t('upgrade.addLabel')}
+            className="h-11 w-24 rounded-lg border border-line bg-transparent text-center text-xl font-semibold tabular-nums text-foreground outline-none focus:border-lime"
+          />
           <button
             type="button"
             aria-label={t('upgrade.addLabel')}
@@ -128,6 +164,12 @@ export default function UpgradePanel({
             <Plus className="h-4 w-4 shrink-0" aria-hidden />
           </button>
         </div>
+
+        <p className="text-xs text-dim">
+          {t('upgrade.maxHint', {
+            max: priceFormatter.format(TARIFF_MAX_DEVICES),
+          })}
+        </p>
       </div>
 
       <div className="flex flex-col gap-1">

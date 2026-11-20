@@ -115,7 +115,7 @@ describe('GET /api/keys/[id]/devices (CAB-03)', () => {
     const res = await GET(request(), idContext(KEY_ID));
 
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ devices: [{ token: 'dev-a', name: 'Phone' }] });
+    expect(await res.json()).toEqual({ devices: [{ token: 'dev-a', name: 'Phone', label: null }] });
   });
 });
 

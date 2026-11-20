@@ -17,6 +17,7 @@ import { enqueueFulfillJob } from "./outbox";
 import { getPaymentClient, getActiveProviderName, PaymentCode, PaymentProvider, PaymentError } from "./payments";
 import { type PlategaMerchant, hasBotMerchant } from "./platega";
 import { prisma } from "./prisma";
+import { TARIFF_MAX_DEVICES, TARIFF_MIN_DEVICES } from "./tariff-grid";
 
 export type OrderKind = "new" | "renew" | "upgrade";
 export type OrderStatus =
@@ -28,9 +29,16 @@ export type OrderStatus =
   | "canceled"
   | "refunded";
 
-/** App-locked device bounds (provider min is 2; the cabinet ceiling is 10). */
-export const MIN_DEVICES = 2;
-export const MAX_DEVICES = 10;
+/**
+ * Device bounds, single-sourced from the tariff grid.
+ *
+ * The provider now accepts 1..9999 devices (`minDevices=1`, `maxDevices=9999`
+ * in `GET /pricing`); the old "provider minimum is 2" lock belonged to the
+ * retired price grid. Imported rather than re-declared so the storefront, the
+ * order pipeline and the bot cannot drift apart.
+ */
+export const MIN_DEVICES = TARIFF_MIN_DEVICES;
+export const MAX_DEVICES = TARIFF_MAX_DEVICES;
 
 /**
  * The single clean trial-family code shared by BOTH layers that can reject a
@@ -304,7 +312,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   }
 }
 
-/** Current device limit for a cached key, clamped into the app's 2..10 range. */
+/** Current device limit for a cached key, clamped into the storefront range. */
 export function keyDeviceLimit(key: Pick<RenderedKey, "deviceLimit" | "devices">): number {
   const raw = key.deviceLimit ?? key.devices ?? MIN_DEVICES;
   return Math.max(MIN_DEVICES, Math.min(MAX_DEVICES, raw));

@@ -27,6 +27,7 @@ type NavSection = Extract<
   | 'alerts'
   | 'fraud'
   | 'providers'
+  | 'wallet'
 >;
 
 const ITEMS: { section: NavSection; href: string }[] = [
@@ -44,6 +45,7 @@ const ITEMS: { section: NavSection; href: string }[] = [
   { section: 'alerts', href: '/admin/alerts' },
   { section: 'fraud', href: '/admin/fraud' },
   { section: 'providers', href: '/admin/providers' },
+  { section: 'wallet', href: '/admin/wallet' },
 ];
 
 const ITEM_BASE = 'flex h-11 items-center justify-center rounded-lg px-4 text-sm transition-colors';
@@ -81,6 +83,8 @@ function itemLabel(section: NavSection): string {
       return t('admin.navFraud');
     case 'providers':
       return t('admin.navProviders');
+    case 'wallet':
+      return t('admin.navWallet');
   }
 }
 

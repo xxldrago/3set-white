@@ -47,6 +47,7 @@ model User {
   username   String?
   createdAt  DateTime @default(now()) @map("created_at")
   keys       KeyCache[]
+  deviceLabels DeviceLabel[]
 
   // Referral program: every account lazily owns a public `referralCode`
   // (`3SET-XXXXXX`, ensured on first use — pre-existing rows get NULL until
@@ -260,10 +261,37 @@ model KeyCache {
   // referral wallet (same term as the last order, fallback 30d). A short
   // balance mints a pending Platega order + a bot DM with the pay link.
   autoRenew         Boolean   @default(false) @map("auto_renew")
+  // Local display label ("Мой домашний VPN"). The provider has no rename
+  // endpoint (PATCH/PUT /keys/{id} → 501, /keys/{id}/rename → 404), and the
+  // provider `name` is technical (`api_client_845912`) and rewritten on every
+  // sync by upsertCachedKey. This column is OURS: it is never touched by a
+  // provider refresh, so a user-chosen label survives revalidation.
+  label             String?
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
   @@unique([userId, keyId])
   @@map("keys_cache")
+}
+
+/**
+ * User-chosen device label, keyed by the provider device token.
+ *
+ * The provider stores no device name of its own beyond what the VPN client
+ * reports, and offers no rename call, so the label lives here and is joined
+ * onto the device list at render time. A token the provider no longer reports
+ * simply never matches, so stale rows are harmless.
+ */
+model DeviceLabel {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  keyId     String   @map("key_id")
+  token     String
+  label     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, keyId, token])
+  @@map("device_labels")
 }
 
 // One-time Login Widget payload guard (D-11). Rows older than 48h are

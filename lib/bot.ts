@@ -10,7 +10,13 @@ import { Telegraf } from "telegraf";
 import { normalizeImage, saveAttachment } from "./attachments";
 import { resolveTariffQuote } from "./pricing";
 import { env } from "./env";
-import { t, tp } from "./i18n";
+import { t, tp, type I18nKey } from "./i18n";
+import {
+  TARIFF_DAYS,
+  TARIFF_MAX_DEVICES,
+  TARIFF_MIN_DEVICES,
+  tariffDaysLabel,
+} from "./tariff-grid";
 import {
   formatKeyDate,
   getSubscriptionForUser,
@@ -235,35 +241,64 @@ bot.command("promo", async (ctx) => {
 // Prisma or fetch logic. Raw provider text is never sent (D-19/D-24): failures
 // reply with an i18n message only.
 // ---------------------------------------------------------------------------
-const MIN_DEVICES = 2; // provider minDevices=2 (contract lock 02-01)
-const MAX_DEVICES = 10;
+const MIN_DEVICES = TARIFF_MIN_DEVICES;
+const MAX_DEVICES = TARIFF_MAX_DEVICES;
 const priceFormatter = new Intl.NumberFormat("ru-RU");
 
 function daysLabel(days: number): string {
-  if (days === 7) return t("pricing.days7");
-  if (days === 30) return t("pricing.days30");
-  return t("pricing.days90");
+  return tariffDaysLabel(days);
 }
 
 function tariffDaysKeyboard() {
-  return {
-    inline_keyboard: [
-      [
-        { text: t("pricing.days7"), callback_data: "tariff:days:7" },
-        { text: t("pricing.days30"), callback_data: "tariff:days:30" },
-        { text: t("pricing.days90"), callback_data: "tariff:days:90" },
-      ],
-    ],
-  };
+  // Five periods do not fit one Telegram row comfortably; 3 + 2 reads better
+  // and keeps every button a comfortable tap target.
+  const all = TARIFF_DAYS.map((days) => ({
+    text: daysLabel(days),
+    callback_data: `tariff:days:${days}`,
+  }));
+  const rows: Array<Array<{ text: string; callback_data: string }>> = [];
+  for (let i = 0; i < all.length; i += 3) rows.push(all.slice(i, i + 3));
+  return { inline_keyboard: rows };
+}
+
+/** Device counts offered as one-tap presets; anything else is typed. */
+const DEVICE_PRESETS = [1, 2, 3, 5, 10] as const;
+
+/**
+ * Pending "type a device count" prompts, keyed by telegram id.
+ *
+ * The device ceiling is 9999, so an inline keyboard cannot enumerate the
+ * choices (Telegram caps a message at ~100 buttons). Presets cover the common
+ * counts; the rest arrives as typed text, which needs to remember WHICH term
+ * the user picked. This lives in process memory with a short TTL: the bot runs
+ * as a single long-lived process, and a lost prompt after a restart is
+ * harmless — the user simply taps the tariff button again.
+ */
+const pendingDevicePrompt = new Map<string, { days: number; expiresAt: number }>();
+const DEVICE_PROMPT_TTL_MS = 10 * 60 * 1000;
+
+function setPendingDevicePrompt(telegramId: string, days: number): void {
+  pendingDevicePrompt.set(telegramId, { days, expiresAt: Date.now() + DEVICE_PROMPT_TTL_MS });
+}
+
+/** Consume a pending prompt; null when absent or expired (single use). */
+function takePendingDevicePrompt(telegramId: string): number | null {
+  const entry = pendingDevicePrompt.get(telegramId);
+  if (!entry) return null;
+  pendingDevicePrompt.delete(telegramId);
+  if (entry.expiresAt < Date.now()) return null;
+  return entry.days;
 }
 
 function tariffDevicesKeyboard(days: number) {
-  const buttons: Array<{ text: string; callback_data: string }> = [];
-  for (let d = MIN_DEVICES; d <= MAX_DEVICES; d += 1) {
-    buttons.push({ text: String(d), callback_data: `tariff:devices:${days}:${d}` });
-  }
+  const presets = DEVICE_PRESETS.map((d) => ({
+    text: String(d),
+    callback_data: `tariff:devices:${days}:${d}`,
+  }));
   const rows: Array<Array<{ text: string; callback_data: string }>> = [];
-  for (let i = 0; i < buttons.length; i += 3) rows.push(buttons.slice(i, i + 3));
+  for (let i = 0; i < presets.length; i += 3) rows.push(presets.slice(i, i + 3));
+  // Escape hatch for counts above the presets (up to MAX_DEVICES).
+  rows.push([{ text: t("pricing.devicesOther"), callback_data: `tariff:custom:${days}` }]);
   return { inline_keyboard: rows };
 }
 
@@ -327,10 +362,14 @@ bot.action(/^tariff:days:(\d+)$/, async (ctx) => {
   await ctx.reply(t("pricing.devicesLabel"), { reply_markup: tariffDevicesKeyboard(days) });
 });
 
-bot.action(/^tariff:devices:(\d+):(\d+)$/, async (ctx) => {
-  const days = Number(ctx.match?.[1]);
-  const devices = Number(ctx.match?.[2]);
-  await ctx.answerCbQuery();
+/** Quote a (days, devices) pair and offer the second-tap purchase button. */
+async function replyTariffQuote(
+  ctx: {
+    reply: (text: string, extra?: Record<string, unknown>) => Promise<unknown>;
+  },
+  days: number,
+  devices: number,
+): Promise<void> {
   try {
     const pricing = await resolveTariffQuote(days, devices);
     await ctx.reply(
@@ -350,6 +389,25 @@ bot.action(/^tariff:devices:(\d+):(\d+)$/, async (ctx) => {
   } catch {
     await ctx.reply(t("pricing.error"));
   }
+}
+
+bot.action(/^tariff:devices:(\d+):(\d+)$/, async (ctx) => {
+  const days = Number(ctx.match?.[1]);
+  const devices = Number(ctx.match?.[2]);
+  await ctx.answerCbQuery();
+  await replyTariffQuote(ctx, days, devices);
+});
+
+// "Other count": the user types the number instead of tapping a preset.
+bot.action(/^tariff:custom:(\d+)$/, async (ctx) => {
+  const days = Number(ctx.match?.[1]);
+  await ctx.answerCbQuery();
+  if (ctx.from) setPendingDevicePrompt(String(ctx.from.id), days);
+  await ctx.reply(
+    t("pricing.devicesPrompt", { max: String(MAX_DEVICES) }),
+    // Force a keyboard so the number cannot be swallowed by a stale menu.
+    { reply_markup: { force_reply: true, input_field_placeholder: "2" } },
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -540,14 +598,17 @@ bot.hears(t("bot.menuKeys"), async (ctx) => {
         key.devices !== null && key.deviceLimit !== null
           ? t("key.devicesCount", { n: key.devices, max: key.deviceLimit })
           : "—";
-      return `${key.name ?? key.id}\n${statusLabel(key.statusKind, key.expiresAt)} · ${t("key.expires", {
+      return `${key.label ?? key.name ?? key.id}\n${statusLabel(key.statusKind, key.expiresAt)} · ${t("key.expires", {
         date: expiry,
       })}\n${devices}`;
     });
     // One inline control per key opens its subscription link (02-05 / CAB-04).
     // Index-based callback_data keeps the payload short (Telegram 64-byte cap).
     const keyboard = shown.map((key, index) => [
-      { text: `${key.name ?? key.id} · ${t("key.linkTitle")}`, callback_data: `key:link:${index}` },
+      {
+        text: `${key.label ?? key.name ?? key.id} · ${t("key.linkTitle")}`,
+        callback_data: `key:link:${index}`,
+      },
     ]);
     // Cap the message well under Telegram's 4096-char limit.
     await ctx.reply([header, ...lines].join("\n\n").slice(0, 4000), {
@@ -659,6 +720,28 @@ bot.hears(t("bot.menuGuides"), async (ctx) => {
 // A photo is downloaded through the Bot API (`getFileLink` → `fetch`) and
 // normalized by the shared `lib/attachments.normalizeImage`. Failures reply
 // keyed copy only — never a provider/API error or the file link (D-19/D-24).
+// Typed device count for the «Другое число» escape hatch. Registered BEFORE the
+// support intake handler so a number sent in reply to our force-reply prompt is
+// consumed here; without a pending prompt this handler does nothing and the
+// update falls through untouched.
+bot.on("text", async (ctx, next) => {
+  const from = ctx.from;
+  if (!from) return next();
+  const telegramId = String(from.id);
+  if (!pendingDevicePrompt.has(telegramId)) return next();
+  const text = ctx.message.text.trim();
+  if (!/^\d{1,4}$/.test(text)) return next();
+  const days = takePendingDevicePrompt(telegramId);
+  if (days === null) return next();
+  const devices = Number(text);
+  if (devices < MIN_DEVICES || devices > MAX_DEVICES) {
+    await ctx.reply(t("pricing.devicesPrompt", { max: String(MAX_DEVICES) }));
+    setPendingDevicePrompt(telegramId, days);
+    return;
+  }
+  await replyTariffQuote(ctx, days, devices);
+});
+
 // ---------------------------------------------------------------------------
 bot.hears(t("bot.menuSupport"), async (ctx) => {
   const from = ctx.from;

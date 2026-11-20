@@ -7,7 +7,7 @@
 // after the UI's explicit second confirmation (D-32); this route performs it.
 import { z } from "zod";
 import { ArtemidaError } from "../../../../../../lib/artemida";
-import { removeDeviceByUserId } from "../../../../../../lib/keys-service";
+import { normalizeLabel, removeDeviceByUserId, setDeviceLabel } from "../../../../../../lib/keys-service";
 import { logger } from "../../../../../../lib/logger";
 import { requireSession, SessionError } from "../../../../../../lib/session";
 
@@ -15,6 +15,9 @@ export const dynamic = "force-dynamic";
 
 const idSchema = z.string().min(1).max(200);
 const tokenSchema = z.string().min(1).max(300);
+const patchSchema = z.object({
+  label: z.union([z.string().max(200), z.null()]),
+});
 
 function mapArtemidaStatus(code: ArtemidaError["code"]): number {
   switch (code) {
@@ -68,6 +71,68 @@ export async function DELETE(
       return Response.json({ error: err.code }, { status: mapArtemidaStatus(err.code) });
     }
     logger.error({ route: "keys-device-delete", outcome: "unexpected_error" });
+    return Response.json({ error: "internal" }, { status: 500 });
+  }
+}
+
+/**
+ * PATCH /api/keys/[id]/devices/[token] — set or clear a device label.
+ *
+ * Local-only, like the key label: the provider keeps no name we can write and
+ * offers no rename call, so the label lives in `device_labels` and is joined
+ * onto the device list at render time. Ownership of the KEY is checked first,
+ * so guessing a token cannot label a device on someone else's key.
+ */
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string; token: string }> },
+): Promise<Response> {
+  let userId: number;
+  try {
+    ({ userId } = await requireSession());
+  } catch (err) {
+    if (err instanceof SessionError) {
+      return Response.json({ error: "unauthorized" }, { status: 401 });
+    }
+    logger.error({ route: "keys-device-label", outcome: "session_error" });
+    return Response.json({ error: "internal" }, { status: 500 });
+  }
+
+  const { id, token } = await params;
+  const parsedId = idSchema.safeParse(id);
+  const parsedToken = tokenSchema.safeParse(token);
+  if (!parsedId.success || !parsedToken.success) {
+    return Response.json({ error: "bad_request" }, { status: 400 });
+  }
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return Response.json({ error: "bad_request" }, { status: 400 });
+  }
+  const parsed = patchSchema.safeParse(body);
+  if (!parsed.success) {
+    return Response.json({ error: "bad_request" }, { status: 400 });
+  }
+
+  let label: string | null;
+  try {
+    label = parsed.data.label === null ? null : normalizeLabel(parsed.data.label);
+  } catch {
+    return Response.json({ error: "label_too_long" }, { status: 400 });
+  }
+
+  try {
+    const owned = await setDeviceLabel(userId, parsedId.data, parsedToken.data, label);
+    if (!owned) return Response.json({ error: "not_found" }, { status: 404 });
+    return Response.json({ ok: true, label });
+  } catch (err) {
+    if (err instanceof ArtemidaError) {
+      logger.warn({ route: "keys-device-label", code: err.code, requestId: err.requestId });
+      return Response.json({ error: err.code }, { status: mapArtemidaStatus(err.code) });
+    }
+    logger.error({ route: "keys-device-label", outcome: "unexpected_error" });
     return Response.json({ error: "internal" }, { status: 500 });
   }
 }

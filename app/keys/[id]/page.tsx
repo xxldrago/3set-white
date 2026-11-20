@@ -20,7 +20,7 @@ import {
   formatKeyDate,
   getKeyForUser,
   getSubscriptionForUser,
-  listDevices,
+  listDevicesWithLabels,
   statusLabel,
   type SubscriptionForUser,
 } from '@/lib/keys-service';
@@ -90,9 +90,9 @@ export default async function KeyDetailPage({
   // is UNKNOWN (02-01 0-key probe), so a fetch failure or an unaddressable
   // payload degrades to the `devices.empty` RU fallback — never a fabricated
   // device row (02-01 KEY CONTRACT).
-  let devices: Device[] = [];
+  let devices: Array<Device & { label: string | null }> = [];
   try {
-    devices = (await listDevices(BigInt(telegramId), id)) ?? [];
+    devices = (await listDevicesWithLabels(telegramId, id)) ?? [];
   } catch (err) {
     if (err instanceof ArtemidaError) {
       logger.warn({
@@ -120,7 +120,7 @@ export default async function KeyDetailPage({
       <main className="flex flex-1 w-full max-w-3xl flex-col gap-6 px-6 py-12 sm:px-16">
         <header className="flex flex-col gap-2">
           <h1 className="text-3xl font-semibold leading-10 tracking-tight break-all text-foreground">
-            {key.name ?? key.id}
+            {key.label ?? key.name ?? key.id}
           </h1>
           <p className="text-sm text-muted">
             {t('key.expires', { date: expiry })} · {statusLabel(key.statusKind, key.expiresAt)}
@@ -183,7 +183,8 @@ export default async function KeyDetailPage({
           ) : (
             <ul className="flex flex-col gap-2">
               {devices.map((device) => {
-                const label = device.name ?? device.token;
+                // The owner's local label wins over the client-reported name.
+                const label = device.label ?? device.name ?? device.token;
                 return (
                   <li
                     key={device.token}

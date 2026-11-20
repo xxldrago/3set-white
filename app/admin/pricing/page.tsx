@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import TariffPricingForm from '@/components/admin/TariffPricingForm';
 import { requireRole } from '@/lib/admin-auth';
-import { listTariffPrices } from '@/lib/pricing';
+import { listTariffPrices, getTariffMarkup } from '@/lib/pricing';
 import { t } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
 import { AdminError, SessionError } from '@/lib/session';
@@ -35,8 +35,9 @@ function SkeletonRows() {
 
 async function PricingSection() {
   let rows;
+  let markup;
   try {
-    rows = await listTariffPrices();
+    [rows, markup] = await Promise.all([listTariffPrices(), getTariffMarkup()]);
   } catch {
     logger.error({ route: 'admin-pricing', outcome: 'grid_load_failed' });
     return (
@@ -49,7 +50,7 @@ async function PricingSection() {
     );
   }
 
-  return <TariffPricingForm initialRows={rows} />;
+  return <TariffPricingForm initialRows={rows} initialMarkup={markup} />;
 }
 
 export default async function AdminPricingPage() {

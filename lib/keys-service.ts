@@ -26,7 +26,11 @@ export type StartTrialResult =
 
 export type StatusKind = "active" | "expiring" | "expired" | "pending" | "unknown";
 
-export type RenderedKey = NormalizedKey & { statusKind: StatusKind };
+export type RenderedKey = NormalizedKey & {
+  statusKind: StatusKind;
+  /** Owner-chosen key label; null when the user never renamed it. */
+  label?: string | null;
+};
 
 type KeyCacheRow = Awaited<ReturnType<typeof prisma.keyCache.findMany>>[number];
 
@@ -107,6 +111,9 @@ function toRenderedKey(row: KeyCacheRow): RenderedKey {
   return {
     id: row.keyId,
     name: row.name,
+    // Owner-chosen label wins over the provider's technical name. `label` is
+    // never written by a provider sync, so it survives revalidation.
+    label: row.label,
     status: row.status,
     isTrial: row.isTrial,
     expiresAt: row.expiresAt ? row.expiresAt.toISOString() : null,
@@ -625,4 +632,112 @@ export async function startTrialByUserId(
   await upsertCachedKey(userId, key);
 
   return { kind: "created", key };
+}
+
+// ---------------------------------------------------------------------------
+// Local display labels (keys + devices)
+//
+// ARTEMIDA offers no rename endpoint: PATCH/PUT /keys/{id} answer 501 and
+// /keys/{id}/rename answers 404 (verified live against the API on 2026-11-20).
+// Its own `name` is technical and gets rewritten on every sync, so a label the
+// user chose must live in our DB and never touch the provider.
+// ---------------------------------------------------------------------------
+
+/** Longest accepted label; long enough for a sentence, short enough to render. */
+export const LABEL_MAX_LENGTH = 64;
+
+/**
+ * Normalize a user-supplied label. Returns the trimmed value, or `null` when
+ * the input should CLEAR the label (empty/whitespace). Throws on too-long input
+ * so callers surface a validation error instead of silently truncating.
+ */
+export function normalizeLabel(raw: unknown): string | null {
+  if (typeof raw !== "string") throw new Error("label:invalid");
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) return null;
+  if (trimmed.length > LABEL_MAX_LENGTH) throw new Error("label:too_long");
+  return trimmed;
+}
+
+/**
+ * Set or clear the owner's label for an owned key. Returns false (→ 404) when
+ * the key is not owned, so a non-owned key is indistinguishable from a missing
+ * one (no oracle, the same discipline as every other ownership read here).
+ */
+export async function setKeyLabel(
+  userId: number,
+  keyId: string,
+  label: string | null,
+): Promise<boolean> {
+  const updated = await prisma.keyCache.updateMany({
+    where: { userId, keyId },
+    data: { label },
+  });
+  return updated.count === 1;
+}
+
+/** Labels for the given key ids, scoped to the owner. Missing keys are absent. */
+export async function keyLabelsFor(
+  userId: number,
+  keyIds: readonly string[],
+): Promise<Map<string, string>> {
+  if (keyIds.length === 0) return new Map();
+  const rows = await prisma.keyCache.findMany({
+    where: { userId, keyId: { in: [...keyIds] }, label: { not: null } },
+    select: { keyId: true, label: true },
+  });
+  return new Map(
+    rows.flatMap((row) => (row.label === null ? [] : [[row.keyId, row.label] as const])),
+  );
+}
+
+/**
+ * Set or clear a device label on an owned key. The ownership check runs first
+ * and covers the whole key, so a caller cannot label a device on someone
+ * else's key even by guessing a token.
+ */
+export async function setDeviceLabel(
+  userId: number,
+  keyId: string,
+  token: string,
+  label: string | null,
+): Promise<boolean> {
+  if ((await ownedKeyRowIdForOwner({ userId }, keyId)) === null) return false;
+  if (label === null) {
+    await prisma.deviceLabel.deleteMany({ where: { userId, keyId, token } });
+    return true;
+  }
+  await prisma.deviceLabel.upsert({
+    where: { userId_keyId_token: { userId, keyId, token } },
+    update: { label },
+    create: { userId, keyId, token, label },
+  });
+  return true;
+}
+
+/** Device labels on a key, keyed by provider token. */
+export async function deviceLabelsFor(
+  userId: number,
+  keyId: string,
+): Promise<Map<string, string>> {
+  const rows = await prisma.deviceLabel.findMany({
+    where: { userId, keyId },
+    select: { token: true, label: true },
+  });
+  return new Map(rows.map((row) => [row.token, row.label]));
+}
+
+/**
+ * Owned device list with local labels applied. Returns null (→ 404) for a
+ * non-owned key, matching `listDevicesByUserId`. Labels are joined in memory
+ * because the provider is the source of truth for which tokens exist.
+ */
+export async function listDevicesWithLabels(
+  userId: number,
+  keyId: string,
+): Promise<Array<Device & { label: string | null }> | null> {
+  const devices = await listDevicesByUserId(userId, keyId);
+  if (devices === null) return null;
+  const labels = await deviceLabelsFor(userId, keyId);
+  return devices.map((device) => ({ ...device, label: labels.get(device.token) ?? null }));
 }

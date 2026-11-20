@@ -6,7 +6,7 @@
 // normalizer is tolerant and only addressable devices are returned.
 import { z } from "zod";
 import { ArtemidaError } from "../../../../../lib/artemida";
-import { listDevicesByUserId } from "../../../../../lib/keys-service";
+import { listDevicesWithLabels } from "../../../../../lib/keys-service";
 import { logger } from "../../../../../lib/logger";
 import { requireSession, SessionError } from "../../../../../lib/session";
 
@@ -56,7 +56,7 @@ export async function GET(
   }
 
   try {
-    const devices = await listDevicesByUserId(userId, parsed.data);
+    const devices = await listDevicesWithLabels(userId, parsed.data);
     if (devices === null) return Response.json({ error: "not_found" }, { status: 404 });
     return Response.json({ devices });
   } catch (err) {

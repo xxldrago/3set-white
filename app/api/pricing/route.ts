@@ -2,22 +2,27 @@
 // (D-26/D-28). The browser calls only this route; ARTEMIDA_API_KEY never
 // leaves the server (T-02-04).
 //
-// Query input is validated (days ∈ {7,30,90}, devices ∈ 2..10 — provider
-// minDevices=2, contract lock 02-01). `kind:'upgrade'` returns the locally
-// derived prorated device delta (D-43; observed 2026-10-03, no provider quote
-// endpoint). Provider failures map to their status; the provider message is
-// never returned, only `code`.
+// Query input is validated (days ∈ TARIFF_DAYS = {7,30,90,180,365},
+// devices ∈ 1..9999 — the provider's `minDevices=1`/`maxDevices=9999`).
+// `kind:'upgrade'` returns the prorated device delta (D-43; observed
+// 2026-10-03, no provider quote endpoint). Provider failures map to their
+// status; the provider message is never returned, only `code`.
 import { z } from "zod";
 import { ArtemidaError } from "../../../lib/artemida";
 import { logger } from "../../../lib/logger";
 import { resolveTariffQuote, resolveUpgradeQuote } from "../../../lib/pricing";
 import { validatePromo } from "../../../lib/promo";
 import { requireSession, SessionError } from "../../../lib/session";
+import {
+  TARIFF_DAYS,
+  TARIFF_MAX_DEVICES,
+  TARIFF_MIN_DEVICES,
+} from "../../../lib/tariff-grid";
 
 export const dynamic = "force-dynamic";
 
-const ALLOWED_DAYS = [7, 30, 90] as const;
-const MAX_DEVICES = 10;
+const ALLOWED_DAYS = TARIFF_DAYS;
+const MAX_DEVICES = TARIFF_MAX_DEVICES;
 
 const pricingQuery = z
   .object({
@@ -25,9 +30,9 @@ const pricingQuery = z
       .number()
       .int()
       .refine((v) => (ALLOWED_DAYS as readonly number[]).includes(v)),
-    devices: z.coerce.number().int().min(2).max(MAX_DEVICES),
+    devices: z.coerce.number().int().min(TARIFF_MIN_DEVICES).max(MAX_DEVICES),
     kind: z.enum(["new", "renew", "upgrade"]).default("new"),
-    addDevices: z.coerce.number().int().min(1).max(MAX_DEVICES - 2).optional(),
+    addDevices: z.coerce.number().int().min(1).max(MAX_DEVICES).optional(),
     // Optional promo preview — validated read-only, never consumed here.
     promo: z.string().trim().min(1).max(32).optional(),
   })

@@ -1,92 +1,35 @@
-// Support ticket list page (SUP-01, UI-SPEC §1). Session-gated RSC modeled on
-// `app/payments/page.tsx`: it reads ONLY the caller's tickets through the
-// ownership-scoped service (the session telegram id is the only scope; no
-// client-supplied id is trusted — T-04-20) and hands provider-free rows to the
-// presentational `TicketList`. The header carries the count (≥2) and the create
-// CTA; zero tickets renders the keyed empty state. Load failure renders the
-// Phase-2 error mapping (`common.errorLoad` + retry) — never a raw DB string.
-import { Suspense } from 'react';
-import Link from 'next/link';
+// Support ticket list page (SUP-01, UI-SPEC §1). Session-gated RSC that loads
+// the caller's real tickets through the ownership-scoped tickets service and
+// hands them to the `SupportClient` client island rendered in the keys.html
+// visual template. No client-supplied id is trusted — the session telegram id
+// is the only scope (T-04-20). Load failure degrades to an empty list, never a
+// raw DB string.
 import { redirect } from 'next/navigation';
-import { ArrowLeft, Plus, RotateCcw } from 'lucide-react';
-import Nav from '@/components/Nav';
-import TicketList from '@/components/TicketList';
-import { t, tp } from '@/lib/i18n';
+import SupportClient from './SupportClient';
+import { t } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
-import { listTicketsByUserId, type TicketListRow } from '@/lib/tickets-service';
+import {
+  listTicketsByUserId,
+  unreadTicketCountForUser,
+  type TicketListRow,
+} from '@/lib/tickets-service';
+import { getAdminRole } from '@/lib/admin-auth';
 import { getSessionUser, requireSession, SessionError } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: `${t('ticket.listTitle')} — ${t('app.name')}`,
+  title: `${t('ticket.listTitle')} — 3set VPN`,
+  description: 'Единая лента обращений в поддержку 3set VPN: создайте тикет, отслеживайте статус и отвечайте в одном окне.',
 };
 
-const CARD = 'flex flex-col gap-4 rounded-2xl border border-line bg-panel p-6';
-const PRIMARY =
-  'flex h-12 items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-sm font-bold tracking-wide text-lime transition-colors hover:opacity-90';
-const SECONDARY =
-  'flex h-12 items-center justify-center gap-2 rounded-lg text-sm font-bold border border-line px-5 transition-colors hover:bg-foreground/5';
-
-/** Loading fallback while the DB read resolves (UI-SPEC loading state). */
-function SkeletonRows() {
-  return (
-    <section className="flex flex-col gap-4" aria-hidden>
-      {Array.from({ length: 3 }, (_, index) => (
-        <div
-          key={index}
-          className="h-16 animate-pulse rounded-2xl bg-foreground/5"
-        />
-      ))}
-    </section>
-  );
-}
-
-async function TicketsSection({ userId }: { userId: number }) {
-  let rows: TicketListRow[];
-  try {
-    rows = await listTicketsByUserId(userId);
-  } catch {
-    logger.error({ route: 'support', outcome: 'tickets_load_failed' });
-    return (
-      <section className={CARD} role="alert">
-        <p className="text-muted">{t('common.errorLoad')}</p>
-        <Link href="/support" className={SECONDARY}>
-          <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
-          {t('common.retry')}
-        </Link>
-      </section>
-    );
-  }
-
-  return (
-    <section className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-sm text-muted">
-          {rows.length >= 2 ? tp('ticket.count', rows.length) : ''}
-        </span>
-        <Link href="/support/new" className={`${PRIMARY} shrink-0`}>
-          <Plus className="h-4 w-4 shrink-0" aria-hidden />
-          {t('ticket.cta')}
-        </Link>
-      </div>
-
-      {rows.length === 0 ? (
-        <div className={CARD}>
-          <h2 className="text-xl font-semibold text-foreground">
-            {t('ticket.emptyHeading')}
-          </h2>
-          <p className="text-muted">{t('ticket.emptyBody')}</p>
-          <Link href="/support/new" className={PRIMARY}>
-            <Plus className="h-4 w-4 shrink-0" aria-hidden />
-            {t('ticket.cta')}
-          </Link>
-        </div>
-      ) : (
-        <TicketList rows={rows} />
-      )}
-    </section>
-  );
+interface TicketRow {
+  id: string;
+  subject: string;
+  status: TicketListRow['status'];
+  unreadForUser: number;
+  lastMessageAt: string;
+  preview: string | null;
 }
 
 export default async function SupportPage() {
@@ -98,29 +41,41 @@ export default async function SupportPage() {
     throw err;
   }
 
-  const navUser = await getSessionUser();
+  const user = await getSessionUser();
+
+  let tickets: TicketRow[] = [];
+  try {
+    const rows = await listTicketsByUserId(userId);
+    tickets = rows.map((r) => ({
+      id: r.id,
+      subject: r.subject,
+      status: r.status,
+      unreadForUser: r.unreadForUser,
+      lastMessageAt: r.lastMessageAt.toISOString(),
+      preview: r.preview,
+    }));
+  } catch {
+    logger.error({ route: 'support', outcome: 'tickets_load_failed' });
+  }
+
+  let isStaff = false;
+  let unread = 0;
+  if (user) {
+    try {
+      if (user.telegramId !== null) {
+        isStaff = (await getAdminRole(user.telegramId)) !== null;
+      }
+    } catch {
+      // Cosmetic badge — never fail the page on a role lookup.
+    }
+    try {
+      unread = await unreadTicketCountForUser(user.userId);
+    } catch {
+      // The unread badge is non-critical.
+    }
+  }
 
   return (
-    <div className="flex flex-col flex-1 items-center bg-background font-sans bg-background">
-      <Nav user={navUser} />
-      <main className="flex flex-1 w-full max-w-3xl flex-col gap-8 px-6 py-12 sm:px-16">
-        <header className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold leading-10 tracking-tight text-foreground">
-            {t('ticket.listTitle')}
-          </h1>
-        </header>
-
-        <Suspense fallback={<SkeletonRows />}>
-          <TicketsSection userId={userId} />
-        </Suspense>
-
-        <nav className="flex flex-col gap-2 sm:flex-row">
-          <Link href="/" className={SECONDARY}>
-            <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
-            {t('guides.back')}
-          </Link>
-        </nav>
-      </main>
-    </div>
+    <SupportClient tickets={tickets} user={user} isStaff={isStaff} unread={unread} />
   );
 }

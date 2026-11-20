@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.2
 current_phase: 16
 status: completed
-last_updated: "2026-11-20T11:25:22.832Z"
+last_updated: "2026-11-20T11:35:35.075Z"
 last_activity: 2026-11-17
 last_activity_desc: Phases 12-16 complete (alerts, promo/referral quality, save-list/upsell, CSV/dictionary) — milestone v1.2 complete
-state_head: 71f0a362dffe0f3ab8ea5b4f7ef901189be909ac
+state_head: 7f78ccbc27c63de55c080519f25357a786789461
 progress:
   total_phases: 5
   completed_phases: 4
@@ -117,6 +117,7 @@ None yet.
 |---|-------------|------|--------|-----------|
 | 261029-gni | Yandex Metrika counter 113865085 on 3set.online landing (14 pages) | 2026-10-29 | c77c820 | [20261029-yandex-metrika-landing](./quick/20261029-yandex-metrika-landing/) |
 | 2 | Rebuild /subscription in keys.html template with live data | 2026-11-20 | 71f0a36 | — |
+| 3 | PWA mobile install CTA, social share icons and fixed support badge | 2026-11-20 | 7f78ccb | — |
 
 ## Deferred Items
 

@@ -16,7 +16,8 @@
   import TicketCompensation from '@/components/admin/TicketCompensation';
   import UserProfileCard from '@/components/admin/UserProfileCard';
   import TicketStatusChip from '@/components/TicketStatusChip';
-  import TicketThread from '@/components/TicketThread';
+  import TicketAutoRefresh from '@/components/TicketAutoRefresh';
+import TicketThread from '@/components/TicketThread';
   import { requireRole } from '@/lib/admin-auth';
   import { loadAdminHeader } from '@/lib/admin-service';
   import { t } from '@/lib/i18n';
@@ -147,6 +148,7 @@ export default async function AdminTicketDetailPage({
 
         <section className={CARD}>
         <TicketThread thread={thread} />
+        <TicketAutoRefresh ticketId={id} />
       </section>
 
       <section className={CARD}>

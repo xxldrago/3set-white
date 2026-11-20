@@ -9,6 +9,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import MarkReadOnOpen from '@/components/MarkReadOnOpen';
+import TicketAutoRefresh from '@/components/TicketAutoRefresh';
 import TicketComposer from '@/components/TicketComposer';
 import TicketStatusChip from '@/components/TicketStatusChip';
 import TicketThread from '@/components/TicketThread';
@@ -80,6 +81,7 @@ export default async function TicketDetailPage({
         </nav>
 
         <MarkReadOnOpen ticketId={id} />
+        <TicketAutoRefresh ticketId={id} />
       </main>
     </div>
   );

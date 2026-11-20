@@ -19,6 +19,7 @@ import {
 import { t } from "./i18n";
 import { formatKeyDate } from "./keys-service";
 import { prisma } from "./prisma";
+import { env } from "./env";
 
 /**
  * Build the support-reply push: the keyed `bot.ticketReply` prefix + the raw
@@ -54,7 +55,7 @@ export async function dispatchTicketNotification(
     where: { id: notification.ticketMessageId },
     select: {
       body: true,
-      ticket: { select: { user: { select: { telegramId: true, chatId: true } } } },
+      ticket: { select: { id: true, user: { select: { telegramId: true, chatId: true, email: true } } } },
     },
   });
   const owner = message?.ticket.user;
@@ -70,7 +71,9 @@ export async function dispatchTicketNotification(
   try {
     // `String()` because the Prisma id is a bigint and the Telegram API wants
     // number|string.
-    await send.sendMessage(String(chatId), buildTicketReplyPush(message.body ?? ""));
+    const link = `${env.APP_BASE_URL}/support/${message.ticket.id}`;
+    const text = `${buildTicketReplyPush(message.body ?? "")}\\n\\n${link}`;
+    await send.sendMessage(String(chatId), text.slice(0, BOT_REPLY_CAP));
     return { outcome: "pushed" };
   } catch {
     // A Telegram/network failure is retryable; the worker reschedules.

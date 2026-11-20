@@ -81,6 +81,7 @@ export const envSchema = z.object({
     .string()
     .email("SUPPORT_ADMIN_EMAIL must be an email address")
     .optional(),
+  SUPPORT_ADMIN_CHANNEL_ID: z.string().min(1).optional(),
   BOT_MODE: z.enum(["polling", "webhook"]).default("polling"),
   // Bot username for the bot-redirect login deep link (plan 06-06, G-06-4b).
   // Optional: when unset the request route falls back to a cached `getMe()`.
@@ -149,6 +150,7 @@ function loadEnv(): Env {
       UPLOAD_DIR: "/data/uploads",
       ADMIN_TELEGRAM_IDS: undefined,
       SUPPORT_ADMIN_EMAIL: undefined,
+      SUPPORT_ADMIN_CHANNEL_ID: undefined,
       BOT_MODE: "polling",
       TELEGRAM_BOT_USERNAME: undefined,
       TELEGRAM_API_ROOT: "https://api.telegram.org",

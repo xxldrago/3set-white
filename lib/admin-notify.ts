@@ -44,7 +44,41 @@ async function pushAll(text: string): Promise<void> {
 export function notifyAdminsNewTicket(ticketId: string, subject: string): void {
   void (async () => {
     try {
-      await pushAll(t("admin.newTicketDm", { id: ticketId, subject }));
+      const text = t("admin.newTicketDm", { id: ticketId, subject });
+      const link = `${env.APP_BASE_URL}/admin/tickets/${ticketId}`;
+      const full = `${text}\\nОтвечать на сайте: ${link}`;
+      // DMs to administrators.
+      await pushAll(full);
+      // Telegram channel (if configured) — a single broadcast message.
+      if (env.SUPPORT_ADMIN_CHANNEL_ID) {
+        try {
+          const { bot } = await import("./bot");
+          await bot.telegram
+            .sendMessage(env.SUPPORT_ADMIN_CHANNEL_ID, full.slice(0, 4000))
+            .catch(() => undefined);
+        } catch {
+          // Best-effort.
+        }
+      }
+      // Email to admin inbox.
+      if (env.SUPPORT_ADMIN_EMAIL) {
+        const { sendMail } = await import("./mail");
+        void sendMail({
+          to: env.SUPPORT_ADMIN_EMAIL,
+          tag: "support-new-ticket",
+          subject: `Новое обращение #${ticketId.slice(0, 8)}: ${subject}`,
+          text: [
+            `Новое обращение в поддержке.`,
+            "",
+            `Тема: ${subject}`,
+            `ID: ${ticketId}`,
+            "",
+            `Ответить на сайте: ${link}`,
+            "",
+            "Ответы отправляются через панель поддержки на сайте — не в Telegram.",
+          ].join("\\n"),
+        }).catch(() => undefined);
+      }
       logger.info({ route: "admin-notify", outcome: "ticket_sent" });
     } catch {
       // Best-effort only.

@@ -117,6 +117,7 @@ export interface SessionUser {
   userId: number;
   telegramId: number | null;
   email: string | null;
+  emailVerifiedAt: Date | null;
   firstName: string | null;
   lastName: string | null;
   username: string | null;
@@ -137,12 +138,13 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   }
   const user = await prisma.user.findUnique({
     where: { id: identity.userId },
-    select: { email: true, firstName: true, lastName: true, username: true },
+    select: { email: true, emailVerifiedAt: true, firstName: true, lastName: true, username: true },
   });
   return {
     userId: identity.userId,
     telegramId: identity.telegramId,
     email: user?.email ?? null,
+    emailVerifiedAt: user?.emailVerifiedAt ?? null,
     firstName: user?.firstName ?? null,
     lastName: user?.lastName ?? null,
     username: user?.username ?? null,

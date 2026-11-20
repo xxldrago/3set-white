@@ -322,10 +322,16 @@ export default function CabinetDashboard({
     setPaying(true);
     setPayError(null);
     try {
+      // zod `.optional()` rejects `null` (only `undefined` is allowed), so a
+      // null promo must be omitted entirely rather than sent as JSON null.
+      const payload: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(body)) {
+        if (value !== null && value !== undefined) payload[key] = value;
+      }
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify(payload),
       });
       const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
       if (!res.ok || typeof data.url !== 'string' || data.url.length === 0) {
@@ -464,6 +470,26 @@ export default function CabinetDashboard({
                   Управляй ключами, устройствами и подпиской 3set VPN в одном месте. Быстро, безопасно, без лишних кликов.
                 </p>
               </div>
+          {/* ALERT */}
+          {!active && !alertHidden && (
+            <div className="alert reveal" id="expiredAlert">
+              <div className="ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 9v4M12 17h.01" /><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+                </svg>
+              </div>
+              <div className="txt">
+                <b>{key ? `Подписка истекла ${fmtDate(key.expiresAt)}` : 'Подписки ещё нет'}</b>
+                <span>Продлите доступ, чтобы устройства остались защищёнными.</span>
+              </div>
+              <button className="btn btn-primary" onClick={() => scrollTo('tariff')}>Продлить подписку</button>
+              <button className="icon-btn" onClick={() => setAlertHidden(true)} aria-label="Скрыть">
+                <X aria-hidden />
+              </button>
+            </div>
+          )}
+
+
             <div className="kicker" style={{ marginTop: 4 }}>{t('subs.title')}</div>
             <article id="subscription" className="card reveal" style={{ ['--d' as string]: '80ms' }}>
               {key ? (
@@ -622,26 +648,6 @@ export default function CabinetDashboard({
             </article>
             </div>
           </section>
-
-          {/* ALERT */}
-          {!active && !alertHidden && (
-            <div className="alert reveal" id="expiredAlert">
-              <div className="ic">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 9v4M12 17h.01" /><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
-                </svg>
-              </div>
-              <div className="txt">
-                <b>{key ? `Подписка истекла ${fmtDate(key.expiresAt)}` : 'Подписки ещё нет'}</b>
-                <span>Продлите доступ, чтобы устройства остались защищёнными.</span>
-              </div>
-              <button className="btn btn-primary" onClick={() => scrollTo('tariff')}>Продлить подписку</button>
-              <button className="icon-btn" onClick={() => setAlertHidden(true)} aria-label="Скрыть">
-                <X aria-hidden />
-              </button>
-            </div>
-          )}
-
 
           {/* TARIFF */}
           <section id="tariff">

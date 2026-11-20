@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import LabelEditor from '@/components/LabelEditor';
 import QrSvg from '@/components/QrSvg';
+import SocialShare from '@/components/SocialShare';
 import {
   TARIFF_DAYS,
   TARIFF_MAX_DEVICES,
@@ -822,6 +823,7 @@ export default function SubscriptionDashboard({
                     </div>
 
                     {k.subscriptionUrl && (
+                      <>
                       <div className="link-box">
                         <div className="link-row">
                           <span className="label">Ссылка подписки</span>
@@ -849,6 +851,13 @@ export default function SubscriptionDashboard({
                           </button>
                         </div>
                       </div>
+                      <SocialShare
+                        compact
+                        url={k.subscriptionUrl}
+                        title={`${displayName(k)} — 3set VPN`}
+                        text="Мой ключ 3set VPN — подключайся по ссылке."
+                      />
+                      </>
                     )}
 
                     <div className="kc-actions">

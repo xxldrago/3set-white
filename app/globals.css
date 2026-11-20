@@ -435,6 +435,12 @@ body::after {
 .cabinet .install.hide{opacity:0;transform:translateY(8px) scale(.99);max-height:0;padding:0;border-width:0;margin:0}
 .cabinet .install .ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:#eef5ea;color:#101a05;flex:none}
 .cabinet .install .ic svg{width:21px;height:21px}
+.cabinet .install .install-desktop,.cabinet .install .install-mobile{display:flex;align-items:center;gap:18px;width:100%;flex-wrap:wrap}
+.cabinet .install .install-mobile{display:none}
+@media (max-width:860px){
+  .cabinet .install .install-desktop{display:none}
+  .cabinet .install .install-mobile{display:flex}
+}
 
 .cabinet footer{border-top:1px solid var(--line);background:rgba(9,14,11,.6);position:relative;z-index:1}
 .cabinet .f-inner{max-width:1120px;margin:0 auto;padding:26px 20px;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}
@@ -659,4 +665,59 @@ body::after {
   .cabinet .search{flex:1}
   .cabinet .keys.list .key-card{flex-direction:column;align-items:stretch}
   .cabinet .keys.list .kc-actions .btn span.tx{display:inline}
+}
+
+/* ==========================================================================
+   SOCIAL SHARE + FIXED SUPPORT BADGE
+   Tokens-based so the same components work in light and dark surfaces.
+   ========================================================================== */
+.social-share{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.social-share.compact{margin-top:0}
+.social-share-label{font-size:12px;font-weight:700;color:var(--muted)}
+.social-share-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.social-share-row button{
+  width:36px;height:36px;flex:none;border-radius:10px;border:1px solid var(--line-2);
+  background:rgba(255,255,255,.03);color:var(--muted);display:grid;place-items:center;
+  cursor:pointer;transition:.25s cubic-bezier(.22,.9,.28,1);
+}
+.social-share-row button svg{width:17px;height:17px}
+.social-share-row button:hover{color:var(--lime);border-color:rgba(183,255,69,.5);background:rgba(183,255,69,.1);transform:translateY(-2px)}
+.social-share-row .social-share-all{
+  width:auto;padding:0 12px;display:flex;align-items:center;gap:8px;
+  font-size:12px;font-weight:800;
+}
+.social-share-row .social-share-status{font-size:12px;font-weight:700;color:var(--green)}
+.social-share-hint{font-size:12px;font-weight:700;color:var(--dim);transition:color .25s}
+.social-share-hint:hover{color:var(--lime)}
+
+.support-fab{position:fixed;right:20px;bottom:20px;z-index:120;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.support-fab-btn{
+  width:56px;height:56px;flex:none;border-radius:50%;display:grid;place-items:center;cursor:pointer;
+  border:1px solid rgba(183,255,69,.6);background:linear-gradient(135deg,#d4ff85,#8fdc2c);color:#101a05;
+  box-shadow:0 14px 34px -12px rgba(0,0,0,.6),0 0 0 5px rgba(183,255,69,.12);
+  transition:transform .3s cubic-bezier(.22,.9,.28,1),box-shadow .3s;
+}
+.support-fab-btn svg{width:24px;height:24px}
+.support-fab-btn:hover{transform:translateY(-3px) scale(1.05);box-shadow:0 18px 40px -12px rgba(0,0,0,.7),0 0 0 8px rgba(183,255,69,.16)}
+.support-fab-panel{
+  width:min(290px,calc(100vw - 40px));padding:16px;border-radius:16px;
+  border:1px solid rgba(233,255,214,.16);background:linear-gradient(165deg,#18231d,#101813);
+  color:#eef5ea;box-shadow:0 28px 60px -24px #000;
+  animation:cab-cardIn .35s cubic-bezier(.22,.9,.28,1) both;
+}
+.support-fab-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.support-fab-title{font-family:var(--font-display,var(--font-unbounded)),sans-serif;font-size:16px;font-weight:600}
+.support-fab-head button{width:30px;height:30px;flex:none;border-radius:9px;border:1px solid rgba(233,255,214,.16);background:rgba(255,255,255,.03);color:#9daba1;display:grid;place-items:center;cursor:pointer}
+.support-fab-head button svg{width:15px;height:15px}
+.support-fab-head button:hover{color:#ff7a6b;border-color:rgba(255,122,107,.4)}
+.support-fab-panel p{margin:0 0 12px;font-size:12.5px;line-height:1.5;color:#9daba1}
+.support-fab-panel a{
+  display:flex;align-items:center;gap:10px;padding:10px 11px;border-radius:10px;
+  font-size:13px;font-weight:700;color:#eef5ea;transition:background .2s,color .2s;
+}
+.support-fab-panel a svg{width:16px;height:16px;color:#b7ff45}
+.support-fab-panel a:hover{background:rgba(183,255,69,.1);color:#b7ff45}
+@media (max-width:620px){
+  .support-fab{right:14px;bottom:14px}
+  .support-fab-btn{width:50px;height:50px}
 }

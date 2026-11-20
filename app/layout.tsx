@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Manrope, Unbounded } from 'next/font/google';
+import SupportFab from '@/components/SupportFab';
 import { t } from '@/lib/i18n';
 import './globals.css';
 
@@ -47,7 +48,10 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
       lang="ru"
       className={`${manrope.variable} ${unbounded.variable} h-full`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <SupportFab />
+      </body>
     </html>
   );
 }

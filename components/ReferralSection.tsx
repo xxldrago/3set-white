@@ -6,6 +6,7 @@
 // recomputed here.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, Copy, Wallet } from 'lucide-react';
+import SocialShare from '@/components/SocialShare';
 import { t, tp } from '@/lib/i18n';
 
 const CARD = 'flex flex-col gap-4 rounded-2xl border border-line p-6 border-line';
@@ -267,6 +268,10 @@ export default function ReferralSection() {
             {t('auth.refCopied')}
           </p>
         )}
+        <SocialShare
+          url={link}
+          text="Заходи в 3set VPN — быстрый и безопасный VPN по ссылке друга."
+        />
       </div>
 
       <p className="text-sm text-muted">

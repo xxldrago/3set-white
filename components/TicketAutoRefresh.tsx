@@ -18,9 +18,13 @@ export default function TicketAutoRefresh({ ticketId }: { ticketId: string }) {
     const tick = () => {
       if (document.visibilityState !== 'visible') return;
       router.refresh();
+      window.dispatchEvent(new Event('ticket-unread-changed'));
     };
     timerRef.current = setInterval(tick, POLL_MS);
-    const onFocus = () => router.refresh();
+    const onFocus = () => {
+      router.refresh();
+      window.dispatchEvent(new Event('ticket-unread-changed'));
+    };
     window.addEventListener('focus', onFocus);
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);

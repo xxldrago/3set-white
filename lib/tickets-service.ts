@@ -212,6 +212,22 @@ export async function listTicketsByUserId(userId: number): Promise<TicketListRow
   return listTicketsByOwner({ id: userId });
 }
 
+/**
+ * Total unread support replies across ALL of the caller's tickets.
+ *
+ * Ownership-scoped (`where: { user: { id: userId } }`) so the header badge can
+ * never reveal another user's activity. Uses a `sum` aggregate rather than
+ * loading rows — this runs on every page (via the nav island), so it must stay
+ * a single cheap query.
+ */
+export async function unreadTicketCountForUser(userId: number): Promise<number> {
+  const result = await prisma.ticket.aggregate({
+    where: { user: { id: userId } },
+    _sum: { unreadForUser: true },
+  });
+  return result._sum.unreadForUser ?? 0;
+}
+
 async function listTicketsByOwner(
   ownerWhere: { telegramId: bigint } | { id: number },
 ): Promise<TicketListRow[]> {

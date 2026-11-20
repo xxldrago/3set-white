@@ -18,6 +18,7 @@ import {
     markTicketRead,
     markTicketReadForAdmin,
     transitionTicket,
+    unreadTicketCountForUser,
 } from '../../lib/tickets-service';
 import { prisma } from '../../lib/prisma';
 
@@ -348,5 +349,42 @@ describe('tickets-service — lifecycle: transitions, reopen, unread (D-50/D-58/
     expect(await transitionTicket(id, 'closed', 'open')).toBe(true);
     // Second call loses: the row is already closed.
     expect(await transitionTicket(id, 'closed', 'open')).toBe(false);
+  });
+});
+
+describe('tickets-service — header unread count', () => {
+  let ownerId: number;
+  let otherId: number;
+
+  beforeAll(async () => {
+    await cleanup();
+    const [owner, other] = await Promise.all([
+      prisma.user.create({ data: { telegramId: TELEGRAM_ID }, select: { id: true } }),
+      prisma.user.create({ data: { telegramId: OTHER_TELEGRAM_ID }, select: { id: true } }),
+    ]);
+    ownerId = owner.id;
+    otherId = other.id;
+  });
+
+  afterAll(async () => {
+    await cleanup();
+  });
+
+  it('sums unread replies across all tickets of one owner only', async () => {
+    await prisma.ticket.createMany({
+      data: [
+        { userId: ownerId, subject: 'A', unreadForUser: 2 },
+        { userId: ownerId, subject: 'B', unreadForUser: 3 },
+        { userId: otherId, subject: 'C', unreadForUser: 7 },
+      ],
+    });
+
+    await expect(unreadTicketCountForUser(ownerId)).resolves.toBe(5);
+    await expect(unreadTicketCountForUser(otherId)).resolves.toBe(7);
+  });
+
+  it('returns 0 when the owner has no unread replies', async () => {
+    await prisma.ticket.deleteMany({ where: { userId: ownerId } });
+    await expect(unreadTicketCountForUser(ownerId)).resolves.toBe(0);
   });
 });

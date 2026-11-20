@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { CircleHelp, Key, LifeBuoy, ShieldCheck, type LucideIcon } from 'lucide-react';
 import Logo from '@/components/Logo';
-import { t } from '@/lib/i18n';
+import { t, tp } from '@/lib/i18n';
 
 /** Serializable display identity passed from the server (see getSessionUser). */
 export interface NavUser {
@@ -44,8 +44,37 @@ function displayName(user: NavUser | null): string {
 export default function Nav({ user }: { user: NavUser | null }) {
   const pathname = usePathname();
   const [staff, setStaff] = useState(false);
+  const [unread, setUnread] = useState(0);
   // Profile is reachable only via the avatar icon (no text link).
   const items = NAV_ITEMS;
+
+  // Unread support replies — the header badge. Refreshed on mount, on window
+  // focus (so returning to the tab after a reply lands is up to date), and when
+  // a thread marks itself read via the shared `ticket-unread-changed` event.
+  // A failed read keeps the last value (badge never flashes a wrong number).
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const load = () => {
+      void fetch('/api/tickets/unread')
+        .then(async (res) => {
+          if (!res.ok || cancelled) return;
+          const body = (await res.json()) as { count?: unknown };
+          if (typeof body.count === 'number' && Number.isFinite(body.count) && !cancelled) {
+            setUnread(Math.max(0, body.count));
+          }
+        })
+        .catch(() => undefined);
+    };
+    load();
+    window.addEventListener('focus', load);
+    window.addEventListener('ticket-unread-changed', load);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', load);
+      window.removeEventListener('ticket-unread-changed', load);
+    };
+  }, [user]);
 
   // Staff shortcut: resolved client-side from the caller's own role so every
   // page keeps passing only the display identity. A failed read hides the
@@ -114,6 +143,14 @@ export default function Nav({ user }: { user: NavUser | null }) {
                 >
                   <ItemIcon className="h-4 w-4 shrink-0" aria-hidden />
                   {item.label}
+                  {item.href === '/support' && unread > 0 && (
+                    <span
+                      aria-label={tp('ticket.unread', unread)}
+                      className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-lime px-1 text-xs font-bold tabular-nums text-foreground"
+                    >
+                      {unread > 99 ? '99+' : unread}
+                    </span>
+                  )}
                 </Link>
               </li>
             );

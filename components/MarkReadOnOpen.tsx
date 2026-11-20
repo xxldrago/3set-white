@@ -16,7 +16,10 @@ export default function MarkReadOnOpen({ ticketId }: { ticketId: string }) {
     if (sent.current) return;
     sent.current = true;
     void fetch(`/api/tickets/${encodeURIComponent(ticketId)}/read`, { method: 'POST' })
-      .then(() => router.refresh())
+      .then(() => {
+        window.dispatchEvent(new Event('ticket-unread-changed'));
+        router.refresh();
+      })
       .catch(() => {
         // silent — retried on the next thread open (D-58)
       });

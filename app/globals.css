@@ -272,7 +272,7 @@ body::after {
 .cabinet .label{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:700}
 .cabinet .mono{font-family:var(--font-mono)}
 
-.cabinet .hero{display:grid;grid-template-columns:1.35fr .95fr;gap:20px;align-items:stretch}
+.cabinet .hero{display:grid;grid-template-columns:1fr;gap:20px;align-items:stretch}
 .cabinet .hero-main{display:flex;flex-direction:column;gap:16px;justify-content:center}
 .cabinet .hi-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .cabinet .pill{
@@ -518,3 +518,7 @@ body::after {
 }
 .cabinet .cab-pay > div > button:first-of-type:hover:not(:disabled){transform:translateY(-2px)}
 .cabinet .cab-pay .text-red-600{color:var(--danger) !important}
+
+/* Tailwind preflight adds a 1px currentColor ring to bare SVGs; the progress
+   ring must not inherit it (it would draw a white square around the dial). */
+.cabinet .ring-wrap svg{box-shadow:none !important}

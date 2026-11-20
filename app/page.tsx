@@ -42,6 +42,7 @@ function toView(key: RenderedKey): CabinetKeyView {
     devices: key.devices,
     deviceLimit: key.deviceLimit,
     subscriptionUrl: key.subscriptionUrl,
+    label: key.label ?? null,
   };
 }
 

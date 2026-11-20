@@ -17,7 +17,7 @@ import {
   Smartphone,
   X,
 } from 'lucide-react';
-import PayCta from '@/components/PayCta';
+import LabelEditor from '@/components/LabelEditor';
 import { t, tp } from '@/lib/i18n';
 import { TARIFF_DAYS, tariffDaysLabel } from '@/lib/tariff-grid';
 
@@ -30,6 +30,7 @@ export interface CabinetKeyView {
   devices: number | null;
   deviceLimit: number | null;
   subscriptionUrl: string | null;
+  label?: string | null;
 }
 
 interface Props {
@@ -124,6 +125,11 @@ export default function CabinetDashboard({
   const [alertHidden, setAlertHidden] = useState(false);
   const [installHidden, setInstallHidden] = useState(false);
   const [openFaq, setOpenFaq] = useState(0);
+  const [keyLabel, setKeyLabel] = useState<string | null>(keys[0]?.label ?? null);
+  const [addDevices, setAddDevices] = useState(1);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -311,6 +317,38 @@ export default function CabinetDashboard({
     if (el) window.scrollTo({ top: el.offsetTop - 90, behavior: 'smooth' });
   };
 
+  const doPay = async (body: Record<string, unknown>) => {
+    if (paying) return;
+    setPaying(true);
+    setPayError(null);
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      if (!res.ok || typeof data.url !== 'string' || data.url.length === 0) {
+        const code = data.error ?? `http_${res.status}`;
+        const messages: Record<string, string> = {
+          promo_invalid: 'Промокод недействителен или уже использован — уберите его и попробуйте снова.',
+          payment_required: 'На балансе провайдера недостаточно средств — пополните баланс API.',
+          rate_limited: 'Слишком много попыток. Повторите через минуту.',
+          unauthorized: 'Сессия истекла — войдите в кабинет заново.',
+          unauthorized_error: 'Сессия истекла — войдите в кабинет заново.',
+          bad_request: 'Некорректные параметры заказа — проверьте срок и число устройств.',
+        };
+        setPayError(messages[code] ?? `Не удалось создать платёж (${code}). Попробуйте ещё раз.`);
+        return;
+      }
+      window.location.assign(data.url);
+    } catch {
+      setPayError('Не удалось связаться с сервером оплаты. Попробуйте ещё раз.');
+    } finally {
+      setPaying(false);
+    }
+  };
+
   const navLinks = [
     { href: '/subscription', label: 'Мои ключи', icon: KeyRound, id: 'subscription' },
     { href: '/#tariff', label: 'Тарифы', icon: ShieldCheck, id: 'tariff' },
@@ -426,89 +464,8 @@ export default function CabinetDashboard({
                   Управляй ключами, устройствами и подпиской 3set VPN в одном месте. Быстро, безопасно, без лишних кликов.
                 </p>
               </div>
-              <div className="hero-stats">
-                <div className="mini">
-                  <span className="label">Устройства</span>
-                  <b>{devices}<small>/{deviceLimit}</small></b>
-                  <div className="bar"><i style={{ width: `${deviceLimit > 0 ? Math.min(100, (devices / deviceLimit) * 100) : 0}%` }} /></div>
-                </div>
-                <div className="mini">
-                  <span className="label">Серверов</span>
-                  <b>48<small>стран 12</small></b>
-                  <div className="bar"><i style={{ width: '86%' }} /></div>
-                </div>
-                <div className="mini">
-                  <span className="label">Пинг сейчас</span>
-                  <b>{ping}<small>мс</small></b>
-                  <div className="bar"><i style={{ width: `${Math.min(100, (ping / 64) * 100)}%` }} /></div>
-                </div>
-              </div>
-            </div>
-
-            <div className="card hero-side reveal" style={{ ['--d' as string]: '120ms' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                <div>
-                  <span className="label">Стабильность сети</span>
-                  <div style={{ fontSize: 15, fontWeight: 800, marginTop: 4 }}>99,98% аптайм</div>
-                </div>
-                <span className="pill ok"><span className="pdot" />Live</span>
-              </div>
-              <svg className="spark" id="spark" viewBox="0 0 300 56" preserveAspectRatio="none" aria-hidden>
-                <polygon className="spark-area" id="sparkArea" points="" />
-                <polyline className="spark-line" id="sparkLine" points="" />
-              </svg>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--dim)' }} className="mono">
-                <span>-30 мин</span><span>сейчас</span>
-              </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
-                <button
-                  className="btn btn-ghost sm"
-                  onClick={async () => {
-                    const ok = key?.subscriptionUrl ? await copyText(key.subscriptionUrl) : false;
-                    toastBox(ok ? 'Ссылка подписки скопирована' : 'Нет ссылки подписки', !ok);
-                  }}
-                >
-                  <span dangerouslySetInnerHTML={{ __html: COPY_ICON }} />
-                  Копировать ключ
-                </button>
-                <button className="btn btn-quiet sm" onClick={openModal}>
-                  <Smartphone aria-hidden />
-                  Устройства
-                </button>
-              </div>
-            </div>
-          </section>
-
-          {/* ALERT */}
-          {!active && !alertHidden && (
-            <div className="alert reveal" id="expiredAlert">
-              <div className="ic">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 9v4M12 17h.01" /><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
-                </svg>
-              </div>
-              <div className="txt">
-                <b>{key ? `Подписка истекла ${fmtDate(key.expiresAt)}` : 'Подписки ещё нет'}</b>
-                <span>Продлите доступ, чтобы устройства остались защищёнными.</span>
-              </div>
-              <button className="btn btn-primary" onClick={() => scrollTo('tariff')}>Продлить подписку</button>
-              <button className="icon-btn" onClick={() => setAlertHidden(true)} aria-label="Скрыть">
-                <X aria-hidden />
-              </button>
-            </div>
-          )}
-
-          {/* SUBSCRIPTION */}
-          <section id="subscription">
-            <div className="sec-head reveal">
-              <div>
-                <span className="kicker">Ключи</span>
-                <h2 className="sec-title" style={{ marginTop: 6 }}>{t('subs.title')}</h2>
-              </div>
-              {key && <span className="pill" style={{ color: 'var(--dim)' }}><span className="mono" style={{ fontSize: 11 }}>{key.name.slice(0, 14)}</span></span>}
-            </div>
-
-            <article className="card reveal" style={{ ['--d' as string]: '80ms' }}>
+            <div className="kicker" style={{ marginTop: 4 }}>{t('subs.title')}</div>
+            <article id="subscription" className="card reveal" style={{ ['--d' as string]: '80ms' }}>
               {key ? (
                 <>
                   <div className="sub-top">
@@ -532,10 +489,18 @@ export default function CabinetDashboard({
                       <div className="sub-name">
                         <span className="ic"><KeyRound aria-hidden /></span>
                         <div>
-                          <h3>{key.name}</h3>
+                          <h3>{keyLabel ?? key.name}</h3>
                           <div className="label" style={{ marginTop: 3 }}>Персональный ключ</div>
                         </div>
                       </div>
+                      <LabelEditor
+                        url={`/api/keys/${encodeURIComponent(key.id)}`}
+                        value={keyLabel}
+                        triggerLabel="Переименовать подписку"
+                        title="Название подписки"
+                        hint="Видно только вам — в панели провайдера имя не меняется."
+                        onSaved={setKeyLabel}
+                      />
                       <div className="sub-meta">
                         <span className={`pill ${active ? 'ok' : 'warn'}`}><span className="pdot" />{active ? 'Активна' : 'Истёк'}</span>
                         <span className="pill" style={{ color: 'var(--muted)' }}>WireGuard</span>
@@ -594,7 +559,55 @@ export default function CabinetDashboard({
                       <Smartphone aria-hidden />
                       Устройства
                     </button>
+                    <button
+                      className="btn btn-ghost"
+                      disabled={!active || deviceLimit >= 9999}
+                      onClick={() => setShowUpgrade((v) => !v)}
+                    >
+                      <Monitor aria-hidden />
+                      Добавить устройства
+                    </button>
                   </div>
+
+                  {showUpgrade && active && deviceLimit < 9999 && (
+                    <div className="card" style={{ marginTop: 16, padding: 18, boxShadow: 'none' }}>
+                      <span className="opt-label">Сколько устройств добавить</span>
+                      <div className="stepper">
+                        <button className="step-btn" aria-label="Уменьшить" disabled={addDevices <= 1} onClick={() => setAddDevices((n) => Math.max(1, n - 1))}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14" /></svg>
+                        </button>
+                        <input
+                          className="step-num"
+                          type="number"
+                          min={1}
+                          max={9999 - deviceLimit}
+                          value={addDevices}
+                          onChange={(e) => {
+                            const n = Number.parseInt(e.target.value, 10);
+                            if (Number.isFinite(n)) setAddDevices(Math.min(9999 - deviceLimit, Math.max(1, n)));
+                          }}
+                          aria-label="Число добавляемых устройств"
+                          style={{ width: 64, background: 'transparent', border: 'none', outline: 'none' }}
+                        />
+                        <button className="step-btn" aria-label="Увеличить" disabled={addDevices >= 9999 - deviceLimit} onClick={() => setAddDevices((n) => Math.min(9999 - deviceLimit, n + 1))}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14M12 5v14" /></svg>
+                        </button>
+                        <span className="dim" style={{ fontSize: 12, marginLeft: 8 }}>
+                          максимум {9999 - deviceLimit} · доплата пропорционально сроку
+                        </span>
+                      </div>
+                      <div style={{ marginTop: 16 }}>
+                        <button
+                          className="btn btn-primary block"
+                          disabled={paying || addDevices < 1}
+                          onClick={() => void doPay({ kind: 'upgrade', keyId: key.id, addDevices })}
+                        >
+                          {paying ? 'Создаём платёж…' : 'Добавить устройства'}
+                        </button>
+                        {payError && <p role="alert" style={{ color: 'var(--danger)', fontSize: 13 }}>{payError}</p>}
+                      </div>
+                    </div>
+                  )}
                 </>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: 24, textAlign: 'center' }}>
@@ -607,7 +620,28 @@ export default function CabinetDashboard({
                 </div>
               )}
             </article>
+            </div>
           </section>
+
+          {/* ALERT */}
+          {!active && !alertHidden && (
+            <div className="alert reveal" id="expiredAlert">
+              <div className="ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 9v4M12 17h.01" /><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+                </svg>
+              </div>
+              <div className="txt">
+                <b>{key ? `Подписка истекла ${fmtDate(key.expiresAt)}` : 'Подписки ещё нет'}</b>
+                <span>Продлите доступ, чтобы устройства остались защищёнными.</span>
+              </div>
+              <button className="btn btn-primary" onClick={() => scrollTo('tariff')}>Продлить подписку</button>
+              <button className="icon-btn" onClick={() => setAlertHidden(true)} aria-label="Скрыть">
+                <X aria-hidden />
+              </button>
+            </div>
+          )}
+
 
           {/* TARIFF */}
           <section id="tariff">
@@ -637,7 +671,11 @@ export default function CabinetDashboard({
                       <span className="t-body">
                         <span className="t-label">{tariffDaysLabel(d)}</span>
                         <span className="t-price">{termPrices[d] === undefined ? '—' : RUB(termPrices[d]!)}</span>
-                        <span className="t-per">по популярному тарифу</span>
+                        <span className="t-per">
+                          {termPrices[d] === undefined
+                            ? 'цена уточняется…'
+                            : `≈ ${(termPrices[d]! / d).toFixed(1).replace('.', ',')} ₽/день · 1 устр.`}
+                        </span>
                       </span>
                     </button>
                   ))}
@@ -667,7 +705,7 @@ export default function CabinetDashboard({
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14M12 5v14" /></svg>
                       </button>
                       <div className="dots" aria-hidden>
-                        {[1, 2, 3, 4, 5].map((i) => <i key={i} className={i <= count ? 'on' : ''} />)}
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => <i key={i} className={i <= count ? 'on' : ''} />)}
                       </div>
                     </div>
                   </div>
@@ -717,16 +755,15 @@ export default function CabinetDashboard({
                   )}
                 </div>
 
-                <div className="cab-pay">
-                  <PayCta
-                    kind="new"
-                    days={term}
-                    devices={count}
-                    disabled={price === null}
-                    label="Купить и продлить"
-                    promoCode={promo}
-                  />
-                </div>
+                <button
+                  className="btn btn-primary block"
+                  style={{ height: 52 }}
+                  disabled={price === null || paying}
+                  onClick={() => void doPay({ kind: 'new', days: term, devices: count, promoCode: promo })}
+                >
+                  {paying ? 'Создаём платёж…' : 'Купить и продлить'}
+                </button>
+                {payError && <p role="alert" style={{ color: 'var(--danger)', fontSize: 13 }}>{payError}</p>}
                 <div className="pay-icons">
                   <span className="mono">МИР</span>·<span className="mono">VISA</span>·<span className="mono">MC</span>·<span className="mono">SBP</span>·<span className="mono">CRYPTO</span>
                 </div>
@@ -894,6 +931,15 @@ export default function CabinetDashboard({
                   <b>{d.label ?? d.name ?? d.token}</b>
                   <span>токен {d.token.slice(0, 12)}</span>
                 </span>
+                <LabelEditor
+                  compact
+                  url={`/api/keys/${encodeURIComponent(key!.id)}/devices/${encodeURIComponent(d.token)}`}
+                  value={d.label}
+                  triggerLabel="Переименовать устройство"
+                  title="Название устройства"
+                  hint="Подпись видна только вам и не отправляется провайдеру."
+                  onSaved={(label) => setDeviceRows((rows) => rows.map((r) => (r.token === d.token ? { ...r, label } : r)))}
+                />
                 <button className="d-act" onClick={() => void detachDevice(d.token, d.label ?? d.name ?? d.token)}>Отключить</button>
               </div>
             ))

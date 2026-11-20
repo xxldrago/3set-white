@@ -3,7 +3,8 @@
 // leaves the server (T-02-04).
 //
 // Query input is validated (days ∈ TARIFF_DAYS = {7,30,90,180,365},
-// devices ∈ 1..9999 — the provider's `minDevices=1`/`maxDevices=9999`).
+// devices ∈ 2..9999 — the storefront's minimum bundle and the provider's
+// `maxDevices=9999`).
 // `kind:'upgrade'` returns the prorated device delta (D-43; observed
 // 2026-10-03, no provider quote endpoint). Provider failures map to their
 // status; the provider message is never returned, only `code`.

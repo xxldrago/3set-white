@@ -17,9 +17,8 @@ import { ArtemidaError, artemida } from "./artemida";
 import { logger } from "./logger";
 import { prisma } from "./prisma";
 import {
-  MARKUP_KINDS,
-  MARKUP_MAX_FIXED,
-  MARKUP_MAX_PERCENT,
+  MARKUP_PER_DEVICE,
+  MARKUP_PER_DEVICE_MAX,
   TARIFF_CURRENCY,
   TARIFF_DAYS,
   TARIFF_GRID_MAX_DEVICES,
@@ -27,13 +26,11 @@ import {
   TARIFF_MAX_DEVICES,
   TARIFF_MIN_AMOUNT,
   TARIFF_MIN_DEVICES,
-  type MarkupKind,
 } from "./tariff-grid";
 
 export {
-  MARKUP_KINDS,
-  MARKUP_MAX_FIXED,
-  MARKUP_MAX_PERCENT,
+  MARKUP_PER_DEVICE,
+  MARKUP_PER_DEVICE_MAX,
   TARIFF_CURRENCY,
   TARIFF_DAYS,
   TARIFF_GRID_MAX_DEVICES,
@@ -42,7 +39,7 @@ export {
   TARIFF_MIN_AMOUNT,
   TARIFF_MIN_DEVICES,
 };
-export type { MarkupKind, TariffDays } from "./tariff-grid";
+export type { TariffDays } from "./tariff-grid";
 
 export interface TariffQuote {
   amount: number;
@@ -67,16 +64,10 @@ export interface TariffPriceInput {
   amount: number | null;
 }
 
-export interface TariffMarkup {
-  kind: MarkupKind;
-  /** Percent points when kind=percent, whole RUB when kind=fixed. */
-  value: number;
-}
+/** Whole-RUB markup added once per device for one offered term. */
+export type PerDeviceMarkups = Record<number, number>;
 
-export const DEFAULT_MARKUP: TariffMarkup = { kind: "percent", value: 0 };
-
-const MARKUP_KIND_KEY = "pricing.markupKind";
-const MARKUP_VALUE_KEY = "pricing.markupValue";
+const markupKey = (days: number) => `pricing.markupPerDevice.${days}`;
 
 const gridCellSchema = z.object({
   days: z.number().int().refine((v) => (TARIFF_DAYS as readonly number[]).includes(v)),
@@ -105,60 +96,83 @@ function assertTariffSelection(days: number, devices: number): void {
 }
 
 // ---------------------------------------------------------------------------
-// Markup settings
+// Per-device markup settings
 // ---------------------------------------------------------------------------
 
-/** Read the global markup. Missing/invalid rows fall back to no markup. */
-export async function getTariffMarkup(): Promise<TariffMarkup> {
-  const rows = await prisma.setting.findMany({
-    where: { key: { in: [MARKUP_KIND_KEY, MARKUP_VALUE_KEY] } },
-    select: { key: true, value: true },
+/** Read one term's per-device markup, falling back to the locked default. */
+export async function getMarkupPerDevice(days: number): Promise<number> {
+  if (!(TARIFF_DAYS as readonly number[]).includes(days)) {
+    throw new Error("pricing:bad_request:days");
+  }
+  const row = await prisma.setting.findUnique({
+    where: { key: markupKey(days) },
+    select: { value: true },
   });
-  const byKey = new Map(rows.map((row) => [row.key, row.value]));
-  const kindRaw = byKey.get(MARKUP_KIND_KEY);
-  const kind: MarkupKind =
-    kindRaw === "fixed" || kindRaw === "percent" ? kindRaw : DEFAULT_MARKUP.kind;
-  const rawValue = byKey.get(MARKUP_VALUE_KEY);
-  const parsed = rawValue === undefined ? Number.NaN : Number(rawValue);
-  const value =
-    Number.isFinite(parsed) && parsed >= 0 ? parsed : DEFAULT_MARKUP.value;
-  return { kind, value };
+  if (row === null) return MARKUP_PER_DEVICE[days as keyof typeof MARKUP_PER_DEVICE];
+  const parsed = Number(row.value);
+  return Number.isFinite(parsed) && parsed >= 0 && parsed <= MARKUP_PER_DEVICE_MAX
+    ? Math.round(parsed)
+    : MARKUP_PER_DEVICE[days as keyof typeof MARKUP_PER_DEVICE];
 }
 
-/** Validate + persist the global markup (admin-only surface). */
-export async function setTariffMarkup(input: TariffMarkup): Promise<TariffMarkup> {
-  const kind: MarkupKind = input.kind === "fixed" ? "fixed" : "percent";
-  const ceiling = kind === "fixed" ? MARKUP_MAX_FIXED : MARKUP_MAX_PERCENT;
-  if (!Number.isFinite(input.value) || input.value < 0 || input.value > ceiling) {
+/** Read all five term markups (one query), defaults filled in. */
+export async function getAllMarkupsPerDevice(): Promise<PerDeviceMarkups> {
+  const rows = await prisma.setting.findMany({
+    where: { key: { startsWith: "pricing.markupPerDevice." } },
+    select: { key: true, value: true },
+  });
+  const byDays = new Map<number, number>();
+  for (const row of rows) {
+    const days = Number(row.key.slice("pricing.markupPerDevice.".length));
+    const parsed = Number(row.value);
+    if (
+      (TARIFF_DAYS as readonly number[]).includes(days) &&
+      Number.isFinite(parsed) &&
+      parsed >= 0 &&
+      parsed <= MARKUP_PER_DEVICE_MAX
+    ) {
+      byDays.set(days, Math.round(parsed));
+    }
+  }
+  const result: PerDeviceMarkups = {};
+  for (const days of TARIFF_DAYS) {
+    result[days] = byDays.get(days) ?? MARKUP_PER_DEVICE[days];
+  }
+  return result;
+}
+
+/** Validate + persist one term's per-device markup (admin-only surface). */
+export async function setMarkupPerDevice(days: number, value: number): Promise<number> {
+  if (!(TARIFF_DAYS as readonly number[]).includes(days)) {
+    throw new Error("pricing:bad_request:days");
+  }
+  if (!Number.isInteger(value) || value < 0 || value > MARKUP_PER_DEVICE_MAX) {
     throw new Error("pricing:bad_request:markup");
   }
-  // Percent may be fractional (e.g. 7.5%); a fixed markup is whole RUB.
-  const value = kind === "fixed" ? Math.round(input.value) : Math.round(input.value * 100) / 100;
-  for (const [key, stored] of [
-    [MARKUP_KIND_KEY, kind],
-    [MARKUP_VALUE_KEY, String(value)],
-  ] as const) {
-    await prisma.setting.upsert({
-      where: { key },
-      update: { value: stored },
-      create: { key, value: stored },
-    });
-  }
-  logger.info({ route: "admin-pricing", outcome: "markup_set", kind, value });
-  return { kind, value };
+  await prisma.setting.upsert({
+    where: { key: markupKey(days) },
+    update: { value: String(value) },
+    create: { key: markupKey(days), value: String(value) },
+  });
+  logger.info({ route: "admin-pricing", outcome: "markup_set", days, value });
+  return value;
 }
 
 /**
- * Apply the markup to a provider amount (whole RUB).
+ * Retail price = live provider quote + per-device markup × device count.
  *
- * Rounding is half-up so a 0.5 RUB fraction never silently favours the buyer,
- * and the result is clamped to the storefront floor (1 RUB) — a free order must
- * never be created by a markup of zero on a zero quote.
+ * The provider quote already reflects its own device tiers, so the final price
+ * always tracks ARTEMIDA changes; the markup is a constant addition per device.
+ * Rounding is half-up and the result is clamped to the storefront floor.
  */
-export function applyMarkup(providerAmount: number, markup: TariffMarkup): number {
+export function applyMarkup(
+  providerAmount: number,
+  days: number,
+  devices: number,
+  markupPerDevice: number,
+): number {
   const base = providerAmount;
-  const raw =
-    markup.kind === "fixed" ? base + markup.value : base + (base * markup.value) / 100;
+  const raw = base + markupPerDevice * devices;
   const rounded = Math.round(raw);
   return Math.max(TARIFF_MIN_AMOUNT, Math.min(TARIFF_MAX_AMOUNT, rounded));
 }
@@ -195,10 +209,10 @@ export async function resolveTariffQuote(days: number, devices: number): Promise
   if (manual) return { amount: manual.amount, currency: manual.currency, source: "manual" };
   const [provider, markup] = await Promise.all([
     artemida.getPricing({ days, devices }),
-    getTariffMarkup(),
+    getMarkupPerDevice(days),
   ]);
   return {
-    amount: applyMarkup(Math.round(provider.price), markup),
+    amount: applyMarkup(Math.round(provider.price), days, devices, markup),
     currency: provider.currency,
     source: "provider",
   };
@@ -234,10 +248,17 @@ export async function resolveUpgradeQuote(input: {
   }
   const [provider, markup] = await Promise.all([
     artemida.getUpgradeQuote({ days, devices, addDevices }),
-    getTariffMarkup(),
+    // Upgrades are priced on the 30-day basis, so the monthly per-device
+    // markup applies to every added device.
+    getMarkupPerDevice(30),
   ]);
   return {
-    amount: applyMarkup(Math.round(provider.amount), markup),
+    // The provider quote already covers the added devices; the markup is
+    // charged once per added device, not per total device count.
+    amount: Math.max(
+      TARIFF_MIN_AMOUNT,
+      Math.min(TARIFF_MAX_AMOUNT, Math.round(provider.amount) + markup * addDevices),
+    ),
     currency: provider.currency,
     source: "provider",
   };

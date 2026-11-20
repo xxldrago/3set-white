@@ -262,7 +262,7 @@ function tariffDaysKeyboard() {
 }
 
 /** Device counts offered as one-tap presets; anything else is typed. */
-const DEVICE_PRESETS = [1, 2, 3, 5, 10] as const;
+const DEVICE_PRESETS = [2, 3, 5, 10] as const;
 
 /**
  * Pending "type a device count" prompts, keyed by telegram id.

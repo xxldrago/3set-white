@@ -15,12 +15,12 @@ export type TariffDays = (typeof TARIFF_DAYS)[number];
 /**
  * Storefront device bounds.
  *
- * The provider now accepts 1..9999 devices (`minDevices=1`, `maxDevices=9999`
- * in `GET /pricing`). The old "minimum 2" lock belonged to the retired price
- * grid and is gone. Retail pricing is a markup over the provider quote, so a
- * device count this large needs no per-cell grid.
+ * The provider accepts 1..9999, but the storefront sells from 2 devices: that
+ * is the bundle the retail markups are calibrated for (30 days / 2 devices =
+ * 400 RUB). Retail pricing is a per-device markup over the live provider quote,
+ * so the 9999 ceiling needs no per-cell price table.
  */
-export const TARIFF_MIN_DEVICES = 1;
+export const TARIFF_MIN_DEVICES = 2;
 export const TARIFF_MAX_DEVICES = 9999;
 
 /**
@@ -49,6 +49,29 @@ export type MarkupKind = (typeof MARKUP_KINDS)[number];
 export const MARKUP_MAX_PERCENT = 1000;
 /** Upper bound for a fixed markup in whole RUB. */
 export const MARKUP_MAX_FIXED = 1_000_000;
+
+/**
+ * Retail markup PER DEVICE, in whole RUB, added on top of the live ARTEMIDA
+ * quote for each offered term. The values are calibrated so that:
+ *   30 days: 2 devices = 400 RUB (provider 120 + 140*2), every next device +200
+ *   90 days: provider + 350 per device
+ *   180 days: provider + 680 per device
+ *   365 days: provider + 1405 per device
+ *   7 days: 140 * 7/30 ≈ 33 per device (proportional to the monthly markup)
+ *
+ * Because the base is always the provider quote, every price still tracks
+ * ARTEMIDA tier changes — the markup is a constant per-device addition.
+ */
+export const MARKUP_PER_DEVICE: Record<TariffDays, number> = {
+  7: 33,
+  30: 140,
+  90: 350,
+  180: 680,
+  365: 1405,
+};
+
+/** Upper bound for one per-device markup (whole RUB). */
+export const MARKUP_PER_DEVICE_MAX = 100_000;
 
 import { t } from './i18n';
 

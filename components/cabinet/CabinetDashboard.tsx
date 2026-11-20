@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import LabelEditor from '@/components/LabelEditor';
 import { t, tp } from '@/lib/i18n';
-import { TARIFF_DAYS, tariffDaysLabel } from '@/lib/tariff-grid';
+import { TARIFF_DAYS, TARIFF_MIN_DEVICES, tariffDaysLabel } from '@/lib/tariff-grid';
 
 export interface CabinetKeyView {
   id: string;
@@ -113,7 +113,7 @@ export default function CabinetDashboard({
   const [unread, setUnread] = useState(unreadInitial);
   const [terms] = useState<readonly number[]>(TARIFF_DAYS);
   const [term, setTerm] = useState<number>(TARIFF_DAYS.includes(30) ? 30 : (TARIFF_DAYS[0] as number));
-  const [count, setCount] = useState(1);
+  const [count, setCount] = useState(TARIFF_MIN_DEVICES);
   const [termPrices, setTermPrices] = useState<Record<number, number>>({});
   const [promo, setPromo] = useState<string | null>(null);
   const [promoText, setPromoText] = useState('');
@@ -680,7 +680,7 @@ export default function CabinetDashboard({
                         <span className="t-per">
                           {termPrices[d] === undefined
                             ? 'цена уточняется…'
-                            : `≈ ${(termPrices[d]! / d).toFixed(1).replace('.', ',')} ₽/день · 1 устр.`}
+                            : `≈ ${(termPrices[d]! / d / TARIFF_MIN_DEVICES).toFixed(1).replace('.', ',')} ₽/день · устр.`}
                         </span>
                       </span>
                     </button>
@@ -691,18 +691,18 @@ export default function CabinetDashboard({
                   <div>
                     <span className="opt-label">Устройства</span>
                     <div className="stepper">
-                      <button className="step-btn" aria-label="Уменьшить число устройств" disabled={count <= 1} onClick={() => setCount((c) => Math.max(1, c - 1))}>
+                      <button className="step-btn" aria-label="Уменьшить число устройств" disabled={count <= TARIFF_MIN_DEVICES} onClick={() => setCount((c) => Math.max(TARIFF_MIN_DEVICES, c - 1))}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14" /></svg>
                       </button>
                       <input
                         className="step-num"
                         type="number"
-                        min={1}
+                        min={TARIFF_MIN_DEVICES}
                         max={9999}
                         value={count}
                         onChange={(e) => {
                           const n = Number.parseInt(e.target.value, 10);
-                          if (Number.isFinite(n)) setCount(Math.min(9999, Math.max(1, n)));
+                          if (Number.isFinite(n)) setCount(Math.min(9999, Math.max(TARIFF_MIN_DEVICES, n)));
                         }}
                         aria-label="Число устройств"
                         style={{ width: 64, background: 'transparent', border: 'none', outline: 'none' }}
@@ -711,7 +711,7 @@ export default function CabinetDashboard({
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14M12 5v14" /></svg>
                       </button>
                       <div className="dots" aria-hidden>
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => <i key={i} className={i <= count ? 'on' : ''} />)}
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => <i key={i} className={i <= count && i >= TARIFF_MIN_DEVICES ? 'on' : ''} />)}
                       </div>
                     </div>
                   </div>

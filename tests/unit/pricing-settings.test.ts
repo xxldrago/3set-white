@@ -164,7 +164,7 @@ describe("resolveTariffQuote — manual wins, provider fallback", () => {
     vi.stubGlobal("fetch", vi.fn(async () => jsonResponse({ body: providerPricing(321) })));
 
     await expect(resolveTariffQuote(7, 10)).resolves.toEqual({
-      amount: 321,
+      amount: 651,
       currency: "RUB",
       source: "provider",
     });
@@ -187,7 +187,7 @@ describe("resolveUpgradeQuote — grid month unit with provider fallback", () =>
     vi.stubGlobal("fetch", vi.fn(async () => jsonResponse({ body: providerPricing(120) })));
 
     await expect(resolveUpgradeQuote({ days: 30, devices: 9, addDevices: 1 })).resolves.toEqual({
-      amount: 60,
+      amount: 200,
       currency: "RUB",
       source: "provider",
     });

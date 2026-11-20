@@ -165,7 +165,7 @@ describe("POST /api/orders — renew (PAY-02, D-42..D-45)", () => {
       keyId: OWNED_KEY,
       days: 30,
       devices: 2,
-      amount: 120,
+      amount: 400,
       currency: "RUB",
       status: "pending",
     });
@@ -220,7 +220,7 @@ describe("POST /api/orders — upgrade (PAY-03, D-42..D-45)", () => {
       kind: "upgrade",
       keyId: OWNED_KEY,
       devices: 1, // stored as the addDevices delta the worker sends to the provider
-      amount: 60, // observed prorated +1 device / 30d → 60 RUB
+      amount: 200, // provider 60 + 140 markup for 1 added device
       status: "pending",
     });
   });

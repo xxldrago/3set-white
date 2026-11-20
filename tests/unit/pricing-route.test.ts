@@ -61,7 +61,7 @@ describe('GET /api/pricing (TRIAL-02)', () => {
     const res = await request('days=7&devices=2');
 
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ price: 49 });
+    expect(await res.json()).toEqual({ price: 115 });
   });
 
   it('clamps devices to the provider range 1..9999', async () => {
@@ -73,11 +73,11 @@ describe('GET /api/pricing (TRIAL-02)', () => {
 
     expect((await request('days=7&devices=0')).status).toBe(400);
     expect((await request('days=7&devices=10000')).status).toBe(400);
-    expect((await request('days=7&devices=1')).status).toBe(200);
+    expect((await request('days=7&devices=1')).status).toBe(400);
     expect((await request('days=7&devices=9999')).status).toBe(200);
     expect((await request('days=7&devices=2')).status).toBe(200);
     // Only the valid selections reached the provider.
-    expect(fetchSpy).toHaveBeenCalledTimes(3);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
   it('restricts days to the offered {7,30,90,180,365} set', async () => {
@@ -102,7 +102,7 @@ describe('GET /api/pricing (TRIAL-02)', () => {
     const res = await request('days=7&devices=2');
 
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ price: 49 });
+    expect(await res.json()).toEqual({ price: 115 });
   });
 
   it('maps a provider 429 to HTTP 429 with the Retry-After value', async () => {

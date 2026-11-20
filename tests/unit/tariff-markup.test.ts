@@ -1,11 +1,10 @@
-// Retail pricing model: markup over the provider quote + a small manual grid.
+// Retail pricing model: per-device markup over the live ARTEMIDA quote.
 //
-// The device ceiling is 9999, so a per-cell price table cannot cover the range.
-// The PRIMARY lever is a global markup (percent or fixed RUB) applied to the live
-// ARTEMIDA quote; an exact manual cell still wins for the small range
-// (≤ TARIFF_GRID_MAX_DEVICES). These vectors pin that precedence and the
-// rounding/floor rules, plus the route-level guards that keep a bad markup from
-// ever reaching a charge.
+// The primary lever is a fixed RUB markup PER DEVICE for each offered term:
+//   7d 33, 30d 140, 90d 350, 180d 680, 365d 1405.
+// The storefront minimum is 2 devices. An exact manual cell still wins for the
+// small range (≤ TARIFF_GRID_MAX_DEVICES). These vectors pin the calibration,
+// the per-device multiplication, and the route-level guards.
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const session = vi.hoisted(() => ({ token: undefined as string | undefined }));
@@ -22,14 +21,15 @@ import { GET as pricingGet } from "../../app/api/pricing/route";
 import { signSession } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
 import {
-  DEFAULT_MARKUP,
   applyMarkup,
-  getTariffMarkup,
+  getAllMarkupsPerDevice,
+  getMarkupPerDevice,
   replaceTariffGrid,
   resolveTariffQuote,
-  setTariffMarkup,
+  setMarkupPerDevice,
 } from "../../lib/pricing";
 import {
+  MARKUP_PER_DEVICE,
   TARIFF_DAYS,
   TARIFF_GRID_MAX_DEVICES,
   TARIFF_MAX_DEVICES,
@@ -39,6 +39,8 @@ import {
 const ADMIN_TG = 900910;
 const SECRET =
   process.env["SESSION_SECRET"] ?? "unit-test-session-secret-at-least-32-characters";
+
+const MARKUP_KEYS = TARIFF_DAYS.map((d) => `pricing.markupPerDevice.${d}`);
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -65,9 +67,7 @@ function providerPricing(amount: number) {
 }
 
 async function cleanup(): Promise<void> {
-  await prisma.setting.deleteMany({
-    where: { key: { in: ["pricing.markupKind", "pricing.markupValue"] } },
-  });
+  await prisma.setting.deleteMany({ where: { key: { in: MARKUP_KEYS } } });
   await prisma.tariffPrice.deleteMany({});
   await prisma.adminUser.deleteMany({ where: { telegramId: BigInt(ADMIN_TG) } });
   await prisma.user.deleteMany({ where: { telegramId: BigInt(ADMIN_TG) } });
@@ -100,9 +100,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   session.token = undefined;
-  await prisma.setting.deleteMany({
-    where: { key: { in: ["pricing.markupKind", "pricing.markupValue"] } },
-  });
+  await prisma.setting.deleteMany({ where: { key: { in: MARKUP_KEYS } } });
   await prisma.tariffPrice.deleteMany({});
 });
 
@@ -116,61 +114,54 @@ describe("tariff grid dimensions", () => {
     expect([...TARIFF_DAYS]).toEqual([7, 30, 90, 180, 365]);
   });
 
-  it("covers the provider device range while keeping the manual grid small", () => {
-    expect(TARIFF_MIN_DEVICES).toBe(1);
+  it("sells from 2 up to 9999 devices while keeping the manual grid small", () => {
+    expect(TARIFF_MIN_DEVICES).toBe(2);
     expect(TARIFF_MAX_DEVICES).toBe(9999);
-    // A per-cell table for 9999 devices would be ~50k inputs — the grid must
-    // stay editable by hand.
     expect(TARIFF_GRID_MAX_DEVICES).toBeLessThanOrEqual(25);
     expect(TARIFF_DAYS.length * TARIFF_GRID_MAX_DEVICES).toBeLessThanOrEqual(100);
   });
 });
 
-describe("applyMarkup — rounding and floor", () => {
-  it("adds a percent markup", () => {
-    expect(applyMarkup(1000, { kind: "percent", value: 30 })).toBe(1300);
-    expect(applyMarkup(1000, { kind: "percent", value: 0 })).toBe(1000);
+describe("per-device markup calibration", () => {
+  it("is locked to the owner's values", () => {
+    expect(MARKUP_PER_DEVICE).toEqual({ 7: 33, 30: 140, 90: 350, 180: 680, 365: 1405 });
   });
 
-  it("adds a fixed markup in whole RUB", () => {
-    expect(applyMarkup(540, { kind: "fixed", value: 100 })).toBe(640);
+  it("yields 400 RUB for 2 devices and +200 per device at 30 days", () => {
+    const provider = 120; // live ARTEMIDA quote for 30d/2 devices
+    expect(applyMarkup(provider, 30, 2, MARKUP_PER_DEVICE[30])).toBe(400);
+    expect(applyMarkup(180, 30, 3, MARKUP_PER_DEVICE[30])).toBe(600);
+    expect(applyMarkup(240, 30, 4, MARKUP_PER_DEVICE[30])).toBe(800);
   });
 
-  it("rounds half-up so a fraction never silently favours the buyer", () => {
-    // 120 × 1.075 = 129.0 → 129; 121 × 1.005 = 121.605 → 122.
-    expect(applyMarkup(121, { kind: "percent", value: 0.5 })).toBe(122);
+  it("adds the markup to the provider price for every term", () => {
+    expect(applyMarkup(49, 7, 2, 33)).toBe(115);
+    expect(applyMarkup(300, 90, 2, 350)).toBe(1000);
+    expect(applyMarkup(540, 180, 2, 680)).toBe(1900);
+    expect(applyMarkup(990, 365, 2, 1405)).toBe(3800);
   });
 
-  it("never returns a free order (clamped to 1 RUB)", () => {
-    expect(applyMarkup(0, { kind: "percent", value: 50 })).toBe(1);
+  it("clamps to a whole-RUB floor", () => {
+    expect(applyMarkup(0, 30, 2, 0)).toBe(1);
   });
 });
 
 describe("markup settings persistence", () => {
-  it("defaults to no markup when nothing is stored", async () => {
-    await expect(getTariffMarkup()).resolves.toEqual(DEFAULT_MARKUP);
+  it("defaults to the locked value when nothing is stored", async () => {
+    await expect(getMarkupPerDevice(30)).resolves.toBe(140);
+    await expect(getAllMarkupsPerDevice()).resolves.toEqual(MARKUP_PER_DEVICE);
   });
 
-  it("round-trips percent and fixed markups", async () => {
-    await setTariffMarkup({ kind: "percent", value: 25 });
-    await expect(getTariffMarkup()).resolves.toEqual({ kind: "percent", value: 25 });
-
-    await setTariffMarkup({ kind: "fixed", value: 300 });
-    await expect(getTariffMarkup()).resolves.toEqual({ kind: "fixed", value: 300 });
+  it("round-trips a saved per-device markup", async () => {
+    await setMarkupPerDevice(30, 200);
+    await expect(getMarkupPerDevice(30)).resolves.toBe(200);
+    expect((await getAllMarkupsPerDevice())[30]).toBe(200);
   });
 
-  it("keeps fractional percents but rounds fixed amounts to whole RUB", async () => {
-    await setTariffMarkup({ kind: "percent", value: 7.55 });
-    await expect(getTariffMarkup()).resolves.toEqual({ kind: "percent", value: 7.55 });
-
-    await setTariffMarkup({ kind: "fixed", value: 99.6 });
-    await expect(getTariffMarkup()).resolves.toEqual({ kind: "fixed", value: 100 });
-  });
-
-  it("rejects out-of-range values", async () => {
-    await expect(setTariffMarkup({ kind: "percent", value: -1 })).rejects.toThrow();
-    await expect(setTariffMarkup({ kind: "percent", value: 5000 })).rejects.toThrow();
-    await expect(setTariffMarkup({ kind: "fixed", value: 0.5 })).resolves.toBeDefined();
+  it("rejects out-of-range values and unknown terms", async () => {
+    await expect(setMarkupPerDevice(30, -1)).rejects.toThrow();
+    await expect(setMarkupPerDevice(30, 1.5)).rejects.toThrow();
+    await expect(setMarkupPerDevice(60, 100)).rejects.toThrow();
   });
 });
 
@@ -190,30 +181,27 @@ describe("resolveTariffQuote — manual cell wins over markup", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it("applies the markup to the provider quote outside the grid", async () => {
-    await setTariffMarkup({ kind: "percent", value: 50 });
+  it("applies the per-device markup above the grid ceiling", async () => {
+    await setMarkupPerDevice(30, 140);
     vi.stubGlobal("fetch", vi.fn(async () => jsonResponse(providerPricing(1000))));
 
     // 100 devices is above TARIFF_GRID_MAX_DEVICES, so no manual cell can exist.
     await expect(resolveTariffQuote(30, 100)).resolves.toMatchObject({
-      amount: 1500,
+      amount: 1000 + 140 * 100,
       source: "provider",
     });
   });
 
-  it("applies a fixed markup to the provider quote", async () => {
-    await setTariffMarkup({ kind: "fixed", value: 150 });
+  it("uses the term's own markup", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => jsonResponse(providerPricing(990))));
 
     await expect(resolveTariffQuote(365, 2)).resolves.toMatchObject({
-      amount: 1140,
+      amount: 990 + 1405 * 2,
       source: "provider",
     });
   });
 
-  it("ignores a manual cell for a term that is not offered", async () => {
-    // 60 days is a provider period but NOT storefront-offered; the guard rejects
-    // it before any lookup or provider call.
+  it("rejects a term that is not offered", async () => {
     const fetchSpy = vi.fn(async () => jsonResponse(providerPricing(100)));
     vi.stubGlobal("fetch", fetchSpy);
 
@@ -221,10 +209,17 @@ describe("resolveTariffQuote — manual cell wins over markup", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  it("rejects fewer than 2 devices", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse(providerPricing(110))));
+    await expect(resolveTariffQuote(30, 1)).rejects.toThrow();
+  });
+
   it("accepts the full device range without a manual grid", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => jsonResponse(providerPricing(499970))));
 
-    await expect(resolveTariffQuote(30, 9999)).resolves.toMatchObject({ amount: 499970 });
+    await expect(resolveTariffQuote(30, 9999)).resolves.toMatchObject({
+      amount: 499970 + 140 * 9999,
+    });
   });
 });
 
@@ -239,41 +234,40 @@ describe("GET /api/pricing — markup is what the storefront shows", () => {
     expect(await res.json()).toEqual({ price: 900 });
   });
 
-  it("returns the marked-up provider price otherwise", async () => {
+  it("returns provider + per-device markup otherwise", async () => {
     await adminSession();
-    await setTariffMarkup({ kind: "percent", value: 20 });
     vi.stubGlobal("fetch", vi.fn(async () => jsonResponse(providerPricing(1000))));
 
     const res = await pricingGet(new Request("http://localhost?days=30&devices=5"));
 
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ price: 1200 });
+    expect(await res.json()).toEqual({ price: 1000 + 140 * 5 });
   });
 });
 
-describe("PATCH /api/admin/pricing — markup BFF", () => {
+describe("PATCH /api/admin/pricing — per-device markup BFF", () => {
   it("rejects a non-administrator", async () => {
-    const res = await adminPatch(patchRequest({ kind: "percent", value: 10 }));
+    const res = await adminPatch(patchRequest({ days: 30, value: 10 }));
     expect(res.status).toBe(401);
   });
 
   it("rejects an invalid markup body", async () => {
     await adminSession();
 
-    expect((await adminPatch(patchRequest({ kind: "percent", value: -5 }))).status).toBe(400);
-    expect((await adminPatch(patchRequest({ kind: "bogus", value: 10 }))).status).toBe(400);
-    expect((await adminPatch(patchRequest({ kind: "fixed", value: 1.5 }))).status).toBe(400);
+    expect((await adminPatch(patchRequest({ days: 30, value: -5 }))).status).toBe(400);
+    expect((await adminPatch(patchRequest({ days: 60, value: 10 }))).status).toBe(400);
+    expect((await adminPatch(patchRequest({ days: 30, value: 1.5 }))).status).toBe(400);
     expect((await adminPatch(patchRequest({}))).status).toBe(400);
   });
 
   it("saves a valid markup and returns it", async () => {
     await adminSession();
 
-    const res = await adminPatch(patchRequest({ kind: "percent", value: 15 }));
+    const res = await adminPatch(patchRequest({ days: 30, value: 15 }));
 
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ markup: { kind: "percent", value: 15 } });
-    await expect(getTariffMarkup()).resolves.toEqual({ kind: "percent", value: 15 });
+    expect(await res.json()).toEqual({ days: 30, value: 15 });
+    await expect(getMarkupPerDevice(30)).resolves.toBe(15);
   });
 });
 
@@ -294,17 +288,17 @@ describe("GET/PUT /api/admin/pricing — grid stays bounded", () => {
     expect(res.status).toBe(400);
   });
 
-  it("returns both the grid and the markup", async () => {
+  it("returns both the grid and the per-device markups", async () => {
     await adminSession();
     vi.stubGlobal("fetch", vi.fn(async () => jsonResponse(providerPricing(100))));
-    await replaceTariffGrid([{ days: 7, devices: 1, amount: 100 }], ADMIN_TG);
-    await setTariffMarkup({ kind: "fixed", value: 50 });
+    await replaceTariffGrid([{ days: 7, devices: 2, amount: 100 }], ADMIN_TG);
+    await setMarkupPerDevice(30, 200);
 
     const res = await adminGet();
 
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { rows: unknown[]; markup: unknown };
+    const body = (await res.json()) as { rows: unknown[]; markups: Record<number, number> };
     expect(body.rows).toHaveLength(1);
-    expect(body.markup).toEqual({ kind: "fixed", value: 50 });
+    expect(body.markups).toMatchObject({ 7: 33, 30: 200, 90: 350 });
   });
 });

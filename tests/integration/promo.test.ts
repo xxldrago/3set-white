@@ -292,9 +292,9 @@ describe("pricing preview + order with promo", () => {
       price: number;
       promo: { code: string; finalPrice: number } | null;
     };
-    expect(body.price).toBe(1000);
+    expect(body.price).toBe(1280);
     expect(body.promo?.code).toBe(CODE_PREVIEW);
-    expect(body.promo?.finalPrice).toBe(900);
+    expect(body.promo?.finalPrice).toBe(1152);
     const row = await prisma.promoCode.findUnique({ where: { code: CODE_PREVIEW } });
     expect(row?.usedCount).toBe(0);
   });
@@ -307,7 +307,7 @@ describe("pricing preview + order with promo", () => {
     );
     expect(res.status).toBe(200);
     const body = (await res.json()) as { price: number; promo: null };
-    expect(body.price).toBe(1000);
+    expect(body.price).toBe(1280);
     expect(body.promo).toBeNull();
   });
 
@@ -327,7 +327,7 @@ describe("pricing preview + order with promo", () => {
       where: { userId: buyerId, promoCode: CODE_ORDER },
       select: { amount: true, finalAmount: true, promoCode: true },
     });
-    expect(order).toMatchObject({ amount: 1000, finalAmount: 900, promoCode: CODE_ORDER });
+    expect(order).toMatchObject({ amount: 1280, finalAmount: 1180, promoCode: CODE_ORDER });
     const row = await prisma.promoCode.findUnique({ where: { code: CODE_ORDER } });
     expect(row?.usedCount).toBe(1);
   });

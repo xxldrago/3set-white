@@ -180,8 +180,8 @@ describe("auto-renew scan", () => {
         kind: "new",
         days: 30,
         devices: 2,
-        amount: 1000,
-        finalAmount: 1000,
+        amount: 1280,
+        finalAmount: 1280,
         currency: "RUB",
         status: "provisioned",
         keyId: KEY,
@@ -189,7 +189,7 @@ describe("auto-renew scan", () => {
       },
     });
     await prisma.walletTx.create({
-      data: { userId, amount: 1000, reason: "referral_bonus", refId: "autoseed" },
+      data: { userId, amount: 1280, reason: "referral_bonus", refId: "autoseed" },
     });
   });
   afterAll(async () => {
@@ -210,7 +210,7 @@ describe("auto-renew scan", () => {
       select: { status: true, balanceUsed: true, finalAmount: true },
     });
     expect(order?.status).toBe("paid");
-    expect(order?.balanceUsed).toBe(1000);
+    expect(order?.balanceUsed).toBe(1280);
   });
 
   it("skips keys with a pending renewal (no duplicates)", async () => {

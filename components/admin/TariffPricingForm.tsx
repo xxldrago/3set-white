@@ -18,11 +18,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { t, tp } from '@/lib/i18n';
-import type { TariffMarkup, TariffPriceRow } from '@/lib/pricing';
+import type { TariffPriceRow } from '@/lib/pricing';
 import {
-  MARKUP_KINDS,
-  MARKUP_MAX_FIXED,
-  MARKUP_MAX_PERCENT,
+  MARKUP_PER_DEVICE_MAX,
   TARIFF_DAYS,
   TARIFF_GRID_MAX_DEVICES,
   TARIFF_MAX_AMOUNT,
@@ -44,16 +42,12 @@ function isValidAmountText(value: string): boolean {
   );
 }
 
-function markupCeiling(kind: TariffMarkup['kind']): number {
-  return kind === 'fixed' ? MARKUP_MAX_FIXED : MARKUP_MAX_PERCENT;
-}
-
 export default function TariffPricingForm({
   initialRows,
-  initialMarkup,
+  initialMarkups,
 }: {
   initialRows: TariffPriceRow[];
-  initialMarkup: TariffMarkup;
+  initialMarkups: Record<number, number>;
 }) {
   const router = useRouter();
   const initial = useCallback(() => {
@@ -75,8 +69,11 @@ export default function TariffPricingForm({
 
   const [values, setValues] = useState<Record<string, string>>(initial);
   const [state, setState] = useState<SaveState>('idle');
-  const [markupKind, setMarkupKind] = useState<TariffMarkup['kind']>(initialMarkup.kind);
-  const [markupValue, setMarkupValue] = useState(String(initialMarkup.value));
+  const [markups, setMarkups] = useState<Record<number, string>>(() => {
+    const map: Record<number, string> = {};
+    for (const days of TARIFF_DAYS) map[days] = String(initialMarkups[days] ?? 0);
+    return map;
+  });
   const [markupState, setMarkupState] = useState<SaveState>('idle');
   const abortRef = useRef<AbortController | null>(null);
 
@@ -116,95 +113,78 @@ export default function TariffPricingForm({
     }
   }, [invalid, router, values]);
 
-  const parsedMarkup = Number(markupValue);
-  const markupInvalid =
-    markupValue.trim().length === 0 ||
-    !Number.isFinite(parsedMarkup) ||
-    parsedMarkup < 0 ||
-    parsedMarkup > markupCeiling(markupKind) ||
-    (markupKind === 'fixed' && !Number.isInteger(parsedMarkup));
+  const markupInvalid = TARIFF_DAYS.some((days) => {
+    const raw = (markups[days] ?? '').trim();
+    if (!/^\d+$/.test(raw)) return true;
+    const value = Number(raw);
+    return !Number.isSafeInteger(value) || value < 0 || value > MARKUP_PER_DEVICE_MAX;
+  });
 
-  const saveMarkup = useCallback(async () => {
+  const saveMarkups = useCallback(async () => {
     if (markupInvalid) return;
     setMarkupState('loading');
     try {
-      const res = await fetch('/api/admin/pricing', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind: markupKind, value: parsedMarkup }),
-      });
-      if (!res.ok) throw new Error('markup_save_failed');
+      for (const days of TARIFF_DAYS) {
+        const res = await fetch('/api/admin/pricing', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ days, value: Number(markups[days]) }),
+        });
+        if (!res.ok) throw new Error('markup_save_failed');
+      }
       setMarkupState('saved');
       router.refresh();
     } catch {
       setMarkupState('error');
     }
-  }, [markupInvalid, markupKind, parsedMarkup]);
+  }, [markupInvalid, markups, router]);
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Markup — applies to every price without an exact manual cell. */}
+      {/* Per-device markups — the primary lever for every offered term. */}
       <section className="flex flex-col gap-3 rounded-2xl border border-line p-6">
         <h3 className="text-lg font-semibold text-foreground">{t('admin.markupTitle')}</h3>
         <p className="text-sm text-muted">{t('admin.markupHint')}</p>
 
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-muted">{t('admin.markupKindLabel')}</span>
-            <select
-              value={markupKind}
-              onChange={(event) => {
-                setMarkupKind(event.target.value as TariffMarkup['kind']);
-                setMarkupState('idle');
-              }}
-              className="h-11 rounded-xl border border-line bg-transparent px-3 text-base text-foreground outline-none"
-            >
-              {MARKUP_KINDS.map((kind) => (
-                <option key={kind} value={kind} className="bg-panel text-foreground">
-                  {kind === 'percent' ? t('admin.markupKindPercent') : t('admin.markupKindFixed')}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-muted">
-              {markupKind === 'percent' ? t('admin.markupValuePercent') : t('admin.markupValueFixed')}
-            </span>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={markupValue}
-              onChange={(event) => {
-                setMarkupValue(event.target.value);
-                setMarkupState('idle');
-              }}
-              aria-invalid={markupInvalid}
-              className={`h-11 w-32 rounded-xl border bg-transparent px-3 text-base tabular-nums text-foreground outline-none ${
-                markupInvalid ? 'border-red-600' : 'border-line'
-              }`}
-            />
-          </label>
-
-          <button
-            type="button"
-            onClick={() => void saveMarkup()}
-            disabled={markupInvalid || markupState === 'loading'}
-            className="flex h-11 items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50"
-          >
-            {markupState === 'loading' ? t('admin.pricingSaving') : t('admin.markupSave')}
-          </button>
+        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {TARIFF_DAYS.map((days) => {
+            const raw = markups[days] ?? '';
+            const invalid = !/^\d+$/.test(raw.trim()) || Number(raw) > MARKUP_PER_DEVICE_MAX;
+            return (
+              <label key={days} className="flex flex-col gap-1">
+                <span className="text-xs text-muted">{tariffDaysLabel(days)}</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={raw}
+                  onChange={(event) => {
+                    setMarkups((prev) => ({ ...prev, [days]: event.target.value }));
+                    setMarkupState('idle');
+                  }}
+                  aria-invalid={invalid}
+                  className={`h-11 w-full rounded-xl border bg-transparent px-3 text-base tabular-nums text-foreground outline-none ${
+                    invalid ? 'border-red-600' : 'border-line'
+                  }`}
+                />
+              </label>
+            );
+          })}
         </div>
 
+        <button
+          type="button"
+          onClick={() => void saveMarkups()}
+          disabled={markupInvalid || markupState === 'loading'}
+          className="flex h-11 w-fit items-center justify-center rounded-lg bg-foreground px-5 text-lime transition-colors hover:bg-[#383838] disabled:opacity-50"
+        >
+          {markupState === 'loading' ? t('admin.pricingSaving') : t('admin.markupSave')}
+        </button>
+
         {markupState === 'saved' && (
-          <p role="status" className="text-sm text-green">
-            {t('admin.markupSaved')}
-          </p>
+          <p role="status" className="text-sm text-green">{t('admin.markupSaved')}</p>
         )}
         {markupState === 'error' && (
-          <p role="alert" className="text-sm text-red-600">
-            {t('admin.markupError')}
-          </p>
+          <p role="alert" className="text-sm text-red-600">{t('admin.markupError')}</p>
         )}
         {markupInvalid && <p className="text-sm text-red-600">{t('admin.markupInvalid')}</p>}
         <p className="text-xs text-dim">{t('admin.markupFormula')}</p>

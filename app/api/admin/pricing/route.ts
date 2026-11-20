@@ -1,29 +1,26 @@
-// GET/PUT /api/admin/pricing — ADM tariff settings (administrator-only BFF).
+// GET/PUT/PATCH /api/admin/pricing — ADM tariff settings (administrator-only BFF).
 //
-// GET returns the manual override grid ({ rows }) plus the global markup.
-// PUT replaces the grid atomically from the full matrix: each cell carries an
-// amount in whole RUB or null to clear the override (fall back to the markup).
-// PATCH updates the markup (percent or fixed RUB) that applies to every price
-// not covered by an exact manual cell.
+// GET returns the optional manual grid plus the per-device markups for all
+// five offered terms. PUT replaces the grid atomically (each cell is a whole-RUB
+// price or null to clear). PATCH updates ONE term's per-device markup — the
+// primary pricing lever: retail = live ARTEMIDA quote + markup × devices.
 //
-// The manual grid is deliberately bounded to TARIFF_GRID_MAX_DEVICES: with the
-// storefront ceiling at 9999 devices a per-cell table would be ~50k inputs.
-// Every row is re-validated here — never trust the client even though it
+// Every row/value is re-validated here — never trust the client even though it
 // pre-validates. requireRole → 401/404; invalid body → 400.
 import { z } from "zod";
 import { requireRole } from "../../../../lib/admin-auth";
 import {
-  getTariffMarkup,
+  getAllMarkupsPerDevice,
   listTariffPrices,
   replaceTariffGrid,
-  setTariffMarkup,
+  setMarkupPerDevice,
   TARIFF_DAYS,
   TARIFF_GRID_MAX_DEVICES,
   TARIFF_MAX_AMOUNT,
   TARIFF_MIN_AMOUNT,
   TARIFF_MIN_DEVICES,
 } from "../../../../lib/pricing";
-import { MARKUP_KINDS, MARKUP_MAX_FIXED, MARKUP_MAX_PERCENT } from "../../../../lib/tariff-grid";
+import { MARKUP_PER_DEVICE_MAX } from "../../../../lib/tariff-grid";
 import { logger } from "../../../../lib/logger";
 import { AdminError, SessionError } from "../../../../lib/session";
 
@@ -42,20 +39,10 @@ const bodySchema = z.object({
     .max(TARIFF_DAYS.length * (TARIFF_GRID_MAX_DEVICES - TARIFF_MIN_DEVICES + 1)),
 });
 
-const markupSchema = z
-  .object({
-    kind: z.enum(MARKUP_KINDS),
-    value: z.number().min(0),
-  })
-  .superRefine((value, ctx) => {
-    const ceiling = value.kind === "fixed" ? MARKUP_MAX_FIXED : MARKUP_MAX_PERCENT;
-    if (value.value > ceiling) {
-      ctx.addIssue({ code: "custom", message: `value must be <= ${ceiling}` });
-    }
-    if (value.kind === "fixed" && !Number.isInteger(value.value)) {
-      ctx.addIssue({ code: "custom", message: "fixed markup must be whole RUB" });
-    }
-  });
+const markupSchema = z.object({
+  days: z.number().int().refine((v) => (TARIFF_DAYS as readonly number[]).includes(v)),
+  value: z.number().int().min(0).max(MARKUP_PER_DEVICE_MAX),
+});
 
 /** Shared 401/404/500 mapping for the administrator gate. */
 function gateError(err: unknown): Response | null {
@@ -79,8 +66,8 @@ export async function GET(): Promise<Response> {
   }
 
   try {
-    const [rows, markup] = await Promise.all([listTariffPrices(), getTariffMarkup()]);
-    return Response.json({ rows, markup });
+    const [rows, markups] = await Promise.all([listTariffPrices(), getAllMarkupsPerDevice()]);
+    return Response.json({ rows, markups });
   } catch {
     logger.error({ route: "admin-pricing", outcome: "list_error" });
     return Response.json({ error: "internal" }, { status: 500 });
@@ -121,12 +108,7 @@ export async function PUT(req: Request): Promise<Response> {
   }
 }
 
-/**
- * PATCH /api/admin/pricing — set the global markup applied to every price that
- * has no exact manual cell. This is the primary pricing lever: the storefront
- * ceiling is 9999 devices, so the long tail is priced as provider quote +
- * markup rather than by hand.
- */
+/** PATCH — set the markup added per device for ONE offered term. */
 export async function PATCH(req: Request): Promise<Response> {
   try {
     await requireRole("administrator");
@@ -149,8 +131,8 @@ export async function PATCH(req: Request): Promise<Response> {
   }
 
   try {
-    const markup = await setTariffMarkup(parsed.data);
-    return Response.json({ markup });
+    const value = await setMarkupPerDevice(parsed.data.days, parsed.data.value);
+    return Response.json({ days: parsed.data.days, value });
   } catch (err) {
     if (err instanceof Error && err.message.startsWith("pricing:bad_request")) {
       return Response.json({ error: "bad_request" }, { status: 400 });

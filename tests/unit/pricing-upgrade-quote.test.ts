@@ -116,7 +116,7 @@ describe('GET /api/pricing upgrade quote (PAY-03)', () => {
     const res = await request('days=30&devices=2&kind=upgrade&addDevices=1');
 
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ price: 60 });
+    expect(await res.json()).toEqual({ price: 200 });
   });
 
   it('scales the delta by addDevices (+2 devices → 120 RUB)', async () => {
@@ -129,7 +129,7 @@ describe('GET /api/pricing upgrade quote (PAY-03)', () => {
     const res = await request('days=30&devices=2&kind=upgrade&addDevices=2');
 
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ price: 120 });
+    expect(await res.json()).toEqual({ price: 400 });
   });
 
   it('keeps the kind:new behavior byte-for-byte ({price} only)', async () => {
@@ -142,6 +142,6 @@ describe('GET /api/pricing upgrade quote (PAY-03)', () => {
     const res = await request('days=7&devices=2');
 
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ price: 49 });
+    expect(await res.json()).toEqual({ price: 115 });
   });
 });

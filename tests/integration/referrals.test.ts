@@ -294,7 +294,7 @@ describe("balance spend on orders", () => {
       orderBy: { createdAt: "desc" },
       select: { amount: true, finalAmount: true, balanceUsed: true },
     });
-    expect(order).toMatchObject({ amount: 1000, finalAmount: 1000, balanceUsed: 400 });
+    expect(order).toMatchObject({ amount: 1280, finalAmount: 1280, balanceUsed: 400 });
     await expect(walletBalance(refereeId)).resolves.toBe(0);
   });
 
@@ -332,7 +332,7 @@ describe("balance spend on orders", () => {
       select: { status: true, balanceUsed: true },
     });
     expect(order?.status).toBe("paid");
-    expect(order?.balanceUsed).toBe(1000);
+    expect(order?.balanceUsed).toBe(1280);
     const jobs = await prisma.outbox.findMany({
       where: { order: { userId: refereeId } },
       select: { id: true },

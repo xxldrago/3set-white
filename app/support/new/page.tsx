@@ -3,10 +3,11 @@
 // passed to the client — the BFF resolves the caller from the signed session
 // cookie and re-validates every field/attachment (T-04-21).
 import Link from 'next/link';
+import Nav from '@/components/Nav';
 import { redirect } from 'next/navigation';
 import CreateTicketForm from '@/components/CreateTicketForm';
 import { t } from '@/lib/i18n';
-import { requireSession, SessionError } from '@/lib/session';
+import { requireSession, SessionError, getSessionUser } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,8 +27,11 @@ export default async function NewTicketPage() {
     throw err;
   }
 
+  const navUser = await getSessionUser();
+
   return (
     <div className="flex flex-col flex-1 items-center bg-background font-sans bg-background">
+      <Nav user={navUser} />
       <main className="flex flex-1 w-full max-w-3xl flex-col gap-8 px-6 py-12 sm:px-16">
         <header className="flex flex-col gap-2">
           <h1 className="text-3xl font-semibold leading-10 tracking-tight text-foreground">

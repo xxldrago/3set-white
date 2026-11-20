@@ -7,6 +7,7 @@
 // one-shot mark-read island (04-06 T2) slot in below; a closed thread shows the
 // reopen note above the composer (D-59).
 import Link from 'next/link';
+import Nav from '@/components/Nav';
 import { notFound, redirect } from 'next/navigation';
 import MarkReadOnOpen from '@/components/MarkReadOnOpen';
 import TicketAutoRefresh from '@/components/TicketAutoRefresh';
@@ -15,7 +16,7 @@ import TicketStatusChip from '@/components/TicketStatusChip';
 import TicketThread from '@/components/TicketThread';
 import { t } from '@/lib/i18n';
 import { getTicketForUserId } from '@/lib/tickets-service';
-import { requireSession, SessionError } from '@/lib/session';
+import { requireSession, SessionError, getSessionUser } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,12 +41,15 @@ export default async function TicketDetailPage({
     throw err;
   }
 
+  const navUser = await getSessionUser();
+
   const { id } = await params;
   const thread = await getTicketForUserId(userId, id);
   if (!thread) notFound();
 
   return (
     <div className="flex flex-col flex-1 items-center bg-background font-sans bg-background">
+      <Nav user={navUser} />
       <main className="flex flex-1 w-full max-w-3xl flex-col gap-6 px-6 py-12 sm:px-16">
         <header className="flex flex-col gap-3">
           <h1 className="text-3xl font-semibold leading-10 tracking-tight break-all text-foreground">

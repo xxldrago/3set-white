@@ -1,5 +1,6 @@
-import Nav from '@/components/Nav';
+import { getAdminRole } from '@/lib/admin-auth';
 import { getSessionUser } from '@/lib/session';
+import { unreadTicketCountForUser } from '@/lib/tickets-service';
 import FaqClient from './FaqClient';
 
 export const dynamic = 'force-dynamic';
@@ -12,12 +13,23 @@ export const metadata = {
 export default async function FaqPage() {
   const user = await getSessionUser();
 
-  return (
-    <div className="flex min-h-screen flex-col bg-background font-sans">
-      <Nav user={user} />
-      <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
-        <FaqClient />
-      </main>
-    </div>
-  );
+  let isStaff = false;
+  let unread = 0;
+  if (user) {
+    try {
+      if (user.telegramId !== null) isStaff = (await getAdminRole(user.telegramId)) !== null;
+    } catch {
+      // Cosmetic badge — never fail the page on a role lookup.
+    }
+    try {
+      unread = await unreadTicketCountForUser(user.userId);
+    } catch {
+      // The FAB/nav badge is non-critical.
+    }
+  }
+
+  const name =
+    user?.firstName?.trim() || user?.username?.trim() || user?.email?.split('@')[0] || 'друг';
+
+  return <FaqClient name={name} email={user?.email ?? null} isStaff={isStaff} unread={unread} />;
 }

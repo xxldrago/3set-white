@@ -1,13 +1,16 @@
-import Link from 'next/link';
+// /subscription — the keys.html prototype template, wired to real data.
+// Keys come from the ownership-scoped, cache-first mirror; QR SVGs are rendered
+// locally on the server; every write from the client island goes through the
+// existing session-gated BFF routes. Nothing here is mock data.
 import { after } from 'next/server';
 import { redirect } from 'next/navigation';
-import { KeyRound, LifeBuoy, PlugZap, RotateCcw, ShoppingCart } from 'lucide-react';
-import Nav from '@/components/Nav';
-import SubscriptionCard from '@/components/SubscriptionCard';
-import TariffPicker from '@/components/TariffPicker';
+import SubscriptionDashboard, {
+  type SubscriptionKeyView,
+} from '@/components/cabinet/SubscriptionDashboard';
+import { getAdminRole } from '@/lib/admin-auth';
 import { ArtemidaError } from '@/lib/artemida';
-import { t } from '@/lib/i18n';
 import {
+  daysUntilExpiry,
   listKeys,
   listKeysByUserId,
   manageableDeviceCounts,
@@ -16,7 +19,9 @@ import {
   type RenderedKey,
 } from '@/lib/keys-service';
 import { logger } from '@/lib/logger';
+import { renderSubscriptionQr } from '@/lib/qr';
 import { getSessionUser, requireSession, requireTelegramSession, SessionError } from '@/lib/session';
+import { unreadTicketCountForUser } from '@/lib/tickets-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,96 +29,43 @@ export const metadata = {
   title: 'Мои ключи — 3set VPN',
 };
 
-const PRIMARY =
-  'flex h-12 items-center justify-center gap-2 rounded-lg bg-foreground px-5 text-sm font-bold tracking-wide text-lime transition-colors hover:opacity-90';
-const SECONDARY =
-  'flex h-12 items-center justify-center gap-2 rounded-lg border border-line px-5 text-sm text-muted transition-colors hover:bg-foreground/5';
-
-/** Error state: mapped copy + retry, never raw provider text (D-19/D-24). */
-function KeysError({ error }: { error: unknown }) {
-  const message =
-    error instanceof ArtemidaError
-      ? error.code === 'rate_limited'
-        ? t('common.errorRateLimit', { seconds: error.retryAfterSec ?? 60 })
-        : error.code === 'bad_gateway' || error.code === 'unavailable'
-          ? t('common.errorUnavailable')
-          : t('common.errorLoad')
-      : t('common.errorLoad');
-
-  return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-line bg-panel p-6" role="alert">
-      <p className="text-muted">{message}</p>
-      <Link href="/subscription" className={SECONDARY}>
-        <RotateCcw className="h-4 w-4 shrink-0" aria-hidden />
-        {t('common.retry')}
-      </Link>
-    </section>
-  );
-}
-
-function KeysGrid({
-  keys,
-  manageable,
-}: {
-  keys: RenderedKey[];
-  manageable?: Map<string, number | null>;
-}) {
-  if (keys.length === 0) {
-    return (
-      <div className="flex flex-col items-center gap-3 rounded-2xl border border-line bg-panel p-10 text-center">
-        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-lime/20 text-2xl text-green">
-          <KeyRound className="h-6 w-6" aria-hidden />
-        </span>
-        <h3 className="text-lg font-semibold text-foreground">Пока нет подписок</h3>
-        <p className="max-w-sm text-sm text-muted">
-          Купите подписку — ключ и персональная ссылка появятся здесь автоматически.
-        </p>
-        <Link href="/#tariff" className={PRIMARY}>
-          <ShoppingCart className="h-4 w-4 shrink-0" aria-hidden />
-          Купить подписку
-        </Link>
-      </div>
-    );
-  }
-  return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      {keys.map((item) => (
-        <SubscriptionCard
-          key={item.id}
-          item={item}
-          manageableDevices={manageable?.get(item.id)}
-        />
-      ))}
-    </div>
-  );
-}
-
-async function KeysSection({ telegramId, userId }: { telegramId: number | null; userId: number }) {
-  let keys: RenderedKey[];
-  try {
-    keys = telegramId !== null ? await listKeys(BigInt(telegramId)) : await listKeysByUserId(userId);
-  } catch (err) {
-    return <KeysError error={err} />;
-  }
-
-  const owner = telegramId !== null ? { telegramId: BigInt(telegramId) } : { userId };
-  const manageable = await manageableDeviceCounts(
-    owner,
-    keys.map((item) => item.id),
-  );
-  const grid = <KeysGrid keys={keys} manageable={manageable} />;
-
-  // D-29: keep refreshing the mirror after the response is sent.
-  after(async () => {
-    try {
-      if (telegramId !== null) await revalidateKeys(BigInt(telegramId));
-      else await revalidateKeysByUserId(userId);
-    } catch (err) {
-      logger.warn({ route: 'subscription', outcome: 'revalidate_failed', code: err instanceof ArtemidaError ? err.code : undefined });
+function loadNotice(error: unknown): string {
+  if (error instanceof ArtemidaError) {
+    if (error.code === 'rate_limited') {
+      return `Слишком много запросов к провайдеру. Повторите через ${error.retryAfterSec ?? 60} с — пока показываем сохранённые данные.`;
     }
-  });
+    if (error.code === 'bad_gateway' || error.code === 'unavailable') {
+      return 'Провайдер временно недоступен. Показываем сохранённые данные — попробуйте обновить страницу позже.';
+    }
+  }
+  return 'Не удалось обновить список подписок. Показываем сохранённые данные.';
+}
 
-  return grid;
+async function toView(
+  key: RenderedKey,
+  manageable: Map<string, number | null>,
+): Promise<SubscriptionKeyView> {
+  let qrSvg: string | null = null;
+  if (key.subscriptionUrl) {
+    try {
+      qrSvg = await renderSubscriptionQr(key.subscriptionUrl);
+    } catch {
+      // The QR is an enhancement — a failed render never hides the key itself.
+    }
+  }
+  return {
+    id: key.id,
+    providerName: key.name,
+    label: key.label ?? null,
+    statusKind: key.statusKind,
+    isTrial: key.isTrial,
+    expiresAt: key.expiresAt,
+    daysLeft: daysUntilExpiry(key.expiresAt) ?? 0,
+    devices: manageable.get(key.id) ?? key.devices ?? 0,
+    deviceLimit: key.deviceLimit ?? key.devices ?? 1,
+    subscriptionUrl: key.subscriptionUrl,
+    qrSvg,
+  };
 }
 
 export default async function SubscriptionPage() {
@@ -133,63 +85,71 @@ export default async function SubscriptionPage() {
   }
 
   const navUser = await getSessionUser();
+  if (!navUser) redirect('/login');
+
+  let keys: RenderedKey[] = [];
+  let notice: string | null = null;
+  try {
+    keys = telegramId !== null ? await listKeys(BigInt(telegramId)) : await listKeysByUserId(userId);
+  } catch (err) {
+    notice = loadNotice(err);
+    logger.warn({
+      route: 'subscription',
+      outcome: 'keys_load_failed',
+      code: err instanceof ArtemidaError ? err.code : undefined,
+    });
+  }
+
+  const owner =
+    telegramId !== null ? { telegramId: BigInt(telegramId) } : { userId };
+  const manageable = await manageableDeviceCounts(
+    owner,
+    keys.map((item) => item.id),
+  );
+
+  // D-29: refresh the mirror after the response is sent, never in the critical path.
+  after(async () => {
+    try {
+      if (telegramId !== null) await revalidateKeys(BigInt(telegramId));
+      else await revalidateKeysByUserId(userId);
+    } catch (err) {
+      logger.warn({
+        route: 'subscription',
+        outcome: 'revalidate_failed',
+        code: err instanceof ArtemidaError ? err.code : undefined,
+      });
+    }
+  });
+
+  let isStaff = false;
+  if (telegramId !== null) {
+    try {
+      isStaff = (await getAdminRole(telegramId)) !== null;
+    } catch {
+      // Staff badge is cosmetic — a failed lookup must not break the page.
+    }
+  }
+
+  let unread = 0;
+  try {
+    unread = await unreadTicketCountForUser(navUser.userId);
+  } catch {
+    // The island refreshes the badge on mount anyway.
+  }
+
+  const displayName =
+    navUser.firstName?.trim() || navUser.username?.trim() || navUser.email?.split('@')[0] || 'друг';
+
+  const views = await Promise.all(keys.map((key) => toView(key, manageable)));
 
   return (
-    <div className="flex min-h-screen flex-col bg-background font-sans">
-      <Nav user={navUser} />
-      <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-4 py-8 sm:px-6">
-        {/* Hero */}
-        <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex flex-col gap-2">
-            <span className="font-mono text-xs uppercase tracking-[0.14em] text-green">
-              Управление доступом
-            </span>
-            <h1 className="text-3xl font-semibold text-foreground">Ваши подписки</h1>
-            <p className="max-w-xl text-muted">
-              Каждая покупка создаёт отдельную ссылку подписки — ограничений по количеству нет.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/guides" className={PRIMARY}>
-              <PlugZap className="h-4 w-4 shrink-0" aria-hidden />
-              Подключить
-            </Link>
-          </div>
-        </section>
-
-        {/* Keys */}
-        <section className="flex flex-col gap-4">
-          <h2 className="text-2xl font-semibold text-foreground">Подключения 3set</h2>
-          <KeysSection telegramId={telegramId} userId={userId} />
-        </section>
-
-        {/* Tariffs live here too — same picker as the home page, so a new
-            subscription starts without navigating away. */}
-        <section className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <span className="font-mono text-xs uppercase tracking-[0.14em] text-green">
-              {t('pricing.title')}
-            </span>
-            <h2 className="text-2xl font-semibold text-foreground">{t('pricing.subtitle')}</h2>
-          </div>
-          <TariffPicker />
-        </section>
-
-        {/* Support strip */}
-        <section className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-panel p-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-1">
-            <h3 className="text-lg font-semibold text-foreground">Поможем разобраться</h3>
-            <p className="text-sm text-muted">
-              Если подписка не обновилась, серверы не появились или устройство не отвязывается —
-              напишите поддержке.
-            </p>
-          </div>
-          <Link href="/support" className={SECONDARY}>
-            <LifeBuoy className="h-4 w-4 shrink-0" aria-hidden />
-            Открыть поддержку
-          </Link>
-        </section>
-      </main>
-    </div>
+    <SubscriptionDashboard
+      name={displayName}
+      email={navUser.email}
+      isStaff={isStaff}
+      unread={unread}
+      keys={views}
+      notice={notice}
+    />
   );
 }

@@ -118,6 +118,7 @@ None yet.
 | 261029-gni | Yandex Metrika counter 113865085 on 3set.online landing (14 pages) | 2026-10-29 | c77c820 | [20261029-yandex-metrika-landing](./quick/20261029-yandex-metrika-landing/) |
 | 2 | Rebuild /subscription in keys.html template with live data | 2026-11-20 | 71f0a36 | — |
 | 3 | PWA mobile install CTA, social share icons and fixed support badge | 2026-11-20 | 7f78ccb | — |
+| 4 | Rebuild /faq page in keys.html template with real FAQ data | 2026-11-20 | d451e5b | — |
 
 ## Deferred Items
 

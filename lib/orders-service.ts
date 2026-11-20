@@ -16,7 +16,6 @@ import { getKeyForUser, getKeyForUserId, type RenderedKey } from "./keys-service
 import { enqueueFulfillJob } from "./outbox";
 import { getPaymentClient, getActiveProviderName, PaymentCode, PaymentProvider, PaymentError } from "./payments";
 import { type PlategaMerchant, hasBotMerchant } from "./platega";
-import { resolveBotUsername } from "./telegram-login";
 import { prisma } from "./prisma";
 
 export type OrderKind = "new" | "renew" | "upgrade";
@@ -51,17 +50,16 @@ export function isTrialConflict(code: string): boolean {
 /**
  * Does a provider-charged amount settle an order for `expected`?
  *
- * Platega bills the SBP fee ON TOP of the order (live-verified upstream: a 5.00
- * RUB order is paid as 5.40, the callback carries 5.40, and the merchant
- * balance is credited exactly 5.00). So a charge in `[expected, expected+20%]`
- * settles the order; anything below `expected` is underpayment, and anything
- * far above is a genuine anomaly that needs owner review. Exact equality is the
- * normal case for card payments.
+ * The merchant pays the acquiring commission (SBP 8%, crypto 5%), so the payer
+ * is charged EXACTLY the order amount and Platega echoes that same figure in
+ * the callback. Equality is therefore the only correct test: a lower charge is
+ * underpayment and a higher one is a genuine anomaly — neither may settle an
+ * order. (An earlier revision tolerated an overpayment band because an upstream
+ * client observed SBP adding its fee on top; that applies to fee-on-payer
+ * merchants only and must never be assumed here.)
  */
 export function amountMatches(charged: number, expected: number): boolean {
-  if (charged === expected) return true;
-  if (charged < expected) return false;
-  return charged <= Math.round(expected * 1.2 * 100) / 100;
+  return charged === expected;
 }
 
 export interface CreateOrderInput {
@@ -256,20 +254,20 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
   try {
     const paymentClient = getPaymentClient(plategaMerchant);
-    // Return target: bot orders come back to the Telegram chat (the cabinet
-    // payment page needs a web session the bot buyer may not have); web orders
-    // land on their own order-status page.
-    let returnUrl = `${env.APP_BASE_URL}/payments/${order.id}`;
-    if (plategaMerchant === "bot") {
-      const botUsername = await resolveBotUsername().catch(() => null);
-      if (botUsername !== null) returnUrl = `https://t.me/${botUsername}`;
-    }
+    // Return targets are PUBLIC pages (no session): Platega sends the payer
+    // here after success/failure, and a bot buyer may never have opened the
+    // cabinet — /payments/[id] would bounce them to /login right after taking
+    // their money. `from=bot` tells the page to offer the bot chat as the next
+    // step; web buyers get the cabinet CTA.
+    const from = plategaMerchant === "bot" ? "?from=bot" : "";
+    const returnUrl = `${env.APP_BASE_URL}/pay/success${from}`;
+    const failedUrl = `${env.APP_BASE_URL}/pay/fail${from}`;
     const paymentResult = await paymentClient.createPayment({
       amount: chargeAmount,
       currency,
       description: `Order ${order.id}`,
       returnUrl,
-      failedUrl: returnUrl,
+      failedUrl,
       payload: order.id,
       metadata: {
         userId: customerRef,

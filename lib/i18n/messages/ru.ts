@@ -264,6 +264,19 @@ export const ru = {
     toKey: 'Открыть ключ',
     toHistory: 'История платежей',
     historyTitle: 'История платежей',
+    // Public return pages (Platega redirects here — no session required, so a
+    // bot buyer who has never opened the cabinet still lands somewhere sane).
+    successTitle: 'Оплата прошла',
+    successBody:
+      'Платёж получен. Ключ выдаётся автоматически — обычно это занимает несколько секунд.',
+    successBotBody:
+      'Платёж получен. Вернитесь в чат с ботом — ключ придёт туда автоматически.',
+    successCabinet: 'Открыть личный кабинет',
+    successToBot: 'Перейти в бота',
+    failTitle: 'Оплата не прошла',
+    failBody:
+      'Платёж не был завершён, деньги не списаны. Можно вернуться и попробовать снова.',
+    failBack: 'Вернуться к тарифам',
   },
   renew: {
     cta: 'Продлить',

@@ -64,6 +64,12 @@ export function normalizeStatus(
         return "FAILED";
       case "CHARGEBACKED":
         return "REFUNDED";
+      // Partial return / provider review: the payment itself still stands, so
+      // neither is a FAILED nor a full REFUNDED. They read as PENDING here and
+      // the callback's own branch decides what to do with the order.
+      case "PARTIALLY_REFUNDED":
+      case "DISPUTED":
+        return "PENDING";
       default:
         return "PENDING";
     }

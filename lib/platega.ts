@@ -94,7 +94,13 @@ const DEFAULT_RETRY: Required<PlategaRetryOptions> = {
 // Tolerant response normalization (bare objects, no {ok,data} envelope).
 // ---------------------------------------------------------------------------
 
-export type PlategaStatus = "PENDING" | "CANCELED" | "CONFIRMED" | "CHARGEBACKED";
+export type PlategaStatus =
+  | "PENDING"
+  | "CANCELED"
+  | "CONFIRMED"
+  | "CHARGEBACKED"
+  | "PARTIALLY_REFUNDED"
+  | "DISPUTED";
 
 export interface CreateTransactionResult {
   transactionId: string;
@@ -136,6 +142,12 @@ const STATUSES: ReadonlySet<string> = new Set([
   "CANCELED",
   "CONFIRMED",
   "CHARGEBACKED",
+  // Newer callback statuses: a chargeback that only returned part of the
+  // payment, and a payment parked under provider review. Both are real and
+  // must parse — an unknown status silently degrading to PENDING would make a
+  // refunded or disputed payment look unpaid forever.
+  "PARTIALLY_REFUNDED",
+  "DISPUTED",
 ]);
 
 function normalizeStatus(value: unknown): PlategaStatus {

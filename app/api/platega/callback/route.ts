@@ -35,9 +35,23 @@ const callbackSchema = z.object({
   id: z.string().min(1),
   amount: z.number(),
   currency: z.string().min(1),
-  status: z.enum(["PENDING", "CONFIRMED", "CANCELED", "CHARGEBACKED"]),
+  // The provider's full callback enum. DISPUTED = payment under review;
+  // PARTIALLY_REFUNDED = partial money returned. Both arrive here and must
+  // parse — the D-34 re-query decides what actually happened, so an unknown
+  // status must never be treated as "not successful yet" and silently ignored.
+  status: z.enum([
+    "PENDING",
+    "CONFIRMED",
+    "CANCELED",
+    "CHARGEBACKED",
+    "PARTIALLY_REFUNDED",
+    "DISPUTED",
+  ]),
   paymentMethod: z.number().optional(),
   payload: z.string().optional(),
+  refundId: z.string().optional(),
+  refundAmount: z.number().optional(),
+  refundStatus: z.enum(["Succeeded", "Declined"]).optional(),
 });
 
 /** Terminal acknowledgment — Platega requires a fast 2xx (never a throw). */
@@ -106,6 +120,26 @@ export async function POST(req: Request): Promise<Response> {
       return ack();
     }
 
+    // DISPUTED: the provider parked the payment under review — money is not
+    // ours yet. Never issue on it, and never touch an order that was already
+    // settled (a review opened AFTER capture leaves the issued key alone; a
+    // later CHARGEBACKED is what claws it back).
+    if (tx.status === "DISPUTED") {
+      logger.warn({ route: "platega_callback", outcome: "disputed", orderId: order.id });
+      return ack();
+    }
+
+    // PARTIALLY_REFUNDED: part of the money went back but the payment still
+    // stands. Keep the order settled — the full-return path is CHARGEBACKED.
+    if (tx.status === "PARTIALLY_REFUNDED") {
+      logger.warn({
+        route: "platega_callback",
+        outcome: "partially_refunded",
+        orderId: order.id,
+      });
+      return ack();
+    }
+
     // 5. CONFIRMED + amount/currency checks are both mandatory (D-35).
     if (tx.status !== "CONFIRMED") {
       return ack(); // PENDING/CANCELED: nothing to issue, ack anyway
@@ -123,16 +157,6 @@ export async function POST(req: Request): Promise<Response> {
         orderId: order.id,
       });
       return ack();
-    }
-    if (tx.amount > expected) {
-      // SBP bills its fee on top of the order: the payer is charged more than
-      // we asked, while our merchant balance is credited exactly `expected`.
-      // Not an anomaly — the order is still settled for `expected`.
-      logger.info({
-        route: "platega_callback",
-        outcome: "amount_over_paid_fee",
-        orderId: order.id,
-      });
     }
 
     // 6. Atomic pending→paid claim + one fulfill enqueue — the SAME shared

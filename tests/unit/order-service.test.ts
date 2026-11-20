@@ -337,16 +337,18 @@ describe("shared confirmed-payment transition (D-39)", () => {
   });
 });
 
-describe("amountMatches (SBP fee-on-top tolerance)", () => {
-  it("accepts exact and over-paid amounts within the 20% fee band", () => {
+describe("amountMatches (merchant pays the commission)", () => {
+  it("accepts only an exact charge", () => {
     expect(amountMatches(49, 49)).toBe(true);
-    expect(amountMatches(52.92, 49)).toBe(true); // observed live SBP +8%
-    expect(amountMatches(58.8, 49)).toBe(true); // band ceiling
+    expect(amountMatches(49.0, 49)).toBe(true);
   });
 
-  it("rejects underpayment and absurd overpayment", () => {
+  it("rejects any underpayment or overpayment, however small", () => {
     expect(amountMatches(48.99, 49)).toBe(false);
     expect(amountMatches(0, 49)).toBe(false);
+    // Fee-on-payer behaviour (SBP +8%) does NOT apply here: the merchant pays
+    // the commission, so an inflated charge is an anomaly, not a valid settle.
+    expect(amountMatches(52.92, 49)).toBe(false);
     expect(amountMatches(147, 49)).toBe(false);
   });
 });

@@ -227,6 +227,38 @@ describe("POST /api/platega/callback (PAY-01)", () => {
     expect(row?.status).toBe("pending");
   });
 
+  it("does not issue on DISPUTED, but leaves an already-settled order alone", async () => {
+    const order = await makeOrder({ plategaTxId: "tx_disputed" });
+    await prisma.order.update({ where: { id: order.id }, data: { status: "provisioned" } });
+    vi.spyOn(platega, "getTransaction").mockResolvedValue(
+      confirmedTx({ id: "tx_disputed", status: "DISPUTED" }),
+    );
+
+    const res = await POST(request(callbackBody({ id: "tx_disputed", status: "DISPUTED" })));
+
+    expect(res.status).toBe(200);
+    // A review opened after capture must not revoke a delivered key; only a
+    // later CHARGEBACKED does that.
+    const row = await prisma.order.findUnique({ where: { id: order.id } });
+    expect(row?.status).toBe("provisioned");
+  });
+
+  it("keeps a PARTIALLY_REFUNDED order settled (only a full return refunds)", async () => {
+    const order = await makeOrder({ plategaTxId: "tx_partial" });
+    await prisma.order.update({ where: { id: order.id }, data: { status: "paid" } });
+    vi.spyOn(platega, "getTransaction").mockResolvedValue(
+      confirmedTx({ id: "tx_partial", status: "PARTIALLY_REFUNDED" }),
+    );
+
+    const res = await POST(
+      request(callbackBody({ id: "tx_partial", status: "PARTIALLY_REFUNDED" })),
+    );
+
+    expect(res.status).toBe(200);
+    const row = await prisma.order.findUnique({ where: { id: order.id } });
+    expect(row?.status).toBe("paid");
+  });
+
   it("acks 200 fast even when the re-query throws (no redelivery loop)", async () => {
     const order = await makeOrder({ plategaTxId: "tx_err" });
     vi.spyOn(platega, "getTransaction").mockRejectedValue(new Error("boom"));
@@ -249,10 +281,10 @@ describe("POST /api/platega/callback (PAY-01)", () => {
     expect(res.status).toBe(401);
   });
 
-  it("settles a CONFIRMED order when SBP added its fee on top (charged > expected)", async () => {
+  it("rejects an overpayment, because the merchant pays the commission", async () => {
     const order = await makeOrder({ plategaTxId: "tx_sbp_fee" });
-    // Live Platega behaviour: a 49 RUB order is paid as 52.92 by the payer,
-    // while the merchant is credited exactly 49.
+    // With the commission on the merchant, the payer is charged exactly the
+    // order amount; anything above it is an anomaly and must not settle.
     vi.spyOn(platega, "getTransaction").mockResolvedValue(
       confirmedTx({ id: "tx_sbp_fee", amount: 52.92 }),
     );
@@ -263,8 +295,8 @@ describe("POST /api/platega/callback (PAY-01)", () => {
 
     expect(res.status).toBe(200);
     const row = await prisma.order.findUnique({ where: { id: order.id } });
-    expect(row?.status).toBe("paid");
-    expect(await prisma.outbox.count({ where: { orderId: order.id } })).toBe(1);
+    expect(row?.status).toBe("pending");
+    expect(await prisma.outbox.count({ where: { orderId: order.id } })).toBe(0);
   });
 
   it("rejects an underpayment (charged < expected)", async () => {

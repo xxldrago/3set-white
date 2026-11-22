@@ -5,6 +5,7 @@
 // 2FA/sessions/referral-rate/logout), never mock state. Falling back to the
 // template's visuals where no real API exists yet.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 interface UserShape {
@@ -95,6 +96,7 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
   const [tab, setTab] = useState<'acc' | 'sec' | 'not' | 'ses'>('acc');
   const [toasts, setToasts] = useState<Array<{ id: number; msg: string; type: 'ok' | 'err' }>>([]);
   const toastIdRef = useRef(0);
+  const router = useRouter();
 
   // local UI state
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -153,8 +155,7 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
       .then(() => {
         setDisabled(btn, false); setDisabled(mob, false);
         addToast('Вы вышли из аккаунта. Перенаправляем на страницу входа…');
-        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-        setTimeout(() => { window.location.href = '/login'; }, 1200);
+        setTimeout(() => { router.push('/login'); }, 1200);
       })
       .catch(() => {
         setDisabled(btn, false); setDisabled(mob, false);
@@ -175,8 +176,7 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
         const ov = document.getElementById('ovConfirm');
         if (ov) ov.classList.remove('open');
         document.body.style.overflow = '';
-        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-        setTimeout(() => { window.location.href = '/login'; }, 1000);
+        setTimeout(() => { router.push('/login'); }, 1000);
       })
       .catch(() => addToast('Не удалось удалить аккаунт', 'err'));
   };
@@ -976,7 +976,7 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
                   <span className="gift-ic" style={{ animation: 'none' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24" /><circle cx="12" cy="12" r="4" /></svg></span>
                   <div style={{ flex: 1, minWidth: 200 }}>
                     <h3 style={{ fontSize: 16, fontWeight: 600 }}>Нужна помощь?</h3>
-                    <p className="muted" style={{ margin: '4px 0 0', fontSize: 13 }}>Команда на связи круглосуточно, средний ответ — 4 минуты.</p>
+                    <p className="muted" style={{ margin: '4px 0 0', fontSize: 13 }}>Команда на связи круглосуточно.</p>
                   </div>
                   <button className="btn btn-ghost" data-toast="Открыт чат поддержки — отвечаем за 2–5 минут"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg> Написать</button>
                 </div>

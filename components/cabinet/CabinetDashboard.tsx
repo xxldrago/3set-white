@@ -362,9 +362,8 @@ export default function CabinetDashboard({
 
   const navLinks = [
     { href: '/subscription', label: 'Мои ключи', icon: KeyRound, id: 'subscription' },
-    { href: '/#tariff', label: 'Тарифы', icon: ShieldCheck, id: 'tariff' },
-    { href: '/profile#referrals', label: 'Бонусы', icon: LifeBuoy, id: 'referral' },
-    { href: '/faq', label: 'FAQ', icon: CircleHelp, id: 'faq' },
+    { href: '/faq', label: 'Инструкции', icon: CircleHelp, id: 'faq' },
+    { href: '/support', label: 'Поддержка', icon: LifeBuoy, id: 'support' },
   ];
 
   const RING_C = 2 * Math.PI * 56;

@@ -243,7 +243,7 @@ export default function InstallClient({ keys, initialKeyId, user }: Props) {
             <div className="nav-links">
               <Link className="nl" href="/subscription">Мои ключи</Link>
               <Link className="nl active" href="/install">Подключение</Link>
-              <Link className="nl" href="/faq">FAQ</Link>
+              <Link className="nl" href="/faq">Инструкции</Link>
               <Link className="nl" href="/support">Поддержка</Link>
             </div>
             <div className="nav-right">
@@ -557,7 +557,8 @@ export default function InstallClient({ keys, initialKeyId, user }: Props) {
               <p className="dim" style={{ fontSize: '12.5px', margin: '8px 0 0' }}>VPN-подписки: покупка и управление ключами · © 2026</p>
             </div>
             <div className="f-links">
-              <a href="#guide">Инструкция</a><a href="#help">FAQ</a>
+              <Link href="/subscription">Мои ключи</Link>
+              <Link href="/faq">Инструкции</Link>
               <button onClick={async () => { try { if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText('support@3set.online'); addToast('Адрес поддержки скопирован'); } catch { addToast('Не удалось скопировать', 'err'); } }}>support@3set.online</button>
               <button onClick={() => addToast('Политика конфиденциальности')}>Политика</button>
             </div>

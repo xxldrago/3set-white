@@ -605,8 +605,7 @@ export default function SubscriptionDashboard({
   /* ---------- render ---------- */
   const navLinks = [
     { href: '/subscription', label: 'Мои ключи', icon: KeyRound, active: true },
-    { href: '/#tariff', label: 'Тарифы', icon: ShieldCheck, active: false },
-    { href: '/guides', label: 'Инструкции', icon: BookOpen, active: false },
+    { href: '/faq', label: 'Инструкции', icon: BookOpen, active: false },
     { href: '/support', label: 'Поддержка', icon: LifeBuoy, active: false },
   ];
 

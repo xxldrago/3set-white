@@ -5,6 +5,7 @@
 // 2FA/sessions/referral-rate/logout), never mock state. Falling back to the
 // template's visuals where no real API exists yet.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 
 interface UserShape {
   userId: number;
@@ -598,24 +599,29 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
         <div className="wrap">
           <nav className="top" id="nav" ref={navRef}>
             <div className="inner">
-              <a className="brand" href="#" aria-label="3set — на главную">
+              <Link className="brand" href="/" aria-label="3set — на главную">
                 <svg className="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
                   <path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" fill="#1b2a1c" />
                   <path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" stroke="#b7ff45" strokeOpacity={0.35} />
                   <path d="M11 16l3.5 3.5L21 13" stroke="#b7ff45" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 <span>3<em>set</em><span className="dom mono">.online</span></span>
-              </a>
+              </Link>
               <div className="nav-links">
-                <a className="nl" href="#referrals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="15.5" cy="7.5" r="5.5" /><path d="m2 21 9.6-9.6M7.5 15.5l2.3 2.3a1 1 0 0 1 0 1.4L7.7 21.3a1 1 0 0 1-1.4 0L4 19" /></svg>Мои ключи</a>
-                <a className="nl" href="#referrals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" /></svg>FAQ</a>
-                <a className="nl" href="#referrals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24" /><circle cx="12" cy="12" r="4" /></svg>Поддержка</a>
+                <Link className="nl" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12 12 3l9 9" /><path d="M9 21V9h6v12" /></svg>Панель</Link>
+                <Link className="nl" href="/subscription"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="15.5" cy="7.5" r="5.5" /><path d="m2 21 9.6-9.6M7.5 15.5l2.3 2.3a1 1 0 0 1 0 1.4L7.7 21.3a1 1 0 0 1-1.4 0L4 19" /></svg>Мои ключи</Link>
+                <Link className="nl" href="/faq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" /></svg>Инструкции</Link>
+                <Link className="nl" href="/support"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24" /><circle cx="12" cy="12" r="4" /></svg>Поддержка</Link>
                 <a className="nl active" href="#top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>Профиль</a>
               </div>
               <div className="nav-right">
-                <a className="btn btn-light sm" href="#" style={{ height: 40 }} data-toast="Админ-панель доступна сотрудникам">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></svg> Админ-панель</a>
-                <a className="avatar-nav" href="#top" title={email} aria-label="Профиль" id="navAvatar">{ini}</a>
+                {isAdmin && (
+                  <Link className="btn btn-light sm" href="/admin" style={{ height: 40 }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></svg>
+                    Админ-панель
+                  </Link>
+                )}
+                <Link className="avatar-nav" href="/profile" title={email} aria-label="Профиль" id="navAvatar">{ini}</Link>
                 <button className="burger" id="burger" aria-label="Меню" aria-expanded={mobileOpen} onClick={() => setMobileOpen((o) => !o)}>
                   <span></span>
                 </button>
@@ -623,9 +629,9 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
             </div>
             <div className={`mobile-menu${mobileOpen ? ' open' : ''}`} id="mobileMenu">
               <div className="mm-inner">
-                <a className="nl" href="#account">Аккаунт</a>
-                <a className="nl" href="#security">Безопасность</a>
-                <a className="nl" href="#referrals">Реферальная программа</a>
+                <Link className="nl" href="#account">Аккаунт</Link>
+                <Link className="nl" href="#security">Безопасность</Link>
+                <Link className="nl" href="#referrals">Реферальная программа</Link>
                 <button className="btn btn-danger block" id="logoutMobile" style={{ marginTop: 6 }} onClick={logout}>Выйти из аккаунта</button>
               </div>
             </div>

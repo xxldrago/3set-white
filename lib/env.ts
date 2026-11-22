@@ -57,7 +57,7 @@ export const envSchema = z.object({
   // subscription links on this host; `lib/whitelabel.ts` verifies the returned
   // URL against it and falls back to the provider URL on mismatch — the host is
   // never constructed or rewritten. Server-only — never a NEXT_PUBLIC_* var.
-  WHITELABEL_HOST: z.string().min(1).default("sub.my.3set.online"),
+  WHITELABEL_HOST: z.string().min(1).default("our.3set.online"),
   // ARTEMIDA low-balance alert threshold in RUB (D-70). Consumed by the admin
   // balance chip in 05-07; carried in the schema here so that plan can read it.
   ARTEMIDA_LOW_BALANCE_RUB: z.coerce.number().nonnegative().default(500),

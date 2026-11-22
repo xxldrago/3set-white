@@ -11,7 +11,6 @@ import {
   CircleHelp,
   KeyRound,
   LifeBuoy,
-  LogIn,
   Monitor,
   ShieldCheck,
   Smartphone,
@@ -119,7 +118,6 @@ export default function CabinetDashboard({
   const [termPrices, setTermPrices] = useState<Record<number, number>>({});
   const [promo, setPromo] = useState<string | null>(null);
   const [promoText, setPromoText] = useState('');
-  const [ping, setPing] = useState(24);
   const [menuOpen, setMenuOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [deviceRows, setDeviceRows] = useState<Array<{ token: string; name: string | null; label: string | null }>>([]);
@@ -135,12 +133,19 @@ export default function CabinetDashboard({
 
   const abortRef = useRef<AbortController | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pingsRef = useRef<number[]>(Array.from({ length: 16 }, () => 18 + Math.round(Math.random() * 22)));
+  const pingsRef = useRef<number[]>([]);
+  // Initialize sparkline data on mount (Math.random is impure during render).
+  useEffect(() => {
+    if (pingsRef.current.length === 0) {
+      pingsRef.current = Array.from({ length: 16 }, () => 18 + Math.round(Math.random() * 22));
+    }
+  }, []);
 
   useEffect(() => {
     const now = new Date();
     const h = now.getHours();
     const g = h < 5 ? 'Доброй ночи' : h < 12 ? 'Доброе утро' : h < 18 ? 'Добрый день' : 'Добрый вечер';
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setGreeting(g);
     setToday(now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }));
   }, []);
@@ -206,8 +211,6 @@ export default function CabinetDashboard({
       const p = pingsRef.current;
       p.shift();
       p.push(Math.max(12, Math.min(64, p[p.length - 1]! + Math.round((Math.random() - 0.5) * 12))));
-      const v = p[p.length - 1]!;
-      setPing(v);
       const max = Math.max(...p);
       const min = Math.min(...p);
       const span = Math.max(1, max - min);

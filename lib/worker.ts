@@ -342,7 +342,7 @@ export async function drainOutbox(opts: { telegram?: TelegramSender } = {}): Pro
       } else {
         await markJobDone(job.id);
       }
-    } catch (err) {
+    } catch {
       // The process must survive any single job failure.
       logger.error({ route: "worker", outcome: "drain_job_error", jobId: job.id });
       await markJobFailed(job.id, "unexpected");

@@ -6,7 +6,7 @@
 // indistinguishable from a missing one (404, no reason oracle — T-02-17).
 import { z } from "zod";
 import { ArtemidaError } from "@/lib/artemida";
-import { getKeyForUser, normalizeLabel, setKeyLabel } from "@/lib/keys-service";
+import { getKeyForUser, normalizeLabel, setKeyLabel, deleteKey, deleteKeyByUserId } from "@/lib/keys-service";
 import { logger } from "@/lib/logger";
 import { requireSession, requireTelegramSession, SessionError } from "@/lib/session";
 
@@ -137,6 +137,60 @@ export async function PATCH(
       return Response.json({ error: err.code }, { status: mapArtemidaStatus(err.code) });
     }
     logger.error({ route: "keys-label", outcome: "unexpected_error" });
+    return Response.json({ error: "internal" }, { status: 500 });
+  }
+}
+
+/**
+ * DELETE /api/keys/[id] — permanently delete an owned key.
+ *
+ * ARTEMIDA has no undo: the provider's `permanent` delete is irreversible and
+ * does not refund. The caller must confirm in the UI before invoking this.
+ * A non-owned key answers 404 (no oracle).
+ */
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> },
+): Promise<Response> {
+  let userId: number;
+  let telegramId: number | null = null;
+  try {
+    ({ userId } = await requireSession());
+  } catch (err) {
+    if (err instanceof SessionError) {
+      return Response.json({ error: "unauthorized" }, { status: 401 });
+    }
+    logger.error({ route: "keys-delete", outcome: "session_error" });
+    return Response.json({ error: "internal" }, { status: 500 });
+  }
+
+  const { id } = await params;
+  const parsedId = idSchema.safeParse(id);
+  if (!parsedId.success) {
+    return Response.json({ error: "bad_request" }, { status: 400 });
+  }
+
+  // Resolve telegram id for the provider-scoped path; fall back to userId path.
+  try {
+    const sid = await requireTelegramSession().catch(() => null);
+    telegramId = sid;
+  } catch {
+    telegramId = null;
+  }
+
+  try {
+    const ok =
+      telegramId !== null
+        ? await deleteKey(BigInt(telegramId), parsedId.data)
+        : await deleteKeyByUserId(userId, parsedId.data);
+    if (!ok) return Response.json({ error: "not_found" }, { status: 404 });
+    return Response.json({ ok: true });
+  } catch (err) {
+    if (err instanceof ArtemidaError) {
+      logger.warn({ route: "keys-delete", code: err.code, requestId: err.requestId });
+      return Response.json({ error: err.code }, { status: mapArtemidaStatus(err.code) });
+    }
+    logger.error({ route: "keys-delete", outcome: "unexpected_error" });
     return Response.json({ error: "internal" }, { status: 500 });
   }
 }

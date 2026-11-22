@@ -30,6 +30,7 @@ import {
   Share2,
   ShieldCheck,
   Smartphone,
+  Trash2,
   X,
 } from 'lucide-react';
 import LabelEditor from '@/components/LabelEditor';
@@ -69,7 +70,7 @@ interface Props {
 
 type UiStatus = 'active' | 'soon' | 'expired' | 'other';
 type Filter = 'all' | UiStatus;
-type Modal = null | 'devices' | 'rename' | 'qr' | 'slots';
+type Modal = null | 'devices' | 'rename' | 'qr' | 'slots' | 'delete';
 type DeviceRow = { token: string; name: string | null; label: string | null };
 
 interface Device {
@@ -482,6 +483,21 @@ export default function SubscriptionDashboard({
     toast('Название обновлено');
   };
 
+  const deleteKey = async () => {
+    if (!activeKey) return;
+    const res = await fetch(`/api/keys/${encodeURIComponent(activeKey.id)}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      toast('Не удалось удалить ключ', true);
+      return;
+    }
+    setKeys((all) => all.filter((k) => k.id !== activeKey.id));
+    setActiveId(null);
+    closeModal();
+    toast('Ключ удалён. Деньги не возвращаются.');
+  };
+
   const shareKey = async (key: SubscriptionKeyView) => {
     if (!key.subscriptionUrl) {
       toast('Ссылка подписки пока недоступна', true);
@@ -794,6 +810,9 @@ export default function SubscriptionDashboard({
                         </button>
                         <button className="tbtn" title="QR-код" aria-label="QR-код" data-act="qr" onClick={() => openModal('qr', k)}>
                           <QrCode aria-hidden />
+                        </button>
+                        <button className="tbtn" title="Удалить ключ" aria-label="Удалить ключ" data-act="delete" onClick={() => openModal('delete', k)} style={{ color: 'var(--red)' }}>
+                          <Trash2 aria-hidden />
                         </button>
                         <button className="tbtn" title="Ещё" aria-label="Ещё" data-act="menu" onClick={(e) => openMenu(e.currentTarget, k)}>
                           <MoreHorizontal aria-hidden />
@@ -1274,6 +1293,24 @@ export default function SubscriptionDashboard({
           <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
             <button className="btn btn-ghost" style={{ flex: 1 }} onClick={closeModal}>Отмена</button>
             <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => void saveRename()}>Сохранить</button>
+          </div>
+        </div>
+      </div>
+
+      <div className={`overlay${modal === 'delete' ? ' open' : ''}`} role="dialog" aria-modal="true" aria-labelledby="delTitle"
+        onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
+        <div className="modal" style={{ width: 'min(440px,100%)' }}>
+          <div className="modal-head">
+            <h3 id="delTitle" style={{ color: 'var(--red)' }}>Удалить ключ?</h3>
+            <button className="icon-btn" onClick={closeModal} aria-label="Закрыть"><X aria-hidden /></button>
+          </div>
+          <p className="muted" style={{ fontSize: '13.5px', margin: '0 0 14px' }}>
+            Ключ <b className="mono" style={{ color: 'var(--lime)', fontSize: '12.5px' }}>{activeKey ? shortId(activeKey.id) : ''}</b> будет удалён навсегда.
+            Деньги за удалённый ключ <b style={{ color: 'var(--red)' }}>не возвращаются</b>. Восстановить ключ после удаления нельзя.
+          </p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-ghost" style={{ flex: 1 }} onClick={closeModal}>Отмена</button>
+            <button className="btn btn-danger" style={{ flex: 1 }} onClick={() => void deleteKey()}>Удалить навсегда</button>
           </div>
         </div>
       </div>

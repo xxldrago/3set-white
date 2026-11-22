@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { CircleHelp, Key, LifeBuoy, ShieldCheck, type LucideIcon } from 'lucide-react';
+import { CircleHelp, Key, LayoutDashboard, LifeBuoy, ShieldCheck, type LucideIcon } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { t, tp } from '@/lib/i18n';
 
@@ -28,8 +28,9 @@ interface NavItem {
 // item; the logo links home. Payments history lives on /payments (reached
 // from the payments page itself, not the header).
 const NAV_ITEMS: NavItem[] = [
+  { href: '/', label: 'Панель', icon: LayoutDashboard },
   { href: '/subscription', label: 'Мои ключи', icon: Key },
-  { href: '/faq', label: 'FAQ', icon: CircleHelp },
+  { href: '/faq', label: 'Инструкции', icon: CircleHelp },
   { href: '/support', label: 'Поддержка', icon: LifeBuoy },
 ];
 

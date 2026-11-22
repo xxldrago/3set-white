@@ -6,7 +6,6 @@
 // state. Falls back to the template's visuals where no real API exists yet.
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
-import TelegramWidgetInjector from '@/components/TelegramWidgetInjector';
 import { t } from '@/lib/i18n';
 
 const LOGIN_ENDPOINT = '/api/auth/email/login';
@@ -40,7 +39,6 @@ declare global {
 interface LoginClientProps {
   initialMode: Mode;
   ref: string | null;
-  userCount: number;
   activeKeys: number;
   legalBaseUrl: string;
 }
@@ -48,7 +46,6 @@ interface LoginClientProps {
 export default function LoginClient({
   initialMode,
   ref: refParam,
-  userCount,
   activeKeys,
   legalBaseUrl,
 }: LoginClientProps) {
@@ -611,21 +608,14 @@ export default function LoginClient({
       requestAnimationFrame(step);
     };
     const t1 = setTimeout(() => {
-      const u = document.getElementById('stUsers');
       const k = document.getElementById('stKeys');
-      // Small numbers read oddly mid-animation next to a plural label
-      // ("3 пользователей"), so only count up once the figure is large.
-      if (u) {
-        if (userCount >= 100) countUp(u, userCount, 1400);
-        else u.textContent = String(userCount);
-      }
       if (k) {
         if (activeKeys >= 100) countUp(k, activeKeys, 1400);
         else k.textContent = String(activeKeys);
       }
     }, 350);
     return () => clearTimeout(t1);
-  }, [userCount, activeKeys]);
+  }, [activeKeys]);
 
   /* ---------- render ---------- */
   return (
@@ -695,8 +685,8 @@ export default function LoginClient({
           </div>
           <div className="bp-stats reveal" style={{ '--d': '240ms' } as React.CSSProperties}>
             <div className="bs">
-              <b id="stUsers">{userCount}</b>
-              <span>{ruPlural(userCount, 'пользователь сервиса', 'пользователя сервиса', 'пользователей сервиса')}</span>
+              <b>∞</b>
+              <span>любое количество пользователей</span>
             </div>
             <div className="bs">
               <b id="stKeys">{activeKeys}</b>
@@ -733,7 +723,7 @@ export default function LoginClient({
             </header>
 
             <div className="card reveal" style={{ '--d': '160ms' } as React.CSSProperties}>
-              <div className="seg-tabs" id="segTabs" role="group" aria-label="Вход или регистрация">
+              <div className={`seg-tabs ${mode === 'register' ? 'right' : ''}`} id="segTabs" role="group" aria-label="Вход или регистрация">
                 <span className="ind" />
                 <button
                   type="button"
@@ -1027,46 +1017,24 @@ export default function LoginClient({
                 <span id="tgLabel">{t('auth.loginViaBot')}</span>
               </button>
 
-              <div className="divider"><i></i><span>{t('auth.orContinue')}</span><i></i></div>
+               <div className="divider" style={{ marginTop: 4 }}><i></i><span>{t('auth.orContinue')}</span><i></i></div>
 
-              <div className="tg-widget">
-                {process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ? (
-                  <TelegramWidgetInjector
-                    botUsername={process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME}
-                    onAuth={(user: unknown) => {
-                      void fetch(TG_WIDGET_ENDPOINT, {
-                        method: 'POST',
-                        headers: { 'content-type': 'application/json' },
-                        body: JSON.stringify(user),
-                      }).then((res) => {
-                        if (res.ok) router.push('/');
-                        else addToast(t('login.error'), 'err');
-                      }).catch(() => addToast(t('login.error'), 'err'));
-                    }}
-                    buttonSize="large"
-                    requestAccess="write"
-                  />
-                ) : null}
-                <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--dim)' }}>
-                  {t('login.widgetNote')}
-                </p>
-                {webappAvailable && (
-                  <>
-                    <button
-                      type="button"
-                      className="btn btn-tg block sm"
-                      onClick={() => void loginFromWebapp()}
-                      disabled={tgBusy}
-                      style={{ marginTop: 8 }}
-                    >
-                      {t('home.loginCta')}
-                    </button>
-                    <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--dim)' }}>
-                      {t('login.webappNote')}
-                    </p>
-                  </>
-                )}
-              </div>
+               {webappAvailable && (
+                 <>
+                   <button
+                     type="button"
+                     className="btn btn-tg block sm"
+                     onClick={() => void loginFromWebapp()}
+                     disabled={tgBusy}
+                     style={{ marginTop: 8 }}
+                   >
+                     {t('home.loginCta')}
+                   </button>
+                   <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--dim)' }}>
+                     {t('login.webappNote')}
+                   </p>
+                 </>
+               )}
             </div>
 
             <p className="legal">

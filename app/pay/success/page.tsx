@@ -10,6 +10,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CheckCircle2 } from 'lucide-react';
 import { t } from '@/lib/i18n';
+import PaySuccessRedirect from './Redirect';
 
 // The bot username is a build-time public value (same one the Login Widget
 // uses); when it is unset the page falls back to the cabinet CTA only.
@@ -38,6 +39,7 @@ export default async function PaySuccessPage({
   return (
     <main className="flex flex-1 items-center justify-center bg-background px-6 py-12">
       <section className={CARD}>
+        <PaySuccessRedirect toBot={fromBot} botUsername={BOT_USERNAME} />
         <span
           aria-hidden
           className="flex size-14 items-center justify-center rounded-full bg-lime/15 text-lime"

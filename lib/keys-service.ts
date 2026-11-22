@@ -108,9 +108,14 @@ export function formatKeyDate(expiresAt: string): string {
 }
 
 function toRenderedKey(row: KeyCacheRow): RenderedKey {
+  // Provider key names sometimes leak the upstream brand (e.g.
+  // "api_ARTΞMIDA API"). Never surface those in the user cabinet — only the
+  // admin panel may reference the provider. Fall back to a neutral label.
+  const rawName = row.name;
+  const cleanName = rawName && /artemida|api_ART/i.test(rawName) ? '3set VPN' : rawName;
   return {
     id: row.keyId,
-    name: row.name,
+    name: cleanName,
     // Owner-chosen label wins over the provider's technical name. `label` is
     // never written by a provider sync, so it survives revalidation.
     label: row.label,
@@ -426,6 +431,29 @@ export async function clearDevices(telegramId: bigint, keyId: string): Promise<b
 /** Clear every device on an owned key for a local user id. */
 export async function clearDevicesByUserId(userId: number, keyId: string): Promise<boolean> {
   return clearDevicesForOwner({ userId }, keyId);
+}
+
+/** Delete an owned key (permanent) for a telegram-id owner. Returns true on success. */
+export async function deleteKey(telegramId: bigint, keyId: string): Promise<boolean> {
+  return deleteKeyForOwner({ telegramId }, keyId);
+}
+
+/** Delete an owned key (permanent) for a local user id. Returns true on success. */
+export async function deleteKeyByUserId(userId: number, keyId: string): Promise<boolean> {
+  return deleteKeyForOwner({ userId }, keyId);
+}
+
+async function deleteKeyForOwner(owner: DeviceKeyOwner, keyId: string): Promise<boolean> {
+  const rowId = await ownedKeyRowIdForOwner(owner, keyId);
+  if (rowId === null) return false;
+  try {
+    await artemida.deleteKey(keyId, { permanent: true });
+  } catch {
+    // If the provider rejects (e.g. already gone), still drop our cache row
+    // so the cabinet stops showing a stale key.
+  }
+  await prisma.keyCache.deleteMany({ where: { id: rowId } });
+  return true;
 }
 
 async function clearDevicesForOwner(

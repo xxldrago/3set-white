@@ -24,15 +24,11 @@ export default async function SignupPage({
   const user = await getSessionUser();
   if (user) redirect('/');
 
-  let userCount = 0;
   let activeKeys = 0;
   try {
-    [userCount, activeKeys] = await Promise.all([
-      prisma.user.count(),
-      prisma.keyCache.count({
-        where: { isTrial: false, expiresAt: { gt: new Date() } },
-      }),
-    ]);
+    activeKeys = await prisma.keyCache.count({
+      where: { isTrial: false, expiresAt: { gt: new Date() } },
+    });
   } catch {
     // Cosmetic counters only — never fail the page on a count query.
   }
@@ -41,7 +37,6 @@ export default async function SignupPage({
     <LoginClient
       initialMode="register"
       ref={ref ?? null}
-      userCount={userCount}
       activeKeys={activeKeys}
       legalBaseUrl={env.LEGAL_BASE_URL}
     />

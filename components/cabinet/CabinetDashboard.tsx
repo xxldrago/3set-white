@@ -713,7 +713,7 @@ export default function CabinetDashboard({
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14M12 5v14" /></svg>
                       </button>
                       <div className="dots" aria-hidden>
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => <i key={i} className={i <= count && i >= TARIFF_MIN_DEVICES ? 'on' : ''} />)}
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => <i key={i} className={i <= count ? 'on' : ''} />)}
                       </div>
                     </div>
                   </div>

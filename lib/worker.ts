@@ -165,6 +165,12 @@ export async function processFulfillOrder(orderId: string): Promise<FulfillOutco
       }),
     ]);
     await upsertCachedKey(order.userId, key);
+    // If a renew/upgrade returned a *new* provider key id (provider-side
+    // reissue), drop the stale cached row for the old key so the cabinet
+    // doesn't show a duplicate "new key" alongside the extended one.
+    if ((order.kind === "renew" || order.kind === "upgrade") && order.keyId && order.keyId !== key.id) {
+      await prisma.keyCache.deleteMany({ where: { userId: order.userId, keyId: order.keyId } });
+    }
     // The transition result is the send gate: only the first writer that
     // actually flips provisioning→provisioned triggers the receipt email,
     // so worker retries can never double-send.

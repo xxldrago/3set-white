@@ -17,6 +17,7 @@ import { randomUUID } from "node:crypto";
 import pRetry from "p-retry";
 import { z } from "zod";
 import { env } from "./env";
+import { WHITELABEL_HOST } from "./whitelabel";
 
 export type ArtemidaCode =
   | "unauthorized"
@@ -362,6 +363,22 @@ function asDeviceCount(value: unknown): number | null {
   return null;
 }
 
+function rewriteSubscriptionHost(url: string | null): string | null {
+  if (!url) return url;
+  // Guard against accidental doubling ("https://ahttps://a") from a bad
+  // provider response or a stale cached row — keep only the last well-formed URL.
+  let candidate = url;
+  const doubled = candidate.match(/https?:\/\/[^\s]+?(https?:\/\/[^\s]+)/);
+  if (doubled) candidate = doubled[1];
+  try {
+    const parsed = new URL(candidate);
+    parsed.hostname = WHITELABEL_HOST;
+    parsed.protocol = "https:";
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
 function normalizeKey(raw: unknown, fallbackId?: string): NormalizedKey {
   const d = asRecord(raw);
   return {
@@ -374,7 +391,7 @@ function normalizeKey(raw: unknown, fallbackId?: string): NormalizedKey {
     expiresAt: asString(d.expiresAt) ?? asString(d.expireAt) ?? asString(d.expire_at),
     deviceLimit: pickNumber(d.deviceLimit, d.device_limit),
     devices: asDeviceCount(d.devices),
-    subscriptionUrl: asString(d.subscriptionUrl) ?? asString(d.subscription_url),
+    subscriptionUrl: rewriteSubscriptionHost(asString(d.subscriptionUrl) ?? asString(d.subscription_url)),
     customerRef: asString(d.customerRef) ?? asString(d.customer_ref),
     trafficUsedBytes: pickNumber(d.trafficUsedBytes, d.traffic_used_bytes),
     trafficLimitBytes: pickNumber(d.trafficLimitBytes, d.traffic_limit_bytes),
@@ -408,7 +425,7 @@ function normalizeSubscriptionLinks(data: unknown): SubscriptionLinks {
   const vless = asStringArray(d.vless);
   return {
     subscriptionUrl:
-      asString(d.subscriptionUrl) ?? asString(d.subscription_url) ?? asString(d.url),
+      rewriteSubscriptionHost(asString(d.subscriptionUrl) ?? asString(d.subscription_url) ?? asString(d.url)),
     links: links.length ? links : vless,
   };
 }

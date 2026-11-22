@@ -28,17 +28,12 @@ export default async function LoginPage({
   const initialMode = mode === 'register' ? 'register' : 'login';
 
   // Real numbers only — the template's invented stats are replaced by live
-  // counts of the accounts and paid keys the cabinet actually holds.
-  let userCount = 0;
+  // counts of paid keys the cabinet actually holds.
   let activeKeys = 0;
   try {
-    [userCount, activeKeys] = await Promise.all([
-      prisma.user.count(),
-      // "Active" = paid and not yet expired, matching deriveStatusKind.
-      prisma.keyCache.count({
-        where: { isTrial: false, expiresAt: { gt: new Date() } },
-      }),
-    ]);
+    activeKeys = await prisma.keyCache.count({
+      where: { isTrial: false, expiresAt: { gt: new Date() } },
+    });
   } catch {
     // Counters are cosmetic proof-of-life: a DB hiccup must not 500 the page.
   }
@@ -47,7 +42,6 @@ export default async function LoginPage({
     <LoginClient
       initialMode={initialMode}
       ref={ref ?? null}
-      userCount={userCount}
       activeKeys={activeKeys}
       legalBaseUrl={env.LEGAL_BASE_URL}
     />

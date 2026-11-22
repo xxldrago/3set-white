@@ -5,7 +5,8 @@
 // accept afterwards. Shown only when the account has no email yet — the
 // Account section renders it in place of the email row.
 //
-// Validation copy and values live here (same discipline as EmailAuthCard);
+// Validation copy and values live here (same discipline as the email auth
+// forms);
 // the httpOnly cookie is never read. Failures are deliberately generic
 // (email_taken on attach would be the same account-existence oracle register
 // refuses to open, D-89). Success re-fetches the profile so the server-rendered

@@ -135,7 +135,9 @@ async function TicketsSection({
         </h2>
         {q || filter !== 'all' ? (
           <p className="text-sm text-muted">{t('admin.ticketsEmptyFiltered')}</p>
-        ) : null}
+        ) : (
+          <p className="text-sm text-muted">{t('ticket.emptyBody')}</p>
+        )}
       </section>
     );
   }

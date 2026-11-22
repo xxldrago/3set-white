@@ -1,13 +1,19 @@
-import AuthPage from '@/components/AuthPage';
+import { redirect } from 'next/navigation';
+import LoginClient from '@/app/login/LoginClient';
+import { getSessionUser } from '@/lib/session';
+import { prisma } from '@/lib/prisma';
+import { env } from '@/lib/env';
 import { t } from '@/lib/i18n';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
-  title: `${t('login.title')} — ${t('app.name')}`,
+  title: `${t('auth.modeRegister')} — ${t('app.name')}`,
+  description: t('login.text'),
 };
 
-// External-traffic entry: byte-identical to /login except the register
-// segment opens first. Login stays one tap away — same component, same
-// routes, only the initial mode differs.
+// External-traffic entry: same island as /login, only the register segment
+// opens first. Login stays one tap away — same routes, same behaviour.
 export default async function SignupPage({
   searchParams,
 }: {
@@ -15,5 +21,29 @@ export default async function SignupPage({
 }) {
   const { ref } = await searchParams;
 
-  return <AuthPage initialMode="register" referral={ref ?? null} />;
+  const user = await getSessionUser();
+  if (user) redirect('/');
+
+  let userCount = 0;
+  let activeKeys = 0;
+  try {
+    [userCount, activeKeys] = await Promise.all([
+      prisma.user.count(),
+      prisma.keyCache.count({
+        where: { isTrial: false, expiresAt: { gt: new Date() } },
+      }),
+    ]);
+  } catch {
+    // Cosmetic counters only — never fail the page on a count query.
+  }
+
+  return (
+    <LoginClient
+      initialMode="register"
+      ref={ref ?? null}
+      userCount={userCount}
+      activeKeys={activeKeys}
+      legalBaseUrl={env.LEGAL_BASE_URL}
+    />
+  );
 }

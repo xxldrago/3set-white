@@ -2249,3 +2249,806 @@ body::after {
         }
         @media (prefers-reduced-motion:reduce){.install-page *{animation-duration:.001s!important;transition-duration:.001s!important}.install-page .reveal{opacity:1;transform:none}}
     
+/* ==========================================================================
+   REFERRALS PAGE — /referrals, supplied template scoped to .referrals-page
+   ========================================================================== */
+
+.referrals-page{
+ --bg:#0e1512; --panel:#131c17; --panel-2:#18231d; --panel-3:#1e2b23;
+ --line:rgba(233,255,214,.09); --line-2:rgba(233,255,214,.16);
+ --fg:#eef5ea; --muted:#9daba1; --dim:#6b7b70;
+ --lime:#b7ff45; --lime-2:#d4ff85; --green:#8fdc2c;
+ --amber:#ffd166; --red:#ff7a6b; --cyan:#63d7c8; --tg:#2aabee;
+ --r-lg:22px; --r-md:16px; --r-sm:12px;
+ --shadow:0 24px 60px -30px rgba(0,0,0,.9);
+ --glow:0 10px 34px -12px rgba(183,255,69,.55);
+ --ease:cubic-bezier(.22,.9,.28,1);
+}
+.referrals-page *{box-sizing:border-box}
+.referrals-page{scroll-behavior:smooth}
+.referrals-page{margin:0;min-height:100vh;background:var(--bg);color:var(--fg);
+ font-family:"Manrope Variable",Manrope,system-ui,sans-serif;font-size:15px;line-height:1.55;
+ -webkit-font-smoothing:antialiased;overflow-x:hidden}
+.referrals-page h1, .referrals-page h2, .referrals-page h3{font-family:"Unbounded Variable",Unbounded,Manrope,sans-serif;letter-spacing:-.02em;margin:0}
+.referrals-page .mono{font-family:"JetBrains Mono Variable","JetBrains Mono",ui-monospace,monospace}
+.referrals-page button, .referrals-page input, .referrals-page select, .referrals-page textarea{font:inherit;color:inherit}
+.referrals-page a{color:inherit;text-decoration:none}
+.install-page ::selection{background:rgba(183,255,69,.28)}
+.bg-fx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.referrals-page .bg-fx .grid{position:absolute;inset:-2px;
+ background-image:linear-gradient(rgba(183,255,69,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(183,255,69,.045) 1px,transparent 1px);
+ background-size:64px 64px;mask-image:radial-gradient(120% 80% at 50% 0%,#000 20%,transparent 78%)}
+.referrals-page .blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5}
+.referrals-page .blob.b1{width:520px;height:520px;top:-220px;left:-120px;background:radial-gradient(circle,rgba(140,220,44,.30),transparent 65%);animation:float1 22s var(--ease) infinite}
+.referrals-page .blob.b2{width:600px;height:600px;top:120px;right:-260px;background:radial-gradient(circle,rgba(60,180,120,.20),transparent 65%);animation:float2 28s var(--ease) infinite}
+.referrals-page .blob.b3{width:460px;height:460px;bottom:-180px;left:32%;background:radial-gradient(circle,rgba(183,255,69,.14),transparent 65%);animation:float1 34s var(--ease) infinite reverse}
+@keyframes float1{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(40px,50px,0) scale(1.12)}}
+@keyframes float2{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-50px,40px,0) scale(1.08)}}
+.referrals-page .wrap{position:relative;z-index:1;display:flex;flex-direction:column;min-height:100vh}
+.progress-bar{position:fixed;top:0;left:0;height:2px;width:0;z-index:60;
+ background:linear-gradient(90deg,var(--green),var(--lime-2));box-shadow:0 0 14px rgba(183,255,69,.7);transition:width .12s linear}
+.referrals-page nav.top{position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line);background:rgba(11,17,14,.72);
+ backdrop-filter:blur(16px) saturate(140%);transition:background .3s var(--ease)}
+.referrals-page nav.top .inner{max-width:1200px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:18px;justify-content:space-between}
+.referrals-page nav.top.scrolled{background:rgba(9,14,11,.92)}
+.referrals-page nav.top.scrolled .inner{padding-top:8px;padding-bottom:8px;transition:padding .3s var(--ease)}
+.referrals-page .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px}
+.referrals-page .brand .mark{width:36px;height:36px;flex:none;filter:drop-shadow(0 4px 12px rgba(183,255,69,.35));transition:transform .5s var(--ease)}
+.referrals-page .brand:hover .mark{transform:rotate(-8deg) scale(1.06)}
+.referrals-page .brand em{font-style:normal;color:var(--lime)}
+.referrals-page .brand .dom{font-size:11px;color:var(--dim);font-weight:500;margin-left:2px}
+.referrals-page .nav-links{display:flex;align-items:center;gap:4px}
+.referrals-page .nav-links a.nl{display:flex;align-items:center;gap:7px;padding:9px 13px;border-radius:11px;font-weight:700;font-size:13.5px;color:var(--muted);
+ position:relative;border:1px solid transparent;transition:color .25s,background .25s,transform .25s var(--ease)}
+.referrals-page .nav-links a.nl svg{width:16px;height:16px;opacity:.9}
+.referrals-page .nav-links a.nl::after{content:"";position:absolute;left:13px;right:13px;bottom:5px;height:2px;border-radius:2px;background:var(--lime);
+ transform:scaleX(0);transform-origin:left;transition:transform .3s var(--ease)}
+.referrals-page .nav-links a.nl:hover{color:var(--fg);background:rgba(183,255,69,.07)}
+.referrals-page .nav-links a.nl:hover::after{transform:scaleX(1)}
+.referrals-page .nav-links a.nl.active{color:#101a05;background:linear-gradient(135deg,var(--lime-2),var(--green));box-shadow:var(--glow)}
+.referrals-page .nav-links a.nl.active::after{display:none}
+.referrals-page .nav-right{display:flex;align-items:center;gap:10px}
+.referrals-page .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:13px;padding:0 18px;height:46px;
+ font-weight:800;font-size:13.5px;cursor:pointer;white-space:nowrap;
+ transition:transform .2s var(--ease),box-shadow .3s,background .25s,border-color .25s,color .25s,opacity .25s}
+.referrals-page .btn svg{width:17px;height:17px}
+.referrals-page .btn:active{transform:scale(.975)}
+.referrals-page .btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}
+.referrals-page .btn-primary{background:linear-gradient(135deg,var(--lime-2),var(--green));color:#101a05;box-shadow:var(--glow)}
+.referrals-page .btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 16px 40px -14px rgba(183,255,69,.75)}
+.referrals-page .btn-light{background:#eef5ea;color:#101a05}
+.referrals-page .btn-light:hover{background:#fff;transform:translateY(-2px)}
+.referrals-page .btn-tg{background:linear-gradient(135deg,#2aabee,#229ed9);color:#fff;box-shadow:0 10px 28px -14px rgba(42,171,238,.9)}
+.referrals-page .btn-tg:hover{transform:translateY(-2px)}
+.referrals-page .btn-ghost{border-color:var(--line-2);background:rgba(255,255,255,.02);color:var(--fg)}
+.referrals-page .btn-ghost:hover:not(:disabled){border-color:rgba(183,255,69,.45);background:rgba(183,255,69,.09);transform:translateY(-2px)}
+.referrals-page .btn-quiet{border-color:var(--line);background:transparent;color:var(--muted)}
+.referrals-page .btn-quiet:hover{color:var(--fg);border-color:var(--line-2);background:rgba(255,255,255,.04)}
+.referrals-page .btn-danger{border-color:rgba(255,122,107,.35);background:rgba(255,122,107,.1);color:var(--red)}
+.referrals-page .btn-danger:hover:not(:disabled){background:rgba(255,122,107,.2);transform:translateY(-2px)}
+.referrals-page .btn.sm{height:38px;padding:0 14px;font-size:12.5px;border-radius:11px}
+.referrals-page .btn.xs{height:32px;padding:0 11px;font-size:12px;border-radius:10px}
+.referrals-page .btn.block{width:100%}
+.referrals-page .avatar-nav{width:42px;height:42px;flex:none;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line-2);
+ background:radial-gradient(circle at 30% 25%,#2a3a20,#141d18);font-weight:800;font-size:13px;cursor:pointer;position:relative;
+ transition:transform .3s var(--ease),border-color .3s,box-shadow .3s}
+.referrals-page .avatar-nav:hover{transform:translateY(-2px) scale(1.04);border-color:rgba(183,255,69,.5);box-shadow:0 0 0 4px rgba(183,255,69,.1)}
+.referrals-page .avatar-nav .dot{position:absolute;right:-1px;bottom:-1px;width:12px;height:12px;border-radius:50%;background:var(--lime);border:2.5px solid var(--bg);animation:pulseDot 2.4s infinite}
+@keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(183,255,69,.55)}50%{box-shadow:0 0 0 6px rgba(183,255,69,0)}}
+.referrals-page .burger{display:none;width:42px;height:42px;border-radius:12px;border:1px solid var(--line-2);background:rgba(255,255,255,.03);cursor:pointer;align-items:center;justify-content:center}
+.referrals-page .burger span{display:block;width:17px;height:2px;background:var(--fg);border-radius:2px;position:relative;transition:.3s var(--ease)}
+.referrals-page .burger span::before, .referrals-page .burger span::after{content:"";position:absolute;left:0;width:17px;height:2px;background:var(--fg);border-radius:2px;transition:.3s var(--ease)}
+.referrals-page .burger span::before{top:-6px}.referrals-page .burger span::after{top:6px}
+.referrals-page .burger.open span{background:transparent}
+.referrals-page .burger.open span::before{top:0;transform:rotate(45deg)}
+.referrals-page .burger.open span::after{top:0;transform:rotate(-45deg)}
+.referrals-page .mobile-menu{display:none;overflow:hidden;max-height:0;transition:max-height .45s var(--ease)}
+.referrals-page .mobile-menu.open{max-height:400px}
+.referrals-page .mobile-menu .mm-inner{padding:6px 20px 16px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.referrals-page .mobile-menu a.nl{padding:12px 10px;border-radius:12px;font-weight:700;color:var(--muted)}
+.referrals-page .mobile-menu a.nl:hover{background:rgba(183,255,69,.08);color:var(--fg)}
+main{flex:1;width:100%;max-width:1200px;margin:0 auto;padding:34px 20px 60px;display:flex;flex-direction:column;gap:24px}
+.referrals-page .card{background:linear-gradient(160deg,rgba(255,255,255,.035),rgba(255,255,255,0) 42%),var(--panel);
+ border:1px solid var(--line);border-radius:var(--r-lg);padding:26px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.referrals-page .card::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+ background:radial-gradient(420px 160px at 88% -10%,rgba(183,255,69,.10),transparent 70%)}
+.referrals-page .kicker{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--green);font-weight:700}
+.referrals-page h1.page-title{font-size:clamp(26px,4.2vw,38px);line-height:1.14;font-weight:700}
+.referrals-page h1.page-title em{font-style:normal;color:var(--lime)}
+.referrals-page h2.sec-title{font-size:clamp(18px,2.4vw,23px);font-weight:600;line-height:1.3}
+.referrals-page .muted{color:var(--muted)} .referrals-page .dim{color:var(--dim)}
+.referrals-page .label{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:700}
+.referrals-page .pill{display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;font-size:12px;font-weight:800;
+ border:1px solid var(--line-2);background:rgba(255,255,255,.03)}
+.referrals-page .pill .pdot{width:8px;height:8px;border-radius:50%;background:var(--lime);animation:pulseDot 2.2s infinite}
+.referrals-page .pill.ok{border-color:rgba(183,255,69,.35);background:rgba(183,255,69,.10);color:var(--lime)}
+.referrals-page .pill.warn{border-color:rgba(255,209,102,.32);background:rgba(255,209,102,.10);color:var(--amber)}
+.referrals-page .pill.warn .pdot{background:var(--amber)}
+.referrals-page .pill.info{border-color:rgba(99,215,200,.3);background:rgba(99,215,200,.10);color:var(--cyan)}
+.referrals-page .pill.info .pdot{background:var(--cyan)}
+.referrals-page .pill.bad{border-color:rgba(255,122,107,.3);background:rgba(255,122,107,.1);color:var(--red)}
+.referrals-page .bar{height:7px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.referrals-page .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),var(--lime));width:0;transition:width 1.2s var(--ease)}
+.referrals-page .sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.hero{display:grid;grid-template-columns:1.28fr .72fr;gap:20px;align-items:stretch}
+.referrals-page .hero-l{display:flex;flex-direction:column;gap:16px;justify-content:center}
+.referrals-page .hero-l p.lead{margin:0;color:var(--muted);font-size:14.5px;max-width:56ch}
+.referrals-page .link-big{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border:1px dashed rgba(183,255,69,.35);border-radius:var(--r-md);
+ padding:13px;background:rgba(183,255,69,.06)}
+.referrals-page .link-big code{font-size:13px;color:var(--lime);font-family:"JetBrains Mono Variable",monospace;word-break:break-all;flex:1;min-width:180px}
+.referrals-page .hero-mini{display:flex;gap:10px;flex-wrap:wrap}
+.referrals-page .hm{flex:1 1 120px;border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px;background:rgba(255,255,255,.022);
+ transition:transform .35s var(--ease),border-color .35s}
+.referrals-page .hm:hover{transform:translateY(-3px);border-color:rgba(183,255,69,.3)}
+.referrals-page .hm b{display:block;font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.referrals-page .hm span{font-size:11px;color:var(--dim);font-weight:700}
+.referrals-page .balance-card{display:flex;flex-direction:column;gap:16px;align-items:center;text-align:center;justify-content:center}
+.referrals-page .bal-ring{position:relative;width:158px;height:158px;display:grid;place-items:center}
+.referrals-page .bal-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.referrals-page .bal-ring circle{fill:none;stroke-width:10;stroke-linecap:round}
+.referrals-page .bal-ring .tr{stroke:rgba(255,255,255,.07)}
+.referrals-page .bal-ring .vl{stroke:url(#balGrad);transition:stroke-dashoffset 1.4s var(--ease)}
+.referrals-page .bal-ring .in{position:relative}
+.referrals-page .bal-ring b{display:block;font-size:38px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.referrals-page .bal-ring span{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:800}
+.referrals-page .tier-chip{display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;font-size:12px;font-weight:800;
+ background:linear-gradient(135deg,rgba(212,255,133,.2),rgba(143,220,44,.12));border:1px solid rgba(183,255,69,.35);color:var(--lime)}
+.referrals-page .tier-chip svg{width:14px;height:14px}
+.stats-strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.referrals-page .stat{border:1px solid var(--line);border-radius:var(--r-md);padding:16px;background:linear-gradient(160deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--panel);
+ display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden;transition:transform .35s var(--ease),border-color .35s}
+.referrals-page .stat:hover{transform:translateY(-4px);border-color:rgba(183,255,69,.32)}
+.referrals-page .stat .ic{position:absolute;right:12px;top:12px;width:24px;height:24px;color:var(--dim);opacity:.6}
+.referrals-page .stat .ic svg{width:100%;height:100%}
+.referrals-page .stat b{font-size:25px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.02em}
+.referrals-page .stat b small{font-size:12px;color:var(--dim);font-weight:700;margin-left:2px}
+.referrals-page .stat .delta{font-size:11px;font-weight:800;color:var(--lime);display:inline-flex;align-items:center;gap:4px}
+.referrals-page .stat .delta svg{width:12px;height:12px}
+.referrals-page .stat .delta.down{color:var(--red)}
+.referrals-page .chart-card{display:flex;flex-direction:column;gap:14px}
+.referrals-page .chart-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.referrals-page .seg{display:flex;border:1px solid var(--line-2);border-radius:12px;overflow:hidden;background:rgba(0,0,0,.22)}
+.referrals-page .seg button{height:38px;padding:0 14px;background:none;border:none;cursor:pointer;font-size:12px;font-weight:800;color:var(--dim);transition:.25s}
+.referrals-page .seg button:hover{color:var(--fg);background:rgba(255,255,255,.05)}
+.referrals-page .seg button.on{color:#101a05;background:linear-gradient(135deg,var(--lime-2),var(--green))}
+.referrals-page .chart-wrap{position:relative}
+.referrals-page .chart{width:100%;height:190px;display:block;overflow:visible}
+.referrals-page .ch-line{fill:none;stroke:url(#lineGrad);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;
+ filter:drop-shadow(0 4px 12px rgba(183,255,69,.35))}
+.referrals-page .ch-area{fill:url(#areaGrad)}
+.referrals-page .ch-grid line{stroke:rgba(255,255,255,.055);stroke-width:1}
+.referrals-page .ch-dot{fill:#0e1512;stroke:var(--lime);stroke-width:2.4;cursor:pointer;transition:r .2s var(--ease),fill .2s}
+.referrals-page .ch-dot:hover{fill:var(--lime);r:6.5}
+.referrals-page .ch-x{font-size:9.5px;fill:var(--dim);font-weight:700;font-family:"JetBrains Mono Variable",monospace}
+.referrals-page .tip{position:absolute;pointer-events:none;padding:8px 11px;border-radius:11px;border:1px solid var(--line-2);
+ background:rgba(18,27,22,.97);box-shadow:0 16px 34px -18px #000;font-size:12px;font-weight:800;opacity:0;transform:translate(-50%,-140%);
+ transition:opacity .2s var(--ease);white-space:nowrap;z-index:5}
+.referrals-page .tip.show{opacity:1}
+.referrals-page .tip span{display:block;font-size:10.5px;color:var(--dim);font-weight:700}
+.grid2{display:grid;grid-template-columns:1.4fr .6fr;gap:22px;align-items:start}
+.tabs{display:flex;gap:6px;border:1px solid var(--line);border-radius:15px;padding:5px;background:rgba(0,0,0,.22);overflow-x:auto;scrollbar-width:none}
+.referrals-page .tabs::-webkit-scrollbar{display:none}
+.referrals-page .tab{flex:1;min-width:max-content;height:42px;padding:0 15px;border-radius:11px;border:none;background:none;cursor:pointer;
+ font-size:13px;font-weight:800;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:8px;transition:.28s var(--ease);white-space:nowrap}
+.referrals-page .tab svg{width:16px;height:16px}
+.referrals-page .tab .cnt{font-size:10.5px;padding:1px 7px;border-radius:99px;background:rgba(255,255,255,.08);color:var(--fg);font-variant-numeric:tabular-nums}
+.referrals-page .tab:hover{color:var(--fg);background:rgba(255,255,255,.05)}
+.referrals-page .tab.on{color:#101a05;background:linear-gradient(135deg,var(--lime-2),var(--green));box-shadow:var(--glow)}
+.referrals-page .tab.on .cnt{background:rgba(16,26,5,.2);color:#101a05}
+.referrals-page .panel{display:none;flex-direction:column;gap:20px;animation:panelIn .45s var(--ease) both}
+.referrals-page .panel.on{display:flex}
+@keyframes panelIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.referrals-page .block{border:1px solid var(--line);border-radius:var(--r-md);padding:20px;background:rgba(255,255,255,.018);display:flex;flex-direction:column;gap:14px}
+.referrals-page .block-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.referrals-page .block-head h3{font-size:16px;font-weight:600}
+.referrals-page .block-head p{margin:5px 0 0;font-size:13px;color:var(--muted);max-width:62ch}
+.field{display:flex;flex-direction:column;gap:7px}
+.referrals-page .field>label{font-size:13px;color:var(--muted);font-weight:700}
+.referrals-page .input, .referrals-page .select, .referrals-page .textarea{border-radius:13px;border:1px solid var(--line-2);background:rgba(0,0,0,.25);padding:0 14px;font-size:14px;outline:none;
+ transition:.25s var(--ease);width:100%}
+.referrals-page .input, .referrals-page .select{height:48px}
+.referrals-page .textarea{padding:12px 14px;min-height:110px;resize:vertical;line-height:1.55}
+.referrals-page .input::placeholder, .referrals-page .textarea::placeholder{color:var(--dim)}
+.referrals-page .input:focus, .referrals-page .select:focus, .referrals-page .textarea:focus{border-color:rgba(183,255,69,.55);box-shadow:0 0 0 4px rgba(183,255,69,.10);background:rgba(0,0,0,.35)}
+.referrals-page .input.err{border-color:rgba(255,122,107,.6);box-shadow:0 0 0 4px rgba(255,122,107,.10)}
+.referrals-page .input.ok{border-color:rgba(183,255,69,.5)}
+.referrals-page .select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7b70' stroke-width='2' stroke-linecap='round'><path d='m6 9 6 6 6-6'/></svg>");
+ background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:38px}
+.referrals-page .select option{background:#131c17}
+.referrals-page .hint{font-size:11.5px;color:var(--dim);font-weight:600}
+.referrals-page .hint.bad{color:var(--red)} .referrals-page .hint.good{color:var(--lime)}
+.referrals-page .shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.referrals-page .switch{position:relative;width:52px;height:30px;flex:none;border-radius:99px;border:1px solid var(--line-2);background:rgba(0,0,0,.35);cursor:pointer;transition:.35s var(--ease)}
+.referrals-page .switch i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--dim);transition:.35s var(--ease)}
+.referrals-page .switch.on{background:linear-gradient(135deg,var(--lime-2),var(--green));border-color:transparent;box-shadow:0 0 16px -4px rgba(183,255,69,.6)}
+.referrals-page .switch.on i{left:25px;background:#101a05}
+.referrals-page .row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;border:1px solid var(--line);border-radius:var(--r-sm);
+ background:var(--panel-2);flex-wrap:wrap;transition:.3s var(--ease)}
+.referrals-page .row:hover{border-color:rgba(183,255,69,.24);background:var(--panel-3)}
+.referrals-page .row .rt{min-width:0;flex:1}
+.referrals-page .row .rt b{display:block;font-size:14px;font-weight:700}
+.referrals-page .row .rt span{font-size:12.5px;color:var(--dim)}
+.tbl-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.referrals-page .search{position:relative;display:flex;align-items:center;flex:1;min-width:200px;max-width:300px}
+.referrals-page .search svg{position:absolute;left:13px;width:16px;height:16px;color:var(--dim);pointer-events:none}
+.referrals-page .search .input{padding-left:38px;height:44px}
+.referrals-page .chips{display:flex;gap:7px;flex-wrap:wrap}
+.referrals-page .chipf{border:1px solid var(--line-2);background:rgba(255,255,255,.02);color:var(--muted);border-radius:999px;height:34px;padding:0 13px;
+ font-size:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.26s var(--ease)}
+.referrals-page .chipf:hover{color:var(--fg);border-color:rgba(183,255,69,.4);transform:translateY(-2px)}
+.referrals-page .chipf.on{color:#101a05;background:linear-gradient(135deg,var(--lime-2),var(--green));border-color:transparent}
+.referrals-page .chipf span{font-size:10.5px;opacity:.8;font-variant-numeric:tabular-nums}
+.referrals-page .tbl{width:100%;border-collapse:separate;border-spacing:0 8px}
+.referrals-page .tbl th{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:800;text-align:left;padding:0 14px 2px}
+.referrals-page .tbl th.sortable{cursor:pointer;user-select:none;transition:color .25s}
+.referrals-page .tbl th.sortable:hover{color:var(--lime)}
+.referrals-page .tbl th .ar{opacity:.35;margin-left:4px}
+.referrals-page .tbl th.act .ar{opacity:1;color:var(--lime)}
+.referrals-page .tbl td{padding:13px 14px;background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:13.2px;vertical-align:middle}
+.referrals-page .tbl tr td:first-child{border-left:1px solid var(--line);border-radius:14px 0 0 14px}
+.referrals-page .tbl tr td:last-child{border-right:1px solid var(--line);border-radius:0 14px 14px 0}
+.referrals-page .tbl tbody tr{transition:.3s var(--ease);animation:rowIn .45s var(--ease) both}
+@keyframes rowIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.referrals-page .tbl tbody tr:hover td{background:var(--panel-3);border-color:rgba(183,255,69,.22)}
+.referrals-page .tbl tbody tr.fresh td{background:rgba(183,255,69,.09)}
+.referrals-page .who{display:flex;align-items:center;gap:11px;min-width:0}
+.referrals-page .who .av{width:34px;height:34px;flex:none;border-radius:11px;display:grid;place-items:center;font-size:12px;font-weight:800;
+ background:rgba(183,255,69,.13);color:var(--lime);border:1px solid rgba(183,255,69,.2)}
+.referrals-page .who b{display:block;font-size:13.2px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.referrals-page .who span{font-size:11px;color:var(--dim)}
+.referrals-page .st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px;border:1px solid transparent;white-space:nowrap}
+.referrals-page .st i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.referrals-page .st.paid{color:var(--lime);background:rgba(183,255,69,.11);border-color:rgba(183,255,69,.28)}
+.referrals-page .st.pending{color:var(--amber);background:rgba(255,209,102,.1);border-color:rgba(255,209,102,.28)}
+.referrals-page .st.pending i{animation:pulseDot 2s infinite}
+.referrals-page .st.refund{color:var(--red);background:rgba(255,122,107,.1);border-color:rgba(255,122,107,.26)}
+.referrals-page .num{font-variant-numeric:tabular-nums;font-weight:800}
+.referrals-page .empty{display:none;flex-direction:column;align-items:center;gap:12px;padding:44px 20px;text-align:center;
+ border:1px dashed var(--line-2);border-radius:var(--r-md);background:rgba(255,255,255,.015)}
+.referrals-page .empty.show{display:flex;animation:panelIn .5s var(--ease) both}
+.referrals-page .empty .eic{width:52px;height:52px;border-radius:17px;display:grid;place-items:center;background:rgba(183,255,69,.1);color:var(--lime)}
+.referrals-page .empty .eic svg{width:24px;height:24px}
+.tpl{border:1px solid var(--line);border-radius:var(--r-md);background:var(--panel-2);overflow:hidden;transition:.35s var(--ease)}
+.referrals-page .tpl:hover{border-color:rgba(183,255,69,.28);transform:translateY(-3px)}
+.referrals-page .tpl-h{display:flex;align-items:center;gap:10px;padding:13px 15px;border-bottom:1px solid var(--line)}
+.referrals-page .tpl-h b{font-size:13.5px;flex:1}
+.referrals-page .tpl-b{padding:15px;font-size:13px;color:var(--muted);white-space:pre-line;line-height:1.6;min-height:96px}
+.referrals-page .tpl-b .code{color:var(--lime);font-family:"JetBrains Mono Variable",monospace;font-weight:700}
+.referrals-page .tpl-f{display:flex;gap:8px;padding:0 15px 15px;flex-wrap:wrap}
+.referrals-page .banner-wrap{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.referrals-page .banner-wrap canvas{width:100%;max-width:340px;height:auto;border-radius:14px;border:1px solid var(--line-2);box-shadow:0 20px 44px -26px #000}
+.tiers{display:flex;flex-direction:column;gap:10px}
+.referrals-page .tier{display:flex;gap:13px;align-items:flex-start;padding:14px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--panel-2);
+ position:relative;overflow:hidden;transition:.35s var(--ease)}
+.referrals-page .tier:hover{transform:translateX(4px);border-color:rgba(183,255,69,.3)}
+.referrals-page .tier.cur{border-color:rgba(183,255,69,.5);background:linear-gradient(120deg,rgba(183,255,69,.12),rgba(255,255,255,.01))}
+.referrals-page .tier.cur::after{content:"ваш уровень";position:absolute;top:9px;right:10px;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+ color:#101a05;background:linear-gradient(135deg,var(--lime-2),var(--green));padding:3px 8px;border-radius:99px}
+.referrals-page .tier .tic{width:38px;height:38px;flex:none;border-radius:12px;display:grid;place-items:center;background:rgba(183,255,69,.12);color:var(--lime);border:1px solid rgba(183,255,69,.2)}
+.referrals-page .tier .tic svg{width:18px;height:18px}
+.referrals-page .tier.locked .tic{background:rgba(255,255,255,.04);color:var(--dim);border-color:var(--line-2)}
+.referrals-page .tier b{display:block;font-size:13.5px}
+.referrals-page .tier span{font-size:12px;color:var(--muted)}
+.referrals-page .tier .req{font-size:11px;color:var(--dim);font-weight:800;margin-top:3px;display:block}
+.lb{display:flex;flex-direction:column;gap:8px}
+.referrals-page .lbr{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--panel-2);transition:.3s var(--ease)}
+.referrals-page .lbr:hover{transform:translateX(4px);border-color:rgba(183,255,69,.28)}
+.referrals-page .lbr .pos{width:26px;height:26px;flex:none;border-radius:9px;display:grid;place-items:center;font-size:11.5px;font-weight:800;
+ background:rgba(255,255,255,.06);color:var(--muted);font-variant-numeric:tabular-nums}
+.referrals-page .lbr.top1 .pos{background:linear-gradient(135deg,#ffe08a,#ffc93c);color:#2a1f00}
+.referrals-page .lbr.top2 .pos{background:linear-gradient(135deg,#e6f0ea,#b9c7bd);color:#1a211c}
+.referrals-page .lbr.top3 .pos{background:linear-gradient(135deg,#e8b183,#c9834f);color:#2a1708}
+.referrals-page .lbr .nm{flex:1;min-width:0;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.referrals-page .lbr .vv{font-size:12px;font-weight:800;color:var(--lime);font-variant-numeric:tabular-nums}
+.referrals-page .lbr.me{border-color:rgba(183,255,69,.45);background:linear-gradient(120deg,rgba(183,255,69,.1),rgba(255,255,255,.01))}
+.acc{display:flex;flex-direction:column;gap:9px}
+.referrals-page .acc-item{border:1px solid var(--line);border-radius:var(--r-sm);background:rgba(255,255,255,.018);overflow:hidden;transition:border-color .3s,background .3s}
+.referrals-page .acc-item.open{border-color:rgba(183,255,69,.32);background:rgba(183,255,69,.045)}
+.referrals-page .acc-q{width:100%;background:none;border:none;cursor:pointer;padding:15px 16px;display:flex;align-items:center;gap:12px;font-weight:700;font-size:13.5px;text-align:left}
+.referrals-page .acc-q .chev{margin-left:auto;width:18px;height:18px;flex:none;color:var(--dim);transition:transform .4s var(--ease),color .3s}
+.referrals-page .acc-item.open .chev{transform:rotate(180deg);color:var(--lime)}
+.referrals-page .acc-a{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s var(--ease)}
+.referrals-page .acc-item.open .acc-a{grid-template-rows:1fr}
+.referrals-page .acc-a>div{overflow:hidden}
+.referrals-page .acc-a p{margin:0;padding:0 16px 15px;color:var(--muted);font-size:13px}
+.how{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.referrals-page .how-i{position:relative;border:1px solid var(--line);border-radius:var(--r-md);padding:18px;background:var(--panel);display:flex;flex-direction:column;gap:9px;
+ transition:transform .4s var(--ease),border-color .4s,background .4s;overflow:hidden}
+.referrals-page .how-i:hover{transform:translateY(-5px);border-color:rgba(183,255,69,.4);background:var(--panel-2)}
+.referrals-page .how-i .n{font-size:11px;color:var(--dim);font-weight:800;letter-spacing:.1em}
+.referrals-page .how-i .ic{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:rgba(183,255,69,.14);color:var(--lime);border:1px solid rgba(183,255,69,.22);transition:.4s var(--ease)}
+.referrals-page .how-i:hover .ic{transform:scale(1.08) rotate(-6deg);box-shadow:0 0 0 5px rgba(183,255,69,.08)}
+.referrals-page .how-i .ic svg{width:20px;height:20px}
+.referrals-page .how-i h3{font-size:14px;font-weight:600;line-height:1.35}
+.referrals-page .how-i p{margin:0;font-size:12.5px;color:var(--muted)}
+.referrals-page .how-i::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,var(--green),var(--lime));
+ transform:scaleX(0);transform-origin:left;transition:transform .5s var(--ease)}
+.referrals-page .how-i:hover::after{transform:scaleX(1)}
+.overlay{position:fixed;inset:0;z-index:70;background:rgba(6,10,8,.74);backdrop-filter:blur(7px);display:grid;place-items:center;padding:20px;
+ opacity:0;pointer-events:none;transition:opacity .35s var(--ease)}
+.referrals-page .overlay.open{opacity:1;pointer-events:auto}
+.referrals-page .modal{width:min(500px,100%);max-height:88vh;overflow:auto;border-radius:var(--r-lg);border:1px solid var(--line-2);
+ background:linear-gradient(170deg,#18231d,#111a15);box-shadow:0 40px 90px -30px #000;padding:24px;
+ transform:translateY(22px) scale(.96);opacity:0;transition:.45s var(--ease)}
+.referrals-page .overlay.open .modal{transform:none;opacity:1}
+.referrals-page .modal-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.referrals-page .modal-head h3{font-size:18px;font-weight:600;flex:1}
+.referrals-page .icon-btn{width:38px;height:38px;flex:none;border-radius:11px;border:1px solid var(--line-2);background:rgba(255,255,255,.03);cursor:pointer;
+ display:grid;place-items:center;transition:.25s var(--ease)}
+.referrals-page .icon-btn svg{width:17px;height:17px}
+.referrals-page .icon-btn:hover{background:rgba(255,122,107,.14);border-color:rgba(255,122,107,.45);color:var(--red);transform:rotate(90deg)}
+.referrals-page .spinner{width:17px;height:17px;border-radius:50%;border:2px solid rgba(16,26,5,.3);border-top-color:#101a05;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.referrals-page .success{display:none;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:12px 0}
+.referrals-page .success.show{display:flex;animation:panelIn .5s var(--ease) both}
+.referrals-page .success .sic{width:62px;height:62px;border-radius:22px;display:grid;place-items:center;background:rgba(183,255,69,.15);color:var(--lime);border:1px solid rgba(183,255,69,.3)}
+.referrals-page .success .sic svg{width:30px;height:30px}
+.referrals-page .qr-frame{padding:14px;border-radius:18px;background:#f2f7ee;box-shadow:0 0 0 1px rgba(183,255,69,.35),0 20px 50px -20px rgba(183,255,69,.4);animation:panelIn .5s var(--ease) both}
+.referrals-page .qr-frame canvas{display:block;width:210px;height:210px;image-rendering:pixelated}
+.referrals-page .stepper{display:flex;align-items:center;gap:12px}
+.referrals-page .step-btn{width:46px;height:46px;flex:none;border-radius:13px;border:1px solid var(--line-2);background:rgba(255,255,255,.03);cursor:pointer;
+ display:grid;place-items:center;transition:.25s var(--ease)}
+.referrals-page .step-btn svg{width:17px;height:17px}
+.referrals-page .step-btn:hover:not(:disabled){border-color:rgba(183,255,69,.5);background:rgba(183,255,69,.12);transform:translateY(-2px)}
+.referrals-page .step-btn:disabled{opacity:.35;cursor:not-allowed}
+.referrals-page .step-val{flex:1;height:46px;text-align:center;border-radius:13px;border:1px solid var(--line-2);background:rgba(0,0,0,.25);font-size:19px;
+ font-weight:800;font-variant-numeric:tabular-nums;outline:none}
+.referrals-page .step-val:focus{border-color:rgba(183,255,69,.55);box-shadow:0 0 0 4px rgba(183,255,69,.1)}
+.referrals-page .preview{border:1px dashed var(--line-2);border-radius:var(--r-sm);padding:13px;background:rgba(0,0,0,.22);font-size:12.5px;color:var(--muted)}
+.referrals-page .preview b{color:var(--lime)}
+.toasts{position:fixed;z-index:90;right:20px;bottom:20px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}
+.referrals-page .toast{display:flex;align-items:center;gap:11px;padding:13px 16px;border-radius:14px;min-width:230px;max-width:min(380px,86vw);
+ border:1px solid var(--line-2);background:rgba(20,30,24,.95);backdrop-filter:blur(10px);box-shadow:0 20px 44px -20px #000;
+ font-size:13.5px;font-weight:700;transform:translateY(16px) scale(.94);opacity:0;transition:.4s var(--ease)}
+.referrals-page .toast.show{transform:none;opacity:1}
+.referrals-page .toast .ti{width:26px;height:26px;flex:none;border-radius:8px;display:grid;place-items:center;background:rgba(183,255,69,.16);color:var(--lime)}
+.referrals-page .toast .ti svg{width:15px;height:15px}
+.referrals-page .toast.err .ti{background:rgba(255,122,107,.16);color:var(--red)}
+.referrals-page .confetti{position:fixed;inset:0;z-index:80;pointer-events:none;overflow:hidden}
+.referrals-page .cf{position:absolute;width:9px;height:14px;border-radius:2px;opacity:.95;animation:cfall linear forwards}
+@keyframes cfall{0%{transform:translateY(-10vh) rotate(0)}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+.referrals-page .to-top{position:fixed;right:20px;bottom:20px;z-index:65;width:46px;height:46px;border-radius:14px;border:1px solid var(--line-2);
+ background:rgba(20,30,24,.92);backdrop-filter:blur(10px);color:var(--lime);cursor:pointer;display:grid;place-items:center;
+ opacity:0;transform:translateY(14px) scale(.9);pointer-events:none;transition:.35s var(--ease)}
+.referrals-page .to-top.show{opacity:1;transform:none;pointer-events:auto}
+.referrals-page .to-top:hover{background:rgba(183,255,69,.16);border-color:rgba(183,255,69,.5);transform:translateY(-3px)}
+.referrals-page .to-top svg{width:19px;height:19px}
+.referrals-page footer{border-top:1px solid var(--line);background:rgba(9,14,11,.6);position:relative;z-index:1}
+.referrals-page .f-inner{max-width:1200px;margin:0 auto;padding:26px 20px;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.referrals-page .f-links{display:flex;gap:8px;flex-wrap:wrap}
+.referrals-page .f-links a, .referrals-page .f-links button{font-size:13px;color:var(--muted);font-weight:700;padding:8px 12px;border-radius:10px;transition:.25s;background:none;border:none;cursor:pointer}
+.referrals-page .f-links a:hover, .referrals-page .f-links button:hover{color:var(--lime);background:rgba(183,255,69,.08)}
+.referrals-page .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s var(--ease),transform .7s var(--ease);transition-delay:var(--d,0ms)}
+.referrals-page .reveal.in{opacity:1;transform:none}
+@media (max-width:1080px){
+.referrals-page  .hero, .referrals-page .grid2{grid-template-columns:1fr}
+.referrals-page  .stats-strip{grid-template-columns:repeat(2,1fr)}
+.referrals-page  .how{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:860px){
+.referrals-page  .nav-links, .referrals-page .nav-right .btn-light{display:none}
+.referrals-page  .burger{display:flex}
+.referrals-page  .mobile-menu{display:block}
+}
+@media (max-width:700px){
+.referrals-page  .tbl thead{display:none}
+.referrals-page  .tbl, .referrals-page .tbl tbody, .referrals-page .tbl tr, .referrals-page .tbl td{display:block;width:100%}
+.referrals-page  .tbl tr{border:1px solid var(--line);border-radius:14px;background:var(--panel-2);margin-bottom:10px;padding:6px 0;overflow:hidden}
+.referrals-page  .tbl td{border:none;background:none;padding:9px 14px;border-radius:0}
+.referrals-page  .tbl td::before{content:attr(data-l);display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:800;margin-bottom:3px}
+}
+@media (max-width:620px){
+.referrals-page  main{padding:24px 14px 44px;gap:20px}
+.referrals-page  .card{padding:20px;border-radius:18px}
+.referrals-page  .stats-strip, .referrals-page .how{grid-template-columns:1fr}
+.referrals-page  .hero-mini .hm{flex:1 1 100%}
+.referrals-page  .toasts{left:14px;right:14px;align-items:stretch}
+.referrals-page  .toast{max-width:none}
+.referrals-page  .to-top{right:14px;bottom:14px}
+.referrals-page  .tab{font-size:12px;padding:0 11px}
+.referrals-page  .chart{height:160px}
+}
+@media (prefers-reduced-motion:reduce){.referrals-page *{animation-duration:.001s!important;transition-duration:.001s!important}.referrals-page .reveal{opacity:1;transform:none}}
+
+/* ==========================================================================
+   REFERRALS PAGE — /referrals, supplied template scoped to .referrals-page
+   ========================================================================== */
+
+.referrals-page{
+ --bg:#0e1512; --panel:#131c17; --panel-2:#18231d; --panel-3:#1e2b23;
+ --line:rgba(233,255,214,.09); --line-2:rgba(233,255,214,.16);
+ --fg:#eef5ea; --muted:#9daba1; --dim:#6b7b70;
+ --lime:#b7ff45; --lime-2:#d4ff85; --green:#8fdc2c;
+ --amber:#ffd166; --red:#ff7a6b; --cyan:#63d7c8; --tg:#2aabee;
+ --r-lg:22px; --r-md:16px; --r-sm:12px;
+ --shadow:0 24px 60px -30px rgba(0,0,0,.9);
+ --glow:0 10px 34px -12px rgba(183,255,69,.55);
+ --ease:cubic-bezier(.22,.9,.28,1);
+}
+.referrals-page *{box-sizing:border-box}
+.referrals-page{scroll-behavior:smooth}
+.referrals-page{margin:0;min-height:100vh;background:var(--bg);color:var(--fg);
+ font-family:"Manrope Variable",Manrope,system-ui,sans-serif;font-size:15px;line-height:1.55;
+ -webkit-font-smoothing:antialiased;overflow-x:hidden}
+.referrals-page h1, .referrals-page h2, .referrals-page h3{font-family:"Unbounded Variable",Unbounded,Manrope,sans-serif;letter-spacing:-.02em;margin:0}
+.referrals-page .mono{font-family:"JetBrains Mono Variable","JetBrains Mono",ui-monospace,monospace}
+.referrals-page button, .referrals-page input, .referrals-page select, .referrals-page textarea{font:inherit;color:inherit}
+.referrals-page a{color:inherit;text-decoration:none}
+.install-page ::selection{background:rgba(183,255,69,.28)}
+.bg-fx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.referrals-page .bg-fx .grid{position:absolute;inset:-2px;
+ background-image:linear-gradient(rgba(183,255,69,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(183,255,69,.045) 1px,transparent 1px);
+ background-size:64px 64px;mask-image:radial-gradient(120% 80% at 50% 0%,#000 20%,transparent 78%)}
+.referrals-page .blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5}
+.referrals-page .blob.b1{width:520px;height:520px;top:-220px;left:-120px;background:radial-gradient(circle,rgba(140,220,44,.30),transparent 65%);animation:float1 22s var(--ease) infinite}
+.referrals-page .blob.b2{width:600px;height:600px;top:120px;right:-260px;background:radial-gradient(circle,rgba(60,180,120,.20),transparent 65%);animation:float2 28s var(--ease) infinite}
+.referrals-page .blob.b3{width:460px;height:460px;bottom:-180px;left:32%;background:radial-gradient(circle,rgba(183,255,69,.14),transparent 65%);animation:float1 34s var(--ease) infinite reverse}
+@keyframes float1{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(40px,50px,0) scale(1.12)}}
+@keyframes float2{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-50px,40px,0) scale(1.08)}}
+.referrals-page .wrap{position:relative;z-index:1;display:flex;flex-direction:column;min-height:100vh}
+.progress-bar{position:fixed;top:0;left:0;height:2px;width:0;z-index:60;
+ background:linear-gradient(90deg,var(--green),var(--lime-2));box-shadow:0 0 14px rgba(183,255,69,.7);transition:width .12s linear}
+.referrals-page nav.top{position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line);background:rgba(11,17,14,.72);
+ backdrop-filter:blur(16px) saturate(140%);transition:background .3s var(--ease)}
+.referrals-page nav.top .inner{max-width:1200px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:18px;justify-content:space-between}
+.referrals-page nav.top.scrolled{background:rgba(9,14,11,.92)}
+.referrals-page nav.top.scrolled .inner{padding-top:8px;padding-bottom:8px;transition:padding .3s var(--ease)}
+.referrals-page .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px}
+.referrals-page .brand .mark{width:36px;height:36px;flex:none;filter:drop-shadow(0 4px 12px rgba(183,255,69,.35));transition:transform .5s var(--ease)}
+.referrals-page .brand:hover .mark{transform:rotate(-8deg) scale(1.06)}
+.referrals-page .brand em{font-style:normal;color:var(--lime)}
+.referrals-page .brand .dom{font-size:11px;color:var(--dim);font-weight:500;margin-left:2px}
+.referrals-page .nav-links{display:flex;align-items:center;gap:4px}
+.referrals-page .nav-links a.nl{display:flex;align-items:center;gap:7px;padding:9px 13px;border-radius:11px;font-weight:700;font-size:13.5px;color:var(--muted);
+ position:relative;border:1px solid transparent;transition:color .25s,background .25s,transform .25s var(--ease)}
+.referrals-page .nav-links a.nl svg{width:16px;height:16px;opacity:.9}
+.referrals-page .nav-links a.nl::after{content:"";position:absolute;left:13px;right:13px;bottom:5px;height:2px;border-radius:2px;background:var(--lime);
+ transform:scaleX(0);transform-origin:left;transition:transform .3s var(--ease)}
+.referrals-page .nav-links a.nl:hover{color:var(--fg);background:rgba(183,255,69,.07)}
+.referrals-page .nav-links a.nl:hover::after{transform:scaleX(1)}
+.referrals-page .nav-links a.nl.active{color:#101a05;background:linear-gradient(135deg,var(--lime-2),var(--green));box-shadow:var(--glow)}
+.referrals-page .nav-links a.nl.active::after{display:none}
+.referrals-page .nav-right{display:flex;align-items:center;gap:10px}
+.referrals-page .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:13px;padding:0 18px;height:46px;
+ font-weight:800;font-size:13.5px;cursor:pointer;white-space:nowrap;
+ transition:transform .2s var(--ease),box-shadow .3s,background .25s,border-color .25s,color .25s,opacity .25s}
+.referrals-page .btn svg{width:17px;height:17px}
+.referrals-page .btn:active{transform:scale(.975)}
+.referrals-page .btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}
+.referrals-page .btn-primary{background:linear-gradient(135deg,var(--lime-2),var(--green));color:#101a05;box-shadow:var(--glow)}
+.referrals-page .btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 16px 40px -14px rgba(183,255,69,.75)}
+.referrals-page .btn-light{background:#eef5ea;color:#101a05}
+.referrals-page .btn-light:hover{background:#fff;transform:translateY(-2px)}
+.referrals-page .btn-tg{background:linear-gradient(135deg,#2aabee,#229ed9);color:#fff;box-shadow:0 10px 28px -14px rgba(42,171,238,.9)}
+.referrals-page .btn-tg:hover{transform:translateY(-2px)}
+.referrals-page .btn-ghost{border-color:var(--line-2);background:rgba(255,255,255,.02);color:var(--fg)}
+.referrals-page .btn-ghost:hover:not(:disabled){border-color:rgba(183,255,69,.45);background:rgba(183,255,69,.09);transform:translateY(-2px)}
+.referrals-page .btn-quiet{border-color:var(--line);background:transparent;color:var(--muted)}
+.referrals-page .btn-quiet:hover{color:var(--fg);border-color:var(--line-2);background:rgba(255,255,255,.04)}
+.referrals-page .btn-danger{border-color:rgba(255,122,107,.35);background:rgba(255,122,107,.1);color:var(--red)}
+.referrals-page .btn-danger:hover:not(:disabled){background:rgba(255,122,107,.2);transform:translateY(-2px)}
+.referrals-page .btn.sm{height:38px;padding:0 14px;font-size:12.5px;border-radius:11px}
+.referrals-page .btn.xs{height:32px;padding:0 11px;font-size:12px;border-radius:10px}
+.referrals-page .btn.block{width:100%}
+.referrals-page .avatar-nav{width:42px;height:42px;flex:none;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line-2);
+ background:radial-gradient(circle at 30% 25%,#2a3a20,#141d18);font-weight:800;font-size:13px;cursor:pointer;position:relative;
+ transition:transform .3s var(--ease),border-color .3s,box-shadow .3s}
+.referrals-page .avatar-nav:hover{transform:translateY(-2px) scale(1.04);border-color:rgba(183,255,69,.5);box-shadow:0 0 0 4px rgba(183,255,69,.1)}
+.referrals-page .avatar-nav .dot{position:absolute;right:-1px;bottom:-1px;width:12px;height:12px;border-radius:50%;background:var(--lime);border:2.5px solid var(--bg);animation:pulseDot 2.4s infinite}
+@keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(183,255,69,.55)}50%{box-shadow:0 0 0 6px rgba(183,255,69,0)}}
+.referrals-page .burger{display:none;width:42px;height:42px;border-radius:12px;border:1px solid var(--line-2);background:rgba(255,255,255,.03);cursor:pointer;align-items:center;justify-content:center}
+.referrals-page .burger span{display:block;width:17px;height:2px;background:var(--fg);border-radius:2px;position:relative;transition:.3s var(--ease)}
+.referrals-page .burger span::before, .referrals-page .burger span::after{content:"";position:absolute;left:0;width:17px;height:2px;background:var(--fg);border-radius:2px;transition:.3s var(--ease)}
+.referrals-page .burger span::before{top:-6px}.referrals-page .burger span::after{top:6px}
+.referrals-page .burger.open span{background:transparent}
+.referrals-page .burger.open span::before{top:0;transform:rotate(45deg)}
+.referrals-page .burger.open span::after{top:0;transform:rotate(-45deg)}
+.referrals-page .mobile-menu{display:none;overflow:hidden;max-height:0;transition:max-height .45s var(--ease)}
+.referrals-page .mobile-menu.open{max-height:400px}
+.referrals-page .mobile-menu .mm-inner{padding:6px 20px 16px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+.referrals-page .mobile-menu a.nl{padding:12px 10px;border-radius:12px;font-weight:700;color:var(--muted)}
+.referrals-page .mobile-menu a.nl:hover{background:rgba(183,255,69,.08);color:var(--fg)}
+main{flex:1;width:100%;max-width:1200px;margin:0 auto;padding:34px 20px 60px;display:flex;flex-direction:column;gap:24px}
+.referrals-page .card{background:linear-gradient(160deg,rgba(255,255,255,.035),rgba(255,255,255,0) 42%),var(--panel);
+ border:1px solid var(--line);border-radius:var(--r-lg);padding:26px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.referrals-page .card::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+ background:radial-gradient(420px 160px at 88% -10%,rgba(183,255,69,.10),transparent 70%)}
+.referrals-page .kicker{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--green);font-weight:700}
+.referrals-page h1.page-title{font-size:clamp(26px,4.2vw,38px);line-height:1.14;font-weight:700}
+.referrals-page h1.page-title em{font-style:normal;color:var(--lime)}
+.referrals-page h2.sec-title{font-size:clamp(18px,2.4vw,23px);font-weight:600;line-height:1.3}
+.referrals-page .muted{color:var(--muted)} .referrals-page .dim{color:var(--dim)}
+.referrals-page .label{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:700}
+.referrals-page .pill{display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;font-size:12px;font-weight:800;
+ border:1px solid var(--line-2);background:rgba(255,255,255,.03)}
+.referrals-page .pill .pdot{width:8px;height:8px;border-radius:50%;background:var(--lime);animation:pulseDot 2.2s infinite}
+.referrals-page .pill.ok{border-color:rgba(183,255,69,.35);background:rgba(183,255,69,.10);color:var(--lime)}
+.referrals-page .pill.warn{border-color:rgba(255,209,102,.32);background:rgba(255,209,102,.10);color:var(--amber)}
+.referrals-page .pill.warn .pdot{background:var(--amber)}
+.referrals-page .pill.info{border-color:rgba(99,215,200,.3);background:rgba(99,215,200,.10);color:var(--cyan)}
+.referrals-page .pill.info .pdot{background:var(--cyan)}
+.referrals-page .pill.bad{border-color:rgba(255,122,107,.3);background:rgba(255,122,107,.1);color:var(--red)}
+.referrals-page .bar{height:7px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.referrals-page .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),var(--lime));width:0;transition:width 1.2s var(--ease)}
+.referrals-page .sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.hero{display:grid;grid-template-columns:1.28fr .72fr;gap:20px;align-items:stretch}
+.referrals-page .hero-l{display:flex;flex-direction:column;gap:16px;justify-content:center}
+.referrals-page .hero-l p.lead{margin:0;color:var(--muted);font-size:14.5px;max-width:56ch}
+.referrals-page .link-big{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border:1px dashed rgba(183,255,69,.35);border-radius:var(--r-md);
+ padding:13px;background:rgba(183,255,69,.06)}
+.referrals-page .link-big code{font-size:13px;color:var(--lime);font-family:"JetBrains Mono Variable",monospace;word-break:break-all;flex:1;min-width:180px}
+.referrals-page .hero-mini{display:flex;gap:10px;flex-wrap:wrap}
+.referrals-page .hm{flex:1 1 120px;border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px;background:rgba(255,255,255,.022);
+ transition:transform .35s var(--ease),border-color .35s}
+.referrals-page .hm:hover{transform:translateY(-3px);border-color:rgba(183,255,69,.3)}
+.referrals-page .hm b{display:block;font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.referrals-page .hm span{font-size:11px;color:var(--dim);font-weight:700}
+.referrals-page .balance-card{display:flex;flex-direction:column;gap:16px;align-items:center;text-align:center;justify-content:center}
+.referrals-page .bal-ring{position:relative;width:158px;height:158px;display:grid;place-items:center}
+.referrals-page .bal-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.referrals-page .bal-ring circle{fill:none;stroke-width:10;stroke-linecap:round}
+.referrals-page .bal-ring .tr{stroke:rgba(255,255,255,.07)}
+.referrals-page .bal-ring .vl{stroke:url(#balGrad);transition:stroke-dashoffset 1.4s var(--ease)}
+.referrals-page .bal-ring .in{position:relative}
+.referrals-page .bal-ring b{display:block;font-size:38px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.referrals-page .bal-ring span{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:800}
+.referrals-page .tier-chip{display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;font-size:12px;font-weight:800;
+ background:linear-gradient(135deg,rgba(212,255,133,.2),rgba(143,220,44,.12));border:1px solid rgba(183,255,69,.35);color:var(--lime)}
+.referrals-page .tier-chip svg{width:14px;height:14px}
+.stats-strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.referrals-page .stat{border:1px solid var(--line);border-radius:var(--r-md);padding:16px;background:linear-gradient(160deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--panel);
+ display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden;transition:transform .35s var(--ease),border-color .35s}
+.referrals-page .stat:hover{transform:translateY(-4px);border-color:rgba(183,255,69,.32)}
+.referrals-page .stat .ic{position:absolute;right:12px;top:12px;width:24px;height:24px;color:var(--dim);opacity:.6}
+.referrals-page .stat .ic svg{width:100%;height:100%}
+.referrals-page .stat b{font-size:25px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.02em}
+.referrals-page .stat b small{font-size:12px;color:var(--dim);font-weight:700;margin-left:2px}
+.referrals-page .stat .delta{font-size:11px;font-weight:800;color:var(--lime);display:inline-flex;align-items:center;gap:4px}
+.referrals-page .stat .delta svg{width:12px;height:12px}
+.referrals-page .stat .delta.down{color:var(--red)}
+.referrals-page .chart-card{display:flex;flex-direction:column;gap:14px}
+.referrals-page .chart-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.referrals-page .seg{display:flex;border:1px solid var(--line-2);border-radius:12px;overflow:hidden;background:rgba(0,0,0,.22)}
+.referrals-page .seg button{height:38px;padding:0 14px;background:none;border:none;cursor:pointer;font-size:12px;font-weight:800;color:var(--dim);transition:.25s}
+.referrals-page .seg button:hover{color:var(--fg);background:rgba(255,255,255,.05)}
+.referrals-page .seg button.on{color:#101a05;background:linear-gradient(135deg,var(--lime-2),var(--green))}
+.referrals-page .chart-wrap{position:relative}
+.referrals-page .chart{width:100%;height:190px;display:block;overflow:visible}
+.referrals-page .ch-line{fill:none;stroke:url(#lineGrad);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;
+ filter:drop-shadow(0 4px 12px rgba(183,255,69,.35))}
+.referrals-page .ch-area{fill:url(#areaGrad)}
+.referrals-page .ch-grid line{stroke:rgba(255,255,255,.055);stroke-width:1}
+.referrals-page .ch-dot{fill:#0e1512;stroke:var(--lime);stroke-width:2.4;cursor:pointer;transition:r .2s var(--ease),fill .2s}
+.referrals-page .ch-dot:hover{fill:var(--lime);r:6.5}
+.referrals-page .ch-x{font-size:9.5px;fill:var(--dim);font-weight:700;font-family:"JetBrains Mono Variable",monospace}
+.referrals-page .tip{position:absolute;pointer-events:none;padding:8px 11px;border-radius:11px;border:1px solid var(--line-2);
+ background:rgba(18,27,22,.97);box-shadow:0 16px 34px -18px #000;font-size:12px;font-weight:800;opacity:0;transform:translate(-50%,-140%);
+ transition:opacity .2s var(--ease);white-space:nowrap;z-index:5}
+.referrals-page .tip.show{opacity:1}
+.referrals-page .tip span{display:block;font-size:10.5px;color:var(--dim);font-weight:700}
+.grid2{display:grid;grid-template-columns:1.4fr .6fr;gap:22px;align-items:start}
+.tabs{display:flex;gap:6px;border:1px solid var(--line);border-radius:15px;padding:5px;background:rgba(0,0,0,.22);overflow-x:auto;scrollbar-width:none}
+.referrals-page .tabs::-webkit-scrollbar{display:none}
+.referrals-page .tab{flex:1;min-width:max-content;height:42px;padding:0 15px;border-radius:11px;border:none;background:none;cursor:pointer;
+ font-size:13px;font-weight:800;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:8px;transition:.28s var(--ease);white-space:nowrap}
+.referrals-page .tab svg{width:16px;height:16px}
+.referrals-page .tab .cnt{font-size:10.5px;padding:1px 7px;border-radius:99px;background:rgba(255,255,255,.08);color:var(--fg);font-variant-numeric:tabular-nums}
+.referrals-page .tab:hover{color:var(--fg);background:rgba(255,255,255,.05)}
+.referrals-page .tab.on{color:#101a05;background:linear-gradient(135deg,var(--lime-2),var(--green));box-shadow:var(--glow)}
+.referrals-page .tab.on .cnt{background:rgba(16,26,5,.2);color:#101a05}
+.referrals-page .panel{display:none;flex-direction:column;gap:20px;animation:panelIn .45s var(--ease) both}
+.referrals-page .panel.on{display:flex}
+@keyframes panelIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.referrals-page .block{border:1px solid var(--line);border-radius:var(--r-md);padding:20px;background:rgba(255,255,255,.018);display:flex;flex-direction:column;gap:14px}
+.referrals-page .block-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.referrals-page .block-head h3{font-size:16px;font-weight:600}
+.referrals-page .block-head p{margin:5px 0 0;font-size:13px;color:var(--muted);max-width:62ch}
+.field{display:flex;flex-direction:column;gap:7px}
+.referrals-page .field>label{font-size:13px;color:var(--muted);font-weight:700}
+.referrals-page .input, .referrals-page .select, .referrals-page .textarea{border-radius:13px;border:1px solid var(--line-2);background:rgba(0,0,0,.25);padding:0 14px;font-size:14px;outline:none;
+ transition:.25s var(--ease);width:100%}
+.referrals-page .input, .referrals-page .select{height:48px}
+.referrals-page .textarea{padding:12px 14px;min-height:110px;resize:vertical;line-height:1.55}
+.referrals-page .input::placeholder, .referrals-page .textarea::placeholder{color:var(--dim)}
+.referrals-page .input:focus, .referrals-page .select:focus, .referrals-page .textarea:focus{border-color:rgba(183,255,69,.55);box-shadow:0 0 0 4px rgba(183,255,69,.10);background:rgba(0,0,0,.35)}
+.referrals-page .input.err{border-color:rgba(255,122,107,.6);box-shadow:0 0 0 4px rgba(255,122,107,.10)}
+.referrals-page .input.ok{border-color:rgba(183,255,69,.5)}
+.referrals-page .select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7b70' stroke-width='2' stroke-linecap='round'><path d='m6 9 6 6 6-6'/></svg>");
+ background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:38px}
+.referrals-page .select option{background:#131c17}
+.referrals-page .hint{font-size:11.5px;color:var(--dim);font-weight:600}
+.referrals-page .hint.bad{color:var(--red)} .referrals-page .hint.good{color:var(--lime)}
+.referrals-page .shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.referrals-page .switch{position:relative;width:52px;height:30px;flex:none;border-radius:99px;border:1px solid var(--line-2);background:rgba(0,0,0,.35);cursor:pointer;transition:.35s var(--ease)}
+.referrals-page .switch i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--dim);transition:.35s var(--ease)}
+.referrals-page .switch.on{background:linear-gradient(135deg,var(--lime-2),var(--green));border-color:transparent;box-shadow:0 0 16px -4px rgba(183,255,69,.6)}
+.referrals-page .switch.on i{left:25px;background:#101a05}
+.referrals-page .row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;border:1px solid var(--line);border-radius:var(--r-sm);
+ background:var(--panel-2);flex-wrap:wrap;transition:.3s var(--ease)}
+.referrals-page .row:hover{border-color:rgba(183,255,69,.24);background:var(--panel-3)}
+.referrals-page .row .rt{min-width:0;flex:1}
+.referrals-page .row .rt b{display:block;font-size:14px;font-weight:700}
+.referrals-page .row .rt span{font-size:12.5px;color:var(--dim)}
+.tbl-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.referrals-page .search{position:relative;display:flex;align-items:center;flex:1;min-width:200px;max-width:300px}
+.referrals-page .search svg{position:absolute;left:13px;width:16px;height:16px;color:var(--dim);pointer-events:none}
+.referrals-page .search .input{padding-left:38px;height:44px}
+.referrals-page .chips{display:flex;gap:7px;flex-wrap:wrap}
+.referrals-page .chipf{border:1px solid var(--line-2);background:rgba(255,255,255,.02);color:var(--muted);border-radius:999px;height:34px;padding:0 13px;
+ font-size:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.26s var(--ease)}
+.referrals-page .chipf:hover{color:var(--fg);border-color:rgba(183,255,69,.4);transform:translateY(-2px)}
+.referrals-page .chipf.on{color:#101a05;background:linear-gradient(135deg,var(--lime-2),var(--green));border-color:transparent}
+.referrals-page .chipf span{font-size:10.5px;opacity:.8;font-variant-numeric:tabular-nums}
+.referrals-page .tbl{width:100%;border-collapse:separate;border-spacing:0 8px}
+.referrals-page .tbl th{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:800;text-align:left;padding:0 14px 2px}
+.referrals-page .tbl th.sortable{cursor:pointer;user-select:none;transition:color .25s}
+.referrals-page .tbl th.sortable:hover{color:var(--lime)}
+.referrals-page .tbl th .ar{opacity:.35;margin-left:4px}
+.referrals-page .tbl th.act .ar{opacity:1;color:var(--lime)}
+.referrals-page .tbl td{padding:13px 14px;background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:13.2px;vertical-align:middle}
+.referrals-page .tbl tr td:first-child{border-left:1px solid var(--line);border-radius:14px 0 0 14px}
+.referrals-page .tbl tr td:last-child{border-right:1px solid var(--line);border-radius:0 14px 14px 0}
+.referrals-page .tbl tbody tr{transition:.3s var(--ease);animation:rowIn .45s var(--ease) both}
+@keyframes rowIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.referrals-page .tbl tbody tr:hover td{background:var(--panel-3);border-color:rgba(183,255,69,.22)}
+.referrals-page .tbl tbody tr.fresh td{background:rgba(183,255,69,.09)}
+.referrals-page .who{display:flex;align-items:center;gap:11px;min-width:0}
+.referrals-page .who .av{width:34px;height:34px;flex:none;border-radius:11px;display:grid;place-items:center;font-size:12px;font-weight:800;
+ background:rgba(183,255,69,.13);color:var(--lime);border:1px solid rgba(183,255,69,.2)}
+.referrals-page .who b{display:block;font-size:13.2px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.referrals-page .who span{font-size:11px;color:var(--dim)}
+.referrals-page .st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px;border:1px solid transparent;white-space:nowrap}
+.referrals-page .st i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.referrals-page .st.paid{color:var(--lime);background:rgba(183,255,69,.11);border-color:rgba(183,255,69,.28)}
+.referrals-page .st.pending{color:var(--amber);background:rgba(255,209,102,.1);border-color:rgba(255,209,102,.28)}
+.referrals-page .st.pending i{animation:pulseDot 2s infinite}
+.referrals-page .st.refund{color:var(--red);background:rgba(255,122,107,.1);border-color:rgba(255,122,107,.26)}
+.referrals-page .num{font-variant-numeric:tabular-nums;font-weight:800}
+.referrals-page .empty{display:none;flex-direction:column;align-items:center;gap:12px;padding:44px 20px;text-align:center;
+ border:1px dashed var(--line-2);border-radius:var(--r-md);background:rgba(255,255,255,.015)}
+.referrals-page .empty.show{display:flex;animation:panelIn .5s var(--ease) both}
+.referrals-page .empty .eic{width:52px;height:52px;border-radius:17px;display:grid;place-items:center;background:rgba(183,255,69,.1);color:var(--lime)}
+.referrals-page .empty .eic svg{width:24px;height:24px}
+.tpl{border:1px solid var(--line);border-radius:var(--r-md);background:var(--panel-2);overflow:hidden;transition:.35s var(--ease)}
+.referrals-page .tpl:hover{border-color:rgba(183,255,69,.28);transform:translateY(-3px)}
+.referrals-page .tpl-h{display:flex;align-items:center;gap:10px;padding:13px 15px;border-bottom:1px solid var(--line)}
+.referrals-page .tpl-h b{font-size:13.5px;flex:1}
+.referrals-page .tpl-b{padding:15px;font-size:13px;color:var(--muted);white-space:pre-line;line-height:1.6;min-height:96px}
+.referrals-page .tpl-b .code{color:var(--lime);font-family:"JetBrains Mono Variable",monospace;font-weight:700}
+.referrals-page .tpl-f{display:flex;gap:8px;padding:0 15px 15px;flex-wrap:wrap}
+.referrals-page .banner-wrap{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.referrals-page .banner-wrap canvas{width:100%;max-width:340px;height:auto;border-radius:14px;border:1px solid var(--line-2);box-shadow:0 20px 44px -26px #000}
+.tiers{display:flex;flex-direction:column;gap:10px}
+.referrals-page .tier{display:flex;gap:13px;align-items:flex-start;padding:14px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--panel-2);
+ position:relative;overflow:hidden;transition:.35s var(--ease)}
+.referrals-page .tier:hover{transform:translateX(4px);border-color:rgba(183,255,69,.3)}
+.referrals-page .tier.cur{border-color:rgba(183,255,69,.5);background:linear-gradient(120deg,rgba(183,255,69,.12),rgba(255,255,255,.01))}
+.referrals-page .tier.cur::after{content:"ваш уровень";position:absolute;top:9px;right:10px;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+ color:#101a05;background:linear-gradient(135deg,var(--lime-2),var(--green));padding:3px 8px;border-radius:99px}
+.referrals-page .tier .tic{width:38px;height:38px;flex:none;border-radius:12px;display:grid;place-items:center;background:rgba(183,255,69,.12);color:var(--lime);border:1px solid rgba(183,255,69,.2)}
+.referrals-page .tier .tic svg{width:18px;height:18px}
+.referrals-page .tier.locked .tic{background:rgba(255,255,255,.04);color:var(--dim);border-color:var(--line-2)}
+.referrals-page .tier b{display:block;font-size:13.5px}
+.referrals-page .tier span{font-size:12px;color:var(--muted)}
+.referrals-page .tier .req{font-size:11px;color:var(--dim);font-weight:800;margin-top:3px;display:block}
+.lb{display:flex;flex-direction:column;gap:8px}
+.referrals-page .lbr{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--panel-2);transition:.3s var(--ease)}
+.referrals-page .lbr:hover{transform:translateX(4px);border-color:rgba(183,255,69,.28)}
+.referrals-page .lbr .pos{width:26px;height:26px;flex:none;border-radius:9px;display:grid;place-items:center;font-size:11.5px;font-weight:800;
+ background:rgba(255,255,255,.06);color:var(--muted);font-variant-numeric:tabular-nums}
+.referrals-page .lbr.top1 .pos{background:linear-gradient(135deg,#ffe08a,#ffc93c);color:#2a1f00}
+.referrals-page .lbr.top2 .pos{background:linear-gradient(135deg,#e6f0ea,#b9c7bd);color:#1a211c}
+.referrals-page .lbr.top3 .pos{background:linear-gradient(135deg,#e8b183,#c9834f);color:#2a1708}
+.referrals-page .lbr .nm{flex:1;min-width:0;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.referrals-page .lbr .vv{font-size:12px;font-weight:800;color:var(--lime);font-variant-numeric:tabular-nums}
+.referrals-page .lbr.me{border-color:rgba(183,255,69,.45);background:linear-gradient(120deg,rgba(183,255,69,.1),rgba(255,255,255,.01))}
+.acc{display:flex;flex-direction:column;gap:9px}
+.referrals-page .acc-item{border:1px solid var(--line);border-radius:var(--r-sm);background:rgba(255,255,255,.018);overflow:hidden;transition:border-color .3s,background .3s}
+.referrals-page .acc-item.open{border-color:rgba(183,255,69,.32);background:rgba(183,255,69,.045)}
+.referrals-page .acc-q{width:100%;background:none;border:none;cursor:pointer;padding:15px 16px;display:flex;align-items:center;gap:12px;font-weight:700;font-size:13.5px;text-align:left}
+.referrals-page .acc-q .chev{margin-left:auto;width:18px;height:18px;flex:none;color:var(--dim);transition:transform .4s var(--ease),color .3s}
+.referrals-page .acc-item.open .chev{transform:rotate(180deg);color:var(--lime)}
+.referrals-page .acc-a{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s var(--ease)}
+.referrals-page .acc-item.open .acc-a{grid-template-rows:1fr}
+.referrals-page .acc-a>div{overflow:hidden}
+.referrals-page .acc-a p{margin:0;padding:0 16px 15px;color:var(--muted);font-size:13px}
+.how{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.referrals-page .how-i{position:relative;border:1px solid var(--line);border-radius:var(--r-md);padding:18px;background:var(--panel);display:flex;flex-direction:column;gap:9px;
+ transition:transform .4s var(--ease),border-color .4s,background .4s;overflow:hidden}
+.referrals-page .how-i:hover{transform:translateY(-5px);border-color:rgba(183,255,69,.4);background:var(--panel-2)}
+.referrals-page .how-i .n{font-size:11px;color:var(--dim);font-weight:800;letter-spacing:.1em}
+.referrals-page .how-i .ic{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:rgba(183,255,69,.14);color:var(--lime);border:1px solid rgba(183,255,69,.22);transition:.4s var(--ease)}
+.referrals-page .how-i:hover .ic{transform:scale(1.08) rotate(-6deg);box-shadow:0 0 0 5px rgba(183,255,69,.08)}
+.referrals-page .how-i .ic svg{width:20px;height:20px}
+.referrals-page .how-i h3{font-size:14px;font-weight:600;line-height:1.35}
+.referrals-page .how-i p{margin:0;font-size:12.5px;color:var(--muted)}
+.referrals-page .how-i::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,var(--green),var(--lime));
+ transform:scaleX(0);transform-origin:left;transition:transform .5s var(--ease)}
+.referrals-page .how-i:hover::after{transform:scaleX(1)}
+.overlay{position:fixed;inset:0;z-index:70;background:rgba(6,10,8,.74);backdrop-filter:blur(7px);display:grid;place-items:center;padding:20px;
+ opacity:0;pointer-events:none;transition:opacity .35s var(--ease)}
+.referrals-page .overlay.open{opacity:1;pointer-events:auto}
+.referrals-page .modal{width:min(500px,100%);max-height:88vh;overflow:auto;border-radius:var(--r-lg);border:1px solid var(--line-2);
+ background:linear-gradient(170deg,#18231d,#111a15);box-shadow:0 40px 90px -30px #000;padding:24px;
+ transform:translateY(22px) scale(.96);opacity:0;transition:.45s var(--ease)}
+.referrals-page .overlay.open .modal{transform:none;opacity:1}
+.referrals-page .modal-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.referrals-page .modal-head h3{font-size:18px;font-weight:600;flex:1}
+.referrals-page .icon-btn{width:38px;height:38px;flex:none;border-radius:11px;border:1px solid var(--line-2);background:rgba(255,255,255,.03);cursor:pointer;
+ display:grid;place-items:center;transition:.25s var(--ease)}
+.referrals-page .icon-btn svg{width:17px;height:17px}
+.referrals-page .icon-btn:hover{background:rgba(255,122,107,.14);border-color:rgba(255,122,107,.45);color:var(--red);transform:rotate(90deg)}
+.referrals-page .spinner{width:17px;height:17px;border-radius:50%;border:2px solid rgba(16,26,5,.3);border-top-color:#101a05;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.referrals-page .success{display:none;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:12px 0}
+.referrals-page .success.show{display:flex;animation:panelIn .5s var(--ease) both}
+.referrals-page .success .sic{width:62px;height:62px;border-radius:22px;display:grid;place-items:center;background:rgba(183,255,69,.15);color:var(--lime);border:1px solid rgba(183,255,69,.3)}
+.referrals-page .success .sic svg{width:30px;height:30px}
+.referrals-page .qr-frame{padding:14px;border-radius:18px;background:#f2f7ee;box-shadow:0 0 0 1px rgba(183,255,69,.35),0 20px 50px -20px rgba(183,255,69,.4);animation:panelIn .5s var(--ease) both}
+.referrals-page .qr-frame canvas{display:block;width:210px;height:210px;image-rendering:pixelated}
+.referrals-page .stepper{display:flex;align-items:center;gap:12px}
+.referrals-page .step-btn{width:46px;height:46px;flex:none;border-radius:13px;border:1px solid var(--line-2);background:rgba(255,255,255,.03);cursor:pointer;
+ display:grid;place-items:center;transition:.25s var(--ease)}
+.referrals-page .step-btn svg{width:17px;height:17px}
+.referrals-page .step-btn:hover:not(:disabled){border-color:rgba(183,255,69,.5);background:rgba(183,255,69,.12);transform:translateY(-2px)}
+.referrals-page .step-btn:disabled{opacity:.35;cursor:not-allowed}
+.referrals-page .step-val{flex:1;height:46px;text-align:center;border-radius:13px;border:1px solid var(--line-2);background:rgba(0,0,0,.25);font-size:19px;
+ font-weight:800;font-variant-numeric:tabular-nums;outline:none}
+.referrals-page .step-val:focus{border-color:rgba(183,255,69,.55);box-shadow:0 0 0 4px rgba(183,255,69,.1)}
+.referrals-page .preview{border:1px dashed var(--line-2);border-radius:var(--r-sm);padding:13px;background:rgba(0,0,0,.22);font-size:12.5px;color:var(--muted)}
+.referrals-page .preview b{color:var(--lime)}
+.toasts{position:fixed;z-index:90;right:20px;bottom:20px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}
+.referrals-page .toast{display:flex;align-items:center;gap:11px;padding:13px 16px;border-radius:14px;min-width:230px;max-width:min(380px,86vw);
+ border:1px solid var(--line-2);background:rgba(20,30,24,.95);backdrop-filter:blur(10px);box-shadow:0 20px 44px -20px #000;
+ font-size:13.5px;font-weight:700;transform:translateY(16px) scale(.94);opacity:0;transition:.4s var(--ease)}
+.referrals-page .toast.show{transform:none;opacity:1}
+.referrals-page .toast .ti{width:26px;height:26px;flex:none;border-radius:8px;display:grid;place-items:center;background:rgba(183,255,69,.16);color:var(--lime)}
+.referrals-page .toast .ti svg{width:15px;height:15px}
+.referrals-page .toast.err .ti{background:rgba(255,122,107,.16);color:var(--red)}
+.referrals-page .confetti{position:fixed;inset:0;z-index:80;pointer-events:none;overflow:hidden}
+.referrals-page .cf{position:absolute;width:9px;height:14px;border-radius:2px;opacity:.95;animation:cfall linear forwards}
+@keyframes cfall{0%{transform:translateY(-10vh) rotate(0)}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+.referrals-page .to-top{position:fixed;right:20px;bottom:20px;z-index:65;width:46px;height:46px;border-radius:14px;border:1px solid var(--line-2);
+ background:rgba(20,30,24,.92);backdrop-filter:blur(10px);color:var(--lime);cursor:pointer;display:grid;place-items:center;
+ opacity:0;transform:translateY(14px) scale(.9);pointer-events:none;transition:.35s var(--ease)}
+.referrals-page .to-top.show{opacity:1;transform:none;pointer-events:auto}
+.referrals-page .to-top:hover{background:rgba(183,255,69,.16);border-color:rgba(183,255,69,.5);transform:translateY(-3px)}
+.referrals-page .to-top svg{width:19px;height:19px}
+.referrals-page footer{border-top:1px solid var(--line);background:rgba(9,14,11,.6);position:relative;z-index:1}
+.referrals-page .f-inner{max-width:1200px;margin:0 auto;padding:26px 20px;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.referrals-page .f-links{display:flex;gap:8px;flex-wrap:wrap}
+.referrals-page .f-links a, .referrals-page .f-links button{font-size:13px;color:var(--muted);font-weight:700;padding:8px 12px;border-radius:10px;transition:.25s;background:none;border:none;cursor:pointer}
+.referrals-page .f-links a:hover, .referrals-page .f-links button:hover{color:var(--lime);background:rgba(183,255,69,.08)}
+.referrals-page .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s var(--ease),transform .7s var(--ease);transition-delay:var(--d,0ms)}
+.referrals-page .reveal.in{opacity:1;transform:none}
+@media (max-width:1080px){
+.referrals-page  .hero, .referrals-page .grid2{grid-template-columns:1fr}
+.referrals-page  .stats-strip{grid-template-columns:repeat(2,1fr)}
+.referrals-page  .how{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:860px){
+.referrals-page  .nav-links, .referrals-page .nav-right .btn-light{display:none}
+.referrals-page  .burger{display:flex}
+.referrals-page  .mobile-menu{display:block}
+}
+@media (max-width:700px){
+.referrals-page  .tbl thead{display:none}
+.referrals-page  .tbl, .referrals-page .tbl tbody, .referrals-page .tbl tr, .referrals-page .tbl td{display:block;width:100%}
+.referrals-page  .tbl tr{border:1px solid var(--line);border-radius:14px;background:var(--panel-2);margin-bottom:10px;padding:6px 0;overflow:hidden}
+.referrals-page  .tbl td{border:none;background:none;padding:9px 14px;border-radius:0}
+.referrals-page  .tbl td::before{content:attr(data-l);display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:800;margin-bottom:3px}
+}
+@media (max-width:620px){
+.referrals-page  main{padding:24px 14px 44px;gap:20px}
+.referrals-page  .card{padding:20px;border-radius:18px}
+.referrals-page  .stats-strip, .referrals-page .how{grid-template-columns:1fr}
+.referrals-page  .hero-mini .hm{flex:1 1 100%}
+.referrals-page  .toasts{left:14px;right:14px;align-items:stretch}
+.referrals-page  .toast{max-width:none}
+.referrals-page  .to-top{right:14px;bottom:14px}
+.referrals-page  .tab{font-size:12px;padding:0 11px}
+.referrals-page  .chart{height:160px}
+}
+@media (prefers-reduced-motion:reduce){.referrals-page *{animation-duration:.001s!important;transition-duration:.001s!important}.referrals-page .reveal{opacity:1;transform:none}}

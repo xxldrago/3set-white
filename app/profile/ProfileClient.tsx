@@ -32,6 +32,8 @@ interface PageProps {
   user: UserShape | null;
   summary: ReferralSummaryShape | null;
   referralLink: string;
+  isAdmin: boolean;
+  hasActiveSub: boolean;
 }
 
 /* ---------- utils ---------- */
@@ -88,7 +90,7 @@ export function SessionGate ({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export default function ProfileClient ({ user, summary, referralLink }: PageProps) {
+export default function ProfileClient ({ user, summary, referralLink, isAdmin, hasActiveSub }: PageProps) {
   const [tab, setTab] = useState<'acc' | 'sec' | 'not' | 'ses'>('acc');
   const [toasts, setToasts] = useState<Array<{ id: number; msg: string; type: 'ok' | 'err' }>>([]);
   const toastIdRef = useRef(0);
@@ -650,9 +652,15 @@ export default function ProfileClient ({ user, summary, referralLink }: PageProp
                       <span>ID <span className="mono">#{userId}</span></span>
                     </div>
                     <div className="prof-badges">
-                      <span className={`pill ok`}><span className="pdot"></span>Аккаунт подтверждён</span>
-                      <span className={`pill info`}><span className="pdot"></span>Сотрудник</span>
-                      <span className={`pill warn`}><span className="pdot"></span>Подписка истекла</span>
+                      {(user?.emailVerifiedAt || user?.telegramId) && (
+                        <span className={`pill ok`}><span className="pdot"></span>Аккаунт подтверждён</span>
+                      )}
+                      {isAdmin && (
+                        <span className={`pill info`}><span className="pdot"></span>Сотрудник</span>
+                      )}
+                      {!hasActiveSub && (
+                        <span className={`pill warn`}><span className="pdot"></span>Подписка истекла</span>
+                      )}
                     </div>
                   </div>
                 </div>

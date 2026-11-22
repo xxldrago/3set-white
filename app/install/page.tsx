@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
-import Nav from '@/components/Nav';
-import { listKeys, listKeysByUserId } from '@/lib/keys-service';
-import { getSessionUser, requireSession, requireTelegramSession, SessionError } from '@/lib/session';
 import InstallClient, { type InstallKey } from './InstallClient';
+import { listKeys, listKeysByUserId } from '@/lib/keys-service';
+import { requireSession, requireTelegramSession, SessionError } from '@/lib/session';
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,18 +32,33 @@ export default async function InstallPage({
     throw err;
   }
 
-  const navUser = await getSessionUser();
+  // Fetch the user's display name/email for the nav avatar.
+  let userName: string | null = null;
+  let userEmail: string | null = null;
+  try {
+    const u = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, firstName: true, lastName: true, username: true },
+    });
+    userName = u?.firstName ?? u?.username ?? null;
+    userEmail = u?.email ?? null;
+  } catch {
+    // Cosmetic — never fail the page on a profile lookup.
+  }
+
   const { key: initialKeyId } = await searchParams;
 
   let keys: InstallKey[] = [];
   try {
+    // eslint-disable-next-line react-hooks/purity
+    const now = Date.now();
     const rendered =
       telegramId !== null ? await listKeys(BigInt(telegramId)) : await listKeysByUserId(userId);
     keys = rendered.map((k) => ({
       id: k.id,
       name: k.name ?? k.id,
       daysLeft: k.expiresAt
-        ? Math.max(0, Math.ceil((new Date(k.expiresAt).getTime() - Date.now()) / DAY_MS))
+        ? Math.max(0, Math.ceil((new Date(k.expiresAt).getTime() - now) / DAY_MS))
         : null,
       devices: k.devices,
       subscriptionUrl: k.subscriptionUrl,
@@ -53,26 +68,10 @@ export default async function InstallPage({
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background font-sans">
-      <Nav user={navUser} />
-      <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-8 sm:px-6">
-        <section className="flex flex-col gap-2">
-          <span className="font-mono text-xs uppercase tracking-[0.14em] text-green">
-            Подключение за 3 минуты
-          </span>
-          <h1 className="text-3xl font-semibold text-foreground sm:text-4xl">
-            Выберите устройство.
-            <br />
-            <span className="text-green">Остальное уже готово.</span>
-          </h1>
-          <p className="max-w-2xl text-muted">
-            Система покажет подходящие приложения, официальные ссылки и кнопку импорта вашей ссылки
-            подписки.
-          </p>
-        </section>
-
-        <InstallClient keys={keys} initialKeyId={initialKeyId} />
-      </main>
-    </div>
+    <InstallClient
+      keys={keys}
+      initialKeyId={initialKeyId}
+      user={{ firstName: userName, email: userEmail }}
+    />
   );
 }

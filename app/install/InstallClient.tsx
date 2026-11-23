@@ -92,6 +92,30 @@ export default function InstallClient({ keys, initialKeyId, user }: Props) {
     }
   }, [os]);
 
+  // Reveal-on-scroll for install cards.
+  useEffect(() => {
+    const nodes = Array.from(document.querySelectorAll('.install-page .reveal'));
+    if (!('IntersectionObserver' in window)) {
+      nodes.forEach((n) => n.classList.add('in'));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      }),
+      { threshold: 0.05, rootMargin: '0px 0px -20px 0px' },
+    );
+    nodes.forEach((n) => io.observe(n));
+    nodes.forEach((n) => {
+      const r = n.getBoundingClientRect();
+      if (r.top < window.innerHeight && r.bottom > 0) n.classList.add('in');
+    });
+    return () => io.disconnect();
+  }, []);
+
   // stepper classes
   const step1Done = !!key;
   const step2Done = !!os;

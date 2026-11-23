@@ -148,6 +148,31 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
     return () => window.removeEventListener('scroll', onScroll);
   }, [onScroll]);
 
+  // Reveal-on-scroll for the profile cards.
+  useEffect(() => {
+    const nodes = Array.from(document.querySelectorAll('.profile-page .reveal'));
+    if (!('IntersectionObserver' in window)) {
+      nodes.forEach((n) => n.classList.add('in'));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      }),
+      { threshold: 0.05, rootMargin: '0px 0px -20px 0px' },
+    );
+    nodes.forEach((n) => io.observe(n));
+    // Also reveal anything already in view on mount.
+    nodes.forEach((n) => {
+      const r = n.getBoundingClientRect();
+      if (r.top < window.innerHeight && r.bottom > 0) n.classList.add('in');
+    });
+    return () => io.disconnect();
+  }, []);
+
   const toTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
   const logout = () => {

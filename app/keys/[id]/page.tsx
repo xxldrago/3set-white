@@ -219,7 +219,7 @@ export default async function KeyDetailPage({
         </section>
 
         <nav className="flex flex-col gap-2 sm:flex-row">
-          <Link href="/guides" className={PRIMARY}>
+          <Link href={`/install?key=${encodeURIComponent(id)}`} className={PRIMARY}>
             <BookOpen className="h-4 w-4 shrink-0" aria-hidden />
             {t('key.guidesCta')}
           </Link>

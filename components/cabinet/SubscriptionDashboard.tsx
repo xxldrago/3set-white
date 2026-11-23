@@ -714,7 +714,7 @@ export default function SubscriptionDashboard({
                   <List aria-hidden />
                 </button>
               </div>
-              <Link href="/guides" className="btn btn-primary">
+              <Link href="/install" className="btn btn-primary">
                 <PlugZap aria-hidden />
                 Подключить
               </Link>
@@ -822,7 +822,6 @@ export default function SubscriptionDashboard({
                     <div className="kc-status">
                       <span className={`pill ${meta.cls}`}><span className="pdot" />{meta.text}</span>
                       {k.isTrial && <span className="pill warn">Пробный</span>}
-                      <span className="pill" style={{ color: 'var(--muted)' }}>WireGuard</span>
                       <span className="pill" style={{ color: 'var(--dim)' }}>Без логов</span>
                     </div>
 
@@ -836,7 +835,7 @@ export default function SubscriptionDashboard({
 
                     <div className="kc-stats">
                       <div className="stat"><span className="label">Осталось</span><b>{k.daysLeft} дн.</b></div>
-                      <div className="stat"><span className="label">Устройства</span><b className="mono">{k.devices}/{k.deviceLimit}</b></div>
+                      <div className="stat"><span className="label">Устройства</span><b className="mono">{k.deviceLimit}/{k.devices}</b></div>
                       <div className="stat"><span className="label">Действует до</span><b>{fmtDate(k.expiresAt)}</b></div>
                     </div>
 
@@ -1151,7 +1150,7 @@ export default function SubscriptionDashboard({
               <div className="chan">
                 <Link href="/support" className="btn btn-primary"><Send aria-hidden /><span>Telegram</span></Link>
                 <a href="mailto:support@3set.online" className="btn btn-ghost"><Mail aria-hidden /><span>E-mail</span></a>
-                <Link href="/guides" className="btn btn-quiet"><BookOpen aria-hidden /><span>Инструкции</span></Link>
+                <Link href="/install" className="btn btn-quiet"><BookOpen aria-hidden /><span>Инструкции</span></Link>
               </div>
             </div>
           </section>
@@ -1172,7 +1171,7 @@ export default function SubscriptionDashboard({
             <div className="f-links">
               <Link href="/subscription">Мои ключи</Link>
               <Link href="/#tariff">Тарифы</Link>
-              <Link href="/guides">Инструкции</Link>
+              <Link href="/install">Инструкции</Link>
               <Link href="/support">Поддержка</Link>
             </div>
           </div>

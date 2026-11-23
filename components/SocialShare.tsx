@@ -143,7 +143,7 @@ export default function SocialShare({
         {status && <span className="social-share-status" role="status">{status}</span>}
       </div>
       {!compact && (
-        <Link href="/guides" className="social-share-hint">Как подключить VPN по ссылке →</Link>
+        <Link href="/install" className="social-share-hint">Как подключить VPN по ссылке →</Link>
       )}
     </div>
   );

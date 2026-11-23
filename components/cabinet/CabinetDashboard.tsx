@@ -517,20 +517,22 @@ export default function CabinetDashboard({
                         <span className="ic"><KeyRound aria-hidden /></span>
                         <div>
                           <h3>{keyLabel ?? key.name}</h3>
-                          <div className="label" style={{ marginTop: 3 }}>Персональный ключ</div>
+                          <div className="label" style={{ marginTop: 3, display: 'flex', alignItems: 'center', gap: 6 }}>
+                            Персональный ключ
+                            <LabelEditor
+                              url={`/api/keys/${encodeURIComponent(key.id)}`}
+                              value={keyLabel}
+                              triggerLabel="Переименовать подписку"
+                              title="Название подписки"
+                              hint="Видно только вам — в панели провайдера имя не меняется."
+                              onSaved={setKeyLabel}
+                              compact
+                            />
+                          </div>
                         </div>
                       </div>
-                      <LabelEditor
-                        url={`/api/keys/${encodeURIComponent(key.id)}`}
-                        value={keyLabel}
-                        triggerLabel="Переименовать подписку"
-                        title="Название подписки"
-                        hint="Видно только вам — в панели провайдера имя не меняется."
-                        onSaved={setKeyLabel}
-                      />
                       <div className="sub-meta">
                         <span className={`pill ${active ? 'ok' : 'warn'}`}><span className="pdot" />{active ? 'Активна' : 'Истёк'}</span>
-                        <span className="pill" style={{ color: 'var(--muted)' }}>WireGuard</span>
                         <span className="pill" style={{ color: 'var(--muted)' }}>Без логов</span>
                       </div>
                       <p className="muted" style={{ fontSize: 13.5, margin: '2px 0 0' }}>
@@ -543,8 +545,8 @@ export default function CabinetDashboard({
 
                   <div className="stat-grid">
                     <div className="stat"><span className="label">Осталось</span><b>{daysLeft} дн.</b><div className="bar"><i style={{ width: `${ringPct * 100}%` }} /></div></div>
-                    <div className="stat"><span className="label">Устройства</span><b className="mono">{devices}/{deviceLimit}</b><div className="bar"><i style={{ width: `${deviceLimit > 0 ? Math.min(100, (devices / deviceLimit) * 100) : 0}%` }} /></div></div>
-                    <div className="stat"><span className="label">Действует до</span><b>{fmtDate(key.expiresAt)}</b><span className="dim" style={{ fontSize: 11.5 }}>Europe · Amsterdam</span></div>
+                    <div className="stat"><span className="label">Устройства</span><b className="mono">{deviceLimit}/{devices}</b><div className="bar"><i style={{ width: `${deviceLimit > 0 ? Math.min(100, (devices / deviceLimit) * 100) : 0}%` }} /></div></div>
+                    <div className="stat"><span className="label">Действует до</span><b>{fmtDate(key.expiresAt)}</b></div>
                   </div>
 
                   {key.subscriptionUrl && (
@@ -921,7 +923,7 @@ export default function CabinetDashboard({
               <Link href="/support">Поддержка</Link>
               <a href="mailto:support@3set.online">support@3set.online</a>
               <Link href="/faq">Инструкции</Link>
-              <Link href="/guides">Инструкции</Link>
+              <Link href="/install">Инструкции</Link>
             </div>
           </div>
         </footer>

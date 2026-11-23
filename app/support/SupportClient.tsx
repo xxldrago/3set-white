@@ -514,12 +514,6 @@ export default function SupportClient({ tickets, user, isStaff, unread, now }: P
                 <b>Telegram-чат</b>
                 <p>Самый быстрый канал: можно прислать скриншоты и видео.</p>
               </div>
-              <div className="chan reveal" onClick={() => { navigator.clipboard.writeText('support@3set.online'); toast('Адрес поддержки скопирован'); }}>
-                <span className="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>
-                <span className="cic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m2 7l10 6 10-6" /></svg></span>
-                <b>support@3set.online</b>
-                <p>Для вопросов по оплате, чекам и возвратам. Ответ в течение рабочего дня.</p>
-              </div>
               <Link href="/faq" className="chan reveal">
                 <span className="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>
                 <span className="cic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg></span>
@@ -544,7 +538,6 @@ export default function SupportClient({ tickets, user, isStaff, unread, now }: P
             </div>
             <div className="f-links">
               <a href="#tickets">Обращения</a><a href="/faq">Инструкции</a>
-              <button onClick={() => { navigator.clipboard.writeText('support@3set.online'); toast('Адрес поддержки скопирован'); }}>support@3set.online</button>
               <button onClick={() => toast('Политика конфиденциальности')}>Политика</button>
               <button onClick={() => toast('Публичная оферта')}>Оферта</button>
             </div>

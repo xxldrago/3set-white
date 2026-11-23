@@ -46,7 +46,7 @@ export default function SupportFab() {
           <Link href="/support" onClick={() => setOpen(false)}>
             <LifeBuoy aria-hidden /> Открыть поддержку
           </Link>
-          <Link href="/guides" onClick={() => setOpen(false)}>
+          <Link href="/install" onClick={() => setOpen(false)}>
             <BookOpen aria-hidden /> Инструкции
           </Link>
         </div>

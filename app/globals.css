@@ -1348,7 +1348,19 @@ body::after {
    ======================================================================== */
 
 /* layout */
-.profile-page{position:relative;min-height:100vh;background:var(--bg);color:var(--fg);font-family:var(--font-sans,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif)}
+.profile-page{
+  --bg:#0e1512;--panel:#131c17;--panel-2:#18231d;--panel-3:#1e2b23;
+  --line:rgba(233,255,214,.09);--line-2:rgba(233,255,214,.16);
+  --fg:#eef5ea;--muted:#9daba1;--dim:#6b7b70;
+  --lime:#b7ff45;--lime-2:#d4ff85;--green:#8fdc2c;
+  --amber:#ffd166;--red:#ff7a6b;--cyan:#63d7c8;
+  --r-lg:22px;--r-md:16px;--r-sm:12px;
+  --shadow:0 24px 60px -30px rgba(0,0,0,.9);
+  --glow:0 10px 34px -12px rgba(183,255,69,.55);
+  --ease:cubic-bezier(.22,.9,.28,1);
+  position:relative;min-height:100vh;background:var(--bg);color:var(--fg);
+  font-family:var(--font-sans,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif)
+}
 .profile-page .wrap{max-width:1200px;margin:0 auto;padding:0 20px 80px}
 .profile-page footer{border-top:1px solid var(--line);background:rgba(9,14,11,.6);position:relative;margin-top:40px}
 

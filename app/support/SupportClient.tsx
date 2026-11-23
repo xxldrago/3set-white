@@ -4,21 +4,7 @@
 // from the server page; replies/creation hit the session-gated BFF routes
 // (POST /api/tickets, POST /api/tickets/[id]/messages, GET /api/tickets/[id]).
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  AlertCircle,
-  ChevronRight,
-  Clock,
-  Copy,
-  LifeBuoy,
-  Mail,
-  MessageCircle,
-  RotateCcw,
-  Send,
-  Ticket,
-  Ticket as TicketIcon,
-  X,
-} from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 const CATEGORY_NAMES: Record<string, string> = {
   conn: 'Подключение',
@@ -64,9 +50,11 @@ interface PageProps {
   } | null;
   isStaff: boolean;
   unread: number;
+  /** Server render timestamp — keeps relative time pure during render. */
+  now: number;
 }
 
-export default function SupportClient({ tickets, user, isStaff, unread }: PageProps) {
+export default function SupportClient({ tickets, user, isStaff, unread, now }: PageProps) {
   // ---------- local UI state ----------
   const [filter, setFilter] = useState<'all' | 'open' | 'answered' | 'closed'>('all');
   const [query, setQuery] = useState('');
@@ -78,7 +66,6 @@ export default function SupportClient({ tickets, user, isStaff, unread }: PagePr
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [toasts, setToasts] = useState<Array<{ id: number; msg: string; type: 'ok' | 'err' }>>([]);
-  const [scrollY, setScrollY] = useState(0);
   const toastRef = useRef(0);
 
   // ---------- derived ----------
@@ -112,9 +99,8 @@ export default function SupportClient({ tickets, user, isStaff, unread }: PagePr
 
   const esc = (s: string) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] ?? c));
   const pad = (n: number) => String(n).padStart(2, '0');
-  const fmtDT = (d: Date) => pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear() + ' · ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
   const relTime = (d: Date) => {
-    const diff = Date.now() - d.getTime();
+    const diff = now - d.getTime();
     if (diff < 60e3) return 'только что';
     if (diff < 3600e5) { const m = Math.round(diff / 60e3); return m + ' мин назад'; }
     if (diff < 86400e5) { const h = Math.round(diff / 3600e5); return h + ' ч назад'; }
@@ -151,11 +137,6 @@ export default function SupportClient({ tickets, user, isStaff, unread }: PagePr
   const [thread, setThread] = useState<TicketThread | null>(null);
   const [replySending, setReplySending] = useState(false);
   const [replyText, setReplyText] = useState('');
-
-  const markThreadRead = () => {
-    if (!thread) return;
-    void fetch(`/api/tickets/${encodeURIComponent(thread.id)}/read`, { method: 'POST' });
-  };
 
   const createTicket = async (subject: string, body: string) => {
     setSending(true);
@@ -291,7 +272,7 @@ export default function SupportClient({ tickets, user, isStaff, unread }: PagePr
 
   // ---------- render ----------
   return (
-    <div className="support-page" onScroll={() => setScrollY(window.scrollY)}>
+    <div className="support-page">
       <div className="bg-fx">
         <div className="grid"></div>
         <div className="blob b1"></div>
@@ -311,22 +292,22 @@ export default function SupportClient({ tickets, user, isStaff, unread }: PagePr
       <div className="wrap">
         <nav className="top" id="nav">
           <div className="inner">
-            <a className="brand" href="#" aria-label="3set — на главную">
+            <Link className="brand" href="/" aria-label="3set — на главную">
               <svg className="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
                 <path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" fill="#1b2a1c" />
                 <path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" stroke="#b7ff45" strokeOpacity=".35" />
                 <path d="M11 16l3.5 3.5L21 13" stroke="#b7ff45" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               <span>3<em>set</em><span className="dom mono">.online</span></span>
-            </a>
+            </Link>
             <div className="nav-links">
-              <Link href="/" className="nl">
+              <Link href="/subscription" className="nl">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="m2 21l9.6-9.6M7.5 15.5l2.3 2.3" /></svg>
                 Мои ключи
               </Link>
               <Link href="/faq" className="nl">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" /></svg>
-                FAQ
+                Инструкции
               </Link>
               <a className={`nl active${unread ? ' unread-nav' : ''}`} href="#" onClick={(e) => { e.preventDefault(); setFilter('all'); }}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24" /><circle cx="12" cy="12" r="4" /></svg>
@@ -334,17 +315,28 @@ export default function SupportClient({ tickets, user, isStaff, unread }: PagePr
               </a>
             </div>
             <div className="nav-right">
-              <a className="btn btn-light sm" href="#" style={{ height: 40 }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></svg>
-                Админ-панель
-              </a>
-              <a className="avatar" href="#" title={user?.email ?? 'профиль'} aria-label="Профиль">
+              {isStaff && (
+                <Link className="btn btn-light sm" href="/admin" style={{ height: 40 }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></svg>
+                  Админ-панель
+                </Link>
+              )}
+              <Link className="avatar" href="/profile" title={user?.email ?? 'профиль'} aria-label="Профиль">
                 {(user?.firstName?.[0] ?? user?.username?.[0] ?? user?.email?.split('@')[0] ?? '?').toUpperCase()}
-              </a>
+              </Link>
               <button className="burger" id="burger" aria-label="Меню" aria-expanded="false"><span></span></button>
             </div>
           </div>
         </nav>
+        <div className="mobile-menu" id="mobileMenu">
+          <div className="mm-inner">
+            <Link href="/" className="nl">Панель</Link>
+            <Link href="/subscription" className="nl">Мои ключи</Link>
+            <Link href="/faq" className="nl">Инструкции</Link>
+            <Link href="/profile" className="nl">Профиль</Link>
+            {isStaff && <Link href="/admin" className="nl">Админ-панель</Link>}
+          </div>
+        </div>
 
         <main id="top">
           {/* HERO */}
@@ -369,14 +361,12 @@ export default function SupportClient({ tickets, user, isStaff, unread }: PagePr
               </div>
               <div className="agent-stack">
                 <div className="agents">
-                  <span className="ag" title="Ирина · первая линия">ИР</span>
-                  <span className="ag" title="Павел · сетевой инженер">ПВ</span>
-                  <span className="ag" title="Дина · биллинг">ДН</span>
-                  <span className="ag more">+4</span>
+                  <span className="ag">3S</span>
+                  <span className="ag more">3set</span>
                 </div>
                 <div>
                   <b style={{ fontSize: 13.5 }}>Команда на связи</b>
-                  <div className="dim" style={{ fontSize: 11.5, fontWeight: 700 }}>3 агента онлайн · круглосуточно</div>
+                  <div className="dim" style={{ fontSize: 11.5, fontWeight: 700 }}>Поддержка 3set · круглосуточно</div>
                 </div>
                 <span className="pill ok"><span className="pdot" />Online</span>
               </div>
@@ -499,7 +489,7 @@ export default function SupportClient({ tickets, user, isStaff, unread }: PagePr
               <div className="empty show" id="emptyState">
                 <span className="eic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.2-3.2" /></svg></span>
                 <b style={{ fontSize: 16 }}>Обращений не найдено</b>
-                <p className="muted" style={{ margin: 0, fontSize: 13.5, maxWidth: '40ch' }}>Измените фильтр или создайте новое обращение — команда отвечает круглосуточно, в среднем за 4 минуты.</p>
+                <p className="muted" style={{ margin: 0, fontSize: 13.5, maxWidth: '40ch' }}>Измените фильтр или создайте новое обращение — команда отвечает круглосуточно.</p>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
                   <button className="btn btn-ghost sm" id="resetFilters" onClick={() => { setFilter('all'); setQuery(''); setCatF('all'); setUnreadOnly(false); setSortDesc(true); }}>Сбросить фильтры</button>
                   <button className="btn btn-primary sm" id="newTicketBtn2" onClick={() => setNewOpen(true)}>Создать обращение</button>
@@ -522,7 +512,7 @@ export default function SupportClient({ tickets, user, isStaff, unread }: PagePr
                 <span className="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>
                 <span className="cic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4z" /><path d="M22 2 11 13" /></svg></span>
                 <b>Telegram-чат</b>
-                <p>Самый быстрый канал: ответ за 2–5 минут, можно прислать скриншоты и видео.</p>
+                <p>Самый быстрый канал: можно прислать скриншоты и видео.</p>
               </div>
               <div className="chan reveal" onClick={() => { navigator.clipboard.writeText('support@3set.online'); toast('Адрес поддержки скопирован'); }}>
                 <span className="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>
@@ -530,12 +520,12 @@ export default function SupportClient({ tickets, user, isStaff, unread }: PagePr
                 <b>support@3set.online</b>
                 <p>Для вопросов по оплате, чекам и возвратам. Ответ в течение рабочего дня.</p>
               </div>
-              <div className="chan reveal" onClick={() => { window.location.href = '/faq'; }}>
+              <Link href="/faq" className="chan reveal">
                 <span className="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>
                 <span className="cic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg></span>
-                <b>FAQ и инструкции</b>
-                <p>64 статьи: подключение, приложения, ошибки, скорость, оплата и устройства.</p>
-              </div>
+                <b>Инструкции</b>
+                <p>Подключение, приложения, ошибки, скорость, оплата и устройства.</p>
+              </Link>
             </div>
           </section>
         </main>
@@ -553,7 +543,7 @@ export default function SupportClient({ tickets, user, isStaff, unread }: PagePr
               <p className="dim" style={{ fontSize: 12.5, margin: '8px 0 0' }}>VPN-подписки: покупка и управление ключами · © 2026</p>
             </div>
             <div className="f-links">
-              <a href="#tickets">Обращения</a><a href="/faq">FAQ</a>
+              <a href="#tickets">Обращения</a><a href="/faq">Инструкции</a>
               <button onClick={() => { navigator.clipboard.writeText('support@3set.online'); toast('Адрес поддержки скопирован'); }}>support@3set.online</button>
               <button onClick={() => toast('Политика конфиденциальности')}>Политика</button>
               <button onClick={() => toast('Публичная оферта')}>Оферта</button>
@@ -563,7 +553,7 @@ export default function SupportClient({ tickets, user, isStaff, unread }: PagePr
       </div>
 
       {/* NEW TICKET MODAL */}
-      <div className="overlay" id="ovNew" role="dialog" aria-modal="true" aria-labelledby="newTitle">
+      <div className={`overlay${newOpen ? ' open' : ''}`} id="ovNew" role="dialog" aria-modal="true" aria-labelledby="newTitle" onClick={(e) => { if (e.target === e.currentTarget) setNewOpen(false); }}>
         <div className="modal">
           <div className="modal-head">
             <h3 id="newTitle">Новое обращение</h3>
@@ -618,7 +608,7 @@ export default function SupportClient({ tickets, user, isStaff, unread }: PagePr
             <div className="success show" id="newSuccess">
               <span className="sic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg></span>
               <b style={{ fontSize: 16 }}>Обращение создано</b>
-              <p className="muted" style={{ margin: 0, fontSize: 13.5, maxWidth: '38ch' }}>Номер <span className="mono" style={{ color: 'var(--lime)' }}>{createdId}</span>. Ответим сюда и продублируем на почту — обычно за 4–10 минут.</p>
+              <p className="muted" style={{ margin: 0, fontSize: 13.5, maxWidth: '38ch' }}>Номер <span className="mono" style={{ color: 'var(--lime)' }}>{createdId}</span>. Ответим сюда и продублируем на почту.</p>
               <div style={{ display: 'flex', gap: 8, width: '100%', marginTop: 4 }}>
                 <button className="btn btn-ghost" onClick={() => { setCreatedId(null); setNewOpen(false); }} style={{ flex: 1 }}>Закрыть</button>
                 <button className="btn btn-primary" id="openCreated" onClick={() => { setCreatedId(null); setNewOpen(false); openThreadModal(createdId); }} style={{ flex: 1 }}>Открыть диалог</button>
@@ -630,7 +620,7 @@ export default function SupportClient({ tickets, user, isStaff, unread }: PagePr
 
       {/* TICKET DETAIL MODAL */}
       {openModalId && (
-        <div className="overlay" id="ovTicket" role="dialog" aria-modal="true" aria-labelledby="chatTitle" onClick={(e) => { if (e.target === e.currentTarget) { setOpenModalId(null); setThread(null); } }}>
+        <div className="overlay open" id="ovTicket" role="dialog" aria-modal="true" aria-labelledby="chatTitle" onClick={(e) => { if (e.target === e.currentTarget) { setOpenModalId(null); setThread(null); } }}>
           <div className="modal wide" onClick={(e) => e.stopPropagation()}>
             <div className="chat-head">
               <span className="tk-av" id="chatAvatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg></span>

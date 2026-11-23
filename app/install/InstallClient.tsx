@@ -535,10 +535,10 @@ export default function InstallClient({ keys, initialKeyId, user }: Props) {
                   <span className="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24" /><circle cx="12" cy="12" r="4" /></svg></span>
                   <div style={{ flex: 1, minWidth: 200 }}>
                     <b style={{ fontSize: '14.5px' }}>Не получилось?</b>
-                    <p className="muted" style={{ margin: '3px 0 0', fontSize: '13px' }}>Сначала откройте FAQ по приложению. Если ошибка останется — поддержка поможет по скриншоту, отвечаем за 4 минуты.</p>
+                    <p className="muted" style={{ margin: '3px 0 0', fontSize: '13px' }}>Сначала откройте инструкции по приложению. Если ошибка останется — поддержка поможет по скриншоту, отвечаем за 4 минуты.</p>
                   </div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <button className="btn btn-ghost sm" onClick={() => addToast('Открыт FAQ по настройке приложений')}>FAQ по настройке →</button>
+                    <button className="btn btn-ghost sm" onClick={() => addToast('Открыт раздел инструкций по настройке приложений')}>Инструкции по настройке →</button>
                     <button className="btn btn-lime-line sm" onClick={() => addToast('Открыт чат техподдержки — приложите скриншот ошибки')}>Техподдержка ↗</button>
                   </div>
                 </div>

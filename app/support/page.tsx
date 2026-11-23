@@ -75,7 +75,9 @@ export default async function SupportPage() {
     }
   }
 
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
   return (
-    <SupportClient tickets={tickets} user={user} isStaff={isStaff} unread={unread} />
+    <SupportClient tickets={tickets} user={user} isStaff={isStaff} unread={unread} now={now} />
   );
 }

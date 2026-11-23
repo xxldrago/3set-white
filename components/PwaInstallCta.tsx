@@ -16,7 +16,9 @@ export default function PwaInstallCta({ onDismiss }: { onDismiss?: () => void })
 
   useEffect(() => {
     const handler = (event: Event) => {
-      event.preventDefault(); // keep the native mini-infobar from covering the UI
+      // Do not call preventDefault(): Chrome logs "Banner not shown" when the
+      // page cancels the event but only prompts on a later click. The event
+      // object stays usable for prompt() and the native UI still works.
       setDeferred(event as BeforeInstallPromptEvent);
     };
     window.addEventListener('beforeinstallprompt', handler);

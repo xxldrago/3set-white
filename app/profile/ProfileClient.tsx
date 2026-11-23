@@ -36,6 +36,7 @@ interface PageProps {
   referralLink: string;
   isAdmin: boolean;
   hasActiveSub: boolean;
+  legalBaseUrl: string;
 }
 
 /* ---------- utils ---------- */
@@ -92,7 +93,7 @@ export function SessionGate ({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export default function ProfileClient ({ user, summary, referralLink, isAdmin, hasActiveSub }: PageProps) {
+export default function ProfileClient ({ user, summary, referralLink, isAdmin, hasActiveSub, legalBaseUrl }: PageProps) {
   const [tab, setTab] = useState<'acc' | 'sec' | 'not' | 'ses'>('acc');
   const [toasts, setToasts] = useState<Array<{ id: number; msg: string; type: 'ok' | 'err' }>>([]);
   const toastIdRef = useRef(0);
@@ -118,6 +119,15 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
     () => summary ?? ({} as ReferralSummaryShape),
     [summary],
   );
+  // Effective referral rate resolved server-side (admin-configurable), never a
+  // hardcoded "5 days" promise.
+  const rateLabel = useMemo(() => {
+    const rate = summary?.myRate;
+    if (!rate || !rate.value) return '—';
+    if (rate.kind === 'days') return `${rate.value} дн.`;
+    if (rate.kind === 'percent') return `${rate.value}%`;
+    return `${rate.value} ₽`;
+  }, [summary]);
 
   /* ---------- nav / chrome ---------- */
   const navRef = useRef<HTMLElement>(null);
@@ -236,12 +246,11 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
   /* ---------- security ring ---------- */
   const [secPct, setSecPct] = useState(0);
   const [secLbl, setSecLbl] = useState('базовый');
+  const [tfaEnabled, setTfaEnabled] = useState(false);
   const [secChecks, setSecChecks] = useState<Array<{ k: string; t: string; ok: boolean }>>([
-    { k: 'password', t: 'Пароль длиной 8+ символов', ok: false },
-    { k: 'tg', t: 'Привязан Telegram для входа', ok: false },
+    { k: 'email', t: 'Email подтверждён', ok: !!user?.emailVerifiedAt },
+    { k: 'tg', t: 'Привязан Telegram для входа', ok: user?.telegramId !== null && user?.telegramId !== undefined },
     { k: 'tfa', t: 'Включена двухфакторная защита', ok: false },
-    { k: 'alerts', t: 'Уведомления о новых входах', ok: true },
-    { k: 'sessions', t: 'Нет незнакомых сессий', ok: true },
   ]);
 
   const C = 2 * Math.PI * 54;
@@ -272,9 +281,9 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
 
   useEffect(() => {
     fetch('/api/user/tfa')
-    fetch('/api/user/tfa')
       .then(async (r) => {
         const j = await r.json().catch(() => ({}));
+        setTfaEnabled(!!j.enabled);
         setSecChecks((xs) => xs.map((c) => c.k === 'tfa' ? { ...c, ok: !!j.enabled } : c));
         renderSecurity();
       })
@@ -289,20 +298,15 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
     const inv = document.getElementById('rsInv');
     const days = document.getElementById('rsDays');
     const sum = document.getElementById('rsSum');
-    const prog = document.getElementById('refProgTxt');
-    const bar = document.getElementById('refBar');
     const invited = (summaryOrEmpty as ReferralSummaryShape)?.referrals ?? 0;
     const earned = summaryOrEmpty.earned ?? 0;
-    const balance = summaryOrEmpty.balance ?? 0;
     if (inv) countUp(inv as HTMLElement, invited, 600);
-    if (days) countUp(days as HTMLElement, balance, 600);
+    if (days) countUp(days as HTMLElement, summaryOrEmpty.bonusDays ?? 0, 600);
     if (sum) countUp(sum as HTMLElement, earned, 600, ' ₽');
-    if (prog) prog.textContent = `${invited} / 3 друзей`;
-    if (bar) (bar as HTMLElement).style.width = Math.min(100, invited / 3 * 100) + '%';
     const empty = document.getElementById('invEmpty');
     if (empty) empty.innerHTML = invited > 0
-      ? '<div style="width:100%;display:flex;flex-direction:column;gap:9px"><div style="display:flex;align-items:center;gap:11px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2)"><span style="width:32px;height:32px;flex:none;border-radius:10px;display:grid;place-items:center;background:rgba(183,255,69,.14);color:var(--lime);font-size:12px;font-weight:800">Д</span><span style="flex:1;min-width:0"><b style="display:block;font-size:13px">Друг зарегистрировался</b><span class="dim" style="font-size:11.5px">код 3SET-XXXX · ожидает первой оплаты</span></span><span class="pill warn" style="padding:4px 10px;font-size:11px"><span class="pdot"></span>Ожидание</span></div><p class="dim" style="margin:0;font-size:11.5px;text-align:center">После его оплаты вам и другу начислится по 5 дней</p></div>'
-      : '<span class="eic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></span><b style="font-size:13.5px">Пока никого</b><p class="dim" style="margin:0;font-size:12.5px;max-width:32ch">Отправьте ссылку — как только друг оплатит подписку, здесь появится запись и начислятся дни.</p>';
+      ? `<div style="width:100%;display:flex;flex-direction:column;gap:9px"><div style="display:flex;align-items:center;gap:11px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2)"><span style="width:32px;height:32px;flex:none;border-radius:10px;display:grid;place-items:center;background:rgba(183,255,69,.14);color:var(--lime);font-size:12px;font-weight:800">${invited}</span><span style="flex:1;min-width:0"><b style="display:block;font-size:13px">Приглашено друзей: ${invited}</b><span class="dim" style="font-size:11.5px">Начислено: ${earned} ₽</span></span></div><p class="dim" style="margin:0;font-size:11.5px;text-align:center">Бонус начисляется после первой оплаты приглашённого</p></div>`
+      : '<span class="eic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></span><b style="font-size:13.5px">Пока никого</b><p class="dim" style="margin:0;font-size:12.5px;max-width:32ch">Отправьте ссылку — как только друг оплатит подписку, здесь появится запись и начислится бонус.</p>';
   }, [summaryOrEmpty, referralLink]);
 
   useEffect(() => { renderReferral(); }, [renderReferral]);
@@ -364,9 +368,10 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
   /* ---------- 2FA ---------- */
   const toggleTfa = async () => {
     try {
-      const res = await api('/api/user/tfa', { method: 'POST', body: JSON.stringify({ enable: true }) });
+      const res = await api('/api/user/tfa', { method: 'POST', body: JSON.stringify({ enable: !tfaEnabled }) });
       const j = await res.json().catch(() => ({}));
-      if (j.enabled === undefined) { addToast('Не удалось включить 2FA', 'err'); return; }
+      if (j.enabled === undefined) { addToast('Не удалось изменить 2FA', 'err'); return; }
+      setTfaEnabled(!!j.enabled);
       setSecChecks((xs) => xs.map((c) => c.k === 'tfa' ? { ...c, ok: j.enabled } : c));
       renderSecurity();
       addToast(j.enabled ? 'Двухфакторная аутентификация включена' : '2FA выключена');
@@ -758,8 +763,8 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
                         </button>
                       </div>
                       <div className="row">
-                        <div className="rt"><b>Пароль</b><span>Установлен · изменён 3 месяца назад</span></div>
-                        <button className="btn btn-ghost sm" data-goto="sec">
+                        <div className="rt"><b>Пароль</b><span>Используется для входа по email</span></div>
+                        <button className="btn btn-ghost sm" data-goto="sec" onClick={() => setTab('sec')}>
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.6 17.4A2 2 0 0 0 2 18.8V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.2a2 2 0 0 0 1.4-.6l.8-.8a6.5 6.5 0 1 0-4-4z" /><circle cx="16.5" cy="7.5" r="0.6" fill="currentColor" /></svg> Сменить пароль
                         </button>
                       </div>
@@ -837,12 +842,8 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
                         </div>
                       </div>
                       <div className="row">
-                        <div className="rt"><b>2FA через Telegram</b><span id="tfaState">Выключена — вход только по паролю</span></div>
-                        <button className="switch" id="tfaSwitch" role="switch" aria-checked="false" aria-label="Двухфакторная аутентификация" onClick={toggleTfa}><i /></button>
-                      </div>
-                      <div className="row">
-                        <div className="rt"><b>Уведомления о новых входах</b><span>Письмо и сообщение в Telegram при входе с нового устройства</span></div>
-                        <button className="switch on" id="loginAlert" role="switch" aria-checked="true"><i /></button>
+                        <div className="rt"><b>2FA через Telegram</b><span>{tfaEnabled ? 'Включена — код при входе с нового устройства' : 'Выключена — вход только по паролю'}</span></div>
+                        <button className={`switch${tfaEnabled ? ' on' : ''}`} id="tfaSwitch" role="switch" aria-checked={tfaEnabled} aria-label="Двухфакторная аутентификация" onClick={toggleTfa}><i /></button>
                       </div>
                     </div>
 
@@ -867,16 +868,19 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
                   {/* NOTIFICATIONS */}
                   <div className={`panel${tab === 'not' ? ' on' : ''}`} id="p-not" style={{ marginTop: 20 }}>
                     <div className="block">
-                      <div className="block-head"><div><h3>Каналы уведомлений</h3><p>Выберите, куда присылать важные сообщения о подписке.</p></div></div>
-                      <div className="row"><div className="rt"><b>Email-уведомления</b><span>{email}</span></div><button className="switch on" data-not="email" role="switch" aria-checked="true"><i /></button></div>
-                      <div className="row"><div className="rt"><b>Telegram-уведомления</b><span>Бот @3set_bot · ID {user?.telegramId}</span></div><button className="switch on" data-not="tg" role="switch" aria-checked="true"><i /></button></div>
+                      <div className="block-head"><div><h3>Каналы уведомлений</h3><p>Куда приходят важные сообщения о подписке.</p></div></div>
+                      <div className="row">
+                        <div className="rt"><b>Email</b><span>{email}</span></div>
+                        <span className={`pill${isEmailVerified ? ' ok' : ' warn'}`}><span className="pdot"></span>{isEmailVerified ? 'подтверждён' : 'не подтверждён'}</span>
+                      </div>
+                      <div className="row">
+                        <div className="rt"><b>Telegram</b><span>{tgLinked ? `Бот · ID ${user?.telegramId}` : 'Не привязан'}</span></div>
+                        <span className={`pill${tgLinked ? ' ok' : ''}`}><span className="pdot"></span>{tgLinked ? 'привязан' : 'не привязан'}</span>
+                      </div>
                     </div>
                     <div className="block">
-                      <div className="block-head"><div><h3>О чём сообщать</h3><p>Напоминания помогают не остаться без защиты в неподходящий момент.</p></div></div>
-                      <div className="row"><div className="rt"><b>Окончание подписки</b><span>За 3 дня и в день окончания</span></div><button className="switch on" data-not="expiry" role="switch" aria-checked="true"><i /></button></div>
-                      <div className="row"><div className="rt"><b>Ответы поддержки</b><span>Новые сообщения в ваших обращениях</span></div><button className="switch on" data-not="support" role="switch" aria-checked="true"><i /></button></div>
-                      <div className="row"><div className="rt"><b>Реферальные начисления</b><span>Когда друг оплатил и пришли бонусные дни</span></div><button className="switch" data-not="ref" role="switch" aria-checked="false"><i /></button></div>
-                      <div className="row"><div className="rt"><b>Новости и акции</b><span>Промокоды, новые серверы, изменения тарифов</span></div><button className="switch" data-not="news" role="switch" aria-checked="false"><i /></button></div>
+                      <div className="block-head"><div><h3>Настройка уведомлений</h3><p>Напоминания об окончании подписки и ответы поддержки приходят в подключённые каналы. Изменить набор уведомлений можно через поддержку.</p></div></div>
+                      <Link className="btn btn-ghost sm" href="/support">Написать в поддержку</Link>
                     </div>
                   </div>
 
@@ -912,10 +916,10 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
                     <span className="gift-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12v9H4v-9" /><path d="M2 7h20v5H2z" /><path d="M12 22V7" /><path d="M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7z" /><path d="M12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z" /></svg></span>
                     <div>
                       <span className="kicker">Реферальная программа</span>
-                      <h2 className="sec-title" style={{ marginTop: 5 }}>Пригласи друга — получи 5 дней</h2>
+                      <h2 className="sec-title" style={{ marginTop: 5 }}>Пригласи друга — получите бонус</h2>
                     </div>
                   </div>
-                  <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>Другу тоже начислим 5 дней после его первой оплаты. Днями продлевается любой ваш ключ. Ваша ставка: <b style={{ color: 'var(--lime)' }}>5 дн. за сделку</b>.</p>
+                  <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>Другу тоже начислим бонус после его первой оплаты. Днями продлевается любой ваш ключ. Ваша ставка: <b style={{ color: 'var(--lime)' }}>{rateLabel} за сделку</b>.</p>
                   <div>
                     <span className="label" style={{ display: 'block', marginBottom: 8 }}>Ваша ссылка</span>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -929,7 +933,7 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
                     </div>
                     <div className="share-row" style={{ marginTop: 10 }}>
                       <button className="btn btn-ghost xs" id="qrRef" onClick={openQrModal}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="5" height="5" x="3" y="3" rx="1" /><rect width="5" height="5" x="16" y="3" rx="1" /><rect width="5" height="5" x="3" y="16" rx="1" /><path d="M16 16h5v5h-5z" /></svg> QR-код</button>
-                      <button className="btn btn-ghost xs" id="shareRef" onClick={async () => { const data = { title: '3set VPN', text: 'Дарю 5 дней VPN-подписки по своей ссылке', url: referralLink }; if (navigator.share) { try { await navigator.share(data); return; } catch {} } const ok = await copyText(referralLink); addToast(ok ? 'Ссылка скопирована — отправьте другу' : 'Не удалось поделиться', ok ? 'ok' : 'err'); }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" /><path d="M16 6l-4-4-4 4M12 2v14" /></svg> Поделиться</button>
+                      <button className="btn btn-ghost xs" id="shareRef" onClick={async () => { const data = { title: '3set VPN', text: 'VPN-подписка 3set по моей ссылке', url: referralLink }; if (navigator.share) { try { await navigator.share(data); return; } catch {} } const ok = await copyText(referralLink); addToast(ok ? 'Ссылка скопирована — отправьте другу' : 'Не удалось поделиться', ok ? 'ok' : 'err'); }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" /><path d="M16 6l-4-4-4 4M12 2v14" /></svg> Поделиться</button>
                       <button className="btn btn-quiet xs" id="tgShare" onClick={async () => { const ok = await copyText(referralLink); addToast(ok ? 'Ссылка скопирована — вставьте её в Telegram' : 'Ошибка копирования', ok ? 'ok' : 'err'); }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4z" /><path d="M22 2 11 13" /></svg> В Telegram</button>
                     </div>
                   </div>
@@ -940,14 +944,14 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
                   </div>
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, marginBottom: 7 }}>
-                      <span className="dim">До награды «+15 дней»</span><span id="refProgTxt">0 / 3 друзей</span>
+                      <span className="dim">Приглашено друзей</span><span id="refProgTxt">{summaryOrEmpty.referrals ?? 0}</span>
                     </div>
-                    <div className="bar"><i id="refBar" /></div>
+                    <div className="bar"><i id="refBar" style={{ width: `${Math.min(100, (summaryOrEmpty.referrals ?? 0) * 20)}%` }} /></div>
                   </div>
                   <ol className="steps">
                     <li><span className="n">1</span>Скопируйте ссылку и отправьте другу</li>
                     <li><span className="n">2</span>Друг регистрируется и оплачивает подписку</li>
-                    <li><span className="n">3</span>Вы оба получаете по 5 дней автоматически</li>
+                    <li><span className="n">3</span>Бонус начисляется автоматически после оплаты</li>
                   </ol>
                   <div style={{ borderTop: '1px solid var(--line)', paddingTop: 16 }}>
                     <span className="label" style={{ display: 'block', marginBottom: 8 }}>Ставка для ваших рефералов</span>
@@ -960,7 +964,7 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
                         <option value="days">дни</option>
                       </select>
                       <input className="input" id="rateValue" inputMode="numeric" placeholder="—" aria-label="Значение ставки" />
-                      <button className="btn btn-ghost" id="rateSave" style={{ flex: 'none' }} onClick={saveReferralRate}><svg viewBox="0 0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg></button>
+                      <button className="btn btn-ghost" id="rateSave" style={{ flex: 'none' }} onClick={saveReferralRate}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg></button>
                     </div>
                   </div>
                   <div style={{ borderTop: '1px solid var(--line)', paddingTop: 16 }}>
@@ -978,7 +982,7 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
                     <h3 style={{ fontSize: 16, fontWeight: 600 }}>Нужна помощь?</h3>
                     <p className="muted" style={{ margin: '4px 0 0', fontSize: 13 }}>Команда на связи круглосуточно.</p>
                   </div>
-                  <button className="btn btn-ghost" data-toast="Открыт чат поддержки — отвечаем за 2–5 минут"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg> Написать</button>
+                  <Link className="btn btn-ghost" href="/support"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg> Написать</Link>
                 </div>
               </aside>
             </div>
@@ -995,8 +999,8 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
               </div>
               <div className="f-links">
                 <a href="#account">Аккаунт</a><a href="#security">Безопасность</a><a href="#referrals">Рефералы</a>
-                <button data-copy="support@3set.online" data-msg="Адрес поддержки скопирован">support@3set.online</button>
-                <button data-toast="Политика конфиденциальности">Политика</button>
+                <button onClick={async () => { const ok = await copyText('support@3set.online'); addToast(ok ? 'Адрес поддержки скопирован' : 'Не удалось скопировать', ok ? 'ok' : 'err'); }}>support@3set.online</button>
+                <a href={`${legalBaseUrl}/privacy`} target="_blank" rel="noopener noreferrer">Политика</a>
               </div>
             </div>
           </footer>

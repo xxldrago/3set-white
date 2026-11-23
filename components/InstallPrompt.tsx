@@ -17,7 +17,9 @@ export default function InstallPrompt() {
 
   useEffect(() => {
     const handler = (e: Event) => {
-      e.preventDefault();
+      // No preventDefault(): cancelling without an immediate prompt() makes
+      // Chrome log "Banner not shown" in the console. Storing the event is
+      // enough to call prompt() later from the install button.
       setDeferred(e as BeforeInstallPromptEvent);
     };
     window.addEventListener('beforeinstallprompt', handler);

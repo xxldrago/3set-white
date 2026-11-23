@@ -6,7 +6,7 @@ import FaqClient from './FaqClient';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'FAQ и помощь — 3set VPN',
+  title: 'Инструкции — 3set VPN',
   description: 'Ответы на частые вопросы об 3set VPN: оплата, подключение, приложения, продление, устройства и личный кабинет.',
 };
 

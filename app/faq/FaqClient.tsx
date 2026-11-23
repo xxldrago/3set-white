@@ -119,11 +119,12 @@ function escRegex(value: string): string {
  */
 function normalizeHtml(html: string): string {
   const out: string[] = [];
-  const stack: string[] = []; // open auto-closable tags: 'li' | 'p'
+  const stack: string[] = []; // open non-void tags
   const TAG = /<(\/?)([a-zA-Z]+)([^>]*)>/g;
   let idx = 0;
   let m: RegExpExecArray | null;
   const listClose = new Set(['ol', 'ul']);
+  const voidTags = new Set(['br', 'hr', 'img', 'input', 'meta', 'link', 'source', 'wbr', 'embed', 'col', 'area', 'base', 'param']);
   while ((m = TAG.exec(html))) {
     out.push(html.slice(idx, m.index)); // text before the tag
     const isClose = m[1] === '/';
@@ -132,11 +133,14 @@ function normalizeHtml(html: string): string {
     idx = TAG.lastIndex;
 
     if (isClose) {
+      // drop stray closing tags with no matching open
+      const openIdx = stack.lastIndexOf(name);
+      if (openIdx === -1) continue;
       // close any auto-closable tags opened above this one
-      while (stack.length && stack[stack.length - 1] !== name) {
+      while (stack.length - 1 > openIdx) {
         out.push(`</${stack.pop()}>`);
       }
-      if (stack.length && stack[stack.length - 1] === name) stack.pop();
+      stack.pop();
       // closing a list also closes any still-open list item
       if (listClose.has(name)) {
         while (stack.includes('li')) out.push(`</${stack.pop()}>`);
@@ -146,12 +150,11 @@ function normalizeHtml(html: string): string {
       // opening tag: auto-close same-type siblings before opening a new one
       if (name === 'li') {
         while (stack.includes('li')) out.push(`</${stack.pop()}>`);
-        stack.push('li');
       } else if (name === 'p') {
         while (stack.includes('p')) out.push(`</${stack.pop()}>`);
-        stack.push('p');
       }
       out.push(full);
+      if (!voidTags.has(name)) stack.push(name);
     }
   }
   out.push(html.slice(idx));
@@ -481,6 +484,9 @@ export default function FaqClient({ name, email, isStaff, unread }: Props) {
                 return (
                   <Link key={item.href} href={item.href} className={`nl${item.active ? ' active' : ''}`}>
                     <Icon aria-hidden />{item.label}
+                    {item.href === '/support' && unread > 0 && (
+                      <span className="nav-badge">{unread > 99 ? '99+' : unread}</span>
+                    )}
                   </Link>
                 );
               })}
@@ -491,10 +497,6 @@ export default function FaqClient({ name, email, isStaff, unread }: Props) {
                   <ShieldCheck aria-hidden />Админ-панель
                 </Link>
               )}
-              <Link href="/support" className="btn btn-light sm" style={{ height: 40 }}>
-                <LifeBuoy aria-hidden />Поддержка
-                {unread > 0 && <span className="nav-badge">{unread > 99 ? '99+' : unread}</span>}
-              </Link>
               <Link href="/profile" className="avatar" title={email ?? 'Профиль'} aria-label="Профиль">
                 {(name.trim()[0] ?? '?').toUpperCase()}<span className="dot" />
               </Link>
@@ -870,7 +872,7 @@ export default function FaqClient({ name, email, isStaff, unread }: Props) {
             <div className="f-links">
               <Link href="/subscription">Мои ключи</Link>
               <Link href="#start">Быстрый старт</Link>
-              <Link href="#answers">FAQ</Link>
+              <Link href="#answers">Инструкции</Link>
               <Link href="/support">Поддержка</Link>
             </div>
           </div>

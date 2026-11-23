@@ -411,17 +411,15 @@ export default function CabinetDashboard({
                   <Link key={item.href} href={item.href} className="nl">
                     <Icon aria-hidden />
                     {item.label}
+                    {item.id === 'support' && unread > 0 && (
+                      <span className="nav-badge">{unread > 99 ? '99+' : unread}</span>
+                    )}
                   </Link>
                 );
               })}
             </div>
 
             <div className="nav-right">
-              <Link href="/support" className="btn btn-light sm" style={{ height: 40 }}>
-                <LifeBuoy aria-hidden />
-                Поддержка
-                {unread > 0 && <span className="badge" style={{ background: '#101a05', color: '#b7ff45' }}>{unread > 99 ? '99+' : unread}</span>}
-              </Link>
               <Link href="/profile" className="avatar" title={email ?? 'Профиль'} aria-label="Профиль">
                 {(name.trim()[0] ?? '?').toUpperCase()}
                 <span className="dot" />
@@ -449,7 +447,6 @@ export default function CabinetDashboard({
                   {item.label}
                 </Link>
               ))}
-              <Link href="/support" className="nl" onClick={() => setMenuOpen(false)}>Поддержка</Link>
             </div>
           </div>
         </nav>
@@ -923,7 +920,7 @@ export default function CabinetDashboard({
             <div className="f-links">
               <Link href="/support">Поддержка</Link>
               <a href="mailto:support@3set.online">support@3set.online</a>
-              <Link href="/faq">FAQ</Link>
+              <Link href="/faq">Инструкции</Link>
               <Link href="/guides">Инструкции</Link>
             </div>
           </div>

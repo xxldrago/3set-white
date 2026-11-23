@@ -61,5 +61,5 @@ export default async function ProfilePage() {
 
   const referralLink = summary ? `${env.APP_BASE_URL}/?ref=${summary.code}` : '';
 
-  return <ProfileClient user={user} summary={summary} referralLink={referralLink} isAdmin={isAdmin} hasActiveSub={hasActiveSub} />;
+  return <ProfileClient user={user} summary={summary} referralLink={referralLink} isAdmin={isAdmin} hasActiveSub={hasActiveSub} legalBaseUrl={env.LEGAL_BASE_URL} />;
 }

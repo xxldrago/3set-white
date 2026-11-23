@@ -23,7 +23,6 @@ import {
   KeyRound,
   LayoutDashboard,
   LifeBuoy,
-  Mail,
   MonitorSmartphone,
   Plus,
   Search,
@@ -848,12 +847,6 @@ export default function FaqClient({ name, email, isStaff, unread }: Props) {
                 <a className="btn btn-ghost" href="https://t.me/threeSet_bot" target="_blank" rel="noopener noreferrer">
                   <Send aria-hidden /><span>Telegram</span>
                 </a>
-                <button className="btn btn-quiet" onClick={async () => {
-                  const ok = await copyText('support@3set.online');
-                  toast(ok ? 'Адрес поддержки скопирован' : 'Не удалось скопировать', !ok);
-                }}>
-                  <Mail aria-hidden /><span>E-mail</span>
-                </button>
               </div>
             </div>
           </section>

@@ -4,7 +4,7 @@
 // it reads the same on the light auth/profile surfaces and the dark cabinet.
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { BookOpen, LifeBuoy, Mail, MessageCircle, X } from 'lucide-react';
+import { BookOpen, LifeBuoy, MessageCircle, X } from 'lucide-react';
 
 export default function SupportFab() {
   const [open, setOpen] = useState(false);
@@ -39,9 +39,6 @@ export default function SupportFab() {
           <p>Отвечаем в среднем за 2–5 минут. Выберите удобный канал:</p>
           <a href="https://t.me/threeSet_bot" target="_blank" rel="noopener noreferrer">
             <MessageCircle aria-hidden /> Telegram-чат
-          </a>
-          <a href="mailto:support@3set.online">
-            <Mail aria-hidden /> support@3set.online
           </a>
           <Link href="/support" onClick={() => setOpen(false)}>
             <LifeBuoy aria-hidden /> Открыть поддержку

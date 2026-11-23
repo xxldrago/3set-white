@@ -17,7 +17,6 @@ import {
   LayoutGrid,
   LifeBuoy,
   List,
-  Mail,
   Minus,
   Monitor,
   MoreHorizontal,
@@ -1142,7 +1141,6 @@ export default function SubscriptionDashboard({
               </div>
               <div className="chan">
                 <Link href="/support" className="btn btn-primary"><Send aria-hidden /><span>Telegram</span></Link>
-                <a href="mailto:support@3set.online" className="btn btn-ghost"><Mail aria-hidden /><span>E-mail</span></a>
                 <Link href="/install" className="btn btn-quiet"><BookOpen aria-hidden /><span>Инструкции</span></Link>
               </div>
             </div>

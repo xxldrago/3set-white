@@ -584,7 +584,6 @@ export default function InstallClient({ keys, initialKeyId, user }: Props) {
             <div className="f-links">
               <Link href="/subscription">Мои ключи</Link>
               <Link href="/faq">Инструкции</Link>
-              <button onClick={async () => { try { if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText('support@3set.online'); addToast('Адрес поддержки скопирован'); } catch { addToast('Не удалось скопировать', 'err'); } }}>support@3set.online</button>
               <button onClick={() => addToast('Политика конфиденциальности')}>Политика</button>
             </div>
           </div>

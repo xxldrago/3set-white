@@ -1001,7 +1001,6 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
               </div>
               <div className="f-links">
                 <a href="#account">Аккаунт</a><a href="#security">Безопасность</a><a href="#referrals">Рефералы</a>
-                <button onClick={async () => { const ok = await copyText('support@3set.online'); addToast(ok ? 'Адрес поддержки скопирован' : 'Не удалось скопировать', ok ? 'ok' : 'err'); }}>support@3set.online</button>
                 <a href={`${legalBaseUrl}/privacy`} target="_blank" rel="noopener noreferrer">Политика</a>
               </div>
             </div>

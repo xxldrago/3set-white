@@ -912,7 +912,6 @@ export default function CabinetDashboard({
             </div>
             <div className="f-links">
               <Link href="/support">Поддержка</Link>
-              <a href="mailto:support@3set.online">support@3set.online</a>
               <Link href="/faq">Инструкции</Link>
               <Link href="/install">Инструкции</Link>
             </div>

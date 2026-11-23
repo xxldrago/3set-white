@@ -883,17 +883,6 @@ export default function CabinetDashboard({
           {!installHidden && (
             <section id="install-guide">
               <div className="install reveal" id="installCard">
-                <div className="install-desktop">
-                  <div className="ic">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V3" /><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5 5 5-5" /></svg>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 220 }}>
-                    <b style={{ fontSize: 15 }}>Установите приложение 3set VPN</b>
-                    <p className="muted" style={{ margin: '3px 0 0', fontSize: 13 }}>Один тап для подключения, авто-выбор ближайшего сервера и защита в публичных сетях.</p>
-                  </div>
-                  <Link href="/install" className="btn btn-light">Скачать</Link>
-                  <button className="btn btn-quiet" onClick={() => setInstallHidden(true)}>Не сейчас</button>
-                </div>
                 <div className="install-mobile">
                   <div className="ic">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" /><path d="M12 18h.01" /></svg>

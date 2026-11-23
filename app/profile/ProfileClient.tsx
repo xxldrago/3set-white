@@ -642,7 +642,6 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
                 <Link className="nl" href="/subscription"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="15.5" cy="7.5" r="5.5" /><path d="m2 21 9.6-9.6M7.5 15.5l2.3 2.3a1 1 0 0 1 0 1.4L7.7 21.3a1 1 0 0 1-1.4 0L4 19" /></svg>Мои ключи</Link>
                 <Link className="nl" href="/faq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" /></svg>Инструкции</Link>
                 <Link className="nl" href="/support"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24" /><circle cx="12" cy="12" r="4" /></svg>Поддержка</Link>
-                <a className="nl active" href="#top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>Профиль</a>
               </div>
               <div className="nav-right">
                 {isAdmin && (
@@ -979,20 +978,6 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
                     <li><span className="n">3</span>Бонус начисляется автоматически после оплаты</li>
                   </ol>
                   <div style={{ borderTop: '1px solid var(--line)', paddingTop: 16 }}>
-                    <span className="label" style={{ display: 'block', marginBottom: 8 }}>Ставка для ваших рефералов</span>
-                    <p className="muted" style={{ margin: '0 0 10px', fontSize: 12.5 }}>Что получат приведённые вами, когда сами приведут покупателя. Пусто — глобальная ставка.</p>
-                    <div className="rate-row">
-                      <select className="select" id="rateType" aria-label="Тип ставки" defaultValue="">
-                        <option value="">Глобальная ставка</option>
-                        <option value="percent">%</option>
-                        <option value="fixed">₽</option>
-                        <option value="days">дни</option>
-                      </select>
-                      <input className="input" id="rateValue" inputMode="numeric" placeholder="—" aria-label="Значение ставки" />
-                      <button className="btn btn-ghost" id="rateSave" style={{ flex: 'none' }} onClick={saveReferralRate}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg></button>
-                    </div>
-                  </div>
-                  <div style={{ borderTop: '1px solid var(--line)', paddingTop: 16 }}>
                     <span className="label" style={{ display: 'block', marginBottom: 10 }}>История приглашений</span>
                     <div className="inv-empty" id="invEmpty">
                       <span className="eic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M19 8v6M22 11h-6" /></svg></span>
@@ -1000,14 +985,6 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
                       <p className="dim" style={{ margin: 0, fontSize: 12.5, maxWidth: '32ch' }}>Отправьте ссылку — как только друг оплатит подписку, здесь появится запись и начислятся дни.</p>
                     </div>
                   </div>
-                </div>
-                <div className="card reveal" style={{ '--d': '160ms', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' } as React.CSSProperties}>
-                  <span className="gift-ic" style={{ animation: 'none' }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24" /><circle cx="12" cy="12" r="4" /></svg></span>
-                  <div style={{ flex: 1, minWidth: 200 }}>
-                    <h3 style={{ fontSize: 16, fontWeight: 600 }}>Нужна помощь?</h3>
-                    <p className="muted" style={{ margin: '4px 0 0', fontSize: 13 }}>Команда на связи круглосуточно.</p>
-                  </div>
-                  <Link className="btn btn-ghost" href="/support"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg> Написать</Link>
                 </div>
               </aside>
             </div>

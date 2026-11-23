@@ -788,7 +788,6 @@ export default function SubscriptionDashboard({
                 const meta = STATUS_META[st];
                 const pct = Math.max(2, Math.min(100, (k.daysLeft / Math.max(1, term)) * 100));
                 const barCls = st === 'expired' ? 'dead' : st === 'soon' ? 'warn' : '';
-                const shown = seenUrls[k.id];
                 return (
                   <article
                     key={k.id}
@@ -855,17 +854,9 @@ export default function SubscriptionDashboard({
                             Скопировать
                           </button>
                         </div>
-                        <div className={`link-val${shown ? '' : ' blurred'}`}>
+                        <div className="link-val">
                           <ChainIcon />
                           <code title={k.subscriptionUrl}>{k.subscriptionUrl}</code>
-                          <button
-                            className="eye"
-                            title={shown ? 'Скрыть ссылку' : 'Показать ссылку'}
-                            aria-label={shown ? 'Скрыть ссылку' : 'Показать ссылку'}
-                            onClick={() => setSeenUrls((s) => ({ ...s, [k.id]: !s[k.id] }))}
-                          >
-                            {shown ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
-                          </button>
                         </div>
                       </div>
                       <SocialShare

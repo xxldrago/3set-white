@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   CircleHelp,
   KeyRound,
+  LayoutDashboard,
   LifeBuoy,
   Monitor,
   ShieldCheck,
@@ -361,6 +362,7 @@ export default function CabinetDashboard({
   };
 
   const navLinks = [
+    { href: '/', label: 'Панель', icon: LayoutDashboard, id: 'home' },
     { href: '/subscription', label: 'Мои ключи', icon: KeyRound, id: 'subscription' },
     { href: '/faq', label: 'Инструкции', icon: CircleHelp, id: 'faq' },
     { href: '/support', label: 'Поддержка', icon: LifeBuoy, id: 'support' },

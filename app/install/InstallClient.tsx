@@ -265,6 +265,7 @@ export default function InstallClient({ keys, initialKeyId, user }: Props) {
               <span>3<em>set</em><span className="dom mono">.online</span></span>
             </Link>
             <div className="nav-links">
+              <Link className="nl" href="/">Панель</Link>
               <Link className="nl" href="/subscription">Мои ключи</Link>
               <Link className="nl active" href="/install">Подключение</Link>
               <Link className="nl" href="/faq">Инструкции</Link>

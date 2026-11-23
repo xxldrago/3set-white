@@ -301,6 +301,10 @@ export default function SupportClient({ tickets, user, isStaff, unread, now }: P
               <span>3<em>set</em><span className="dom mono">.online</span></span>
             </Link>
             <div className="nav-links">
+              <Link href="/" className="nl">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12 12 3l9 9" /><path d="M9 21V9h6v12" /></svg>
+                Панель
+              </Link>
               <Link href="/subscription" className="nl">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="m2 21l9.6-9.6M7.5 15.5l2.3 2.3" /></svg>
                 Мои ключи

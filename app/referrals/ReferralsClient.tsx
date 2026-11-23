@@ -93,6 +93,7 @@ export default function ReferralsClient({ user, summary, referralLink, isAdmin, 
               <span>3<em>set</em><span className="dom mono">.online</span></span>
             </Link>
             <div className="nav-links">
+              <Link href="/" className="nl">Панель</Link>
               <Link href="/subscription" className="nl">Мои ключи</Link>
               <Link href="/referrals" className="nl active">Рефералы</Link>
               <Link href="/faq" className="nl">Инструкции</Link>

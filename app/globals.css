@@ -1352,7 +1352,9 @@ body::after {
   --shadow:0 24px 60px -30px rgba(0,0,0,.9);
   --glow:0 10px 34px -12px rgba(183,255,69,.55);
   --ease:cubic-bezier(.22,.9,.28,1);
-
+  position:relative;min-height:100vh;background:var(--bg);color:var(--fg);
+  font-family:var(--font-sans,"Manrope Variable",Manrope,system-ui,sans-serif);font-size:15px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
 }
 .profile-page h1, .profile-page h2, .profile-page h3 {
 font-family:"Unbounded Variable",Unbounded,Manrope,sans-serif;letter-spacing:-.02em;margin:0
@@ -2448,7 +2450,7 @@ opacity:1;transform:none
             --line:rgba(233,255,214,.09); --line-2:rgba(233,255,214,.16);
             --fg:#eef5ea; --muted:#9daba1; --dim:#6b7b70;
             --lime:#b7ff45; --lime-2:#d4ff85; --green:#8fdc2c;
-            --amber:#ffd166; --red:#ff7a6b;
+            --amber:#ffd166; --red:#ff7a6b; --cyan:#63d7c8;
             --r-lg:22px; --r-md:16px; --r-sm:12px;
             --shadow:0 24px 60px -30px rgba(0,0,0,.9);
             --glow:0 10px 34px -12px rgba(183,255,69,.55);

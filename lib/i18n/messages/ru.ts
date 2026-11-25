@@ -321,12 +321,6 @@ export const ru = {
   ticket: {
     cta: 'Создать обращение',
     listTitle: 'Обращения',
-    emptyHeading: 'Обращений пока нет',
-    emptyBody:
-      'Если что-то не работает или остались вопросы — создайте обращение. Мы ответим здесь и в Telegram.',
-    countOne: '{n} обращение',
-    countFew: '{n} обращения',
-    countMany: '{n} обращений',
     unreadOne: '{n} непрочитанное обращение',
     unreadFew: '{n} непрочитанных обращения',
     unreadMany: '{n} непрочитанных обращений',
@@ -371,21 +365,6 @@ export const ru = {
 
     navUsers: 'Пользователи',
       navTickets: 'Обращения',
-      ticketsFilterAll: 'Все',
-      ticketsFilterOpen: 'Ждут ответа',
-      ticketsFilterAnswered: 'Отвечено',
-      ticketsFilterClosed: 'Закрыто',
-      ticketsFilterUnread: 'Непрочитанные',
-      ticketsFilters: 'Фильтры обращений',
-      ticketsSearchPlaceholder: 'Тема, текст, email или @username',
-      ticketsSearchCta: 'Найти',
-      ticketsSearchClear: 'Сбросить',
-      ticketsEmptyFiltered:
-        'По этому запросу ничего не найдено. Измените фильтр или текст поиска.',
-      ticketsPagination: 'Страницы обращений',
-      ticketsPagePrev: 'Назад',
-      ticketsPageNext: 'Вперёд',
-      ticketsPageInfo: 'Страница {page} из {pages}',
       ticketContextTitle: 'Контекст клиента',
       ticketCompensationTitle: 'Компенсация',
       ticketCompensationHint:

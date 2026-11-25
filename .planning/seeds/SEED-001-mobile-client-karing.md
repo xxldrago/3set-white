@@ -27,7 +27,36 @@ scope: Large
 
 - `.planning/PROJECT.md` — ARTEMIDA Paid API (V1, `https://artemida.cc/v1`), trial/pricing constraints
 - `.planning/research/STACK.md` — Node 24 / Next 16 / Telegraf / Postgres 17 / Prisma 7 (текущий стек; мобильный клиент — новая ветка)
-- Прототип UI (ожидается от пользователя следующим сообщением) — будет добавлен в breadcrumbs после получения
+- `.planning/seeds/prototype-mobile-client.html` — прототип интерфейса (HTML+CSS+JS, чистый vanilla JS, localStorage demo-данные)
+- `.planning/seeds/SEED-001-mobile-client-karing.md` — этот seed
+
+## Prototype (v1) — `.planning/seeds/prototype-mobile-client.html`
+
+Полный прототип прислан пользователем; сохранён как артефакт. Vanilla JS-стек (без React), всё состояние в `localStorage` (`set3_mobile_v1`).
+
+**Что прототип добавляет относительно/вместо чёрновика:**
+
+1. **Полный дизайн-система** уже прописана: тёмная тема с мятно-лаймовой заливкой (`--bg:#0e1512`, `--lime:#b7ff45`, `--teal:#3ee6b0`), градиенты, шрифты Manrope/Unbounded/JetBrains Mono через Fontsource Variable, background FX (grid + blobs + grain), status bar с notch, кнопки 3 вида (primary/ghost/danger).
+2. **Экран профиля — bottom sheet** с профилем, подпиской (дни осталось / действует до / устройства), ссылкой, устройством, kill switch, автоподключением, рефералом, reset/demo, logout — это реализовано в одном листе (sheet), а не в отдельном экране.
+3. **Лист «Как это работает»** — 6 steps, открывается с иконки в шапке (значительно проще, чем отдельный экран: это FAQ/explainer).
+4. **Сеть (Wi-Fi/LTE) — chip в тулбаре**, который сбрасывает кеш пинга и (при активном соединении) реконнектит — живой эмулятор `connectivity_plus`.
+5. **Промокоды, 5 тарифов, устройство-переключатель (2–10), платёжные методы, сумма со скидкой, SVG-часы прогресса ключа** — реализовано в покупке.
+6. **Состояния**: пинг (pinging), подключение (connecting) с отменой, connected (таймер + трафик ↓/↑), idle; connect-btn ведёт себя по `conn.status`.
+7. **Тосты с действиями** (например, «Вернуть» для отмены отключения устройства).
+8. **Конфетти** при успешной оплате.
+
+**Баги/дельты прототипа, которые надо решить (не реализованы в коде прототипа):**
+- Пароль: минимум **6** символов в прототипе vs 8 в спеке → выравнять.
+- Стоимость: `base * devices/2` (цена тарифа уже за 2 устройства); спека ставила «5 устройств, безлимит» фиксированной ценой.
+- Оплата — чисто симуляция (`sleep`-цепочка, confetti); настоящий `POST /payments/create` не подключён.
+- Telegram — симуляция (генерирует nonce и «ждёт подтверждения»); реальный deep-link flow не подключён.
+- Пинг — симуляция (`Math.random`, `force:true` для 2 серверов); `connect` логика (last-good, quick path, cache TTL) реальна.
+- `kill switch` в `disconnect` toast-ов: при симуляции без реального VpnService.
+- Нет real `Ip`/real traffic counters integration.
+
+---
+
+_Захвачено через `/gsd-capture --seed`. Прототип UI сохранён и добавлен в breadcrumbs._
 
 ## Notes
 
@@ -115,4 +144,4 @@ scope: Large
 
 ---
 
-_Захвачено через `/gsd-capture --seed`. Прототип UI будет добавлен в breadcrumbs после получения._
+_Захвачено через `/gsd-capture --seed`. Прототип UI получен и сохранён в `.planning/seeds/prototype-mobile-client.html` (добавлен в breadcrumbs), JS валиден (node --check), рендер без консольных ошибок._

@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1512">
+<title>3set VPN — мобильный клиент</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/manrope@5/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/unbounded@5/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/jetbrains-mono@5/index.css">
+<style>
+:root{
+  --bg:#0e1512; --bg2:#0b110e; --surface:#131c16; --surface2:#182419; --surface3:#1d2b1f;
+  --line:rgba(183,255,69,.14); --line2:rgba(183,255,69,.3);
+  --lime:#b7ff45; --lime2:#d4ff85; --lime3:#7fd41f; --teal:#3ee6b0; --amber:#ffc24b; --red:#ff6b6b; --blue:#2aabee;
+  --text:#f2f7ec; --muted:#a7b8a9; --dim:#6f8272;
+  --grad:linear-gradient(135deg,#d4ff85,#7fd41f);
+  --grad-teal:linear-gradient(135deg,#8ffbe0,#1fbf8f);
+  --r:18px;
+  --font:'Manrope Variable',system-ui,sans-serif;
+  --disp:'Unbounded Variable',var(--font);
+  --mono:'JetBrains Mono Variable',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font);background:#070b09;color:var(--text);-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input{font-family:inherit;color:inherit}
+.mono{font-family:var(--mono)}
+.stage{min-height:100dvh;display:grid;place-items:center;padding:22px;background:
+  radial-gradient(900px 600px at 15% 10%,rgba(127,212,31,.09),transparent 60%),
+  radial-gradient(800px 600px at 85% 90%,rgba(62,230,176,.07),transparent 60%),#070b09}
+.phone{position:relative;width:min(420px,100%);height:min(880px,calc(100dvh - 44px));border-radius:44px;overflow:hidden;
+  background:var(--bg);border:1px solid var(--line2);
+  box-shadow:0 0 0 8px #0a0f0c,0 40px 120px rgba(0,0,0,.65),0 0 90px rgba(183,255,69,.09)}
+@media(max-width:520px){.stage{padding:0}.phone{width:100%;height:100dvh;border-radius:0;border:0;box-shadow:none}}
+.bg-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.bg-fx .grid{position:absolute;inset:0;background-image:linear-gradient(rgba(183,255,69,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(183,255,69,.05) 1px,transparent 1px);background-size:34px 34px;mask-image:radial-gradient(120% 90% at 50% 0%,#000 30%,transparent 80%)}
+.blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5;animation:drift 16s ease-in-out infinite alternate}
+.b1{width:300px;height:300px;background:rgba(127,212,31,.32);top:-90px;left:-70px}
+.b2{width:260px;height:260px;background:rgba(62,230,176,.22);bottom:-60px;right:-80px;animation-delay:-6s}
+.b3{width:200px;height:200px;background:rgba(183,255,69,.16);top:40%;left:55%;animation-delay:-11s}
+@keyframes drift{to{transform:translate(34px,26px) scale(1.12)}}
+.grain{position:absolute;inset:0;opacity:.05;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E")}
+.statusbar{position:absolute;top:0;left:0;right:0;height:48px;display:flex;align-items:center;justify-content:space-between;padding:12px 26px 0;z-index:40;font-size:13px;font-weight:700}
+.notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:112px;height:26px;background:#050806;border-radius:20px;border:1px solid rgba(255,255,255,.05)}
+.sb-icons{display:flex;gap:6px;align-items:center;color:var(--muted)}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;padding-top:52px;opacity:0;pointer-events:none;transform:translateY(14px);transition:opacity .32s ease,transform .32s ease;z-index:10}
+.screen.active{opacity:1;pointer-events:auto;transform:none}
+.scroll{overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(183,255,69,.4) rgba(255,255,255,.03)}
+.scroll::-webkit-scrollbar{width:6px}
+.scroll::-webkit-scrollbar-track{background:rgba(255,255,255,.03);border-radius:6px}
+.scroll::-webkit-scrollbar-thumb{background:linear-gradient(#d4ff85,#7fd41f);border-radius:6px}
+.scroll::-webkit-scrollbar-thumb:hover{background:#d4ff85}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(183,255,69,.05);font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
+.pill.ok{color:var(--lime2);border-color:rgba(183,255,69,.35)}
+.pill.bad{color:#ffb4b4;border-color:rgba(255,107,107,.4);background:rgba(255,107,107,.07)}
+.pdot{width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 10px var(--lime);animation:pulse 1.8s infinite}
+.pill.bad .pdot{background:var(--red);box-shadow:0 0 10px var(--red)}
+@keyframes pulse{50%{opacity:.45}}
+.kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--lime3);font-weight:800}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;height:48px;padding:0 18px;border-radius:14px;font-weight:800;font-size:14px;transition:transform .15s,box-shadow .2s,background .2s,border-color .2s;border:1px solid transparent}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--grad);color:#0c130d;box-shadow:0 8px 28px rgba(183,255,69,.25)}
+.btn-primary:hover{box-shadow:0 10px 34px rgba(183,255,69,.4)}
+.btn-ghost{border-color:var(--line);background:rgba(255,255,255,.02);color:var(--text)}
+.btn-ghost:hover{border-color:var(--line2);background:rgba(183,255,69,.06)}
+.btn-danger{border-color:rgba(255,107,107,.45);background:rgba(255,107,107,.1);color:#ffc9c9}
+.btn-danger:hover{background:rgba(255,107,107,.18)}
+.btn.block{width:100%}
+.btn.sm{height:38px;font-size:12.5px;padding:0 13px;border-radius:11px}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.icon-btn{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);display:grid;place-items:center;color:var(--muted);background:rgba(255,255,255,.02);transition:.2s;flex:0 0 auto}
+.icon-btn:hover{color:var(--lime2);border-color:var(--line2)}
+.card{background:linear-gradient(160deg,var(--surface2),var(--surface));border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.input{width:100%;height:50px;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.25);padding:0 15px;font-size:14.5px;color:var(--text);outline:none;transition:.2s}
+.input:focus{border-color:var(--lime3);box-shadow:0 0 0 3px rgba(183,255,69,.12)}
+.input::placeholder{color:var(--dim)}
+.label{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:800}
+.muted{color:var(--muted)}.dim{color:var(--dim)}
+svg.ic{width:18px;height:18px;flex:0 0 auto}
+/* AUTH */
+#screen-auth{padding-left:22px;padding-right:22px;justify-content:center;gap:0}
+.auth-logo{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-size:22px;font-weight:700;margin-bottom:6px}
+.auth-logo em{font-style:normal;color:var(--lime)}
+.auth-logo .dom{font-size:12px;color:var(--dim);font-family:var(--mono)}
+.auth-title{font-family:var(--disp);font-size:24px;margin:18px 0 6px}
+.auth-sub{font-size:13.5px;color:var(--muted);margin-bottom:22px;line-height:1.5}
+.auth-form{display:flex;flex-direction:column;gap:12px}
+.pass-wrap{position:relative}
+.pass-wrap .icon-btn{position:absolute;right:6px;top:6px;width:38px;height:38px;border:0}
+.auth-err{font-size:12.5px;color:#ffb4b4;min-height:16px;font-weight:700}
+.auth-divider{display:flex;align-items:center;gap:12px;color:var(--dim);font-size:12px;margin:16px 0}
+.auth-divider::before,.auth-divider::after{content:"";flex:1;height:1px;background:var(--line)}
+.btn-tg{border-color:rgba(42,171,238,.4);background:rgba(42,171,238,.09);color:#bfe6ff}
+.btn-tg:hover{background:rgba(42,171,238,.16)}
+.auth-switch{text-align:center;font-size:13px;color:var(--muted);margin-top:18px}
+.auth-switch button{color:var(--lime2);font-weight:800;text-decoration:underline;text-underline-offset:3px}
+.auth-note{margin-top:22px;font-size:11.5px;color:var(--dim);text-align:center;line-height:1.5}
+.spinner{width:18px;height:18px;border-radius:50%;border:2.5px solid rgba(12,19,13,.25);border-top-color:#0c130d;animation:spin .7s linear infinite}
+.spinner.lime{border-color:rgba(183,255,69,.2);border-top-color:var(--lime)}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* MAIN */
+.main-head{padding:10px 18px 12px;display:flex;flex-direction:column;gap:10px}
+.mh-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:700;font-size:16px}
+.brand em{font-style:normal;color:var(--lime)}
+.brand .dom{font-size:10px;color:var(--dim);font-family:var(--mono)}
+.mh-actions{display:flex;gap:8px;align-items:center}
+.avatar{width:38px;height:38px;border-radius:12px;background:var(--grad);color:#0c130d;font-weight:900;display:grid;place-items:center;font-size:15px;position:relative}
+.avatar .dot{position:absolute;right:-2px;bottom:-2px;width:10px;height:10px;border-radius:50%;background:var(--lime);border:2px solid var(--bg)}
+.greet{font-family:var(--disp);font-size:19px;line-height:1.25}
+.mh-pills{display:flex;gap:8px;flex-wrap:wrap}
+.tabs{margin:2px 18px 10px;display:grid;grid-template-columns:1fr 1fr;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:16px;padding:4px;gap:4px}
+.tab{height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:800;font-size:12.5px;color:var(--muted);transition:.22s;border:1px solid transparent}
+.tab.active[data-tab="simple"]{background:var(--grad);color:#0c130d;box-shadow:0 6px 20px rgba(183,255,69,.25)}
+.tab.active[data-tab="whitelist"]{background:var(--grad-teal);color:#062019;box-shadow:0 6px 20px rgba(62,230,176,.25)}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 18px 8px}
+.mode-desc{font-size:11.5px;color:var(--dim);line-height:1.35;flex:1}
+.toolbar .right{display:flex;gap:6px}
+.net-chip{height:32px;padding:0 11px;border-radius:10px;border:1px solid var(--line);font-size:11px;font-weight:800;color:var(--teal);display:flex;align-items:center;gap:6px;background:rgba(62,230,176,.06)}
+.icon-btn.sm{width:32px;height:32px;border-radius:10px}
+.icon-btn.spinning svg{animation:spin 1s linear infinite}
+.srv-list{flex:1;min-height:0;padding:2px 18px 12px;display:flex;flex-direction:column;gap:9px}
+.srv{display:grid;grid-template-columns:40px 1fr auto;gap:11px;align-items:center;padding:12px;border-radius:16px;border:1px solid var(--line);background:linear-gradient(160deg,var(--surface2),var(--surface));cursor:pointer;transition:border-color .2s,background .2s,transform .15s;text-align:left;width:100%}
+.srv:active{transform:scale(.985)}
+.srv:hover{border-color:var(--line2)}
+.srv.selected{border-color:var(--lime3);background:linear-gradient(160deg,rgba(183,255,69,.1),var(--surface));box-shadow:0 0 0 1px rgba(183,255,69,.25),0 6px 22px rgba(183,255,69,.08)}
+#screen-main[data-tab="whitelist"] .srv.selected{border-color:var(--teal);background:linear-gradient(160deg,rgba(62,230,176,.1),var(--surface));box-shadow:0 0 0 1px rgba(62,230,176,.3)}
+.srv .flag{width:40px;height:40px;border-radius:12px;background:rgba(0,0,0,.3);border:1px solid var(--line);display:grid;place-items:center;font-size:20px}
+.srv .name{font-weight:800;font-size:14px;display:flex;align-items:center;gap:7px}
+.srv .meta{display:flex;align-items:center;gap:7px;margin-top:4px;flex-wrap:wrap}
+.proto{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:6px;border:1px solid var(--line);color:var(--muted)}
+.proto.wg{color:var(--lime2);border-color:rgba(183,255,69,.3)}
+.proto.hy{color:var(--teal);border-color:rgba(62,230,176,.3)}
+.proto.ss{color:var(--amber);border-color:rgba(255,194,75,.3)}
+.proto.tr{color:#ffb4b4;border-color:rgba(255,107,107,.3)}
+.proto.vl{color:#9be8ff;border-color:rgba(42,171,238,.35)}
+.sni{font-family:var(--mono);font-size:9.5px;color:var(--dim)}
+.last-chip{font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#0c130d;background:var(--grad);padding:2px 7px;border-radius:6px}
+.loadbar{width:56px;height:4px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden}
+.loadbar i{display:block;height:100%;border-radius:4px;background:var(--lime3)}
+.loadbar i.mid{background:var(--amber)}.loadbar i.hi{background:var(--red)}
+.ping{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.ping b{font-family:var(--mono);font-size:13px;font-weight:700}
+.ping .ms{font-size:9px;color:var(--dim)}
+.ping.good b{color:var(--lime)}.ping.mid b{color:var(--teal)}.ping.warn b{color:var(--amber)}.ping.bad b{color:var(--red)}
+.ping.wait b{color:var(--dim);animation:pulse 1.2s infinite}
+.srv.auto{grid-template-columns:40px 1fr auto;background:linear-gradient(135deg,rgba(183,255,69,.12),rgba(62,230,176,.06));border-color:rgba(183,255,69,.3)}
+.srv.auto .flag{background:var(--grad);border:0;color:#0c130d}
+.srv.auto .sub{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.35}
+.bottom{padding:10px 18px 18px;border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(11,17,14,.6),var(--bg2));display:flex;flex-direction:column;gap:10px}
+.conn-panel{display:none;grid-template-columns:1fr 1fr;gap:8px;padding:12px;border-radius:16px;border:1px solid rgba(183,255,69,.3);background:linear-gradient(160deg,rgba(183,255,69,.09),var(--surface))}
+.conn-panel.show{display:grid}
+.cp-cell .label{font-size:9.5px}
+.cp-cell b{font-size:13px;display:block;margin-top:2px}
+.cp-timer{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;border-top:1px dashed var(--line);padding-top:9px;margin-top:2px}
+.cp-timer .t{font-family:var(--mono);font-size:21px;font-weight:700;color:var(--lime2)}
+.cp-traffic{display:flex;gap:14px;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.cp-traffic b{color:var(--text)}
+.connect-btn{height:62px;border-radius:18px;font-size:16px;font-weight:900;letter-spacing:.02em;display:flex;align-items:center;justify-content:center;gap:11px;width:100%;transition:.25s;position:relative;overflow:hidden}
+.connect-btn.idle{background:var(--grad);color:#0c130d;box-shadow:0 10px 34px rgba(183,255,69,.3)}
+.connect-btn.busy{background:rgba(183,255,69,.08);border:1px solid var(--line2);color:var(--lime2)}
+.connect-btn.busy::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(183,255,69,.14) 50%,transparent 70%);animation:shimmer 1.3s infinite}
+@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.connect-btn.on{background:rgba(255,107,107,.12);border:1px solid rgba(255,107,107,.5);color:#ffc9c9;box-shadow:0 8px 28px rgba(255,107,107,.12)}
+.conn-hint{font-size:11px;color:var(--dim);text-align:center;line-height:1.4}
+.banner{margin:0 18px 8px;padding:11px 13px;border-radius:14px;border:1px solid rgba(255,194,75,.4);background:rgba(255,194,75,.08);display:none;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px;font-weight:700;color:#ffe2ae}
+.banner.show{display:flex}
+/* SHOP */
+.shop-head{display:flex;align-items:center;gap:12px;padding:8px 18px 12px}
+.shop-head h2{font-family:var(--disp);font-size:17px;flex:1}
+.shop-body{flex:1;min-height:0;padding:0 18px 14px;display:flex;flex-direction:column;gap:14px}
+.key-card{display:flex;gap:14px;align-items:center}
+.ring-wrap{position:relative;width:86px;height:86px;flex:0 0 auto}
+.ring{width:86px;height:86px;transform:rotate(-90deg)}
+.ring .track{fill:none;stroke:rgba(255,255,255,.07);stroke-width:9}
+.ring .val{fill:none;stroke:url(#ringGrad);stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset .6s}
+.ring-center{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.ring-center b{font-size:20px;font-family:var(--disp)}
+.ring-center span{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em}
+.link-box{border:1px dashed var(--line2);border-radius:12px;padding:9px 11px;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.25)}
+.link-box code{font-family:var(--mono);font-size:10.5px;color:var(--lime2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.terms{display:flex;flex-direction:column;gap:8px}
+.term{position:relative;display:grid;grid-template-columns:26px 1fr auto;gap:11px;align-items:center;padding:13px;border-radius:14px;border:1px solid var(--line);background:var(--surface);text-align:left;transition:.2s;width:100%}
+.term:hover{border-color:var(--line2)}
+.term[aria-pressed="true"]{border-color:var(--lime3);background:linear-gradient(160deg,rgba(183,255,69,.1),var(--surface));box-shadow:0 0 0 1px rgba(183,255,69,.25)}
+.term .check{width:22px;height:22px;border-radius:50%;border:2px solid var(--dim);display:grid;place-items:center;color:transparent;transition:.2s}
+.term[aria-pressed="true"] .check{background:var(--grad);border-color:transparent;color:#0c130d}
+.term .t-label{font-weight:800;font-size:14px;display:block}
+.term .t-per{font-size:10.5px;color:var(--dim);display:block;margin-top:2px}
+.term .t-price{font-family:var(--mono);font-weight:700;font-size:15px;color:var(--lime2)}
+.term .badge{position:absolute;top:-8px;right:12px;background:var(--grad);color:#0c130d;font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:7px}
+.stepper-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.stepper{display:flex;align-items:center;gap:10px}
+.step-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);display:grid;place-items:center;color:var(--lime2);background:rgba(0,0,0,.25);transition:.2s}
+.step-btn:hover{border-color:var(--line2)}
+.step-btn[disabled]{opacity:.3;pointer-events:none}
+.step-num{font-family:var(--mono);font-size:20px;font-weight:700;width:44px;text-align:center}
+.dots{display:flex;gap:4px}
+.dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.1)}
+.dots i.on{background:var(--lime);box-shadow:0 0 6px rgba(183,255,69,.6)}
+.promo{display:flex;gap:8px}
+.promo .input{height:46px}
+.promo-msg{font-size:11.5px;font-weight:700;min-height:15px;margin-top:5px}
+.promo-msg.ok{color:var(--lime2)}.promo-msg.err{color:#ffb4b4}
+.pay-chips{display:flex;gap:7px;flex-wrap:wrap}
+.pay-chip{height:36px;padding:0 13px;border-radius:10px;border:1px solid var(--line);font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted);transition:.2s}
+.pay-chip[aria-pressed="true"]{border-color:var(--lime3);color:var(--lime2);background:rgba(183,255,69,.08)}
+.sum-line{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);padding:5px 0}
+.sum-line b{color:var(--text);font-family:var(--mono)}
+.sum-line.disc b{color:var(--lime2)}
+.shop-bottom{padding:12px 18px 18px;border-top:1px solid var(--line);background:var(--bg2);display:flex;align-items:center;gap:14px}
+.shop-total .label{font-size:9.5px}
+.shop-total .price{font-family:var(--disp);font-size:22px;color:var(--lime2)}
+.shop-total .per{font-size:10px;color:var(--dim)}
+.shop-bottom .btn{flex:1;height:54px}
+.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+/* SHEETS & OVERLAYS */
+.scrim{position:absolute;inset:0;background:rgba(4,8,6,.66);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:.3s;z-index:50}
+.scrim.show{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-height:84%;background:linear-gradient(180deg,var(--surface3),var(--surface));border-top:1px solid var(--line2);border-radius:26px 26px 0 0;z-index:55;transform:translateY(102%);transition:transform .36s cubic-bezier(.32,.72,.28,1);display:flex;flex-direction:column;box-shadow:0 -20px 60px rgba(0,0,0,.5)}
+.sheet.open{transform:none}
+.sheet-grip{width:44px;height:4px;border-radius:4px;background:rgba(255,255,255,.18);margin:10px auto 0}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px 8px}
+.sheet-head h3{font-family:var(--disp);font-size:16px}
+.sheet-body{padding:4px 18px 22px;display:flex;flex-direction:column;gap:13px;min-height:0}
+.dev-row{display:flex;align-items:center;gap:11px;padding:11px;border:1px solid var(--line);border-radius:13px;background:rgba(0,0,0,.2)}
+.dev-row .ic-wrap{width:36px;height:36px;border-radius:10px;background:rgba(183,255,69,.1);display:grid;place-items:center;color:var(--lime2)}
+.dev-row .info{flex:1;min-width:0}
+.dev-row b{font-size:13px;display:block}
+.dev-row span{font-size:10.5px;color:var(--dim)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px dashed var(--line)}
+.toggle-row .t{font-size:13.5px;font-weight:700}
+.toggle-row .s{font-size:11px;color:var(--dim);margin-top:2px}
+.switch{width:46px;height:26px;border-radius:20px;background:rgba(255,255,255,.1);border:1px solid var(--line);position:relative;transition:.25s;flex:0 0 auto}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--dim);transition:.25s}
+.switch[aria-pressed="true"]{background:rgba(183,255,69,.25);border-color:var(--lime3)}
+.switch[aria-pressed="true"]::after{left:22px;background:var(--lime);box-shadow:0 0 8px rgba(183,255,69,.7)}
+.logic-step{display:flex;gap:11px;padding:11px;border:1px solid var(--line);border-radius:13px;background:rgba(0,0,0,.18)}
+.logic-step .n{width:26px;height:26px;border-radius:9px;background:var(--grad);color:#0c130d;font-weight:900;font-size:12px;display:grid;place-items:center;flex:0 0 auto}
+.logic-step b{font-size:13px;display:block;margin-bottom:3px}
+.logic-step p{font-size:11.5px;color:var(--muted);line-height:1.5}
+.overlay{position:absolute;inset:0;z-index:60;display:grid;place-items:center;padding:24px;background:rgba(4,8,6,.72);backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:.28s}
+.overlay.show{opacity:1;pointer-events:auto}
+.modal{width:100%;max-width:340px;background:linear-gradient(170deg,var(--surface3),var(--surface));border:1px solid var(--line2);border-radius:22px;padding:22px;text-align:center;transform:translateY(16px) scale(.97);transition:.3s;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.overlay.show .modal{transform:none}
+.modal h3{font-family:var(--disp);font-size:17px;margin:12px 0 6px}
+.modal p{font-size:12.5px;color:var(--muted);line-height:1.55}
+.modal .big-ic{width:62px;height:62px;border-radius:50%;margin:0 auto;display:grid;place-items:center}
+.big-ic.lime{background:rgba(183,255,69,.14);border:1px solid rgba(183,255,69,.4);color:var(--lime)}
+.big-ic.blue{background:rgba(42,171,238,.14);border:1px solid rgba(42,171,238,.4);color:var(--blue)}
+.nonce{font-family:var(--mono);font-size:13px;color:var(--lime2);background:rgba(0,0,0,.3);border:1px dashed var(--line2);border-radius:10px;padding:9px;margin:12px 0;word-break:break-all}
+.poll-dots{display:inline-flex;gap:4px;margin-left:6px}
+.poll-dots i{width:5px;height:5px;border-radius:50%;background:var(--lime);animation:pulse 1s infinite}
+.poll-dots i:nth-child(2){animation-delay:.2s}.poll-dots i:nth-child(3){animation-delay:.4s}
+.toasts{position:absolute;top:54px;left:14px;right:14px;z-index:80;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{pointer-events:auto;display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:13px;background:rgba(19,28,22,.96);border:1px solid var(--line2);border-left:3px solid var(--lime);font-size:12.5px;font-weight:700;box-shadow:0 12px 34px rgba(0,0,0,.5);animation:toastIn .3s cubic-bezier(.32,.72,.28,1)}
+.toast.err{border-left-color:var(--red)}.toast.warn{border-left-color:var(--amber)}.toast.info{border-left-color:var(--teal)}
+.toast .act{margin-left:auto;color:var(--lime2);font-weight:900;font-size:12px;text-decoration:underline;text-underline-offset:3px;flex:0 0 auto}
+.toast.out{animation:toastOut .3s forwards}
+@keyframes toastIn{from{opacity:0;transform:translateY(-12px)}}
+@keyframes toastOut{to{opacity:0;transform:translateY(-12px)}}
+.confetti{position:absolute;inset:0;pointer-events:none;z-index:90;overflow:hidden}
+.cf{position:absolute;top:-14px;width:8px;height:13px;border-radius:2px;animation:cfFall var(--dur) linear forwards}
+@keyframes cfFall{to{transform:translateY(110vh) rotate(var(--rot));opacity:0}}
+@media(prefers-reduced-motion:reduce){.blob,.pdot,.connect-btn.busy::after{animation:none}.screen,.sheet{transition:none}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#d4ff85"/><stop offset="100%" stop-color="#7fd41f"/></linearGradient>
+</defs></svg>
+<div class="stage">
+<div class="phone" id="phone">
+  <div class="bg-fx" aria-hidden="true"><div class="grid"></div><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="grain"></div></div>
+  <div class="notch" aria-hidden="true"></div>
+  <div class="statusbar"><span class="mono" id="sbTime">9:41</span><span class="sb-icons" id="sbIcons"></span></div>
+
+  <!-- AUTH -->
+  <section class="screen active" id="screen-auth">
+    <div class="auth-logo"><span id="authLogo"></span><span>3<em>set</em><span class="dom">.online</span></span></div>
+    <div class="kicker">Мобильный клиент</div>
+    <h1 class="auth-title" id="authTitle">Вход в кабинет</h1>
+    <p class="auth-sub">Один аккаунт — ключ, устройства и подписка на всех платформах. Войди по email или через Telegram.</p>
+    <form class="auth-form" id="authForm" novalidate>
+      <input class="input" id="authEmail" type="email" placeholder="Email" autocomplete="email">
+      <div class="pass-wrap">
+        <input class="input" id="authPass" type="password" placeholder="Пароль · минимум 6 символов" autocomplete="current-password">
+        <button type="button" class="icon-btn" id="passEye" aria-label="Показать пароль"></button>
+      </div>
+      <input class="input" id="authPass2" type="password" placeholder="Повтори пароль" style="display:none">
+      <div class="auth-err" id="authErr"></div>
+      <button class="btn btn-primary block" id="authSubmit" type="submit" style="height:54px">Войти</button>
+    </form>
+    <div class="auth-divider">или</div>
+    <button class="btn btn-tg block" id="tgBtn" style="height:52px"><span id="tgIcon"></span>Войти через Telegram</button>
+    <div class="auth-switch"><span id="authSwitchText">Нет аккаунта?</span> <button id="authSwitch" type="button">Создать</button></div>
+    <p class="auth-note">Прототип: данные хранятся локально на устройстве.<br>Telegram-вход имитирует deep-link подтверждение ботом.</p>
+  </section>
+
+  <!-- MAIN -->
+  <section class="screen" id="screen-main" data-tab="simple">
+    <div class="main-head">
+      <div class="mh-row">
+        <div class="brand"><span id="mainLogo"></span><span>3<em>set</em><span class="dom">.online</span></span></div>
+        <div class="mh-actions">
+          <button class="icon-btn" id="logicBtn" aria-label="Как это работает"></button>
+          <button class="icon-btn" id="shopBtn" aria-label="Купить ключ"></button>
+          <button class="avatar" id="avatarBtn" aria-label="Профиль"><span id="avatarLetter">А</span><span class="dot"></span></button>
+        </div>
+      </div>
+      <div class="mh-row">
+        <h1 class="greet" id="greet">Добрый день, Алексей</h1>
+      </div>
+      <div class="mh-pills">
+        <span class="pill ok" id="statusPill"><span class="pdot"></span><span id="statusText">VPN выключен</span></span>
+        <span class="pill" id="keyPill"><span class="mono" id="keyPillText">ключ · 26 дн.</span></span>
+        <span class="pill"><span class="mono" id="datePill"></span></span>
+      </div>
+    </div>
+    <div class="banner" id="keyBanner"><span>Ключ неактивен — серверы недоступны</span><button class="btn btn-primary sm" id="bannerBuy">Купить</button></div>
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-tab="simple" role="tab" aria-selected="true"><span class="t-ic"></span>Простой VPN</button>
+      <button class="tab" data-tab="whitelist" role="tab" aria-selected="false"><span class="t-ic"></span>Обход белых списков</button>
+    </div>
+    <div class="toolbar">
+      <div class="mode-desc" id="modeDesc"></div>
+      <div class="right">
+        <button class="net-chip" id="netChip" aria-label="Сменить сеть"></button>
+        <button class="icon-btn sm" id="refreshBtn" aria-label="Обновить пинг"></button>
+      </div>
+    </div>
+    <div class="srv-list scroll" id="srvList"></div>
+    <div class="bottom">
+      <div class="conn-panel" id="connPanel">
+        <div class="cp-cell"><span class="label">Сервер</span><b id="cpServer">—</b></div>
+        <div class="cp-cell"><span class="label">Протокол</span><b id="cpProto">—</b></div>
+        <div class="cp-cell"><span class="label">IP</span><b class="mono" id="cpIp">—</b></div>
+        <div class="cp-cell"><span class="label">Пинг</span><b class="mono" id="cpPing">—</b></div>
+        <div class="cp-timer"><span class="t" id="cpTime">00:00:00</span><span class="cp-traffic"><span>↓ <b id="cpDown">0 МБ</b></span><span>↑ <b id="cpUp">0 МБ</b></span></span></div>
+      </div>
+      <button class="connect-btn idle" id="connectBtn"><span id="cbIcon"></span><span id="cbLabel">Подключить</span></button>
+      <div class="conn-hint" id="connHint">Автопинг перед подключением · быстрый путь по последним живым серверам</div>
+    </div>
+  </section>
+
+  <!-- SHOP -->
+  <section class="screen" id="screen-shop">
+    <div class="shop-head">
+      <button class="icon-btn" id="shopBack" aria-label="Назад"></button>
+      <h2>Покупка ключа</h2>
+      <span class="pill ok"><span class="pdot"></span>30 секунд</span>
+    </div>
+    <div class="shop-body scroll">
+      <div class="card key-card">
+        <div class="ring-wrap">
+          <svg class="ring" viewBox="0 0 132 132"><circle class="track" cx="66" cy="66" r="56"/><circle class="val" id="shopRing" cx="66" cy="66" r="56" stroke-dasharray="351.86" stroke-dashoffset="351.86"/></svg>
+          <div class="ring-center"><b id="shopDays">0</b><span>дней</span></div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <b style="font-size:14px">Персональный ключ</b>
+          <p class="dim" style="font-size:11px;margin:3px 0 8px" id="shopExpiry">Нет активного ключа</p>
+          <div class="link-box"><code id="shopLink"></code><button class="icon-btn sm" id="shopCopy" aria-label="Скопировать ссылку"></button></div>
+        </div>
+      </div>
+      <div><span class="label">Срок подписки</span><div class="terms" id="terms" style="margin-top:8px"></div></div>
+      <div class="card">
+        <div class="stepper-row">
+          <div><span class="label">Устройства</span><div class="stepper" style="margin-top:8px">
+            <button class="step-btn" id="devMinus" aria-label="Меньше устройств"></button>
+            <span class="step-num" id="devNum">2</span>
+            <button class="step-btn" id="devPlus" aria-label="Больше устройств"></button>
+          </div></div>
+          <div class="dots" id="devDots" aria-hidden="true"></div>
+        </div>
+        <p class="dim" style="font-size:11px;margin-top:9px">Все устройства работают одновременно, трафик без ограничений.</p>
+      </div>
+      <div class="card">
+        <span class="label">Промокод</span>
+        <div class="promo" style="margin-top:8px"><input class="input" id="promoInput" placeholder="Например, LIME15"><button class="btn btn-ghost" id="promoBtn" style="height:46px">Применить</button></div>
+        <div class="promo-msg" id="promoMsg"></div>
+        <div style="margin-top:6px">
+          <div class="sum-line"><span id="sumTerm">1 месяц</span><b id="sumBase">400 ₽</b></div>
+          <div class="sum-line"><span>Устройства</span><b id="sumDev">2</b></div>
+          <div class="sum-line disc" id="sumDiscRow" style="display:none"><span>Скидка</span><b id="sumDisc">−0 ₽</b></div>
+        </div>
+      </div>
+      <div><span class="label">Способ оплаты</span><div class="pay-chips" id="payChips" style="margin-top:8px"></div></div>
+    </div>
+    <div class="shop-bottom">
+      <div class="shop-total"><span class="label">К оплате</span><div class="price" id="shopPrice">400 ₽</div><div class="per" id="shopPer"></div></div>
+      <button class="btn btn-primary" id="buyBtn">Купить и продлить</button>
+    </div>
+  </section>
+
+  <!-- SCRIM / SHEETS -->
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet" id="sheet-profile">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head"><h3>Профиль и ключ</h3><button class="icon-btn" data-close aria-label="Закрыть"></button></div>
+    <div class="sheet-body scroll">
+      <div class="card" style="display:flex;gap:13px;align-items:center">
+        <div class="avatar" style="width:48px;height:48px;font-size:19px" id="profAvatar">А</div>
+        <div style="flex:1;min-width:0"><b id="profName">Алексей</b><div class="dim" style="font-size:11.5px;margin-top:2px" id="profEmail"></div></div>
+        <span class="pill ok" id="profMethod">email</span>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center"><span class="label">Подписка</span><span class="pill ok" id="profStatus"><span class="pdot"></span>Активна</span></div>
+        <div style="display:flex;gap:16px;margin-top:10px">
+          <div><b class="mono" style="font-size:19px" id="profDays">26</b><div class="dim" style="font-size:10px">дней осталось</div></div>
+          <div><b class="mono" style="font-size:19px" id="profUntil">20.12.2026</b><div class="dim" style="font-size:10px">действует до</div></div>
+          <div><b class="mono" style="font-size:19px" id="profDevCount">1/2</b><div class="dim" style="font-size:10px">устройства</div></div>
+        </div>
+        <div class="link-box" style="margin-top:11px"><code id="profLink"></code><button class="icon-btn sm" id="profCopy" aria-label="Скопировать"></button></div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span class="label">Устройства</span><button class="btn btn-ghost sm" id="devAdd">+ Добавить</button></div>
+        <div id="devList" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+      <div class="card" style="padding:6px 14px">
+        <div class="toggle-row"><div><div class="t">Kill switch</div><div class="s">Блокировать трафик вне VPN</div></div><button class="switch" id="killSwitch" aria-pressed="false" aria-label="Kill switch"></button></div>
+        <div class="toggle-row" style="border:0"><div><div class="t">Автоподключение</div><div class="s">Подключаться при запуске приложения</div></div><button class="switch" id="autoSwitch" aria-pressed="false" aria-label="Автоподключение"></button></div>
+      </div>
+      <div class="card">
+        <span class="label">Рефералы · +5 дней за друга</span>
+        <div class="link-box" style="margin-top:8px"><code id="refLink"></code><button class="icon-btn sm" id="refCopy" aria-label="Скопировать"></button></div>
+      </div>
+      <button class="btn btn-ghost block" id="resetDemo">Сбросить демо-данные</button>
+      <button class="btn btn-danger block" id="logoutBtn">Выйти из аккаунта</button>
+    </div>
+  </div>
+
+  <div class="sheet" id="sheet-logic">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head"><h3>Как это работает</h3><button class="icon-btn" data-close aria-label="Закрыть"></button></div>
+    <div class="sheet-body scroll">
+      <div class="logic-step"><span class="n">1</span><div><b>Два пула серверов</b><p>«Простой VPN» — обычные серверы для сетей без ограничений. «Обход белых списков» — VLESS+Reality с SNI разрешённых доменов: handshake выглядит как легальный TLS-трафик.</p></div></div>
+      <div class="logic-step"><span class="n">2</span><div><b>Автопинг через ядро</b><p>Не ICMP, а urltest: HTTP-запрос через каждый outbound. Замеряется реальная задержка прокси, а не просто доступность адреса.</p></div></div>
+      <div class="logic-step"><span class="n">3</span><div><b>Быстрый путь</b><p>При подключении первыми пингуются до 3 серверов, успешных в прошлый раз (таймаут 800 мс). Есть живой — подключаемся сразу, не дожидаясь всего пула.</p></div></div>
+      <div class="logic-step"><span class="n">4</span><div><b>Полный пинг и ранкинг</b><p>Если быстрый путь пуст — параллельная проверка всех серверов (2 с). Выбор: минимальный пинг, затем нагрузка. Кеш живёт 60 секунд.</p></div></div>
+      <div class="logic-step"><span class="n">5</span><div><b>Смена сети</b><p>Wi-Fi ↔ LTE инвалидирует кеш и запускает ре-пинг с переподключением — автовыбор не залипает на мёртвом сервере.</p></div></div>
+      <div class="logic-step"><span class="n">6</span><div><b>Ключ = подписка</b><p>Конфиги приходят с бэкенда только при активном ключе. Покупка продлевает срок от текущей даты окончания, лимит устройств контролируется сервером.</p></div></div>
+    </div>
+  </div>
+
+  <!-- TELEGRAM OVERLAY -->
+  <div class="overlay" id="tgOverlay">
+    <div class="modal">
+      <div class="big-ic blue" id="tgModalIcon"></div>
+      <h3 id="tgTitle">Вход через Telegram</h3>
+      <p id="tgDesc">Создаём одноразовую ссылку для бота…</p>
+      <div class="nonce" id="tgNonce" style="display:none"></div>
+      <button class="btn btn-tg block" id="tgOpen" style="display:none;margin-top:6px">Открыть Telegram</button>
+      <button class="btn btn-ghost block" id="tgCancel" style="margin-top:9px">Отмена</button>
+    </div>
+  </div>
+
+  <!-- PAYMENT OVERLAY -->
+  <div class="overlay" id="payOverlay">
+    <div class="modal">
+      <div class="big-ic lime" id="payIcon"><span class="spinner lime" id="paySpin"></span></div>
+      <h3 id="payTitle">Создаём платёж…</h3>
+      <p id="payDesc">Связываемся с платёжным провайдером</p>
+      <div class="link-box" id="payLinkBox" style="display:none;margin:13px 0;text-align:left"><code id="payLink"></code><button class="icon-btn sm" id="payCopy" aria-label="Скопировать"></button></div>
+      <button class="btn btn-primary block" id="payDone" style="display:none;margin-top:6px">Готово</button>
+    </div>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <div class="confetti" id="confetti"></div>
+</div>
+</div>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s)};
+var LS='set3_mobile_v1';
+var DAY=86400000;
+var rand=function(a,b){return a+Math.random()*(b-a)};
+var randInt=function(a,b){return Math.round(rand(a,b))};
+var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms)})};
+var fmtMoney=function(n){return n.toLocaleString('ru-RU')+' ₽'};
+var fmtDate=function(ts){return new Date(ts).toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'})};
+var fmtMB=function(mb){return mb<1024?mb.toFixed(1).replace('.',',')+' МБ':(mb/1024).toFixed(2).replace('.',',')+' ГБ'};
+var pad=function(n){return String(n).padStart(2,'0')};
+
+var IC={
+shield:'<svg class="ic" viewBox="0 0 32 32" fill="none"><path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" fill="#1b2a1c"/><path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" stroke="#b7ff45" stroke-opacity=".4"/><path d="M11 16l3.5 3.5L21 13" stroke="#b7ff45" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+bolt:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 11-13h-7l0-7z"/></svg>',
+key:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg>',
+power:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></svg>',
+refresh:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>',
+wifi:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><path d="M12 20h.01"/></svg>',
+lte:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/></svg>',
+info:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>',
+x:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+back:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>',
+copy:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
+check:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+eye:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
+tg:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg>',
+phone:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg>',
+trash:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+minus:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg>',
+plus:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M12 5v14"/></svg>',
+list:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h.01M3 12h.01M3 18h.01M8 6h13M8 12h13M8 18h13"/></svg>',
+signal:'<svg width="17" height="12" viewBox="0 0 17 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2" width="3" height="10" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1" opacity=".35"/></svg>',
+battery:'<svg width="24" height="12" viewBox="0 0 24 12" fill="none" stroke="currentColor"><rect x="1" y="1" width="19" height="10" rx="3"/><rect x="3" y="3" width="13" height="6" rx="1.5" fill="#b7ff45" stroke="none"/><path d="M22 4v4" stroke-linecap="round"/></svg>'
+};
+
+var SERVERS=[
+{id:'ams1',tab:'simple',city:'Амстердам',cc:'NL',flag:'🇳🇱',proto:'WireGuard',pc:'wg',base:38,load:24,force:true},
+{id:'fra1',tab:'simple',city:'Франкфурт',cc:'DE',flag:'🇩🇪',proto:'WireGuard',pc:'wg',base:44,load:37,force:true},
+{id:'hel1',tab:'simple',city:'Хельсинки',cc:'FI',flag:'🇫🇮',proto:'Hysteria2',pc:'hy',base:52,load:18},
+{id:'waw1',tab:'simple',city:'Варшава',cc:'PL',flag:'🇵🇱',proto:'Shadowsocks',pc:'ss',base:61,load:42},
+{id:'sto1',tab:'simple',city:'Стокгольм',cc:'SE',flag:'🇸🇪',proto:'WireGuard',pc:'wg',base:49,load:29},
+{id:'ist1',tab:'simple',city:'Стамбул',cc:'TR',flag:'🇹🇷',proto:'Trojan',pc:'tr',base:86,load:55},
+{id:'rnl1',tab:'whitelist',city:'Амстердам',cc:'NL',flag:'🇳🇱',proto:'VLESS · Reality',pc:'vl',sni:'vk.com',base:47,load:31,force:true},
+{id:'rde1',tab:'whitelist',city:'Франкфурт',cc:'DE',flag:'🇩🇪',proto:'VLESS · Reality',pc:'vl',sni:'gosuslugi.ru',base:53,load:44,force:true},
+{id:'rfi1',tab:'whitelist',city:'Хельсинки',cc:'FI',flag:'🇫🇮',proto:'VLESS · Reality',pc:'vl',sni:'yandex.ru',base:60,load:22},
+{id:'rpl1',tab:'whitelist',city:'Варшава',cc:'PL',flag:'🇵🇱',proto:'VLESS · Reality',pc:'vl',sni:'ozon.ru',base:68,load:39},
+{id:'rse1',tab:'whitelist',city:'Стокгольм',cc:'SE',flag:'🇸🇪',proto:'VLESS · Reality',pc:'vl',sni:'wildberries.ru',base:57,load:26},
+{id:'rtr1',tab:'whitelist',city:'Стамбул',cc:'TR',flag:'🇹🇷',proto:'VLESS · Reality',pc:'vl',sni:'avito.ru',base:92,load:61}
+];
+var TERMS=[
+{id:'d7',label:'7 дней',days:7,base:115},
+{id:'m1',label:'1 месяц',days:30,base:400,hit:true},
+{id:'m3',label:'3 месяца',days:90,base:1000},
+{id:'m6',label:'6 месяцев',days:180,base:1900},
+{id:'y1',label:'1 год',days:365,base:3800}
+];
+var PAYS=[{id:'mir',l:'МИР'},{id:'visa',l:'VISA'},{id:'mc',l:'MC'},{id:'sbp',l:'SBP'},{id:'crypto',l:'CRYPTO'}];
+
+function seed(){
+  var now=Date.now();
+  return {
+    session:{name:'Алексей',email:'xxldragon@mail.ru',method:'email'},
+    sub:{expiresAt:now+26*DAY,deviceLimit:2,link:'https://our.3set.online/FhVVLG9Xfd7rxMjQ',devices:[{id:'d1',name:'iPhone 15 · iOS',seen:'только что'}]},
+    tab:'simple',selected:{simple:'auto',whitelist:'auto'},
+    lastGood:{simple:[],whitelist:[]},
+    settings:{kill:false,auto:false},net:'wifi',
+    shop:{term:'m1',devices:2,discount:0,promo:'',pay:'mir'}
+  };
+}
+var state;
+try{var raw=localStorage.getItem(LS);state=raw?JSON.parse(raw):seed();}catch(e){state=seed();}
+if(!state.sub||!state.selected)state=seed();
+function save(){try{localStorage.setItem(LS,JSON.stringify(state))}catch(e){}}
+var cache={simple:{},whitelist:{}};
+var fullPingAt={simple:0,whitelist:0};
+var conn={status:'idle',serverId:null,tab:null,startedAt:0,down:0,up:0,ip:'',ping:0};
+var pingToken=0,connRun=0,statsTimer=null,authMode='login',tgTimer=null;
+
+function serversOf(tab){return SERVERS.filter(function(s){return s.tab===tab})}
+function srvById(id){return SERVERS.find(function(s){return s.id===id})}
+function subActive(){return state.sub.expiresAt>Date.now()}
+function daysLeft(){return Math.max(0,Math.ceil((state.sub.expiresAt-Date.now())/DAY))}
+function fakeIp(s){var h=0;for(var i=0;i<s.id.length;i++)h=(h*31+s.id.charCodeAt(i))%997;return '185.220.'+(h%200+10)+'.'+(h%230+12)}
+
+/* ICONS */
+$('#authLogo').innerHTML=IC.shield;$('#mainLogo').innerHTML=IC.shield;
+$('#tgIcon').innerHTML=IC.tg;$('#passEye').innerHTML=IC.eye;
+$('#logicBtn').innerHTML=IC.info;$('#shopBtn').innerHTML=IC.key;
+$('#shopBack').innerHTML=IC.back;$('#shopCopy').innerHTML=IC.copy;$('#profCopy').innerHTML=IC.copy;$('#refCopy').innerHTML=IC.copy;$('#payCopy').innerHTML=IC.copy;
+$('#refreshBtn').innerHTML=IC.refresh;$('#devMinus').innerHTML=IC.minus;$('#devPlus').innerHTML=IC.plus;
+$('#tgModalIcon').innerHTML=IC.tg;
+document.querySelectorAll('[data-close]').forEach(function(b){b.innerHTML=IC.x});
+document.querySelectorAll('.tab').forEach(function(t){t.querySelector('.t-ic').innerHTML=t.dataset.tab==='simple'?IC.shield:IC.list});
+$('#sbIcons').innerHTML=IC.signal+IC.wifi+IC.battery;
+$('#refLink').textContent='https://dash.3set.online/?ref=3SET-YVFCL2';
+
+/* CLOCK */
+function tickClock(){var d=new Date();$('#sbTime').textContent=d.getHours()+':'+pad(d.getMinutes());
+$('#datePill').textContent=d.toLocaleDateString('ru-RU',{weekday:'short',day:'numeric',month:'long'});}
+tickClock();setInterval(tickClock,20000);
+
+/* TOASTS */
+function toast(msg,type,action){
+  var box=$('#toasts');var el=document.createElement('div');
+  el.className='toast '+(type||'');el.innerHTML='<span>'+msg+'</span>';
+  if(action){var b=document.createElement('button');b.className='act';b.textContent=action.label;
+    b.onclick=function(){action.fn();kill()};el.appendChild(b);}
+  box.appendChild(el);
+  var t=setTimeout(kill,action?5200:3200);
+  function kill(){clearTimeout(t);el.classList.add('out');setTimeout(function(){el.remove()},300);}
+}
+function confetti(){
+  var box=$('#confetti');var colors=['#b7ff45','#d4ff85','#7fd41f','#3ee6b0','#f2f7ec','#ffc24b'];
+  for(var i=0;i<64;i++){var p=document.createElement('i');p.className='cf';
+    p.style.left=rand(0,100)+'%';p.style.background=colors[i%colors.length];
+    p.style.setProperty('--dur',rand(1.6,3)+'s');p.style.setProperty('--rot',randInt(-540,540)+'deg');
+    p.style.animationDelay=rand(0,.4)+'s';box.appendChild(p);
+    setTimeout(function(n){return function(){n.remove()}}(p),3600);}
+}
+function copyText(txt){
+  function ok(){toast('Ссылка скопирована','info')}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(ok).catch(function(){fallback()})}else fallback();
+  function fallback(){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');ok()}catch(e){toast('Не удалось скопировать','err')}ta.remove();}
+}
+
+/* SCREENS */
+function showScreen(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.toggle('active',s.id===id)});closeSheets();}
+function openSheet(id){$('#scrim').classList.add('show');$(id).classList.add('open');}
+function closeSheets(){$('#scrim').classList.remove('show');document.querySelectorAll('.sheet').forEach(function(s){s.classList.remove('open')});}
+$('#scrim').addEventListener('click',closeSheets);
+document.querySelectorAll('[data-close]').forEach(function(b){b.addEventListener('click',closeSheets)});
+
+/* HEADER / KEY */
+function renderHeader(){
+  var s=state.session;
+  $('#greet').textContent=(new Date().getHours()<12?'Доброе утро':new Date().getHours()<18?'Добрый день':'Добрый вечер')+', '+(s?s.name:'гость');
+  $('#avatarLetter').textContent=s?s.name.charAt(0).toUpperCase():'?';
+  var act=subActive(),dl=daysLeft();
+  var kp=$('#keyPill');kp.className='pill '+(act?'ok':'bad');
+  $('#keyPillText').textContent=act?'ключ · '+dl+' дн.':'ключ истёк';
+  $('#keyBanner').classList.toggle('show',!act);
+  var st=$('#statusPill');
+  if(conn.status==='connected'){st.className='pill ok';$('#statusText').textContent='VPN активен · защита включена';}
+  else{st.className='pill';$('#statusText').textContent=conn.status==='idle'?'VPN выключен':'Подключение…';}
+}
+
+/* SERVER LIST */
+function pingClass(rtt,online){if(!online)return 'bad';if(rtt<=60)return 'good';if(rtt<=110)return 'mid';if(rtt<=180)return 'warn';return 'bad'}
+function loadClass(l){return l<45?'':l<70?'mid':'hi'}
+function buildList(){
+  var tab=state.tab;var list=$('#srvList');list.innerHTML='';
+  var auto=document.createElement('button');auto.className='srv auto';auto.id='autoCard';auto.dataset.id='auto';
+  auto.innerHTML='<span class="flag">'+IC.bolt+'</span><span><span class="name">Автовыбор</span><span class="sub" id="autoSub">Выберу самый быстрый сервер</span></span><span class="ping wait" id="autoPing"><b>—</b><span class="ms">мс</span></span>';
+  auto.addEventListener('click',function(){selectServer('auto')});
+  list.appendChild(auto);
+  serversOf(tab).forEach(function(s){
+    var el=document.createElement('button');el.className='srv';el.dataset.id=s.id;el.id='srv-'+s.id;
+    var last=state.lastGood[tab][0]===s.id?'<span class="last-chip">последний</span>':'';
+    var sni=s.sni?'<span class="sni">SNI: '+s.sni+'</span>':'';
+    el.innerHTML='<span class="flag">'+s.flag+'</span><span><span class="name">'+s.city+' <span class="dim mono" style="font-size:10px">'+s.cc+'</span>'+last+'</span><span class="meta"><span class="proto '+s.pc+'">'+s.proto+'</span>'+sni+'<span class="loadbar"><i class="'+loadClass(s.load)+'" style="width:'+s.load+'%"></i></span></span></span><span class="ping wait" id="ping-'+s.id+'"><b>—</b><span class="ms">мс</span></span>';
+    el.addEventListener('click',function(){selectServer(s.id)});
+    list.appendChild(el);
+  });
+  paintSelection();paintAllPings();paintAuto();
+  $('#modeDesc').textContent=tab==='simple'?'Полный туннель · весь трафик через сервер · WireGuard / Hysteria2 / SS':'Reality с SNI разрешённых доменов · работает при белых списках оператора';
+  $('#screen-main').dataset.tab=tab;
+  document.querySelectorAll('.tab').forEach(function(t){var on=t.dataset.tab===tab;t.classList.toggle('active',on);t.setAttribute('aria-selected',on)});
+}
+function paintSelection(){
+  var sel=state.selected[state.tab];
+  document.querySelectorAll('#srvList .srv').forEach(function(el){el.classList.toggle('selected',el.dataset.id===sel)});
+}
+function paintPing(id){
+  var c=cache[state.tab][id];var el=$('#ping-'+id);if(!el)return;
+  if(!c){el.className='ping wait';el.innerHTML='<b>—</b><span class="ms">мс</span>';return;}
+  if(!c.online){el.className='ping bad';el.innerHTML='<b>офлайн</b><span class="ms">нет ответа</span>';return;}
+  el.className='ping '+pingClass(c.rtt,true);el.innerHTML='<b>'+c.rtt+'</b><span class="ms">мс</span>';
+}
+function paintAllPings(){serversOf(state.tab).forEach(function(s){paintPing(s.id)});}
+function bestOnline(tab,ids){
+  var pool=ids?ids.map(srvById):serversOf(tab);
+  var alive=pool.filter(function(s){var c=cache[tab][s.id];return c&&c.online});
+  alive.sort(function(a,b){var ca=cache[tab][a.id],cb=cache[tab][b.id];return ca.rtt-cb.rtt||a.load-b.load});
+  return alive[0]||null;
+}
+function paintAuto(){
+  var tab=state.tab;var best=bestOnline(tab);var sub=$('#autoSub'),pg=$('#autoPing');if(!sub)return;
+  if(conn.status==='connected'&&conn.tab===tab){var cs=srvById(conn.serverId);sub.textContent='Подключено: '+cs.city;pg.className='ping good';pg.innerHTML='<b>'+conn.ping+'</b><span class="ms">мс</span>';return;}
+  if(best){var c=cache[tab][best.id];sub.textContent='Лучший: '+best.city+' · '+best.proto;pg.className='ping '+pingClass(c.rtt,true);pg.innerHTML='<b>'+c.rtt+'</b><span class="ms">мс</span>';}
+  else{sub.textContent='Проверка серверов…';pg.className='ping wait';pg.innerHTML='<b>—</b><span class="ms">мс</span>';}
+}
+function selectServer(id){
+  state.selected[state.tab]=id;save();paintSelection();
+  if(conn.status==='connected'&&id!=='auto'&&id!==conn.serverId)toast('Сервер выбран. Отключись и подключись снова','info');
+}
+
+/* PING ENGINE */
+function setBusy(on){$('#refreshBtn').classList.toggle('spinning',on);}
+function pingServers(tab,ids,timeout,fast){
+  var token=++pingToken;setBusy(true);
+  var pool=ids?ids.map(srvById).filter(Boolean):serversOf(tab);
+  var results={};
+  return Promise.all(pool.map(function(s){
+    var delay=fast?rand(160,620):rand(240,1300);
+    return sleep(Math.min(delay,timeout)).then(function(){
+      if(token!==pingToken)return;
+      var online=s.force?true:Math.random()>(fast?0.06:0.13);
+      var rtt=online?Math.round(s.base+rand(-8,22)+(fast?0:rand(0,26))):null;
+      results[s.id]={online:online,rtt:rtt};
+      cache[tab][s.id]={online:online,rtt:rtt,ts:Date.now()};
+      if(tab===state.tab){paintPing(s.id);}
+    });
+  })).then(function(){
+    if(token===pingToken){setBusy(false);if(!ids)fullPingAt[tab]=Date.now();if(tab===state.tab)paintAuto();}
+    return results;
+  });
+}
+function cacheFresh(tab){return Date.now()-fullPingAt[tab]<60000&&bestOnline(tab)}
+
+/* CONNECT */
+function setConnUI(){
+  var btn=$('#connectBtn'),lbl=$('#cbLabel'),ic=$('#cbIcon'),hint=$('#connHint'),panel=$('#connPanel');
+  btn.className='connect-btn';
+  if(conn.status==='connected'){
+    btn.classList.add('on');ic.innerHTML=IC.power;lbl.textContent='Отключить';
+    hint.textContent='Трафик защищён · kill switch '+(state.settings.kill?'включён':'выключен');
+    panel.classList.add('show');
+    var s=srvById(conn.serverId);
+    $('#cpServer').textContent=s.flag+' '+s.city;$('#cpProto').textContent=s.proto;
+    $('#cpIp').textContent=conn.ip;$('#cpPing').textContent=conn.ping+' мс';
+  }else if(conn.status==='idle'){
+    btn.classList.add('idle');ic.innerHTML=IC.power;lbl.textContent='Подключить';
+    hint.textContent='Автопинг перед подключением · быстрый путь по последним живым серверам';
+    panel.classList.remove('show');
+  }else{
+    btn.classList.add('busy');ic.innerHTML='<span class="spinner lime"></span>';lbl.textContent=conn.phase||'Проверка…';
+    hint.textContent='Нажми ещё раз, чтобы отменить';panel.classList.remove('show');
+  }
+  renderHeader();
+}
+function startStats(){
+  clearInterval(statsTimer);
+  statsTimer=setInterval(function(){
+    if(conn.status!=='connected')return;
+    conn.down+=rand(.15,1.9);conn.up+=rand(.04,.5);
+    var sec=Math.floor((Date.now()-conn.startedAt)/1000);
+    $('#cpTime').textContent=pad(Math.floor(sec/3600))+':'+pad(Math.floor(sec/60)%60)+':'+pad(sec%60);
+    $('#cpDown').textContent=fmtMB(conn.down);$('#cpUp').textContent=fmtMB(conn.up);
+  },1000);
+}
+function disconnect(silent){
+  connRun++;clearInterval(statsTimer);
+  conn={status:'idle',serverId:null,tab:null,startedAt:0,down:0,up:0,ip:'',ping:0};
+  setConnUI();paintAuto();
+  if(!silent){toast('VPN отключён','info');if(state.settings.kill)toast('Kill switch: трафик вне VPN заблокирован','warn');}
+}
+function cancelConnect(){connRun++;conn.status='idle';setBusy(false);setConnUI();toast('Подключение отменено','info');}
+function connect(){
+  if(!subActive()){toast('Нужен активный ключ','warn');openShop();return;}
+  var run=++connRun;var tab=state.tab;
+  conn.status='pinging';conn.phase='Проверка последних серверов…';setConnUI();
+  var target=null;var sel=state.selected[tab];
+  var step=Promise.resolve();
+  if(sel!=='auto'){
+    step=pingServers(tab,[sel],1500,true).then(function(r){
+      if(run!==connRun)return;
+      if(r[sel]&&r[sel].online){target=srvById(sel);}
+      else{toast('Сервер недоступен — включаю автовыбор','warn');state.selected[tab]='auto';save();paintSelection();}
+    });
+  }
+  step.then(function(){
+    if(run!==connRun)return;
+    if(target||state.selected[tab]!=='auto')return;
+    if(cacheFresh(tab)){conn.phase='Кеш свежий — выбираю лучший…';setConnUI();target=bestOnline(tab);return;}
+    var lg=state.lastGood[tab].slice(0,3);
+    var p=Promise.resolve();
+    if(lg.length){conn.phase='Быстрый путь: последние живые…';setConnUI();
+      p=pingServers(tab,lg,800,true).then(function(){if(run===connRun)target=bestOnline(tab,lg);});}
+    return p.then(function(){
+      if(run!==connRun||target)return;
+      conn.phase='Полный автопинг серверов…';setConnUI();
+      return pingServers(tab,null,2000,false).then(function(){if(run===connRun)target=bestOnline(tab);});
+    });
+  }).then(function(){
+    if(run!==connRun)return;
+    if(!target){conn.status='idle';setBusy(false);setConnUI();toast('Нет доступных серверов. Попробуй другой таб','err');return;}
+    conn.phase='Подключение · '+target.city+'…';setConnUI();
+    return sleep(900).then(function(){
+      if(run!==connRun)return;
+      var c=cache[tab][target.id];
+      conn={status:'connected',serverId:target.id,tab:tab,startedAt:Date.now(),down:0,up:0,ip:fakeIp(target),ping:c?c.rtt:target.base};
+      var lg=state.lastGood[tab].filter(function(x){return x!==target.id});lg.unshift(target.id);state.lastGood[tab]=lg.slice(0,5);
+      save();setConnUI();paintAuto();startStats();toast('Защита включена · '+target.city,'ok');
+    });
+  });
+}
+$('#connectBtn').addEventListener('click',function(){
+  if(conn.status==='connected')disconnect();
+  else if(conn.status==='idle')connect();
+  else cancelConnect();
+});
+
+/* TABS / TOOLBAR */
+document.querySelectorAll('.tab').forEach(function(t){
+  t.addEventListener('click',function(){
+    if(state.tab===t.dataset.tab)return;
+    if(conn.status!=='idle'&&conn.status!=='connected')cancelConnect();
+    state.tab=t.dataset.tab;save();buildList();renderNet();
+    pingServers(state.tab,null,2000,false);
+  });
+});
+$('#refreshBtn').addEventListener('click',function(){pingServers(state.tab,null,2000,false);toast('Пинг обновлён','info')});
+function renderNet(){$('#netChip').innerHTML=(state.net==='wifi'?IC.wifi:IC.lte)+'<span>'+(state.net==='wifi'?'Wi-Fi':'LTE')+'</span>';}
+$('#netChip').addEventListener('click',function(){
+  state.net=state.net==='wifi'?'lte':'wifi';save();renderNet();
+  cache[state.tab]={};fullPingAt[state.tab]=0;paintAllPings();paintAuto();
+  toast('Сеть изменена — кеш пинга сброшен','info');
+  var wasConnected=conn.status==='connected';
+  if(wasConnected)disconnect(true);
+  pingServers(state.tab,null,2000,false).then(function(){if(wasConnected&&subActive())connect();});
+});
+$('#logicBtn').addEventListener('click',function(){openSheet('#sheet-logic')});
+$('#shopBtn').addEventListener('click',openShop);
+$('#bannerBuy').addEventListener('click',openShop);
+$('#avatarBtn').addEventListener('click',function(){renderProfile();openSheet('#sheet-profile')});/* SHOP */
+function termById(id){return TERMS.find(function(t){return t.id===id})}
+function shopPrice(){var t=termById(state.shop.term);return Math.round(t.base*state.shop.devices/2*(1-state.shop.discount))}
+function renderShop(){
+  var act=subActive(),dl=daysLeft();
+  $('#shopDays').textContent=dl;
+  $('#shopRing').style.strokeDashoffset=(351.86*(1-Math.min(dl/30,1))).toFixed(2);
+  $('#shopExpiry').textContent=act?'Действует до '+fmtDate(state.sub.expiresAt):'Нет активного ключа';
+  $('#shopLink').textContent=state.sub.link;
+  var box=$('#terms');box.innerHTML='';
+  TERMS.forEach(function(t){
+    var b=document.createElement('button');b.className='term';b.setAttribute('aria-pressed',state.shop.term===t.id);
+    var per=(t.base/(t.days*2)).toFixed(1).replace('.',',');
+    b.innerHTML=(t.hit?'<span class="badge">Хит</span>':'')+'<span class="check">'+IC.check+'</span><span><span class="t-label">'+t.label+'</span><span class="t-per">≈ '+per+' ₽/день · устр.</span></span><span class="t-price">'+fmtMoney(t.base)+'</span>';
+    b.addEventListener('click',function(){state.shop.term=t.id;save();renderShop()});
+    box.appendChild(b);
+  });
+  $('#devNum').textContent=state.shop.devices;
+  $('#devMinus').disabled=state.shop.devices<=2;$('#devPlus').disabled=state.shop.devices>=10;
+  var dots=$('#devDots');dots.innerHTML='';
+  for(var i=0;i<10;i++){var d=document.createElement('i');if(i<state.shop.devices)d.className='on';dots.appendChild(d);}
+  var t=termById(state.shop.term),price=shopPrice();
+  $('#sumTerm').textContent=t.label;$('#sumBase').textContent=fmtMoney(Math.round(t.base*state.shop.devices/2));
+  $('#sumDev').textContent=state.shop.devices;
+  var disc=Math.round(t.base*state.shop.devices/2)-price;
+  $('#sumDiscRow').style.display=disc>0?'flex':'none';$('#sumDisc').textContent='−'+fmtMoney(disc);
+  $('#shopPrice').textContent=fmtMoney(price);
+  $('#shopPer').textContent='≈ '+(price/(t.days*state.shop.devices)).toFixed(1).replace('.',',')+' ₽ / день · '+state.shop.devices+' устр.';
+  var pc=$('#payChips');pc.innerHTML='';
+  PAYS.forEach(function(p){var b=document.createElement('button');b.className='pay-chip';b.textContent=p.l;b.setAttribute('aria-pressed',state.shop.pay===p.id);
+    b.addEventListener('click',function(){state.shop.pay=p.id;save();renderShop()});pc.appendChild(b);});
+}
+function openShop(){renderShop();showScreen('screen-shop');}
+$('#shopBack').addEventListener('click',function(){showScreen('screen-main');renderHeader()});
+$('#shopCopy').addEventListener('click',function(){copyText(state.sub.link)});
+$('#devMinus').addEventListener('click',function(){if(state.shop.devices>2){state.shop.devices--;save();renderShop()}});
+$('#devPlus').addEventListener('click',function(){if(state.shop.devices<10){state.shop.devices++;save();renderShop()}});
+$('#promoBtn').addEventListener('click',function(){
+  var code=$('#promoInput').value.trim().toUpperCase();var msg=$('#promoMsg');
+  if(code==='LIME15'){state.shop.discount=.15;state.shop.promo=code;msg.className='promo-msg ok';msg.textContent='Промокод применён: −15%';toast('Скидка 15% активна','ok');}
+  else if(code==='3SET5'){state.shop.discount=.05;state.shop.promo=code;msg.className='promo-msg ok';msg.textContent='Промокод применён: −5%';toast('Скидка 5% активна','ok');}
+  else{state.shop.discount=0;state.shop.promo='';msg.className='promo-msg err';msg.textContent='Промокод не найден';$('#promoInput').classList.add('shake');setTimeout(function(){$('#promoInput').classList.remove('shake')},450);}
+  save();renderShop();
+});
+$('#buyBtn').addEventListener('click',function(){
+  var ov=$('#payOverlay');ov.classList.add('show');
+  $('#paySpin').style.display='block';$('#payIcon').innerHTML='<span class="spinner lime" id="paySpin"></span>';
+  $('#payTitle').textContent='Создаём платёж…';$('#payDesc').textContent='Связываемся с платёжным провайдером';
+  $('#payLinkBox').style.display='none';$('#payDone').style.display='none';
+  sleep(800).then(function(){
+    $('#payTitle').textContent='Ожидаем оплату…';$('#payDesc').textContent='Подтверждение от провайдера · способ: '+state.shop.pay.toUpperCase();
+    return sleep(1500);
+  }).then(function(){
+    var t=termById(state.shop.term);
+    var base=Math.max(Date.now(),state.sub.expiresAt);
+    state.sub.expiresAt=base+t.days*DAY;state.sub.deviceLimit=state.shop.devices;
+    save();confetti();
+    $('#payIcon').innerHTML=IC.check;$('#payTitle').textContent='Ключ активен';
+    $('#payDesc').textContent=t.label+' · '+state.shop.devices+' устр. · действует до '+fmtDate(state.sub.expiresAt);
+    $('#payLink').textContent=state.sub.link;$('#payLinkBox').style.display='flex';$('#payDone').style.display='flex';
+    renderHeader();
+  });
+});
+$('#payCopy').addEventListener('click',function(){copyText(state.sub.link)});
+$('#payDone').addEventListener('click',function(){$('#payOverlay').classList.remove('show');showScreen('screen-main');renderHeader();toast('Подписка продлена до '+fmtDate(state.sub.expiresAt),'ok')});
+
+/* PROFILE */
+function renderProfile(){
+  var s=state.session;if(!s)return;
+  $('#profAvatar').textContent=s.name.charAt(0).toUpperCase();
+  $('#profName').textContent=s.name;$('#profEmail').textContent=s.email;
+  $('#profMethod').textContent=s.method==='telegram'?'telegram':'email';
+  var act=subActive();
+  $('#profStatus').className='pill '+(act?'ok':'bad');
+  $('#profStatus').innerHTML='<span class="pdot"></span>'+(act?'Активна':'Истекла');
+  $('#profDays').textContent=daysLeft();$('#profUntil').textContent=fmtDate(state.sub.expiresAt);
+  $('#profDevCount').textContent=state.sub.devices.length+'/'+state.sub.deviceLimit;
+  $('#profLink').textContent=state.sub.link;
+  $('#killSwitch').setAttribute('aria-pressed',state.settings.kill);
+  $('#autoSwitch').setAttribute('aria-pressed',state.settings.auto);
+  var dl=$('#devList');dl.innerHTML='';
+  if(!state.sub.devices.length){dl.innerHTML='<p class="dim" style="font-size:12px">Устройств нет. Подключи первое по ссылке подписки.</p>';}
+  state.sub.devices.forEach(function(d){
+    var row=document.createElement('div');row.className='dev-row';
+    row.innerHTML='<span class="ic-wrap">'+IC.phone+'</span><span class="info"><b>'+d.name+'</b><span>'+d.seen+'</span></span>';
+    var rm=document.createElement('button');rm.className='icon-btn sm';rm.innerHTML=IC.trash;rm.setAttribute('aria-label','Отключить устройство');
+    rm.addEventListener('click',function(){
+      var idx=state.sub.devices.findIndex(function(x){return x.id===d.id});
+      var removed=state.sub.devices.splice(idx,1)[0];save();renderProfile();
+      toast('Устройство отключено','warn',{label:'Вернуть',fn:function(){state.sub.devices.splice(Math.min(idx,state.sub.devices.length),0,removed);save();renderProfile();}});
+    });
+    row.appendChild(rm);dl.appendChild(row);
+  });
+}
+$('#profCopy').addEventListener('click',function(){copyText(state.sub.link)});
+$('#refCopy').addEventListener('click',function(){copyText($('#refLink').textContent)});
+$('#devAdd').addEventListener('click',function(){
+  if(state.sub.devices.length>=state.sub.deviceLimit){toast('Лимит устройств достигнут. Купи тариф с большим числом устройств','err');return;}
+  state.sub.devices.push({id:'d'+Date.now(),name:'Это устройство · Web',seen:'только что'});save();renderProfile();toast('Устройство добавлено','ok');
+});
+$('#killSwitch').addEventListener('click',function(){state.settings.kill=!state.settings.kill;save();renderProfile();setConnUI();toast('Kill switch '+(state.settings.kill?'включён':'выключен'),'info')});
+$('#autoSwitch').addEventListener('click',function(){state.settings.auto=!state.settings.auto;save();renderProfile();toast('Автоподключение '+(state.settings.auto?'включено':'выключено'),'info')});
+$('#resetDemo').addEventListener('click',function(){try{localStorage.removeItem(LS)}catch(e){}location.reload()});
+$('#logoutBtn').addEventListener('click',function(){
+  if(conn.status==='connected')disconnect(true);
+  state.session=null;save();closeSheets();showScreen('screen-auth');toast('Вы вышли из аккаунта','info');
+});
+
+/* AUTH */
+function setAuthMode(m){
+  authMode=m;
+  $('#authTitle').textContent=m==='login'?'Вход в кабинет':'Создать аккаунт';
+  $('#authSubmit').textContent=m==='login'?'Войти':'Создать аккаунт';
+  $('#authPass2').style.display=m==='login'?'none':'block';
+  $('#authSwitchText').textContent=m==='login'?'Нет аккаунта?':'Уже есть аккаунт?';
+  $('#authSwitch').textContent=m==='login'?'Создать':'Войти';
+  $('#authErr').textContent='';
+}
+$('#authSwitch').addEventListener('click',function(){setAuthMode(authMode==='login'?'register':'login')});
+$('#passEye').addEventListener('click',function(){var p=$('#authPass');p.type=p.type==='password'?'text':'password'});
+$('#authForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  var email=$('#authEmail').value.trim(),pass=$('#authPass').value,err=$('#authErr');
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){err.textContent='Введи корректный email';return;}
+  if(pass.length<6){err.textContent='Пароль — минимум 6 символов';return;}
+  if(authMode==='register'&&pass!==$('#authPass2').value){err.textContent='Пароли не совпадают';return;}
+  err.textContent='';
+  var btn=$('#authSubmit');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';
+  sleep(900).then(function(){
+    btn.disabled=false;btn.textContent=authMode==='login'?'Войти':'Создать аккаунт';
+    var name=email.split('@')[0].replace(/[._-]/g,' ');name=name.charAt(0).toUpperCase()+name.slice(1);
+    state.session={name:name,email:email,method:'email'};save();
+    enterApp();toast(authMode==='login'?'С возвращением, '+name:'Аккаунт создан','ok');
+  });
+});
+$('#tgBtn').addEventListener('click',function(){
+  var ov=$('#tgOverlay');ov.classList.add('show');
+  $('#tgTitle').textContent='Вход через Telegram';$('#tgDesc').textContent='Создаём одноразовую ссылку для бота…';
+  $('#tgNonce').style.display='none';$('#tgOpen').style.display='none';
+  var nonce=Math.random().toString(36).slice(2,8).toUpperCase();
+  sleep(700).then(function(){
+    $('#tgDesc').textContent='Открой бота и нажми «Запустить». Ссылка живёт 5 минут.';
+    $('#tgNonce').textContent='t.me/set3vpn_bot?start='+nonce;$('#tgNonce').style.display='block';
+    $('#tgOpen').style.display='flex';
+  });
+  $('#tgOpen').onclick=function(){
+    $('#tgOpen').style.display='none';
+    $('#tgDesc').innerHTML='Ожидаем подтверждение ботом<span class="poll-dots"><i></i><i></i><i></i></span>';
+    tgTimer=sleep(1900).then(function(){
+      ov.classList.remove('show');
+      state.session={name:'Алексей',email:'@alexey_tg',method:'telegram'};save();
+      enterApp();toast('Telegram подтверждён','ok');
+    });
+  };
+});
+$('#tgCancel').addEventListener('click',function(){$('#tgOverlay').classList.remove('show')});
+
+function enterApp(){
+  showScreen('screen-main');renderHeader();buildList();renderNet();
+  pingServers(state.tab,null,2000,false).then(function(){
+    if(state.settings.auto&&subActive()&&conn.status==='idle')connect();
+  });
+}
+
+/* INIT */
+renderNet();
+if(state.session){enterApp();}
+else{showScreen('screen-auth');}
+setConnUI();
+})();
+</script>
+</body>
+</html>

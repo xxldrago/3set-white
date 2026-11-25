@@ -7,7 +7,7 @@
 | v1.0 | MVP (Bot + Cabinet + Payments) | Shipped | 1-6 |
 | v1.1 | Расширенная аналитика | Shipped | 7-11 |
 | v1.2 | Стабилизация и качество | Completed | 12-17 |
-| **v2.0** | **Мобильный клиент** | **Planning** | **18-23** |
+| **v2.0** | **Мобильный клиент** | **Executing** | **18-23** |
 
 ---
 
@@ -34,11 +34,15 @@
 
 #### Plans
 
-| Plan | Title | Wave | Depends On | Description |
-|------|-------|------|------------|-------------|
-| 18-01 | Flutter Project + Auth Infra (Tracer) | 1 | — | `flutter create`, Riverpod, `flutter_secure_storage`, `dio`, `app_links`, `connectivity_plus`, `logger`, `freezed`, `jwt_decoder`. Dio auth interceptor (401→refresh→retry). TokenStore with biometric read. AuthNotifier with session restore. DeepLinkHandler with polling. ConnectivityService. Integration test tracer. |
-| 18-02 | Backend Mobile Auth Routes | 1 | — | `POST /api/mobile/auth/login`, `register`, `refresh`, `telegram/nonce`, `telegram/poll`, `GET /api/mobile/subscription`. `lib/mobile-auth.ts` shared logic. `TelegramLinkToken` Prisma model. `assetlinks.json` + `apple-app-site-association`. Postman test suite. |
-| 18-03 | Auth Screens + Telegram Flow + Providers | 2 | 18-01, 18-02 | Login/Register/TelegramWait screens. AuthForm + ErrorToast widgets. Router redirect on auth state. Logout. Session restore routing. `currentTabProvider`, `subscriptionProvider`. Widget + integration tests. |
+| Plan | Title | Wave | Depends On | Status | Description |
+|------|-------|------|------------|--------|-------------|
+| 18-01a | Flutter Project Scaffold | 1 | — | ✅ Complete | `flutter create`, Riverpod, `flutter_secure_storage`, `dio`, `app_links`, `connectivity_plus`, `logger`, `freezed`, `jwt_decoder`, `go_router`, Material 3 theme. All 20 JwtUtils tests pass. |
+| 18-01b | Secure Storage + HTTP Client | 1 | 18-01a | ✅ Complete | TokenStore with biometric/non-biometric reads, DioClient with AuthInterceptor (single-flight refresh). 6 storage/api tests pass. |
+| 18-01c | AuthNotifier State Machine | 1 | 18-01b | ✅ Complete | AuthState (freezed), AuthNotifier with session restore (validates via /subscription, refresh on 401), login, register, logout, startTelegramAuth. 10 unit tests pass. |
+| 18-01d | DeepLinkHandler + AppRouter | 1 | 18-01c | ✅ Complete | Telegram deep link polling, GoRouter redirect on auth state, ConnectivityService. |
+| 18-01e | Native Deep Links + Integration Test | 2 | 18-01d, 18-02 | ✅ Complete | Android App Links (autoVerify), iOS Universal Links (associated domains), VPN/foreground permissions, deep_link_tracer_test.dart vertical slice test. |
+| 18-02 | Backend Mobile Auth Routes | 1 | — | ✅ Complete | `POST /api/mobile/auth/login`, `register`, `refresh`, `telegram/nonce`, `telegram/poll`, `GET /api/mobile/subscription`. `lib/mobile-auth.ts` shared logic. `TelegramLinkToken` Prisma model. `assetlinks.json` + `apple-app-site-association`. 33 integration tests pass. |
+| 18-03 | Auth Screens + Telegram Flow + Providers | 2 | 18-01e, 18-02 | 🔄 In Progress | Login/Register/TelegramWait screens. AuthForm + ErrorToast widgets. Router redirect on auth state. Logout. Session restore routing. `currentTabProvider`, `subscriptionProvider`. Widget + integration tests. |
 
 #### Deliverables
 

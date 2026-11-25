@@ -41,6 +41,7 @@
 | 18-03 | Auth Screens + Telegram Flow + Providers | 2 | 18-01, 18-02 | Login/Register/TelegramWait screens. AuthForm + ErrorToast widgets. Router redirect on auth state. Logout. Session restore routing. `currentTabProvider`, `subscriptionProvider`. Widget + integration tests. |
 
 #### Deliverables
+
 - Flutter app runs on Android/iOS simulators
 - Email/password + Telegram auth working
 - JWT persisted securely, biometric unlock
@@ -69,6 +70,7 @@
 | 19.11 | **Riverpod: `serverPoolProvider`, `pingCacheProvider`, `bestServerProvider`** | Reactive UI updates |
 
 #### Deliverables
+
 - Two tabs with live server data
 - Ping works (quick-path + full), cache TTL respected
 - Network change invalidates cache
@@ -99,6 +101,7 @@
 | 20.13 | **Permission Flows** — VPN permission request, handle deny/revoke gracefully | Toast + retry button |
 
 #### Deliverables
+
 - VPN connects on Android + iOS
 - FSM handles all states + cancel
 - Kill switch works both platforms
@@ -130,6 +133,7 @@
 | 21.13 | **Subscription Ring (Shop)** — SVG ring `days/30`, color by threshold | Visual matches prototype |
 
 #### Deliverables
+
 - Shop screen fully functional
 - Platega payment flow works (test mode)
 - Key issued on payment success
@@ -160,6 +164,7 @@
 | 22.12 | **Accessibility** — labels, contrast, dynamic type | Passes a11y audit |
 
 #### Deliverables
+
 - Profile sheet complete
 - Device management with undo
 - Settings persist
@@ -190,6 +195,7 @@
 | 23.12 | **Version Bump** — `pubspec.yaml` + `package.json` sync, tag `mobile/v2.0.0` | Tags pushed |
 
 #### Deliverables
+
 - AAB on Play Console Internal Testing
 - IPA on TestFlight
 - All P0/P1 bugs fixed

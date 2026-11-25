@@ -1,36 +1,40 @@
 ---
 gsd_state_version: 1.0
 milestone: v2.0
+milestone_name: Мобильный клиент
 current_phase: 18
 status: executing
-last_updated: "2026-11-25T19:30:00.000Z"
+stopped_at: Completed 18-01a-PLAN.md — Flutter project scaffold with Riverpod, freezed models, JWT utils, GoRouter, Material 3 theme
+last_updated: "2026-11-25T09:23:16.661Z"
 last_activity: 2026-11-25
 last_activity_desc: Completed Plan 18-01a — Flutter project scaffold with Riverpod, freezed models, JWT utils, GoRouter, Material 3 theme
-state_head: "18-01a"
+state_head: 0f887986ab2854c986005747c58b37d0f2042916
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 7
   completed_plans: 1
-milestone_name: Мобильный клиент
-stopped_at: Completed 18-01a — Flutter foundation scaffold complete
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
+
 See: .planning/PROJECT.md (updated 2026-11-25)
 
 **Core value:** Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
 **Current focus:** v2.0 Мобильный клиент (Phase 18 — Plan 18-01a complete)
 
 ## Current Position
+
 Phase: 18
 Plan: 18-01a (complete)
 Status: Executing — Flutter project scaffold with all dependencies, models, router, theme, and tests
 Last activity: 2026-11-25 — Plan 18-01a complete
 
 ## Per-Milestone Progress
+
 | Milestone | Phases | Completed | Status |
 |-----------|--------|-----------|--------|
 | v1.0 MVP | 6 | 6 | Shipped |
@@ -39,13 +43,33 @@ Last activity: 2026-11-25 — Plan 18-01a complete
 | **v2.0 Мобильный клиент** | **6** | **0** | **Planning** |
 
 ## Active Workstreams
+
 None (flat mode)
 
 ## Blockers
+
 - Apple NetworkExtension entitlement (apply ASAP)
 - Platega test credentials (requested)
 - GPL-3.0 legal review (schedule)
 
 ## Next Actions
+
 1. Run `/gsd-plan-phase 18` to create detailed PLAN.md for Foundation & Auth
 2. Begin Flutter project setup and backend auth routes
+
+## Decisions
+
+- [Phase 18]: Flutter project scaffold created with Riverpod 3.4+, flutter_secure_storage 11.2+, dio 5.9+, app_links 6.4+, freezed + json_serializable, go_router 15+, Material 3 theme
+- [Phase 18]: All 20 JwtUtils unit tests pass; flutter analyze clean (0 errors); flutter build ios --debug --no-codesign succeeds; build_runner generates freezed/json_serializable code without conflicts
+
+## Performance Metrics
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 18 P01a | 7200 | 1 tasks | 15 files |
+
+## Session
+
+**Last session:** 2026-11-25T09:23:16.651Z
+**Stopped at:** Completed 18-01a-PLAN.md — Flutter project scaffold with Riverpod, freezed models, JWT utils, GoRouter, Material 3 theme
+**Resume file:** None

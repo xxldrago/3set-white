@@ -9,16 +9,16 @@ part of 'auth_models.dart';
 _TokenPair _$TokenPairFromJson(Map<String, dynamic> json) => _TokenPair(
   accessToken: json['accessToken'] as String,
   refreshToken: json['refreshToken'] as String,
-  expiresIn: (json['expires_in'] as num).toInt(),
-  userId: (json['user_id'] as num?)?.toInt(),
+  expiresIn: (json['expiresIn'] as num).toInt(),
+  userId: (json['userId'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$TokenPairToJson(_TokenPair instance) =>
     <String, dynamic>{
       'accessToken': instance.accessToken,
       'refreshToken': instance.refreshToken,
-      'expires_in': instance.expiresIn,
-      'user_id': instance.userId,
+      'expiresIn': instance.expiresIn,
+      'userId': instance.userId,
     };
 
 _User _$UserFromJson(Map<String, dynamic> json) => _User(
@@ -65,28 +65,28 @@ _AuthResponse _$AuthResponseFromJson(Map<String, dynamic> json) =>
     _AuthResponse(
       accessToken: json['accessToken'] as String,
       refreshToken: json['refreshToken'] as String,
-      expiresIn: (json['expires_in'] as num).toInt(),
+      expiresIn: (json['expiresIn'] as num).toInt(),
     );
 
 Map<String, dynamic> _$AuthResponseToJson(_AuthResponse instance) =>
     <String, dynamic>{
       'accessToken': instance.accessToken,
       'refreshToken': instance.refreshToken,
-      'expires_in': instance.expiresIn,
+      'expiresIn': instance.expiresIn,
     };
 
 _TelegramNonceResponse _$TelegramNonceResponseFromJson(
   Map<String, dynamic> json,
 ) => _TelegramNonceResponse(
   nonce: json['nonce'] as String,
-  expiresIn: (json['expires_in'] as num).toInt(),
+  expiresIn: (json['expiresIn'] as num).toInt(),
 );
 
 Map<String, dynamic> _$TelegramNonceResponseToJson(
   _TelegramNonceResponse instance,
 ) => <String, dynamic>{
   'nonce': instance.nonce,
-  'expires_in': instance.expiresIn,
+  'expiresIn': instance.expiresIn,
 };
 
 _Pending _$PendingFromJson(Map<String, dynamic> json) => _Pending(

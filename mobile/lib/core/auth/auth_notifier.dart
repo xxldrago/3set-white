@@ -223,6 +223,16 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     }
   }
 
+  /// Public method to trigger session restore.
+  /// Used by DeepLinkHandler after Telegram auth succeeds.
+  Future<void> restoreSession() => _restoreSession();
+
+  /// Sets an error state (used by DeepLinkHandler for Telegram auth errors).
+  void setError(String message) {
+    _logger.w('Setting error state: $message');
+    state = AsyncData(AuthState.error(message));
+  }
+
   /// Logs out the current user.
   ///
   /// Clears all tokens from secure storage and sets unauthenticated state.

@@ -22,6 +22,7 @@ dependencies:
   jwt_decoder: ^2.0.1
   go_router: ^18.1.4
   riverpod_annotation: ^4.0.8
+  local_auth: ^3.0.2
 
 dev_dependencies:
   flutter_test:
@@ -32,6 +33,8 @@ dev_dependencies:
   json_serializable: ^6.15.2
   riverpod_generator: ^4.0.10
   mocktail: ^1.0.4
+  integration_test:
+    sdk: flutter
 
 flutter:
   uses-material-design: true

@@ -8,8 +8,8 @@ abstract class TokenPair with _$TokenPair {
   const factory TokenPair({
     required String accessToken,
     required String refreshToken,
-    @JsonKey(name: 'expires_in') required int expiresIn,
-    @JsonKey(name: 'user_id') int? userId,
+    @JsonKey(name: 'expiresIn') required int expiresIn,
+    @JsonKey(name: 'userId') int? userId,
   }) = _TokenPair;
 
   factory TokenPair.fromJson(Map<String, dynamic> json) => _$TokenPairFromJson(json);
@@ -53,7 +53,7 @@ abstract class AuthResponse with _$AuthResponse {
   const factory AuthResponse({
     required String accessToken,
     required String refreshToken,
-    @JsonKey(name: 'expires_in') required int expiresIn,
+    @JsonKey(name: 'expiresIn') required int expiresIn,
   }) = _AuthResponse;
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) => _$AuthResponseFromJson(json);
@@ -63,7 +63,7 @@ abstract class AuthResponse with _$AuthResponse {
 abstract class TelegramNonceResponse with _$TelegramNonceResponse {
   const factory TelegramNonceResponse({
     required String nonce,
-    @JsonKey(name: 'expires_in') required int expiresIn,
+    @JsonKey(name: 'expiresIn') required int expiresIn,
   }) = _TelegramNonceResponse;
 
   factory TelegramNonceResponse.fromJson(Map<String, dynamic> json) => _$TelegramNonceResponseFromJson(json);

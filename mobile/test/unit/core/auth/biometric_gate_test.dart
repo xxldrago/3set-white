@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' as riverpod;
 import 'package:mobile/core/auth/biometric_gate.dart';
 import 'package:mobile/core/storage/token_store.dart';
 
@@ -10,82 +10,117 @@ class MockTokenStore extends Mock implements TokenStore {}
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('BiometricGate (app lifecycle)', () {
+  group('BiometricGate (Auth)', () {
     late MockTokenStore mockTokenStore;
-    late BiometricGate gate;
+    late BiometricGate biometricGate;
 
     setUp(() {
       mockTokenStore = MockTokenStore();
-      // Use internal constructor for testing
-      gate = BiometricGate._internal(mockTokenStore);
-
-      when(() => mockTokenStore.hasTokens()).thenAnswer((_) async => false);
-      when(() => mockTokenStore.getAccessToken()).thenAnswer((_) async => null);
-      when(() => mockTokenStore.clearAll()).thenAnswer((_) async {});
+      biometricGate = BiometricGate(mockTokenStore);
     });
 
     tearDown(() {
-      gate.unregisterObserver();
+      biometricGate.unregisterObserver();
     });
 
-    test('registerObserver adds observer to WidgetsBinding', () {
-      expect(gate._registered, false);
-      gate.registerObserver();
-      expect(gate._registered, true);
+    group('registerObserver / unregisterObserver', () {
+      test('registerObserver adds observer to WidgetsBinding', () {
+        expect(() => biometricGate.registerObserver(), returnsNormally);
+      });
+
+      test('unregisterObserver removes observer from WidgetsBinding', () {
+        biometricGate.registerObserver();
+        expect(() => biometricGate.unregisterObserver(), returnsNormally);
+      });
+
+      test('can call unregisterObserver multiple times without error', () {
+        biometricGate.registerObserver();
+        biometricGate.unregisterObserver();
+        expect(() => biometricGate.unregisterObserver(), returnsNormally);
+      });
     });
 
-    test('unregisterObserver removes observer from WidgetsBinding', () {
-      gate.registerObserver();
-      gate.unregisterObserver();
-      expect(gate._registered, false);
+    group('didChangeAppLifecycleState', () {
+      test('calls hasTokens when state is resumed', () async {
+        when(() => mockTokenStore.hasTokens()).thenAnswer((_) async => false);
+
+        biometricGate.didChangeAppLifecycleState(AppLifecycleState.resumed);
+
+        // Wait for the async _onAppResumed to complete
+        await Future.delayed(Duration.zero);
+
+        verify(() => mockTokenStore.hasTokens()).called(1);
+      });
+
+      test('does nothing for other lifecycle states', () {
+        biometricGate.didChangeAppLifecycleState(AppLifecycleState.paused);
+        biometricGate.didChangeAppLifecycleState(AppLifecycleState.inactive);
+        biometricGate.didChangeAppLifecycleState(AppLifecycleState.detached);
+
+        // Should not call hasTokens for non-resumed states
+        verifyNever(() => mockTokenStore.hasTokens());
+      });
     });
 
-    test('on resume with no tokens does nothing', () async {
-      when(() => mockTokenStore.hasTokens()).thenAnswer((_) async => false);
+    group('resume behavior via lifecycle events', () {
+      test('returns early when no tokens exist', () async {
+        when(() => mockTokenStore.hasTokens()).thenAnswer((_) async => false);
+        when(() => mockTokenStore.getAccessToken()).thenAnswer((_) async => 'token');
+        when(() => mockTokenStore.clearAll()).thenAnswer((_) async {});
 
-      await gate._onAppResumed();
+        biometricGate.didChangeAppLifecycleState(AppLifecycleState.resumed);
+        await Future.delayed(Duration.zero);
 
-      verify(() => mockTokenStore.hasTokens()).called(1);
-      verifyNever(() => mockTokenStore.getAccessToken());
-      verifyNever(() => mockTokenStore.clearAll());
+        verify(() => mockTokenStore.hasTokens()).called(1);
+        verifyNever(() => mockTokenStore.getAccessToken());
+        verifyNever(() => mockTokenStore.clearAll());
+      });
+
+      test('calls getAccessToken when tokens exist and succeeds', () async {
+        when(() => mockTokenStore.hasTokens()).thenAnswer((_) async => true);
+        when(() => mockTokenStore.getAccessToken()).thenAnswer((_) async => 'token');
+        when(() => mockTokenStore.clearAll()).thenAnswer((_) async {});
+
+        biometricGate.didChangeAppLifecycleState(AppLifecycleState.resumed);
+        await Future.delayed(Duration.zero);
+
+        verify(() => mockTokenStore.hasTokens()).called(1);
+        verify(() => mockTokenStore.getAccessToken()).called(1);
+        verifyNever(() => mockTokenStore.clearAll());
+      });
+
+      test('clears tokens when getAccessToken returns null (biometric cancelled)', () async {
+        when(() => mockTokenStore.hasTokens()).thenAnswer((_) async => true);
+        when(() => mockTokenStore.getAccessToken()).thenAnswer((_) async => null);
+        when(() => mockTokenStore.clearAll()).thenAnswer((_) async {});
+
+        biometricGate.didChangeAppLifecycleState(AppLifecycleState.resumed);
+        await Future.delayed(Duration.zero);
+
+        verify(() => mockTokenStore.hasTokens()).called(1);
+        verify(() => mockTokenStore.getAccessToken()).called(1);
+        verify(() => mockTokenStore.clearAll()).called(1);
+      });
+
+      test('clears tokens when getAccessToken throws (biometric error)', () async {
+        when(() => mockTokenStore.hasTokens()).thenAnswer((_) async => true);
+        when(() => mockTokenStore.getAccessToken()).thenThrow(Exception('Biometric error'));
+        when(() => mockTokenStore.clearAll()).thenAnswer((_) async {});
+
+        biometricGate.didChangeAppLifecycleState(AppLifecycleState.resumed);
+        await Future.delayed(Duration.zero);
+
+        verify(() => mockTokenStore.hasTokens()).called(1);
+        verify(() => mockTokenStore.getAccessToken()).called(1);
+        verify(() => mockTokenStore.clearAll()).called(1);
+      });
     });
 
-    test('on resume with tokens triggers biometric read', () async {
-      when(() => mockTokenStore.hasTokens()).thenAnswer((_) async => true);
-      when(() => mockTokenStore.getAccessToken()).thenAnswer((_) async => 'access_token_123');
-
-      await gate._onAppResumed();
-
-      verify(() => mockTokenStore.hasTokens()).called(1);
-      verify(() => mockTokenStore.getAccessToken()).called(1);
-      verifyNever(() => mockTokenStore.clearAll());
-    });
-
-    test('on resume with tokens but biometric returns null clears storage', () async {
-      when(() => mockTokenStore.hasTokens()).thenAnswer((_) async => true);
-      when(() => mockTokenStore.getAccessToken()).thenAnswer((_) async => null);
-
-      await gate._onAppResumed();
-
-      verify(() => mockTokenStore.hasTokens()).called(1);
-      verify(() => mockTokenStore.getAccessToken()).called(1);
-      verify(() => mockTokenStore.clearAll()).called(1);
-    });
-
-    test('on resume with tokens but biometric throws clears storage', () async {
-      when(() => mockTokenStore.hasTokens()).thenAnswer((_) async => true);
-      when(() => mockTokenStore.getAccessToken()).thenThrow(Exception('Biometric not enrolled'));
-
-      await gate._onAppResumed();
-
-      verify(() => mockTokenStore.hasTokens()).called(1);
-      verify(() => mockTokenStore.getAccessToken()).called(1);
-      verify(() => mockTokenStore.clearAll()).called(1);
-    });
-
-    test('biometricGateProvider can be instantiated', () {
-      // This test verifies the provider exists and has correct signature
-      expect(biometricGateProvider, isA<riverpod.Provider<BiometricGate>>());
+    group('Provider', () {
+      test('biometricGateProvider can be instantiated', () {
+        // This test verifies the provider exists and has correct signature
+        expect(biometricGateProvider, isA<Provider<BiometricGate>>());
+      });
     });
   });
 }

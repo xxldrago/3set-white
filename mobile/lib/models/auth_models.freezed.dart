@@ -16,7 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$TokenPair {
 
- String get accessToken; String get refreshToken;@JsonKey(name: 'expires_in') int get expiresIn;@JsonKey(name: 'user_id') int? get userId;
+ String get accessToken; String get refreshToken;@JsonKey(name: 'expiresIn') int get expiresIn;@JsonKey(name: 'userId') int? get userId;
 /// Create a copy of TokenPair
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -54,7 +54,7 @@ abstract mixin class $TokenPairCopyWith<$Res>  {
   factory $TokenPairCopyWith(TokenPair value, $Res Function(TokenPair) _then) = _$TokenPairCopyWithImpl;
 @useResult
 $Res call({
- String accessToken, String refreshToken,@JsonKey(name: 'expires_in') int expiresIn,@JsonKey(name: 'user_id') int? userId
+ String accessToken, String refreshToken,@JsonKey(name: 'expiresIn') int expiresIn,@JsonKey(name: 'userId') int? userId
 });
 
 
@@ -162,7 +162,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String accessToken,  String refreshToken, @JsonKey(name: 'expires_in')  int expiresIn, @JsonKey(name: 'user_id')  int? userId)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String accessToken,  String refreshToken, @JsonKey(name: 'expiresIn')  int expiresIn, @JsonKey(name: 'userId')  int? userId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TokenPair() when $default != null:
 return $default(_that.accessToken,_that.refreshToken,_that.expiresIn,_that.userId);case _:
@@ -183,7 +183,7 @@ return $default(_that.accessToken,_that.refreshToken,_that.expiresIn,_that.userI
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String accessToken,  String refreshToken, @JsonKey(name: 'expires_in')  int expiresIn, @JsonKey(name: 'user_id')  int? userId)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String accessToken,  String refreshToken, @JsonKey(name: 'expiresIn')  int expiresIn, @JsonKey(name: 'userId')  int? userId)  $default,) {final _that = this;
 switch (_that) {
 case _TokenPair():
 return $default(_that.accessToken,_that.refreshToken,_that.expiresIn,_that.userId);case _:
@@ -203,7 +203,7 @@ return $default(_that.accessToken,_that.refreshToken,_that.expiresIn,_that.userI
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String accessToken,  String refreshToken, @JsonKey(name: 'expires_in')  int expiresIn, @JsonKey(name: 'user_id')  int? userId)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String accessToken,  String refreshToken, @JsonKey(name: 'expiresIn')  int expiresIn, @JsonKey(name: 'userId')  int? userId)?  $default,) {final _that = this;
 switch (_that) {
 case _TokenPair() when $default != null:
 return $default(_that.accessToken,_that.refreshToken,_that.expiresIn,_that.userId);case _:
@@ -218,13 +218,13 @@ return $default(_that.accessToken,_that.refreshToken,_that.expiresIn,_that.userI
 @JsonSerializable()
 
 class _TokenPair implements TokenPair {
-  const _TokenPair({required this.accessToken, required this.refreshToken, @JsonKey(name: 'expires_in') required this.expiresIn, @JsonKey(name: 'user_id') this.userId});
+  const _TokenPair({required this.accessToken, required this.refreshToken, @JsonKey(name: 'expiresIn') required this.expiresIn, @JsonKey(name: 'userId') this.userId});
   factory _TokenPair.fromJson(Map<String, dynamic> json) => _$TokenPairFromJson(json);
 
 @override final  String accessToken;
 @override final  String refreshToken;
-@override@JsonKey(name: 'expires_in') final  int expiresIn;
-@override@JsonKey(name: 'user_id') final  int? userId;
+@override@JsonKey(name: 'expiresIn') final  int expiresIn;
+@override@JsonKey(name: 'userId') final  int? userId;
 
 /// Create a copy of TokenPair
 /// with the given fields replaced by the non-null parameter values.
@@ -261,7 +261,7 @@ abstract mixin class _$TokenPairCopyWith<$Res> implements $TokenPairCopyWith<$Re
   factory _$TokenPairCopyWith(_TokenPair value, $Res Function(_TokenPair) _then) = __$TokenPairCopyWithImpl;
 @override @useResult
 $Res call({
- String accessToken, String refreshToken,@JsonKey(name: 'expires_in') int expiresIn,@JsonKey(name: 'user_id') int? userId
+ String accessToken, String refreshToken,@JsonKey(name: 'expiresIn') int expiresIn,@JsonKey(name: 'userId') int? userId
 });
 
 
@@ -1123,7 +1123,7 @@ as String,
 /// @nodoc
 mixin _$AuthResponse {
 
- String get accessToken; String get refreshToken;@JsonKey(name: 'expires_in') int get expiresIn;
+ String get accessToken; String get refreshToken;@JsonKey(name: 'expiresIn') int get expiresIn;
 /// Create a copy of AuthResponse
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1161,7 +1161,7 @@ abstract mixin class $AuthResponseCopyWith<$Res>  {
   factory $AuthResponseCopyWith(AuthResponse value, $Res Function(AuthResponse) _then) = _$AuthResponseCopyWithImpl;
 @useResult
 $Res call({
- String accessToken, String refreshToken,@JsonKey(name: 'expires_in') int expiresIn
+ String accessToken, String refreshToken,@JsonKey(name: 'expiresIn') int expiresIn
 });
 
 
@@ -1268,7 +1268,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String accessToken,  String refreshToken, @JsonKey(name: 'expires_in')  int expiresIn)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String accessToken,  String refreshToken, @JsonKey(name: 'expiresIn')  int expiresIn)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AuthResponse() when $default != null:
 return $default(_that.accessToken,_that.refreshToken,_that.expiresIn);case _:
@@ -1289,7 +1289,7 @@ return $default(_that.accessToken,_that.refreshToken,_that.expiresIn);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String accessToken,  String refreshToken, @JsonKey(name: 'expires_in')  int expiresIn)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String accessToken,  String refreshToken, @JsonKey(name: 'expiresIn')  int expiresIn)  $default,) {final _that = this;
 switch (_that) {
 case _AuthResponse():
 return $default(_that.accessToken,_that.refreshToken,_that.expiresIn);case _:
@@ -1309,7 +1309,7 @@ return $default(_that.accessToken,_that.refreshToken,_that.expiresIn);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String accessToken,  String refreshToken, @JsonKey(name: 'expires_in')  int expiresIn)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String accessToken,  String refreshToken, @JsonKey(name: 'expiresIn')  int expiresIn)?  $default,) {final _that = this;
 switch (_that) {
 case _AuthResponse() when $default != null:
 return $default(_that.accessToken,_that.refreshToken,_that.expiresIn);case _:
@@ -1324,12 +1324,12 @@ return $default(_that.accessToken,_that.refreshToken,_that.expiresIn);case _:
 @JsonSerializable()
 
 class _AuthResponse implements AuthResponse {
-  const _AuthResponse({required this.accessToken, required this.refreshToken, @JsonKey(name: 'expires_in') required this.expiresIn});
+  const _AuthResponse({required this.accessToken, required this.refreshToken, @JsonKey(name: 'expiresIn') required this.expiresIn});
   factory _AuthResponse.fromJson(Map<String, dynamic> json) => _$AuthResponseFromJson(json);
 
 @override final  String accessToken;
 @override final  String refreshToken;
-@override@JsonKey(name: 'expires_in') final  int expiresIn;
+@override@JsonKey(name: 'expiresIn') final  int expiresIn;
 
 /// Create a copy of AuthResponse
 /// with the given fields replaced by the non-null parameter values.
@@ -1366,7 +1366,7 @@ abstract mixin class _$AuthResponseCopyWith<$Res> implements $AuthResponseCopyWi
   factory _$AuthResponseCopyWith(_AuthResponse value, $Res Function(_AuthResponse) _then) = __$AuthResponseCopyWithImpl;
 @override @useResult
 $Res call({
- String accessToken, String refreshToken,@JsonKey(name: 'expires_in') int expiresIn
+ String accessToken, String refreshToken,@JsonKey(name: 'expiresIn') int expiresIn
 });
 
 
@@ -1399,7 +1399,7 @@ as int,
 /// @nodoc
 mixin _$TelegramNonceResponse {
 
- String get nonce;@JsonKey(name: 'expires_in') int get expiresIn;
+ String get nonce;@JsonKey(name: 'expiresIn') int get expiresIn;
 /// Create a copy of TelegramNonceResponse
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1437,7 +1437,7 @@ abstract mixin class $TelegramNonceResponseCopyWith<$Res>  {
   factory $TelegramNonceResponseCopyWith(TelegramNonceResponse value, $Res Function(TelegramNonceResponse) _then) = _$TelegramNonceResponseCopyWithImpl;
 @useResult
 $Res call({
- String nonce,@JsonKey(name: 'expires_in') int expiresIn
+ String nonce,@JsonKey(name: 'expiresIn') int expiresIn
 });
 
 
@@ -1543,7 +1543,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String nonce, @JsonKey(name: 'expires_in')  int expiresIn)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String nonce, @JsonKey(name: 'expiresIn')  int expiresIn)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TelegramNonceResponse() when $default != null:
 return $default(_that.nonce,_that.expiresIn);case _:
@@ -1564,7 +1564,7 @@ return $default(_that.nonce,_that.expiresIn);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String nonce, @JsonKey(name: 'expires_in')  int expiresIn)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String nonce, @JsonKey(name: 'expiresIn')  int expiresIn)  $default,) {final _that = this;
 switch (_that) {
 case _TelegramNonceResponse():
 return $default(_that.nonce,_that.expiresIn);case _:
@@ -1584,7 +1584,7 @@ return $default(_that.nonce,_that.expiresIn);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String nonce, @JsonKey(name: 'expires_in')  int expiresIn)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String nonce, @JsonKey(name: 'expiresIn')  int expiresIn)?  $default,) {final _that = this;
 switch (_that) {
 case _TelegramNonceResponse() when $default != null:
 return $default(_that.nonce,_that.expiresIn);case _:
@@ -1599,11 +1599,11 @@ return $default(_that.nonce,_that.expiresIn);case _:
 @JsonSerializable()
 
 class _TelegramNonceResponse implements TelegramNonceResponse {
-  const _TelegramNonceResponse({required this.nonce, @JsonKey(name: 'expires_in') required this.expiresIn});
+  const _TelegramNonceResponse({required this.nonce, @JsonKey(name: 'expiresIn') required this.expiresIn});
   factory _TelegramNonceResponse.fromJson(Map<String, dynamic> json) => _$TelegramNonceResponseFromJson(json);
 
 @override final  String nonce;
-@override@JsonKey(name: 'expires_in') final  int expiresIn;
+@override@JsonKey(name: 'expiresIn') final  int expiresIn;
 
 /// Create a copy of TelegramNonceResponse
 /// with the given fields replaced by the non-null parameter values.
@@ -1640,7 +1640,7 @@ abstract mixin class _$TelegramNonceResponseCopyWith<$Res> implements $TelegramN
   factory _$TelegramNonceResponseCopyWith(_TelegramNonceResponse value, $Res Function(_TelegramNonceResponse) _then) = __$TelegramNonceResponseCopyWithImpl;
 @override @useResult
 $Res call({
- String nonce,@JsonKey(name: 'expires_in') int expiresIn
+ String nonce,@JsonKey(name: 'expiresIn') int expiresIn
 });
 
 

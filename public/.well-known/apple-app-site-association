@@ -3,7 +3,7 @@
     "apps": [],
     "details": [
       {
-        "appID": "TEAM_ID_PLACEHOLDER.com.3set.mobile",
+        "appID": "TEAMID.com.3set.mobile",
         "paths": ["*"]
       }
     ]

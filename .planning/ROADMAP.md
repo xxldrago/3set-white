@@ -58,6 +58,7 @@ Phases 12-16 of milestone v1.2.
 | 14. Promo/referral quality & fraud: воронка click→register→pay по кодам/партнёрам, ROI скидки, Partner ROI с выплатами, fraud-сигналы | 1/1 | Complete    | 2026-11-17 |
 | 15. Save-list истекающих ключей с push T-7/T-3/T-1 и upsell-radar по тяжёлым пользователям на низком тарифе | 1/1 | Complete    | 2026-11-17 |
 | 16. CSV-экспорт отчётов и metric dictionary (страница с определениями формул) | 1/1 | Complete    | 2026-11-17 |
+| 17. 17 Admin template redesign: полный переверсточа /admin под стилистику шаблона, замена текущих элементов | 0/0 | Not started | - |
 
 ### Phase 13: Alerts: падение оплат, рост failed, всплеск тикетов, runway баланса ниже порога, доставка админам через outbox/Telegram
 
@@ -102,3 +103,13 @@ Plans:
 Plans:
 
 - [ ] TBD (run /gsd-plan-phase 16 to break down)
+
+### Phase 17: 17 Admin template redesign: полный переверсточа /admin под стилистику шаблона, замена текущих элементов
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 16
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 17 to break down)

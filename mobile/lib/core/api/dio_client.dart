@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 import 'package:mobile/core/api/auth_interceptor.dart';
-import 'package:mobile/core/api/endpoints.dart';
 import 'package:mobile/core/storage/secure_storage.dart';
 import 'package:mobile/core/storage/token_store.dart';
 

@@ -10,7 +10,6 @@ Logger createLogger(String className) {
       lineLength: 120,
       colors: true,
       printEmojis: false,
-      printTime: true,
       dateTimeFormat: DateTimeFormat.dateAndTime,
     ),
     filter: ProductionFilter(),

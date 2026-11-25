@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 /// Supports both login and registration variants.
 class AuthForm extends StatefulWidget {
   final bool isLogin;
-  final VoidCallback onSubmit;
+  final Future<void> Function(String email, String password, String? confirmPassword) onSubmit;
   final VoidCallback? onToggleAuthMode;
+  final VoidCallback? onTelegramLogin;
   final String submitLabel;
   final String toggleLabel;
   final bool isLoading;
@@ -16,6 +17,7 @@ class AuthForm extends StatefulWidget {
     required this.isLogin,
     required this.onSubmit,
     this.onToggleAuthMode,
+    this.onTelegramLogin,
     required this.submitLabel,
     required this.toggleLabel,
     this.isLoading = false,
@@ -76,7 +78,7 @@ class _AuthFormState extends State<AuthForm> {
   bool _validateConfirmPassword(String? value) {
     if (!widget.isLogin) {
       if (value == null || value.isEmpty) {
-        _confirmPasswordError = 'Подтвердите пароль';
+        _confirmPasswordError = 'Введите пароль повторно';
         return false;
       }
       if (value != _passwordController.text) {
@@ -97,9 +99,13 @@ class _AuthFormState extends State<AuthForm> {
     return emailValid && passwordValid && confirmValid;
   }
 
-  void _handleSubmit() {
+  Future<void> _handleSubmit() async {
     if (_validateForm()) {
-      widget.onSubmit();
+      await widget.onSubmit(
+        _emailController.text.trim(),
+        _passwordController.text,
+        widget.isLogin ? null : _confirmPasswordController.text,
+      );
     }
   }
 
@@ -236,13 +242,17 @@ class _AuthFormState extends State<AuthForm> {
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  widget.isLogin
-                      ? 'Нет аккаунта? '
-                      : 'Уже есть аккаунт? ',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                Flexible(
+                  child: Text(
+                    widget.isLogin
+                        ? 'Нет аккаунта? '
+                        : 'Уже есть аккаунт? ',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 TextButton(
@@ -256,14 +266,17 @@ class _AuthFormState extends State<AuthForm> {
           // Telegram login button (login only)
           if (widget.isLogin) ...[
             const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: widget.isLoading ? null : widget.onToggleAuthMode,
-              icon: const Icon(Icons.telegram, size: 20),
-              label: const Text('Войти через Telegram'),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 360),
+              child: OutlinedButton.icon(
+                onPressed: widget.isLoading ? null : widget.onTelegramLogin,
+                icon: const Icon(Icons.telegram, size: 20),
+                label: const Text('Войти через Telegram'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile/core/auth/auth_notifier.dart';
 import 'package:mobile/core/auth/auth_state.dart';
 import 'package:mobile/features/auth/providers.dart';
 import 'package:mobile/features/auth/widgets/auth_form.dart';
@@ -16,24 +15,15 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-
-    setState(() {
-      _isLoading = true;
-    });
+  Future<void> _handleLogin(String email, String password, String? _) async {
+    setState(() => _isLoading = true);
 
     try {
       final authNotifier = ref.read(authNotifierProviderForUI);
@@ -41,9 +31,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       if (!mounted) return;
 
-      result.when(
+      result.maybeWhen(
         authenticated: (_, __) {
-          // Success - router redirect will handle navigation
           if (context.mounted) {
             context.go('/');
           }
@@ -51,8 +40,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         error: (message) {
           showErrorToast(context, message);
         },
-        unauthenticated: () {},
-        loading: () {},
+        orElse: () {},
       );
     } catch (e) {
       if (!mounted) return;
@@ -64,31 +52,46 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  void _navigateToRegister() {
-    if (!context.mounted) return;
-    context.go('/register');
+  Future<void> _handleTelegramAuth() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final authNotifier = ref.read(authNotifierProviderForUI);
+      final nonce = await authNotifier.startTelegramAuth();
+
+      if (nonce != null && mounted) {
+        // Navigate to Telegram wait screen with nonce
+        if (context.mounted) {
+          context.go('/telegram-wait', extra: nonce);
+        }
+      } else if (mounted) {
+        final authState = ref.read(authStateProvider);
+        final error = authState.maybeWhen(
+          data: (state) => state.maybeWhen(
+            error: (message) => message,
+            orElse: () => null,
+          ),
+          orElse: () => null,
+        );
+        if (error != null && context.mounted) {
+          showErrorToast(context, error);
+        } else if (context.mounted) {
+          showErrorToast(context, 'Не удалось получить код для входа через Telegram');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        showErrorToast(context, 'Ошибка Telegram входа: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
-  Future<void> _handleTelegramLogin() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    final authNotifier = ref.read(authNotifierProviderForUI);
-    final nonce = await authNotifier.startTelegramAuth();
-
-    if (!mounted) return;
-
-    setState(() => _isLoading = false);
-
-    if (nonce != null) {
-      // Navigate to Telegram wait screen with nonce
-      if (context.mounted) {
-        context.go('/telegram-wait', extra: nonce);
-      }
-    } else {
-      showErrorToast(context, 'Не удалось инициировать вход через Telegram');
-    }
+  void _navigateToRegister() {
+    context.go('/register');
   }
 
   @override
@@ -146,6 +149,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     toggleLabel: 'Зарегистрироваться',
                     onSubmit: _handleLogin,
                     onToggleAuthMode: _navigateToRegister,
+                    onTelegramLogin: _handleTelegramAuth,
                   ),
 
                   const SizedBox(height: 24),

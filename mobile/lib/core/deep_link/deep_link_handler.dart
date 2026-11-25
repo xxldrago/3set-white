@@ -8,7 +8,6 @@ import 'package:logger/logger.dart';
 import 'package:mobile/core/api/dio_client.dart';
 import 'package:mobile/core/api/endpoints.dart';
 import 'package:mobile/core/auth/auth_notifier.dart';
-import 'package:mobile/core/auth/auth_state.dart';
 import 'package:mobile/core/storage/token_store.dart';
 import 'package:mobile/models/auth_models.dart';
 import 'package:mobile/utils/logger.dart';

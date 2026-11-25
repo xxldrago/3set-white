@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile/core/auth/auth_notifier.dart';
 import 'package:mobile/core/auth/auth_state.dart';
 import 'package:mobile/features/auth/providers.dart';
 import 'package:mobile/features/auth/widgets/auth_form.dart';
 import 'package:mobile/features/auth/widgets/error_toast.dart';
 
-/// Registration screen with email/password and confirmation.
+/// Registration screen with email/password.
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
@@ -16,32 +15,15 @@ class RegisterScreen extends ConsumerStatefulWidget {
 }
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleRegister() async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-    final confirmPassword = _confirmPasswordController.text;
-
-    if (password != confirmPassword) {
-      showErrorToast(context, 'Пароли не совпадают');
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
+  Future<void> _handleRegister(String email, String password, String? confirmPassword) async {
+    setState(() => _isLoading = true);
 
     try {
       final authNotifier = ref.read(authNotifierProviderForUI);
@@ -49,9 +31,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
       if (!mounted) return;
 
-      result.when(
+      result.maybeWhen(
         authenticated: (_, __) {
-          // Success - router redirect will handle navigation
           if (context.mounted) {
             context.go('/');
           }
@@ -59,8 +40,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         error: (message) {
           showErrorToast(context, message);
         },
-        unauthenticated: () {},
-        loading: () {},
+        orElse: () {},
       );
     } catch (e) {
       if (!mounted) return;
@@ -73,7 +53,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   void _navigateToLogin() {
-    if (!context.mounted) return;
     context.go('/auth');
   }
 

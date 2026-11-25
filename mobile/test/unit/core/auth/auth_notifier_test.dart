@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:dio/dio.dart';
-import 'package:logger/logger.dart';
 import 'package:mobile/core/api/dio_client.dart';
 import 'package:mobile/core/api/endpoints.dart';
 import 'package:mobile/core/auth/auth_notifier.dart';
@@ -18,43 +17,30 @@ class MockDio extends Mock implements Dio {}
 
 class MockResponse extends Mock implements Response {}
 
-class MockLogger extends Mock implements Logger {}
-
 void main() {
-  // Register fallback values for all model types
   setUpAll(() {
-    registerFallbackValue(const TokenPair(
+    registerFallbackValue(TokenPair(
       accessToken: 'test_access',
       refreshToken: 'test_refresh',
       expiresIn: 900,
       userId: 1,
     ));
-    registerFallbackValue(const User(id: 1, telegramId: null, email: 'test@example.com'));
-    registerFallbackValue(AuthState.loading());
-    registerFallbackValue(const AuthState.unauthenticated());
-    registerFallbackValue(const AuthState.error('test'));
+    registerFallbackValue(User(id: 1, telegramId: null, email: 'test@example.com'));
   });
 
   group('AuthNotifier', () {
     late MockDioClient mockDioClient;
     late MockTokenStore mockTokenStore;
     late MockDio mockDio;
-    late MockLogger mockLogger;
     late ProviderContainer container;
 
     setUp(() {
       mockDioClient = MockDioClient();
       mockTokenStore = MockTokenStore();
       mockDio = MockDio();
-      mockLogger = MockLogger();
 
       when(() => mockDioClient.dio).thenReturn(mockDio);
       when(() => mockDioClient.tokenStore).thenReturn(mockTokenStore);
-
-      when(() => mockLogger.i(any())).thenReturn(null);
-      when(() => mockLogger.d(any())).thenReturn(null);
-      when(() => mockLogger.w(any())).thenReturn(null);
-      when(() => mockLogger.e(any())).thenReturn(null);
 
       // Default stubs for token store methods called during build
       when(() => mockTokenStore.hasTokens()).thenAnswer((_) async => false);
@@ -80,8 +66,9 @@ void main() {
       test('returns unauthenticated when no tokens exist', () async {
         when(() => mockTokenStore.hasTokens()).thenAnswer((_) async => false);
 
-        final notifier = container.read(authNotifierProvider.notifier);
-        // Wait for build to complete
+        container.read(authNotifierProvider.notifier);
+        // Wait for build to complete and _restoreSession to finish
+        await Future.delayed(const Duration(milliseconds: 10));
         await container.pump();
 
         final state = container.read(authNotifierProvider);
@@ -95,24 +82,55 @@ void main() {
         );
       });
 
-      // Note: Testing the authenticated session restore path is difficult with
-      // AsyncNotifier because _restoreSession runs asynchronously after build()
-      // returns loading state. The provider may be disposed before the async
-      // operation completes in test environment. This is tested via integration
-      // tests instead.
+      test('returns authenticated when tokens valid and subscription succeeds', () async {
+        when(() => mockTokenStore.hasTokens()).thenAnswer((_) async => true);
+        when(() => mockTokenStore.getAccessTokenNoBiometric()).thenAnswer((_) async => 'access_123');
+        when(() => mockTokenStore.getRefreshToken()).thenAnswer((_) async => 'refresh_456');
+        when(() => mockTokenStore.getUserId()).thenAnswer((_) async => 42);
+
+        final response = MockResponse();
+        when(() => response.statusCode).thenReturn(200);
+        when(() => response.data).thenReturn({
+          'user': {'id': 42, 'telegram_id': null, 'email': 'test@example.com'},
+        });
+
+        when(() => mockDio.get(Endpoints.subscription)).thenAnswer((_) async => response);
+
+        container.read(authNotifierProvider.notifier);
+        // Wait for _restoreSession to complete
+        await Future.delayed(const Duration(milliseconds: 10));
+        await container.pump();
+
+        final state = container.read(authNotifierProvider);
+        expect(
+          state.value,
+          isA<AuthState>().having(
+            (s) => s.maybeWhen(authenticated: (_, _) => true, orElse: () => false),
+            'authenticated',
+            true,
+          ),
+        );
+      });
     });
 
     group('login', () {
       test('returns authenticated on successful login', () async {
-        // First call to hasTokens in build() returns false
-        when(() => mockTokenStore.hasTokens()).thenAnswer((_) async => false);
+        // Sequence of hasTokens calls:
+        // 1. build() - first call returns false
+        // 2. After login, _restoreSession - second call returns true
+        var hasTokensCallCount = 0;
+        when(() => mockTokenStore.hasTokens()).thenAnswer((_) async {
+          hasTokensCallCount++;
+          if (hasTokensCallCount == 1) return false; // build() initial call
+          return true; // _restoreSession after login
+        });
 
         final loginResponse = MockResponse();
         when(() => loginResponse.statusCode).thenReturn(200);
         when(() => loginResponse.data).thenReturn({
           'accessToken': 'access_123',
           'refreshToken': 'refresh_456',
-          'expires_in': 900,
+          'expiresIn': 900,
           'user_id': 42,
         });
 
@@ -121,8 +139,7 @@ void main() {
 
         when(() => mockTokenStore.saveTokenPair(any())).thenAnswer((_) async {});
 
-        // After login, _restoreSession is called - stub for that
-        when(() => mockTokenStore.hasTokens()).thenAnswer((_) async => true);
+        // After login, _restoreSession is called
         when(() => mockTokenStore.getAccessTokenNoBiometric()).thenAnswer((_) async => 'access_123');
         when(() => mockTokenStore.getRefreshToken()).thenAnswer((_) async => 'refresh_456');
         when(() => mockTokenStore.getUserId()).thenAnswer((_) async => 42);
@@ -136,6 +153,9 @@ void main() {
         when(() => mockDio.get(Endpoints.subscription)).thenAnswer((_) async => subResponse);
 
         final notifier = container.read(authNotifierProvider.notifier);
+        // Wait for initial build() _restoreSession to complete
+        await Future.delayed(const Duration(milliseconds: 10));
+        
         final result = await notifier.login('test@example.com', 'password123');
 
         expect(
@@ -203,14 +223,22 @@ void main() {
 
     group('register', () {
       test('returns authenticated on successful registration', () async {
-        when(() => mockTokenStore.hasTokens()).thenAnswer((_) async => false);
+        // Sequence of hasTokens calls:
+        // 1. build() - first call returns false
+        // 2. After register, _restoreSession - second call returns true
+        var hasTokensCallCount = 0;
+        when(() => mockTokenStore.hasTokens()).thenAnswer((_) async {
+          hasTokensCallCount++;
+          if (hasTokensCallCount == 1) return false; // build() initial call
+          return true; // _restoreSession after register
+        });
 
         final registerResponse = MockResponse();
         when(() => registerResponse.statusCode).thenReturn(200);
         when(() => registerResponse.data).thenReturn({
           'accessToken': 'access_123',
           'refreshToken': 'refresh_456',
-          'expires_in': 900,
+          'expiresIn': 900,
           'user_id': 42,
         });
 
@@ -220,7 +248,6 @@ void main() {
         when(() => mockTokenStore.saveTokenPair(any())).thenAnswer((_) async {});
 
         // After register, _restoreSession is called
-        when(() => mockTokenStore.hasTokens()).thenAnswer((_) async => true);
         when(() => mockTokenStore.getAccessTokenNoBiometric()).thenAnswer((_) async => 'access_123');
         when(() => mockTokenStore.getRefreshToken()).thenAnswer((_) async => 'refresh_456');
         when(() => mockTokenStore.getUserId()).thenAnswer((_) async => 42);
@@ -234,6 +261,9 @@ void main() {
         when(() => mockDio.get(Endpoints.subscription)).thenAnswer((_) async => subResponse);
 
         final notifier = container.read(authNotifierProvider.notifier);
+        // Wait for initial build() _restoreSession to complete
+        await Future.delayed(const Duration(milliseconds: 10));
+        
         final result = await notifier.register('new@example.com', 'password123');
 
         expect(
@@ -279,6 +309,7 @@ void main() {
         when(() => mockTokenStore.clearAll()).thenAnswer((_) async {});
 
         final notifier = container.read(authNotifierProvider.notifier);
+        await Future.delayed(const Duration(milliseconds: 10));
         await container.pump();
 
         await notifier.logout();
@@ -302,11 +333,12 @@ void main() {
 
         final nonceResponse = MockResponse();
         when(() => nonceResponse.statusCode).thenReturn(200);
-        when(() => nonceResponse.data).thenReturn({'nonce': 'nonce_abc123', 'expires_in': 300});
+        when(() => nonceResponse.data).thenReturn({'nonce': 'nonce_abc123'});
 
         when(() => mockDio.post(Endpoints.telegramNonce)).thenAnswer((_) async => nonceResponse);
 
         final notifier = container.read(authNotifierProvider.notifier);
+        await Future.delayed(const Duration(milliseconds: 10));
         await container.pump();
 
         final nonce = await notifier.startTelegramAuth();
@@ -322,10 +354,10 @@ void main() {
           error: 'Network error',
         );
 
-        when(() => mockDio.post(Endpoints.telegramNonce, data: any(named: 'data'), options: any(named: 'options'), queryParameters: any(named: 'queryParameters')))
-            .thenThrow(dioError);
+        when(() => mockDio.post(Endpoints.telegramNonce)).thenThrow(dioError);
 
         final notifier = container.read(authNotifierProvider.notifier);
+        await Future.delayed(const Duration(milliseconds: 10));
         await container.pump();
 
         final nonce = await notifier.startTelegramAuth();

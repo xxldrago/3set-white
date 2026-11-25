@@ -1,20 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:mobile/core/auth/auth_notifier.dart';
 import 'package:mobile/core/auth/auth_state.dart';
-import 'package:mobile/core/storage/token_store.dart';
-import 'package:mobile/core/api/dio_client.dart';
-import 'package:mobile/core/deep_link/deep_link_handler.dart';
-import 'package:mobile/core/biometric/biometric_gate.dart';
-import 'package:mobile/core/connectivity/connectivity_service.dart';
 import 'package:mobile/models/auth_models.dart';
 
 /// Core providers re-exported for convenience
+/// This allows features to depend on a single provider file.
 export 'package:mobile/core/auth/auth_notifier.dart' show
     dioClientProvider,
-    authNotifierProvider,
-    tokenStoreProvider,
-    AuthNotifier;
+    authNotifierProvider;
+
+export 'package:mobile/core/storage/token_store.dart' show
+    tokenStoreProvider;
 
 export 'package:mobile/core/deep_link/deep_link_handler.dart' show
     deepLinkHandlerProvider;
@@ -24,9 +20,6 @@ export 'package:mobile/core/biometric/biometric_gate.dart' show
 
 export 'package:mobile/core/connectivity/connectivity_service.dart' show
     connectivityServiceProvider;
-
-/// Re-exports core providers for feature modules.
-/// This allows features to depend on a single provider file.
 
 /// Provider for the current authentication state.
 /// Watches the AuthNotifier and exposes the AsyncValue<AuthState>.

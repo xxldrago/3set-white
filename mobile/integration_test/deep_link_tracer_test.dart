@@ -6,9 +6,7 @@ import 'package:mobile/core/deep_link/deep_link_handler.dart';
 import 'package:mobile/core/auth/auth_notifier.dart';
 import 'package:mobile/core/storage/token_store.dart';
 import 'package:mobile/core/api/dio_client.dart';
-import 'package:mobile/models/auth_models.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mocktail/mocktail.dart';
 
 /// Mock classes for testing
@@ -27,9 +25,9 @@ void main() {
       app.main();
       await tester.pumpAndSettle();
 
-      // Verify we're on the login screen (/auth)
-      expect(find.text('Login'), findsOneWidget);
-      expect(find.text('Login Screen'), findsOneWidget);
+      // Verify we're on the login screen (/auth) - Russian UI
+      expect(find.text('Вход'), findsOneWidget);
+      expect(find.text('Добро пожаловать'), findsOneWidget);
     });
 
     // Test 2: Integration test - deep link flow
@@ -38,7 +36,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify we're on the login screen initially
-      expect(find.text('Login'), findsOneWidget);
+      expect(find.text('Вход'), findsOneWidget);
 
       // Note: Full deep link simulation requires Platform channels and a real device/emulator.
       // This test verifies the integration test infrastructure works and the app launches correctly.

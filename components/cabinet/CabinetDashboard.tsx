@@ -12,7 +12,10 @@ import {
   KeyRound,
   LayoutDashboard,
   LifeBuoy,
+  Mail,
   Monitor,
+  RotateCcw,
+  Send,
   ShieldCheck,
   Smartphone,
   X,
@@ -143,6 +146,12 @@ export default function CabinetDashboard({
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
   const [trialBusy, setTrialBusy] = useState(false);
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [tgState, setTgState] = useState<'idle' | 'requesting' | 'waiting' | 'expired' | 'error'>('idle');
+  const [tgUrl, setTgUrl] = useState<string | null>(null);
+  const tgPollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -153,6 +162,14 @@ export default function CabinetDashboard({
       pingsRef.current = Array.from({ length: 16 }, () => 18 + Math.round(Math.random() * 22));
     }
   }, []);
+
+  // Stop any in-flight Telegram link polling when the page unmounts.
+  useEffect(
+    () => () => {
+      if (tgPollRef.current !== null) clearTimeout(tgPollRef.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     const now = new Date();
@@ -357,6 +374,105 @@ export default function CabinetDashboard({
     }
   };
 
+  /* ---------- trial verification (same page) ---------- */
+  function stopTgPoll() {
+    if (tgPollRef.current !== null) {
+      clearTimeout(tgPollRef.current);
+      tgPollRef.current = null;
+    }
+  }
+
+  async function consumeTgLink(token: string) {
+    try {
+      const res = await fetch('/api/auth/email/link/consume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+      if (res.ok) {
+        stopTgPoll();
+        window.location.reload();
+        return;
+      }
+      const body = (await res.json().catch(() => ({}))) as { error?: unknown };
+      if (body.error === 'not_ready') {
+        scheduleTgPoll(token);
+        return;
+      }
+      setTgState('error');
+    } catch {
+      setTgState('error');
+    }
+  }
+
+  function scheduleTgPoll(token: string) {
+    stopTgPoll();
+    tgPollRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/auth/email/link/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        });
+        const body = (await res.json().catch(() => ({}))) as { status?: unknown };
+        if (body.status === 'ready') await consumeTgLink(token);
+        else if (body.status === 'pending') scheduleTgPoll(token);
+        else setTgState('expired');
+      } catch {
+        setTgState('error');
+      }
+    }, 2000);
+  }
+
+  async function startTgLink() {
+    if (tgState === 'requesting' || tgState === 'waiting') return;
+    setTgState('requesting');
+    try {
+      const res = await fetch('/api/auth/email/link/request', { method: 'POST' });
+      if (res.status === 429) {
+        const body = (await res.json().catch(() => ({}))) as { retryAfterSec?: unknown };
+        const retry = typeof body.retryAfterSec === 'number' ? body.retryAfterSec : 0;
+        setTgState('idle');
+        toastBox(retry > 0 ? `Слишком много попыток — повторите через ${retry} сек.` : 'Слишком много попыток — повторите позже', true);
+        return;
+      }
+      if (!res.ok) throw new Error('link_request_failed');
+      const body = (await res.json()) as { token?: unknown; botUrl?: unknown };
+      if (typeof body.token !== 'string' || typeof body.botUrl !== 'string') {
+        throw new Error('link_shape_invalid');
+      }
+      setTgUrl(body.botUrl);
+      setTgState('waiting');
+      window.open(body.botUrl, '_blank', 'noopener');
+      scheduleTgPoll(body.token);
+    } catch {
+      setTgState('error');
+      toastBox('Не удалось создать ссылку для привязки Telegram', true);
+    }
+  }
+
+  async function sendVerifyEmail() {
+    if (emailSending || !email) return;
+    setEmailSending(true);
+    try {
+      const res = await fetch('/api/auth/email/verify/request', { method: 'POST' });
+      if (res.ok) {
+        setEmailSent(true);
+        return;
+      }
+      if (res.status === 409) {
+        // Already verified in another tab — refresh to unlock the trial.
+        window.location.reload();
+        return;
+      }
+      toastBox('Не удалось отправить письмо — попробуйте ещё раз', true);
+    } catch {
+      toastBox('Не удалось отправить письмо — попробуйте ещё раз', true);
+    } finally {
+      setEmailSending(false);
+    }
+  }
+
   const doPay = async (body: Record<string, unknown>) => {
     if (paying) return;
     setPaying(true);
@@ -553,7 +669,7 @@ export default function CabinetDashboard({
                   {trialBusy ? 'Получаем ключ…' : 'Получить пробную подписку'}
                 </button>
               ) : (
-                <Link href="/profile" className="btn btn-primary">Подтвердить</Link>
+                <button className="btn btn-primary" onClick={() => setVerifyOpen(true)}>Подтвердить</button>
               )}
             </div>
           )}
@@ -1029,6 +1145,80 @@ export default function CabinetDashboard({
           <button className="btn btn-ghost block" style={{ marginTop: 14 }} onClick={closeModal}>Готово</button>
         </div>
       </div>
+
+      {/* TRIAL VERIFICATION CHOOSER — no navigation to /profile: the user
+          picks email or Telegram right here and the trial unlocks in place. */}
+      {verifyOpen && (
+        <div className="overlay open" role="dialog" aria-modal="true" aria-labelledby="verifyTitle">
+          <div className="modal" style={{ width: 'min(520px,100%)' }}>
+            <div className="modal-head">
+              <h3 id="verifyTitle">Что подтвердить?</h3>
+              <button className="icon-btn" onClick={() => setVerifyOpen(false)} aria-label="Закрыть"><X aria-hidden /></button>
+            </div>
+            <p className="muted" style={{ margin: '0 0 16px', fontSize: 13.5 }}>
+              Пробная подписка на 1 день станет доступна сразу после подтверждения email или привязки Telegram.
+            </p>
+
+            <div className="dev" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                <span className="d-ic"><Mail aria-hidden /></span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <b style={{ display: 'block', fontSize: 14 }}>Email</b>
+                  <span className="dim" style={{ fontSize: 12.5, wordBreak: 'break-all' }}>{email ?? 'Email не указан'}</span>
+                </span>
+              </div>
+              {emailSent ? (
+                <>
+                  <p className="muted" style={{ margin: 0, fontSize: 13 }}>
+                    Письмо отправлено. Перейдите по ссылке в нём и обновите страницу.
+                  </p>
+                  <button className="btn btn-ghost block" onClick={() => window.location.reload()}>Я подтвердил — обновить</button>
+                </>
+              ) : email ? (
+                <button className="btn btn-primary block" disabled={emailSending} onClick={() => void sendVerifyEmail()}>
+                  {emailSending ? 'Отправляем письмо…' : 'Подтвердить email'}
+                </button>
+              ) : (
+                <p className="dim" style={{ margin: 0, fontSize: 12.5 }}>Email не указан — его можно добавить в профиле.</p>
+              )}
+            </div>
+
+            <div className="dev" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                <span className="d-ic"><Send aria-hidden /></span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <b style={{ display: 'block', fontSize: 14 }}>Telegram</b>
+                  <span className="dim" style={{ fontSize: 12.5 }}>Привязка через бота без phone-номера</span>
+                </span>
+              </div>
+              {tgState === 'waiting' && tgUrl ? (
+                <>
+                  <a className="btn btn-primary block" href={tgUrl} target="_blank" rel="noopener noreferrer">
+                    <Send aria-hidden /> Открыть Telegram-бота
+                  </a>
+                  <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>
+                    Нажмите Start в боте и вернитесь сюда — привязка произойдёт автоматически.
+                  </p>
+                </>
+              ) : (
+                <button className="btn btn-primary block" disabled={tgState === 'requesting'} onClick={() => void startTgLink()}>
+                  {tgState === 'requesting' ? 'Готовим ссылку…' : 'Привязать Telegram'}
+                </button>
+              )}
+              {(tgState === 'expired' || tgState === 'error') && (
+                <p className="dim" style={{ margin: 0, fontSize: 12.5 }}>
+                  {tgState === 'expired' ? 'Ссылка истекла (10 минут).' : 'Не удалось привязать — попробуйте ещё раз.'}
+                  <button className="btn btn-ghost xs" style={{ marginLeft: 8 }} onClick={() => void startTgLink()}>
+                    <RotateCcw aria-hidden /> Повторить
+                  </button>
+                </p>
+              )}
+            </div>
+
+            <button className="btn btn-ghost block" style={{ marginTop: 14 }} onClick={() => setVerifyOpen(false)}>Закрыть</button>
+          </div>
+        </div>
+      )}
 
       <div className="toasts" aria-live="polite" />
       <div className="confetti" aria-hidden />

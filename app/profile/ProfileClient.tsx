@@ -762,7 +762,7 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
 
   /* ---------- render ---------- */
   const A = user ? (user.firstName ?? 'Пользователь') : 'Пользователь';
-  const ini = (A.trim()[0] || 'А').toUpperCase();
+  const ini = (Array.from(A.trim())[0] || 'А').toUpperCase();
 
   return (
     <SessionGate>
@@ -814,9 +814,10 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
             </div>
             <div className={`mobile-menu${mobileOpen ? ' open' : ''}`} id="mobileMenu">
               <div className="mm-inner">
-                <Link className="nl" href="#account">Аккаунт</Link>
-                <Link className="nl" href="#security">Безопасность</Link>
-                <Link className="nl" href="#referrals">Реферальная программа</Link>
+                <Link className="nl" href="/" onClick={() => setMobileOpen(false)}>Панель</Link>
+                <Link className="nl" href="/subscription" onClick={() => setMobileOpen(false)}>Мои ключи</Link>
+                <Link className="nl" href="/faq" onClick={() => setMobileOpen(false)}>Инструкции</Link>
+                <Link className="nl" href="/support" onClick={() => setMobileOpen(false)}>Поддержка</Link>
                 <button className="btn btn-danger block" id="logoutMobile" style={{ marginTop: 6 }} onClick={logout}>Выйти из аккаунта</button>
               </div>
             </div>

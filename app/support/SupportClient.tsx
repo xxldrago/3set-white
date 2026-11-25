@@ -375,31 +375,6 @@ export default function SupportClient({ tickets, user, isStaff, unread, now }: P
                 <span className="pill ok"><span className="pdot" />Online</span>
               </div>
             </div>
-
-            <div className="hero-side">
-              <div className="card reveal" style={{ padding: 20 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
-                  <div>
-                    <span className="label">Время ответа за 24 ч</span>
-                    <div style={{ fontSize: 17, fontWeight: 800, marginTop: 4 }}>4 мин <span className="dim" style={{ fontSize: 11.5, fontWeight: 700 }}>среднее</span></div>
-                  </div>
-                  <span className="pill ok"><span className="pdot" />Live</span>
-                </div>
-                <svg className="spark" id="spark" viewBox="0 0 300 44" preserveAspectRatio="none" aria-hidden="true">
-                  <polygon className="spark-area" id="sparkArea" points="" />
-                  <polyline className="spark-line" id="sparkLine" points="" />
-                </svg>
-                <div className="dim mono" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5 }}><span>−24 ч</span><span>сейчас</span></div>
-              </div>
-              <div className="hstat reveal">
-                <span className="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg></span>
-                <div><b>98%</b><span>обращений решены за 1 день</span></div>
-              </div>
-              <div className="hstat reveal">
-                <span className="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 3 7v6c0 5 3.8 8.6 9 10 5.2-1.4 9-5 9-10V7z" /><path d="m9 12 2 2 4-4" /></svg></span>
-                <div><b>Без логов</b><span>не запрашиваем ссылку подписки</span></div>
-              </div>
-            </div>
           </section>
 
           {/* STATS */}

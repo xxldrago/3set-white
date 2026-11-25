@@ -207,7 +207,7 @@ class DeepLinkHandler {
 
     if (error != null) {
       // Set error state via AuthNotifier
-      _authNotifier.state = AsyncData(AuthState.error(error));
+      _authNotifier.setError(error);
     }
   }
 

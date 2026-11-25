@@ -32,18 +32,13 @@
 
 **Goal**: Working Flutter app with auth (email + Telegram) and secure session persistence.
 
-#### Tasks
+#### Plans
 
-| Task | Description | Acceptance |
-|------|-------------|------------|
-| 18.1 | `flutter create` — project structure, Riverpod, `flutter_secure_storage`, `dio`, `connectivity_plus`, `uni_links`, `logger` | `flutter analyze` clean |
-| 18.2 | **Backend: `/api/mobile/auth/*`** — login, register, telegram (nonce exchange), JWT issuance (15m/30d) | Postman: 200 + JWT |
-| 18.3 | **Auth Screen** — email/password (min 8), register, validation, loading, error toasts | UI matches prototype |
-| 18.4 | **Telegram Deep-Link** — `uni_links` handles `t.me/set3vpn_bot?start={nonce}` → polling → JWT | Deep link → app → success |
-| 18.5 | **Secure Storage + Biometric** — JWT in `flutter_secure_storage`, `biometricAuth: true` on resume | App kill → reopen → auto-login |
-| 18.6 | **Session Restore** — on launch, validate JWT via `/api/mobile/subscription` | Valid → main; invalid → auth |
-| 18.7 | **Logout** — clear storage, disconnect VPN, navigate to auth | Clean logout |
-| 18.8 | **Riverpod Providers** — `authProvider`, `subscriptionProvider`, `currentTabProvider` | State management ready |
+| Plan | Title | Wave | Depends On | Description |
+|------|-------|------|------------|-------------|
+| 18-01 | Flutter Project + Auth Infra (Tracer) | 1 | — | `flutter create`, Riverpod, `flutter_secure_storage`, `dio`, `app_links`, `connectivity_plus`, `logger`, `freezed`, `jwt_decoder`. Dio auth interceptor (401→refresh→retry). TokenStore with biometric read. AuthNotifier with session restore. DeepLinkHandler with polling. ConnectivityService. Integration test tracer. |
+| 18-02 | Backend Mobile Auth Routes | 1 | — | `POST /api/mobile/auth/login`, `register`, `refresh`, `telegram/nonce`, `telegram/poll`, `GET /api/mobile/subscription`. `lib/mobile-auth.ts` shared logic. `TelegramLinkToken` Prisma model. `assetlinks.json` + `apple-app-site-association`. Postman test suite. |
+| 18-03 | Auth Screens + Telegram Flow + Providers | 2 | 18-01, 18-02 | Login/Register/TelegramWait screens. AuthForm + ErrorToast widgets. Router redirect on auth state. Logout. Session restore routing. `currentTabProvider`, `subscriptionProvider`. Widget + integration tests. |
 
 #### Deliverables
 - Flutter app runs on Android/iOS simulators

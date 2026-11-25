@@ -123,8 +123,12 @@ export async function bindLinkToken(
   // Same identity re-opening the link: nothing to do.
   if (row.telegramId !== null) {
     return row.telegramId === BigInt(telegramId)
-      ? { kind: "bound", merged: false, userId: row.userId }
+      ? { kind: "bound", merged: false, userId: row.userId ?? 0 }
       : { kind: "invalid" };
+  }
+  // Cabinet flow: userId must be present (issued by authenticated session)
+  if (row.userId === null) {
+    return { kind: "invalid" };
   }
   try {
     const result = await linkAccounts({ userId: row.userId, telegramId });

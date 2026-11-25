@@ -1,0 +1,1367 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2775.1">
+  <style type="text/css">
+    body {background-color: #0c0e0d}
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px 'Helvetica Neue'}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 13.0px 'Helvetica Neue'; min-height: 15.0px}
+  </style>
+</head>
+<body>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html lang="ru"&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1">&lt;meta charset="utf-8"&gt;</p>
+<p class="p1">&lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;</p>
+<p class="p1">&lt;meta name="theme-color" content="#0e1512"&gt;</p>
+<p class="p1">&lt;title&gt;Профиль — 3set VPN&lt;/title&gt;</p>
+<p class="p1">&lt;meta name="description" content="Профиль, безопасность аккаунта и реферальная программа 3set VPN"&gt;</p>
+<p class="p1">&lt;link rel="preconnect" href="https://cdn.jsdelivr.net"&gt;</p>
+<p class="p1">&lt;link href="https://cdn.jsdelivr.net/npm/@fontsource-variable/manrope/index.css" rel="stylesheet"&gt;</p>
+<p class="p1">&lt;link href="https://cdn.jsdelivr.net/npm/@fontsource-variable/unbounded/index.css" rel="stylesheet"&gt;</p>
+<p class="p1">&lt;link href="https://cdn.jsdelivr.net/npm/@fontsource-variable/jetbrains-mono/index.css" rel="stylesheet"&gt;</p>
+<p class="p1">&lt;script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"&gt;&lt;/script&gt;</p>
+<p class="p1">&lt;style&gt;</p>
+<p class="p1">:root{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>--bg:#0e1512; --panel:#131c17; --panel-2:#18231d; --panel-3:#1e2b23;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>--line:rgba(233,255,214,.09); --line-2:rgba(233,255,214,.16);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>--fg:#eef5ea; --muted:#9daba1; --dim:#6b7b70;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>--lime:#b7ff45; --lime-2:#d4ff85; --green:#8fdc2c;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>--amber:#ffd166; --red:#ff7a6b; --cyan:#63d7c8;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>--r-lg:22px; --r-md:16px; --r-sm:12px;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>--shadow:0 24px 60px -30px rgba(0,0,0,.9);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>--glow:0 10px 34px -12px rgba(183,255,69,.55);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>--ease:cubic-bezier(.22,.9,.28,1);</p>
+<p class="p1">}</p>
+<p class="p1">*{box-sizing:border-box}</p>
+<p class="p1">html{scroll-behavior:smooth}</p>
+<p class="p1">body{margin:0;min-height:100vh;background:var(--bg);color:var(--fg);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>font-family:"Manrope Variable",Manrope,system-ui,sans-serif;font-size:15px;line-height:1.55;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>-webkit-font-smoothing:antialiased;overflow-x:hidden}</p>
+<p class="p1">h1,h2,h3{font-family:"Unbounded Variable",Unbounded,Manrope,sans-serif;letter-spacing:-.02em;margin:0}</p>
+<p class="p1">.mono{font-family:"JetBrains Mono Variable","JetBrains Mono",ui-monospace,monospace}</p>
+<p class="p1">button,input,select,textarea{font:inherit;color:inherit}</p>
+<p class="p1">a{color:inherit;text-decoration:none}</p>
+<p class="p1">::selection{background:rgba(183,255,69,.28)}</p>
+<p class="p2"><br></p>
+<p class="p1">/* фон */</p>
+<p class="p1">.bg-fx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}</p>
+<p class="p1">.bg-fx .grid{position:absolute;inset:-2px;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>background-image:linear-gradient(rgba(183,255,69,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(183,255,69,.045) 1px,transparent 1px);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>background-size:64px 64px;mask-image:radial-gradient(120% 80% at 50% 0%,#000 20%,transparent 78%)}</p>
+<p class="p1">.blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5}</p>
+<p class="p1">.blob.b1{width:520px;height:520px;top:-220px;left:-120px;background:radial-gradient(circle,rgba(140,220,44,.30),transparent 65%);animation:float1 22s var(--ease) infinite}</p>
+<p class="p1">.blob.b2{width:600px;height:600px;top:120px;right:-260px;background:radial-gradient(circle,rgba(60,180,120,.20),transparent 65%);animation:float2 28s var(--ease) infinite}</p>
+<p class="p1">.blob.b3{width:460px;height:460px;bottom:-180px;left:32%;background:radial-gradient(circle,rgba(183,255,69,.14),transparent 65%);animation:float1 34s var(--ease) infinite reverse}</p>
+<p class="p1">@keyframes float1{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(40px,50px,0) scale(1.12)}}</p>
+<p class="p1">@keyframes float2{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-50px,40px,0) scale(1.08)}}</p>
+<p class="p1">.wrap{position:relative;z-index:1;display:flex;flex-direction:column;min-height:100vh}</p>
+<p class="p2"><br></p>
+<p class="p1">/* nav */</p>
+<p class="p1">.progress-bar{position:fixed;top:0;left:0;height:2px;width:0;z-index:60;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>background:linear-gradient(90deg,var(--green),var(--lime-2));box-shadow:0 0 14px rgba(183,255,69,.7);transition:width .12s linear}</p>
+<p class="p1">nav.top{position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line);background:rgba(11,17,14,.72);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>backdrop-filter:blur(16px) saturate(140%);transition:background .3s var(--ease)}</p>
+<p class="p1">nav.top .inner{max-width:1200px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:18px;justify-content:space-between}</p>
+<p class="p1">nav.top.scrolled{background:rgba(9,14,11,.92)}</p>
+<p class="p1">nav.top.scrolled .inner{padding-top:8px;padding-bottom:8px;transition:padding .3s var(--ease)}</p>
+<p class="p1">.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px}</p>
+<p class="p1">.brand .mark{width:36px;height:36px;flex:none;filter:drop-shadow(0 4px 12px rgba(183,255,69,.35));transition:transform .5s var(--ease)}</p>
+<p class="p1">.brand:hover .mark{transform:rotate(-8deg) scale(1.06)}</p>
+<p class="p1">.brand em{font-style:normal;color:var(--lime)}</p>
+<p class="p1">.brand .dom{font-size:11px;color:var(--dim);font-weight:500;margin-left:2px}</p>
+<p class="p1">.nav-links{display:flex;align-items:center;gap:4px}</p>
+<p class="p1">.nav-links a.nl{display:flex;align-items:center;gap:7px;padding:9px 13px;border-radius:11px;font-weight:700;font-size:13.5px;color:var(--muted);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>position:relative;border:1px solid transparent;transition:color .25s,background .25s,transform .25s var(--ease)}</p>
+<p class="p1">.nav-links a.nl svg{width:16px;height:16px;opacity:.9}</p>
+<p class="p1">.nav-links a.nl::after{content:"";position:absolute;left:13px;right:13px;bottom:5px;height:2px;border-radius:2px;background:var(--lime);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>transform:scaleX(0);transform-origin:left;transition:transform .3s var(--ease)}</p>
+<p class="p1">.nav-links a.nl:hover{color:var(--fg);background:rgba(183,255,69,.07)}</p>
+<p class="p1">.nav-links a.nl:hover::after{transform:scaleX(1)}</p>
+<p class="p1">.nav-links a.nl.active{color:#101a05;background:linear-gradient(135deg,var(--lime-2),var(--green));box-shadow:var(--glow)}</p>
+<p class="p1">.nav-links a.nl.active::after{display:none}</p>
+<p class="p1">.nav-right{display:flex;align-items:center;gap:10px}</p>
+<p class="p1">.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:13px;padding:0 18px;height:44px;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>font-weight:800;font-size:13.5px;cursor:pointer;white-space:nowrap;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>transition:transform .2s var(--ease),box-shadow .3s,background .25s,border-color .25s,color .25s,opacity .25s}</p>
+<p class="p1">.btn svg{width:17px;height:17px}</p>
+<p class="p1">.btn:active{transform:scale(.975)}</p>
+<p class="p1">.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}</p>
+<p class="p1">.btn-primary{background:linear-gradient(135deg,var(--lime-2),var(--green));color:#101a05;box-shadow:var(--glow)}</p>
+<p class="p1">.btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 16px 40px -14px rgba(183,255,69,.75)}</p>
+<p class="p1">.btn-light{background:#eef5ea;color:#101a05}</p>
+<p class="p1">.btn-light:hover{background:#fff;transform:translateY(-2px)}</p>
+<p class="p1">.btn-ghost{border-color:var(--line-2);background:rgba(255,255,255,.02);color:var(--fg)}</p>
+<p class="p1">.btn-ghost:hover:not(:disabled){border-color:rgba(183,255,69,.45);background:rgba(183,255,69,.09);transform:translateY(-2px)}</p>
+<p class="p1">.btn-quiet{border-color:var(--line);background:transparent;color:var(--muted)}</p>
+<p class="p1">.btn-quiet:hover{color:var(--fg);border-color:var(--line-2);background:rgba(255,255,255,.04)}</p>
+<p class="p1">.btn-danger{border-color:rgba(255,122,107,.35);background:rgba(255,122,107,.1);color:var(--red)}</p>
+<p class="p1">.btn-danger:hover:not(:disabled){background:rgba(255,122,107,.2);transform:translateY(-2px)}</p>
+<p class="p1">.btn.sm{height:38px;padding:0 14px;font-size:12.5px;border-radius:11px}</p>
+<p class="p1">.btn.xs{height:32px;padding:0 11px;font-size:12px;border-radius:10px}</p>
+<p class="p1">.btn.block{width:100%}</p>
+<p class="p1">.avatar-nav{width:42px;height:42px;flex:none;border-radius:50%;display:grid;place-items:center;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>border:2px solid var(--lime);background:radial-gradient(circle at 30% 25%,#2a3a20,#141d18);font-weight:800;font-size:13px;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>cursor:pointer;position:relative;color:var(--lime);box-shadow:0 0 0 4px rgba(183,255,69,.12)}</p>
+<p class="p1">.burger{display:none;width:42px;height:42px;border-radius:12px;border:1px solid var(--line-2);background:rgba(255,255,255,.03);cursor:pointer;align-items:center;justify-content:center}</p>
+<p class="p1">.burger span{display:block;width:17px;height:2px;background:var(--fg);border-radius:2px;position:relative;transition:.3s var(--ease)}</p>
+<p class="p1">.burger span::before,.burger span::after{content:"";position:absolute;left:0;width:17px;height:2px;background:var(--fg);border-radius:2px;transition:.3s var(--ease)}</p>
+<p class="p1">.burger span::before{top:-6px}.burger span::after{top:6px}</p>
+<p class="p1">.burger.open span{background:transparent}</p>
+<p class="p1">.burger.open span::before{top:0;transform:rotate(45deg)}</p>
+<p class="p1">.burger.open span::after{top:0;transform:rotate(-45deg)}</p>
+<p class="p1">.mobile-menu{display:none;overflow:hidden;max-height:0;transition:max-height .45s var(--ease)}</p>
+<p class="p1">.mobile-menu.open{max-height:380px}</p>
+<p class="p1">.mobile-menu .mm-inner{padding:6px 20px 16px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}</p>
+<p class="p1">.mobile-menu a.nl{padding:12px 10px;border-radius:12px;font-weight:700;color:var(--muted)}</p>
+<p class="p1">.mobile-menu a.nl:hover{background:rgba(183,255,69,.08);color:var(--fg)}</p>
+<p class="p2"><br></p>
+<p class="p1">/* layout */</p>
+<p class="p1">main{flex:1;width:100%;max-width:1200px;margin:0 auto;padding:34px 20px 60px;display:flex;flex-direction:column;gap:24px}</p>
+<p class="p1">.card{background:linear-gradient(160deg,rgba(255,255,255,.035),rgba(255,255,255,0) 42%),var(--panel);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>border:1px solid var(--line);border-radius:var(--r-lg);padding:26px;box-shadow:var(--shadow);position:relative;overflow:hidden}</p>
+<p class="p1">.card::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>background:radial-gradient(420px 160px at 88% -10%,rgba(183,255,69,.10),transparent 70%)}</p>
+<p class="p1">.kicker{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--green);font-weight:700}</p>
+<p class="p1">h1.page-title{font-size:clamp(26px,4.2vw,36px);line-height:1.14;font-weight:700}</p>
+<p class="p1">h2.sec-title{font-size:clamp(18px,2.4vw,22px);font-weight:600;line-height:1.3}</p>
+<p class="p1">.muted{color:var(--muted)} .dim{color:var(--dim)}</p>
+<p class="p1">.label{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:700}</p>
+<p class="p1">.pill{display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;font-size:12px;font-weight:800;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>border:1px solid var(--line-2);background:rgba(255,255,255,.03)}</p>
+<p class="p1">.pill .pdot{width:8px;height:8px;border-radius:50%;background:var(--lime);animation:pulseDot 2.2s infinite}</p>
+<p class="p1">@keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(183,255,69,.55)}50%{box-shadow:0 0 0 6px rgba(183,255,69,0)}}</p>
+<p class="p1">.pill.ok{border-color:rgba(183,255,69,.35);background:rgba(183,255,69,.10);color:var(--lime)}</p>
+<p class="p1">.pill.warn{border-color:rgba(255,209,102,.32);background:rgba(255,209,102,.10);color:var(--amber)}</p>
+<p class="p1">.pill.warn .pdot{background:var(--amber)}</p>
+<p class="p1">.pill.info{border-color:rgba(99,215,200,.3);background:rgba(99,215,200,.10);color:var(--cyan)}</p>
+<p class="p1">.pill.info .pdot{background:var(--cyan)}</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- profile hero ---------- */</p>
+<p class="p1">.hero{display:grid;grid-template-columns:1.3fr .7fr;gap:20px;align-items:stretch}</p>
+<p class="p1">.prof{display:flex;gap:22px;align-items:center;flex-wrap:wrap}</p>
+<p class="p1">.av-ring{position:relative;width:104px;height:104px;flex:none;display:grid;place-items:center}</p>
+<p class="p1">.av-ring::before{content:"";position:absolute;inset:-4px;border-radius:50%;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>background:conic-gradient(from 0deg,var(--lime),var(--green),var(--cyan),var(--lime));</p>
+<p class="p1"><span class="Apple-converted-space">  </span>animation:spinRing 7s linear infinite;opacity:.85;filter:blur(.3px)}</p>
+<p class="p1">.av-ring::after{content:"";position:absolute;inset:2px;border-radius:50%;background:#141d18}</p>
+<p class="p1">@keyframes spinRing{to{transform:rotate(360deg)}}</p>
+<p class="p1">.av-ring .ini{position:relative;z-index:2;font-family:"Unbounded Variable",Unbounded,sans-serif;font-size:34px;font-weight:700;color:var(--lime)}</p>
+<p class="p1">.prof-tx{flex:1;min-width:220px}</p>
+<p class="p1">.prof-name{display:flex;align-items:center;gap:10px;flex-wrap:wrap}</p>
+<p class="p1">.prof-name h1{font-size:clamp(22px,3.4vw,30px);font-weight:700}</p>
+<p class="p1">.edit-btn{width:32px;height:32px;border-radius:10px;border:1px solid var(--line-2);background:rgba(255,255,255,.03);color:var(--muted);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>cursor:pointer;display:grid;place-items:center;transition:.25s var(--ease)}</p>
+<p class="p1">.edit-btn svg{width:15px;height:15px}</p>
+<p class="p1">.edit-btn:hover{color:var(--lime);border-color:rgba(183,255,69,.45);background:rgba(183,255,69,.1);transform:translateY(-2px)}</p>
+<p class="p1">.prof-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:9px;font-size:13px;color:var(--muted)}</p>
+<p class="p1">.prof-meta .sep{width:3px;height:3px;border-radius:50%;background:var(--dim)}</p>
+<p class="p1">.prof-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}</p>
+<p class="p1">.sec-card{display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center;text-align:center}</p>
+<p class="p1">.secring{position:relative;width:126px;height:126px;display:grid;place-items:center}</p>
+<p class="p1">.secring svg{position:absolute;inset:0;transform:rotate(-90deg)}</p>
+<p class="p1">.secring circle{fill:none;stroke-width:9;stroke-linecap:round}</p>
+<p class="p1">.secring .tr{stroke:rgba(255,255,255,.07)}</p>
+<p class="p1">.secring .vl{stroke:url(#secGrad);transition:stroke-dashoffset 1.2s var(--ease)}</p>
+<p class="p1">.secring b{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}</p>
+<p class="p1">.secring span{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:800}</p>
+<p class="p1">.checklist{display:flex;flex-direction:column;gap:7px;width:100%;text-align:left}</p>
+<p class="p1">.ck{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:700;color:var(--muted)}</p>
+<p class="p1">.ck i{width:18px;height:18px;flex:none;border-radius:6px;display:grid;place-items:center;border:1.5px solid var(--line-2);color:transparent;transition:.35s var(--ease)}</p>
+<p class="p1">.ck i svg{width:11px;height:11px}</p>
+<p class="p1">.ck.done{color:var(--fg)}</p>
+<p class="p1">.ck.done i{background:var(--lime);border-color:var(--lime);color:#101a05}</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- grid ---------- */</p>
+<p class="p1">.grid2{display:grid;grid-template-columns:1.35fr .65fr;gap:22px;align-items:start}</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- tabs ---------- */</p>
+<p class="p1">.tabs{display:flex;gap:6px;border:1px solid var(--line);border-radius:15px;padding:5px;background:rgba(0,0,0,.22);overflow-x:auto;scrollbar-width:none}</p>
+<p class="p1">.tabs::-webkit-scrollbar{display:none}</p>
+<p class="p1">.tab{flex:1;min-width:max-content;height:42px;padding:0 15px;border-radius:11px;border:none;background:none;cursor:pointer;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>font-size:13px;font-weight:800;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:8px;transition:.28s var(--ease);white-space:nowrap}</p>
+<p class="p1">.tab svg{width:16px;height:16px}</p>
+<p class="p1">.tab:hover{color:var(--fg);background:rgba(255,255,255,.05)}</p>
+<p class="p1">.tab.on{color:#101a05;background:linear-gradient(135deg,var(--lime-2),var(--green));box-shadow:var(--glow)}</p>
+<p class="p1">.panel{display:none;flex-direction:column;gap:20px;animation:panelIn .45s var(--ease) both}</p>
+<p class="p1">.panel.on{display:flex}</p>
+<p class="p1">@keyframes panelIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}</p>
+<p class="p1">.block{border:1px solid var(--line);border-radius:var(--r-md);padding:20px;background:rgba(255,255,255,.018);display:flex;flex-direction:column;gap:14px}</p>
+<p class="p1">.block-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}</p>
+<p class="p1">.block-head h3{font-size:16px;font-weight:600}</p>
+<p class="p1">.block-head p{margin:5px 0 0;font-size:13px;color:var(--muted);max-width:60ch}</p>
+<p class="p2"><br></p>
+<p class="p1">/* rows */</p>
+<p class="p1">.row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;border:1px solid var(--line);border-radius:var(--r-sm);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>background:var(--panel-2);flex-wrap:wrap;transition:.3s var(--ease)}</p>
+<p class="p1">.row:hover{border-color:rgba(183,255,69,.24);background:var(--panel-3)}</p>
+<p class="p1">.row .rt{min-width:0;flex:1}</p>
+<p class="p1">.row .rt b{display:block;font-size:14px;font-weight:700}</p>
+<p class="p1">.row .rt span{font-size:12.5px;color:var(--dim);word-break:break-all}</p>
+<p class="p1">.row .rt .verified{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;color:var(--lime);margin-left:6px}</p>
+<p class="p1">.row .rt .verified svg{width:13px;height:13px}</p>
+<p class="p2"><br></p>
+<p class="p1">/* switch */</p>
+<p class="p1">.switch{position:relative;width:52px;height:30px;flex:none;border-radius:99px;border:1px solid var(--line-2);background:rgba(0,0,0,.35);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>cursor:pointer;transition:.35s var(--ease)}</p>
+<p class="p1">.switch i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--dim);transition:.35s var(--ease)}</p>
+<p class="p1">.switch.on{background:linear-gradient(135deg,var(--lime-2),var(--green));border-color:transparent;box-shadow:0 0 16px -4px rgba(183,255,69,.6)}</p>
+<p class="p1">.switch.on i{left:25px;background:#101a05}</p>
+<p class="p2"><br></p>
+<p class="p1">/* inputs */</p>
+<p class="p1">.field{display:flex;flex-direction:column;gap:7px}</p>
+<p class="p1">.field&gt;label{font-size:13px;color:var(--muted);font-weight:700}</p>
+<p class="p1">.input,.select,.textarea{border-radius:13px;border:1px solid var(--line-2);background:rgba(0,0,0,.25);padding:0 14px;font-size:14px;outline:none;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>transition:.25s var(--ease);width:100%}</p>
+<p class="p1">.input,.select{height:48px}</p>
+<p class="p1">.textarea{padding:12px 14px;min-height:96px;resize:vertical;line-height:1.5}</p>
+<p class="p1">.input::placeholder,.textarea::placeholder{color:var(--dim)}</p>
+<p class="p1">.input:focus,.select:focus,.textarea:focus{border-color:rgba(183,255,69,.55);box-shadow:0 0 0 4px rgba(183,255,69,.10);background:rgba(0,0,0,.35)}</p>
+<p class="p1">.input.err{border-color:rgba(255,122,107,.6);box-shadow:0 0 0 4px rgba(255,122,107,.10)}</p>
+<p class="p1">.input.ok{border-color:rgba(183,255,69,.5)}</p>
+<p class="p1">.select{appearance:none;background-image:url("data:image/svg+xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7b70' stroke-width='2' stroke-linecap='round'&gt;&lt;path d='m6 9 6 6 6-6'/&gt;&lt;/svg&gt;");</p>
+<p class="p1"><span class="Apple-converted-space">  </span>background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:38px}</p>
+<p class="p1">.select option{background:#131c17}</p>
+<p class="p1">.pw-wrap{display:flex;gap:8px;align-items:center}</p>
+<p class="p1">.pw-wrap .input{flex:1;min-width:0;padding-right:44px}</p>
+<p class="p1">.eye{position:absolute;right:8px;width:34px;height:34px;border-radius:10px;border:none;background:none;cursor:pointer;color:var(--dim);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>display:grid;place-items:center;transition:.25s var(--ease)}</p>
+<p class="p1">.eye svg{width:17px;height:17px}</p>
+<p class="p1">.eye:hover{color:var(--lime);background:rgba(183,255,69,.1)}</p>
+<p class="p1">.pw-rel{position:relative;flex:1;min-width:0}</p>
+<p class="p1">.hint{font-size:11.5px;color:var(--dim);font-weight:600}</p>
+<p class="p1">.hint.bad{color:var(--red)}</p>
+<p class="p1">.hint.good{color:var(--lime)}</p>
+<p class="p1">.strength{display:flex;gap:6px;align-items:center;margin-top:9px}</p>
+<p class="p1">.strength .sb{flex:1;height:5px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden}</p>
+<p class="p1">.strength .sb i{display:block;height:100%;width:0;border-radius:99px;background:var(--red);transition:width .4s var(--ease),background .4s}</p>
+<p class="p1">.strength .sl{font-size:11px;font-weight:800;color:var(--dim);min-width:74px;text-align:right}</p>
+<p class="p2"><br></p>
+<p class="p1">/* sessions */</p>
+<p class="p1">.sess{display:flex;align-items:center;gap:13px;padding:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel-2);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>transition:.35s var(--ease);overflow:hidden}</p>
+<p class="p1">.sess:hover{border-color:rgba(183,255,69,.24)}</p>
+<p class="p1">.sess.removing{opacity:0;transform:translateX(26px) scale(.97);max-height:0;padding-top:0;padding-bottom:0;margin-bottom:-10px;border-width:0}</p>
+<p class="p1">.sess .sic{width:40px;height:40px;flex:none;border-radius:12px;display:grid;place-items:center;background:rgba(183,255,69,.12);color:var(--lime);border:1px solid rgba(183,255,69,.2)}</p>
+<p class="p1">.sess .sic svg{width:19px;height:19px}</p>
+<p class="p1">.sess .stx{flex:1;min-width:0}</p>
+<p class="p1">.sess .stx b{display:block;font-size:13.5px}</p>
+<p class="p1">.sess .stx span{font-size:11.5px;color:var(--dim)}</p>
+<p class="p1">.sess .cur{font-size:10.5px;font-weight:800;color:var(--lime);border:1px solid rgba(183,255,69,.3);background:rgba(183,255,69,.1);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>border-radius:99px;padding:3px 9px}</p>
+<p class="p1">.sess-list{display:flex;flex-direction:column;gap:10px}</p>
+<p class="p2"><br></p>
+<p class="p1">/* danger */</p>
+<p class="p1">.danger{border-color:rgba(255,122,107,.26);background:linear-gradient(120deg,rgba(255,122,107,.07),rgba(255,255,255,.01))}</p>
+<p class="p1">.danger .block-head h3{color:var(--red)}</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- referral ---------- */</p>
+<p class="p1">.ref-card{display:flex;flex-direction:column;gap:18px}</p>
+<p class="p1">.gift-head{display:flex;align-items:center;gap:14px}</p>
+<p class="p1">.gift-ic{width:52px;height:52px;flex:none;border-radius:18px;display:grid;place-items:center;background:rgba(183,255,69,.13);color:var(--lime);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>border:1px solid rgba(183,255,69,.22);animation:breathe 4.5s var(--ease) infinite}</p>
+<p class="p1">.gift-ic svg{width:24px;height:24px}</p>
+<p class="p1">@keyframes breathe{0%,100%{box-shadow:0 0 0 0 rgba(183,255,69,.2)}50%{box-shadow:0 0 0 12px rgba(183,255,69,0)}}</p>
+<p class="p1">.link-val{display:flex;align-items:center;gap:10px;min-width:0;flex:1;border:1px dashed var(--line-2);border-radius:12px;padding:11px 13px;background:rgba(0,0,0,.26)}</p>
+<p class="p1">.link-val code{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:"JetBrains Mono Variable",monospace}</p>
+<p class="p1">.ref-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}</p>
+<p class="p1">.rs{border:1px solid var(--line);border-radius:var(--r-sm);padding:14px;background:var(--panel-2);text-align:center;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>transition:transform .35s var(--ease),border-color .35s,background .35s}</p>
+<p class="p1">.rs:hover{transform:translateY(-3px);border-color:rgba(183,255,69,.3);background:var(--panel-3)}</p>
+<p class="p1">.rs b{display:block;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}</p>
+<p class="p1">.rs span{font-size:11px;color:var(--dim);font-weight:700}</p>
+<p class="p1">.bar{height:7px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}</p>
+<p class="p1">.bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),var(--lime));width:0;transition:width 1.2s var(--ease)}</p>
+<p class="p1">.steps{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px}</p>
+<p class="p1">.steps li{display:flex;gap:11px;align-items:flex-start;font-size:13px;color:var(--muted)}</p>
+<p class="p1">.steps li .n{width:23px;height:23px;flex:none;border-radius:8px;display:grid;place-items:center;font-size:11px;font-weight:800;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>background:rgba(183,255,69,.14);color:var(--lime);border:1px solid rgba(183,255,69,.25)}</p>
+<p class="p1">.rate-row{display:flex;gap:8px;flex-wrap:wrap}</p>
+<p class="p1">.rate-row .select{width:auto;min-width:150px;flex:none}</p>
+<p class="p1">.rate-row .input{flex:1;min-width:100px}</p>
+<p class="p1">.inv-empty{display:flex;flex-direction:column;align-items:center;gap:9px;padding:22px 14px;text-align:center;border:1px dashed var(--line-2);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>border-radius:var(--r-sm);background:rgba(255,255,255,.015)}</p>
+<p class="p1">.inv-empty .eic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:rgba(183,255,69,.1);color:var(--lime)}</p>
+<p class="p1">.inv-empty .eic svg{width:21px;height:21px}</p>
+<p class="p1">.share-row{display:flex;gap:8px;flex-wrap:wrap}</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- modal ---------- */</p>
+<p class="p1">.overlay{position:fixed;inset:0;z-index:70;background:rgba(6,10,8,.74);backdrop-filter:blur(7px);display:grid;place-items:center;padding:20px;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>opacity:0;pointer-events:none;transition:opacity .35s var(--ease)}</p>
+<p class="p1">.overlay.open{opacity:1;pointer-events:auto}</p>
+<p class="p1">.modal{width:min(480px,100%);max-height:88vh;overflow:auto;border-radius:var(--r-lg);border:1px solid var(--line-2);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>background:linear-gradient(170deg,#18231d,#111a15);box-shadow:0 40px 90px -30px #000;padding:24px;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>transform:translateY(22px) scale(.96);opacity:0;transition:.45s var(--ease)}</p>
+<p class="p1">.overlay.open .modal{transform:none;opacity:1}</p>
+<p class="p1">.modal-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}</p>
+<p class="p1">.modal-head h3{font-size:18px;font-weight:600;flex:1}</p>
+<p class="p1">.icon-btn{width:38px;height:38px;flex:none;border-radius:11px;border:1px solid var(--line-2);background:rgba(255,255,255,.03);cursor:pointer;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>display:grid;place-items:center;transition:.25s var(--ease)}</p>
+<p class="p1">.icon-btn svg{width:17px;height:17px}</p>
+<p class="p1">.icon-btn:hover{background:rgba(255,122,107,.14);border-color:rgba(255,122,107,.45);color:var(--red);transform:rotate(90deg)}</p>
+<p class="p1">.spinner{width:17px;height:17px;border-radius:50%;border:2px solid rgba(16,26,5,.3);border-top-color:#101a05;animation:spin .7s linear infinite;display:inline-block}</p>
+<p class="p1">@keyframes spin{to{transform:rotate(360deg)}}</p>
+<p class="p1">.shake{animation:shake .4s}</p>
+<p class="p1">@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}</p>
+<p class="p1">.code-row{display:flex;gap:8px;justify-content:center;margin:6px 0 4px}</p>
+<p class="p1">.code-cell{width:50px;height:58px;border-radius:14px;border:1px solid var(--line-2);background:rgba(0,0,0,.3);text-align:center;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>font-size:22px;font-weight:800;outline:none;font-variant-numeric:tabular-nums;transition:.25s var(--ease)}</p>
+<p class="p1">.code-cell:focus{border-color:rgba(183,255,69,.6);box-shadow:0 0 0 4px rgba(183,255,69,.12)}</p>
+<p class="p1">.success{display:none;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:12px 0}</p>
+<p class="p1">.success.show{display:flex;animation:panelIn .5s var(--ease) both}</p>
+<p class="p1">.success .sic{width:62px;height:62px;border-radius:22px;display:grid;place-items:center;background:rgba(183,255,69,.15);color:var(--lime);border:1px solid rgba(183,255,69,.3)}</p>
+<p class="p1">.success .sic svg{width:30px;height:30px}</p>
+<p class="p1">.qr-frame{padding:14px;border-radius:18px;background:#f2f7ee;box-shadow:0 0 0 1px rgba(183,255,69,.35),0 20px 50px -20px rgba(183,255,69,.4);animation:panelIn .5s var(--ease) both}</p>
+<p class="p1">.qr-frame canvas{display:block;width:210px;height:210px;image-rendering:pixelated}</p>
+<p class="p2"><br></p>
+<p class="p1">/* toasts / top */</p>
+<p class="p1">.toasts{position:fixed;z-index:90;right:20px;bottom:20px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}</p>
+<p class="p1">.toast{display:flex;align-items:center;gap:11px;padding:13px 16px;border-radius:14px;min-width:230px;max-width:min(380px,86vw);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>border:1px solid var(--line-2);background:rgba(20,30,24,.95);backdrop-filter:blur(10px);box-shadow:0 20px 44px -20px #000;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>font-size:13.5px;font-weight:700;transform:translateY(16px) scale(.94);opacity:0;transition:.4s var(--ease)}</p>
+<p class="p1">.toast.show{transform:none;opacity:1}</p>
+<p class="p1">.toast .ti{width:26px;height:26px;flex:none;border-radius:8px;display:grid;place-items:center;background:rgba(183,255,69,.16);color:var(--lime)}</p>
+<p class="p1">.toast .ti svg{width:15px;height:15px}</p>
+<p class="p1">.toast.err .ti{background:rgba(255,122,107,.16);color:var(--red)}</p>
+<p class="p1">.to-top{position:fixed;right:20px;bottom:20px;z-index:65;width:46px;height:46px;border-radius:14px;border:1px solid var(--line-2);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>background:rgba(20,30,24,.92);backdrop-filter:blur(10px);color:var(--lime);cursor:pointer;display:grid;place-items:center;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>opacity:0;transform:translateY(14px) scale(.9);pointer-events:none;transition:.35s var(--ease)}</p>
+<p class="p1">.to-top.show{opacity:1;transform:none;pointer-events:auto}</p>
+<p class="p1">.to-top:hover{background:rgba(183,255,69,.16);border-color:rgba(183,255,69,.5);transform:translateY(-3px)}</p>
+<p class="p1">.to-top svg{width:19px;height:19px}</p>
+<p class="p2"><br></p>
+<p class="p1">footer{border-top:1px solid var(--line);background:rgba(9,14,11,.6);position:relative;z-index:1}</p>
+<p class="p1">.f-inner{max-width:1200px;margin:0 auto;padding:26px 20px;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}</p>
+<p class="p1">.f-links{display:flex;gap:8px;flex-wrap:wrap}</p>
+<p class="p1">.f-links a,.f-links button{font-size:13px;color:var(--muted);font-weight:700;padding:8px 12px;border-radius:10px;transition:.25s;background:none;border:none;cursor:pointer}</p>
+<p class="p1">.f-links a:hover,.f-links button:hover{color:var(--lime);background:rgba(183,255,69,.08)}</p>
+<p class="p2"><br></p>
+<p class="p1">.reveal{opacity:0;transform:translateY(22px);transition:opacity .7s var(--ease),transform .7s var(--ease);transition-delay:var(--d,0ms)}</p>
+<p class="p1">.reveal.in{opacity:1;transform:none}</p>
+<p class="p2"><br></p>
+<p class="p1">@media (max-width:1040px){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.hero,.grid2{grid-template-columns:1fr}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.sec-card{flex-direction:row;text-align:left;gap:20px;flex-wrap:wrap}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.checklist{flex:1;min-width:220px}</p>
+<p class="p1">}</p>
+<p class="p1">@media (max-width:860px){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.nav-links,.nav-right .btn-light{display:none}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.burger{display:flex}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.mobile-menu{display:block}</p>
+<p class="p1">}</p>
+<p class="p1">@media (max-width:620px){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>main{padding:24px 14px 44px;gap:20px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.card{padding:20px;border-radius:18px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.prof{gap:16px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.av-ring{width:84px;height:84px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.av-ring .ini{font-size:28px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.ref-stats{grid-template-columns:1fr}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.sec-card{flex-direction:column;text-align:center}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.toasts{left:14px;right:14px;align-items:stretch}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.toast{max-width:none}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.to-top{right:14px;bottom:14px}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.tab{font-size:12px;padding:0 11px}</p>
+<p class="p1">}</p>
+<p class="p1">@media (prefers-reduced-motion:reduce){*{animation-duration:.001s!important;transition-duration:.001s!important}.reveal{opacity:1;transform:none}}</p>
+<p class="p1">&lt;/style&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;div class="bg-fx"&gt;&lt;div class="grid"&gt;&lt;/div&gt;&lt;div class="blob b1"&gt;&lt;/div&gt;&lt;div class="blob b2"&gt;&lt;/div&gt;&lt;div class="blob b3"&gt;&lt;/div&gt;&lt;/div&gt;</p>
+<p class="p1">&lt;div class="progress-bar" id="progressBar"&gt;&lt;/div&gt;</p>
+<p class="p1">&lt;svg width="0" height="0" style="position:absolute" aria-hidden="true"&gt;&lt;defs&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;linearGradient id="secGrad" x1="0" y1="0" x2="1" y2="1"&gt;&lt;stop offset="0%" stop-color="#d4ff85"/&gt;&lt;stop offset="100%" stop-color="#7fd41f"/&gt;&lt;/linearGradient&gt;</p>
+<p class="p1">&lt;/defs&gt;&lt;/svg&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;div class="wrap"&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;nav class="top" id="nav"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="inner"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;a class="brand" href="#" aria-label="3set — на главную"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" fill="#1b2a1c"/&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" stroke="#b7ff45" stroke-opacity=".35"/&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;path d="M11 16l3.5 3.5L21 13" stroke="#b7ff45" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/svg&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;span&gt;3&lt;em&gt;set&lt;/em&gt;&lt;span class="dom mono"&gt;.online&lt;/span&gt;&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/a&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="nav-links"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;a class="nl" href="#referrals"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"&gt;&lt;circle cx="15.5" cy="7.5" r="5.5"/&gt;&lt;path d="m2 21 9.6-9.6M7.5 15.5l2.3 2.3a1 1 0 0 1 0 1.4L7.7 21.3a1 1 0 0 1-1.4 0L4 19"/&gt;&lt;/svg&gt;Мои ключи&lt;/a&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;a class="nl" href="#referrals"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"&gt;&lt;circle cx="12" cy="12" r="10"/&gt;&lt;path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/&gt;&lt;/svg&gt;FAQ&lt;/a&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;a class="nl" href="#referrals"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;circle cx="12" cy="12" r="10"/&gt;&lt;path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24"/&gt;&lt;circle cx="12" cy="12" r="4"/&gt;&lt;/svg&gt;Поддержка&lt;/a&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;a class="nl active" href="#top"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;circle cx="12" cy="8" r="4"/&gt;&lt;path d="M4 21a8 8 0 0 1 16 0"/&gt;&lt;/svg&gt;Профиль&lt;/a&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="nav-right"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;a class="btn btn-light sm" href="#" data-toast="Админ-панель доступна сотрудникам" style="height:40px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/&gt;&lt;path d="m9 12 2 2 4-4"/&gt;&lt;/svg&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Админ-панель</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/a&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;a class="avatar-nav" href="#top" title="xxldragon@mail.ru" aria-label="Профиль" id="navAvatar"&gt;А&lt;/a&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="burger" id="burger" aria-label="Меню" aria-expanded="false"&gt;&lt;span&gt;&lt;/span&gt;&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="mobile-menu" id="mobileMenu"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="mm-inner"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;a class="nl" href="#account"&gt;Аккаунт&lt;/a&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;a class="nl" href="#security"&gt;Безопасность&lt;/a&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;a class="nl" href="#referrals"&gt;Реферальная программа&lt;/a&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="btn btn-danger block" id="logoutMobile" style="margin-top:6px"&gt;Выйти из аккаунта&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
+<p class="p1">&lt;/nav&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;main id="top"&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- HERO --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;section class="hero"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="card reveal"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="prof"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="av-ring"&gt;&lt;span class="ini" id="avIni"&gt;А&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="prof-tx"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="prof-name"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;h1 id="profName"&gt;Алексей&lt;/h1&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;button class="edit-btn" id="editName" title="Изменить имя" aria-label="Изменить имя"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/&gt;&lt;path d="m15 5 4 4"/&gt;&lt;/svg&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="prof-meta"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;span class="mono"&gt;@ao_mikhalkin&lt;/span&gt;&lt;span class="sep"&gt;&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;span id="profEmail"&gt;xxldragon@mail.ru&lt;/span&gt;&lt;span class="sep"&gt;&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;span&gt;ID &lt;span class="mono"&gt;#4&lt;/span&gt;&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="prof-badges"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;span class="pill ok"&gt;&lt;span class="pdot"&gt;&lt;/span&gt;Аккаунт подтверждён&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;span class="pill info"&gt;&lt;span class="pdot"&gt;&lt;/span&gt;Сотрудник&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;span class="pill warn"&gt;&lt;span class="pdot"&gt;&lt;/span&gt;Подписка истекла&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="card sec-card reveal" style="--d:120ms" id="security"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;span class="label"&gt;Уровень защиты&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="secring"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;svg viewBox="0 0 126 126" aria-hidden="true"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;circle class="tr" cx="63" cy="63" r="54"&gt;&lt;/circle&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;circle class="vl" id="secVal" cx="63" cy="63" r="54" stroke-dasharray="339.29" stroke-dashoffset="339.29"&gt;&lt;/circle&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/svg&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div style="position:relative;text-align:center"&gt;&lt;b id="secPct"&gt;0%&lt;/b&gt;&lt;br&gt;&lt;span id="secLbl"&gt;базовый&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="checklist" id="secList"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/section&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- GRID --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="grid2"&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- LEFT: settings --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;section id="account" style="display:flex;flex-direction:column;gap:18px;min-width:0"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="card reveal"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="sec-head" style="display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;span class="kicker"&gt;Настройки&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;h2 class="sec-title" style="margin-top:6px"&gt;Аккаунт и безопасность&lt;/h2&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;span class="pill"&gt;&lt;span class="mono" style="font-size:11px"&gt;user_id: 4&lt;/span&gt;&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="tabs" role="tablist" id="tabs"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;button class="tab on" data-tab="acc" role="tab"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;circle cx="12" cy="8" r="4"/&gt;&lt;path d="M4 21a8 8 0 0 1 16 0"/&gt;&lt;/svg&gt;Аккаунт&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;button class="tab" data-tab="sec" role="tab"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M12 2 3 7v6c0 5 3.8 8.6 9 10 5.2-1.4 9-5 9-10V7z"/&gt;&lt;path d="m9 12 2 2 4-4"/&gt;&lt;/svg&gt;Безопасность&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;button class="tab" data-tab="not" role="tab"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/&gt;&lt;path d="M13.7 21a2 2 0 0 1-3.4 0"/&gt;&lt;/svg&gt;Уведомления&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;button class="tab" data-tab="ses" role="tab"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;rect width="18" height="12" x="3" y="4" rx="2"/&gt;&lt;path d="M2 20h20"/&gt;&lt;/svg&gt;Сессии&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;!-- ACCOUNT --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="panel on" id="p-acc" style="margin-top:20px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="block"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="block-head"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div&gt;&lt;h3&gt;Личные данные&lt;/h3&gt;&lt;p&gt;Имя отображается в кабинете и в письмах поддержки.&lt;/p&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="field"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;label for="nameInput"&gt;Имя&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div style="display:flex;gap:8px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;input class="input" id="nameInput" value="Алексей" maxlength="24" placeholder="Как к вам обращаться"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;button class="btn btn-ghost" id="saveName" style="flex:none"&gt;Сохранить&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;span class="hint" id="nameHint"&gt;Минимум 2 символа, без цифр и спецсимволов.&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="block"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="block-head"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div&gt;&lt;h3&gt;Способы входа&lt;/h3&gt;&lt;p&gt;Email используется для восстановления доступа, Telegram — для уведомлений и входа без пароля.&lt;/p&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="row"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div class="rt"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;b&gt;Email &lt;span class="verified"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M20 6 9 17l-5-5"/&gt;&lt;/svg&gt;подтверждён&lt;/span&gt;&lt;/b&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;span id="emailRow"&gt;xxldragon@mail.ru&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;button class="btn btn-ghost sm" id="changeEmail"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/&gt;&lt;path d="m15 5 4 4"/&gt;&lt;/svg&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>Изменить</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="row" id="tgRow"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div class="rt"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;b&gt;Telegram &lt;span class="verified" id="tgState"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M20 6 9 17l-5-5"/&gt;&lt;/svg&gt;привязан&lt;/span&gt;&lt;/b&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;span id="tgValue"&gt;ID 902227074 · вход без пароля разрешён&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;button class="btn btn-quiet sm" id="tgBtn"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="m18.84 12.25 1.72-1.71a5 5 0 0 0-7.07-7.07l-1.72 1.71"/&gt;&lt;path d="m5.17 11.75-1.71 1.71a5 5 0 0 0 7.07 7.07l1.71-1.71"/&gt;&lt;path d="M8 2v3M2 8h3M16 19v3M19 16h3"/&gt;&lt;/svg&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>Отвязать</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="row"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div class="rt"&gt;&lt;b&gt;Пароль&lt;/b&gt;&lt;span&gt;Установлен · изменён 3 месяца назад&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;button class="btn btn-ghost sm" data-goto="sec"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M2.6 17.4A2 2 0 0 0 2 18.8V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.2a2 2 0 0 0 1.4-.6l.8-.8a6.5 6.5 0 1 0-4-4z"/&gt;&lt;circle cx="16.5" cy="7.5" r=".6" fill="currentColor"/&gt;&lt;/svg&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>Сменить пароль</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;!-- SECURITY --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="panel" id="p-sec" style="margin-top:20px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="block"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="block-head"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div&gt;&lt;h3&gt;Смена пароля&lt;/h3&gt;&lt;p&gt;Минимум 8 символов. Рекомендуем сочетать буквы разного регистра, цифры и символы.&lt;/p&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;form id="pwForm" novalidate style="display:flex;flex-direction:column;gap:14px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div class="field"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;label for="pwCur"&gt;Текущий пароль&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="pw-wrap"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;div class="pw-rel" style="position:relative;flex:1;display:flex"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;input class="input" id="pwCur" type="password" autocomplete="current-password" placeholder="••••••••"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;button type="button" class="eye" data-eye="pwCur" aria-label="Показать пароль"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/&gt;&lt;circle cx="12" cy="12" r="3"/&gt;&lt;/svg&gt;&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;span class="hint" id="pwCurHint"&gt;&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div class="field"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;label for="pwNew"&gt;Новый пароль&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="pw-wrap"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;div class="pw-rel" style="position:relative;flex:1;display:flex"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;input class="input" id="pwNew" type="password" autocomplete="new-password" minlength="8" placeholder="Минимум 8 символов"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;button type="button" class="eye" data-eye="pwNew" aria-label="Показать пароль"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/&gt;&lt;circle cx="12" cy="12" r="3"/&gt;&lt;/svg&gt;&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;button type="button" class="btn btn-ghost sm" id="genPw" style="flex:none" title="Сгенерировать пароль"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M21 2v6h-6"/&gt;&lt;path d="M3 12a9 9 0 0 1 15-6.7L21 8"/&gt;&lt;path d="M3 22v-6h6"/&gt;&lt;path d="M21 12a9 9 0 0 1-15 6.7L3 16"/&gt;&lt;/svg&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>Сгенерировать</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="strength"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;span class="sb"&gt;&lt;i id="sb1"&gt;&lt;/i&gt;&lt;/span&gt;&lt;span class="sb"&gt;&lt;i id="sb2"&gt;&lt;/i&gt;&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;span class="sb"&gt;&lt;i id="sb3"&gt;&lt;/i&gt;&lt;/span&gt;&lt;span class="sb"&gt;&lt;i id="sb4"&gt;&lt;/i&gt;&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;span class="sl" id="sLabel"&gt;—&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;span class="hint" id="pwNewHint"&gt;&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div class="field"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;label for="pwRep"&gt;Повторите новый пароль&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="pw-wrap"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;div class="pw-rel" style="position:relative;flex:1;display:flex"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;input class="input" id="pwRep" type="password" autocomplete="new-password" placeholder="Повторите пароль"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;button type="button" class="eye" data-eye="pwRep" aria-label="Показать пароль"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/&gt;&lt;circle cx="12" cy="12" r="3"/&gt;&lt;/svg&gt;&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;span class="hint" id="pwRepHint"&gt;&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;button type="submit" class="btn btn-primary block" id="pwSubmit" disabled&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M2.6 17.4A2 2 0 0 0 2 18.8V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.2a2 2 0 0 0 1.4-.6l.8-.8a6.5 6.5 0 1 0-4-4z"/&gt;&lt;circle cx="16.5" cy="7.5" r=".6" fill="currentColor"/&gt;&lt;/svg&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;span id="pwLabel"&gt;Обновить пароль&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/form&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="block"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="block-head"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div&gt;&lt;h3&gt;Двухфакторная аутентификация&lt;/h3&gt;&lt;p&gt;Дополнительный код при входе с нового устройства. Рекомендуется включить.&lt;/p&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="row"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div class="rt"&gt;&lt;b&gt;2FA через Telegram&lt;/b&gt;&lt;span id="tfaState"&gt;Выключена — вход только по паролю&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;button class="switch" id="tfaSwitch" role="switch" aria-checked="false" aria-label="Двухфакторная аутентификация"&gt;&lt;i&gt;&lt;/i&gt;&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="row"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div class="rt"&gt;&lt;b&gt;Уведомления о новых входах&lt;/b&gt;&lt;span&gt;Письмо и сообщение в Telegram при входе с нового устройства&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;button class="switch on" id="loginAlert" role="switch" aria-checked="true" aria-label="Уведомления о входах"&gt;&lt;i&gt;&lt;/i&gt;&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="block danger"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="block-head"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div&gt;&lt;h3&gt;Опасная зона&lt;/h3&gt;&lt;p&gt;Эти действия необратимы: ключи и история обращений будут удалены.&lt;/p&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div style="display:flex;gap:10px;flex-wrap:wrap"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;button class="btn btn-ghost" id="logoutBtn" style="flex:1;min-width:180px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="m16 17 5-5-5-5"/&gt;&lt;path d="M21 12H9"/&gt;&lt;path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/&gt;&lt;/svg&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>Выйти из аккаунта</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;button class="btn btn-danger" id="deleteBtn" style="flex:1;min-width:180px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/&gt;&lt;/svg&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>Удалить аккаунт</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;!-- NOTIFICATIONS --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="panel" id="p-not" style="margin-top:20px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="block"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="block-head"&gt;&lt;div&gt;&lt;h3&gt;Каналы уведомлений&lt;/h3&gt;&lt;p&gt;Выберите, куда присылать важные сообщения о подписке.&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="row"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div class="rt"&gt;&lt;b&gt;Email-уведомления&lt;/b&gt;&lt;span&gt;xxldragon@mail.ru&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;button class="switch on" data-not="email" role="switch" aria-checked="true"&gt;&lt;i&gt;&lt;/i&gt;&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="row"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div class="rt"&gt;&lt;b&gt;Telegram-уведомления&lt;/b&gt;&lt;span&gt;Бот @3set_bot · ID 902227074&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;button class="switch on" data-not="tg" role="switch" aria-checked="true"&gt;&lt;i&gt;&lt;/i&gt;&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="block"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="block-head"&gt;&lt;div&gt;&lt;h3&gt;О чём сообщать&lt;/h3&gt;&lt;p&gt;Напоминания помогают не остаться без защиты в неподходящий момент.&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="row"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div class="rt"&gt;&lt;b&gt;Окончание подписки&lt;/b&gt;&lt;span&gt;За 3 дня и в день окончания&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;button class="switch on" data-not="expiry" role="switch" aria-checked="true"&gt;&lt;i&gt;&lt;/i&gt;&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="row"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div class="rt"&gt;&lt;b&gt;Ответы поддержки&lt;/b&gt;&lt;span&gt;Новые сообщения в ваших обращениях&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;button class="switch on" data-not="support" role="switch" aria-checked="true"&gt;&lt;i&gt;&lt;/i&gt;&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="row"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div class="rt"&gt;&lt;b&gt;Реферальные начисления&lt;/b&gt;&lt;span&gt;Когда друг оплатил и пришли бонусные дни&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;button class="switch" data-not="ref" role="switch" aria-checked="false"&gt;&lt;i&gt;&lt;/i&gt;&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="row"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div class="rt"&gt;&lt;b&gt;Новости и акции&lt;/b&gt;&lt;span&gt;Промокоды, новые серверы, изменения тарифов&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;button class="switch" data-not="news" role="switch" aria-checked="false"&gt;&lt;i&gt;&lt;/i&gt;&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;!-- SESSIONS --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="panel" id="p-ses" style="margin-top:20px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="block"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="block-head"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div&gt;&lt;h3&gt;Активные сессии&lt;/h3&gt;&lt;p&gt;Устройства, на которых выполнен вход в кабинет. Не узнаёте устройство — завершите сессию и смените пароль.&lt;/p&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;button class="btn btn-quiet sm" id="killAll"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M18 6 6 18M6 6l12 12"/&gt;&lt;/svg&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>Завершить все, кроме этой</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="sess-list" id="sessList"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/section&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- RIGHT: referral --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;aside id="referrals" style="display:flex;flex-direction:column;gap:20px;min-width:0"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="card ref-card reveal" style="--d:80ms"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="gift-head"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;span class="gift-ic"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M20 12v9H4v-9"/&gt;&lt;path d="M2 7h20v5H2z"/&gt;&lt;path d="M12 22V7"/&gt;&lt;path d="M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7z"/&gt;&lt;path d="M12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/&gt;&lt;/svg&gt;&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;span class="kicker"&gt;Реферальная программа&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;h2 class="sec-title" style="margin-top:5px"&gt;Пригласи друга — получи 5 дней&lt;/h2&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;p class="muted" style="margin:0;font-size:13.5px"&gt;Другу тоже начислим 5 дней после его первой оплаты. Днями продлевается любой ваш ключ. Ваша ставка: &lt;b style="color:var(--lime)"&gt;5 дн. за сделку&lt;/b&gt;.&lt;/p&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;span class="label" style="display:block;margin-bottom:8px"&gt;Ваша ссылка&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div style="display:flex;gap:8px;flex-wrap:wrap"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="link-val"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;svg viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex:none"&gt;&lt;path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/&gt;&lt;path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/&gt;&lt;/svg&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;code id="refLinkVal"&gt;https://dash.3set.online/?ref=3SET-YVFCL2&lt;/code&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;button class="btn btn-primary" id="copyRef" style="flex:none"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;rect width="14" height="14" x="8" y="8" rx="2"/&gt;&lt;path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/&gt;&lt;/svg&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>Копировать</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="share-row" style="margin-top:10px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;button class="btn btn-ghost xs" id="qrRef"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;rect width="5" height="5" x="3" y="3" rx="1"/&gt;&lt;rect width="5" height="5" x="16" y="3" rx="1"/&gt;&lt;rect width="5" height="5" x="3" y="16" rx="1"/&gt;&lt;path d="M16 16h5v5h-5z"/&gt;&lt;/svg&gt;QR-код&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;button class="btn btn-ghost xs" id="shareRef"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/&gt;&lt;path d="M16 6l-4-4-4 4M12 2v14"/&gt;&lt;/svg&gt;Поделиться&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;button class="btn btn-quiet xs" id="tgShare"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="m22 2-7 20-4-9-9-4z"/&gt;&lt;path d="M22 2 11 13"/&gt;&lt;/svg&gt;В Telegram&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="ref-stats"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="rs"&gt;&lt;b id="rsInv"&gt;0&lt;/b&gt;&lt;span&gt;приглашено&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="rs"&gt;&lt;b id="rsDays"&gt;0&lt;/b&gt;&lt;span&gt;бонусных дней&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="rs"&gt;&lt;b id="rsSum"&gt;0 ₽&lt;/b&gt;&lt;span&gt;начислено&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:7px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;span class="dim"&gt;До награды «+15 дней»&lt;/span&gt;&lt;span id="refProgTxt"&gt;0 / 3 друзей&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="bar"&gt;&lt;i id="refBar"&gt;&lt;/i&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;ol class="steps"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;li&gt;&lt;span class="n"&gt;1&lt;/span&gt;Скопируйте ссылку и отправьте другу&lt;/li&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;li&gt;&lt;span class="n"&gt;2&lt;/span&gt;Друг регистрируется и оплачивает подписку&lt;/li&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;li&gt;&lt;span class="n"&gt;3&lt;/span&gt;Вы оба получаете по 5 дней автоматически&lt;/li&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/ol&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div style="border-top:1px solid var(--line);padding-top:16px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;span class="label" style="display:block;margin-bottom:8px"&gt;Ставка для ваших рефералов&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;p class="muted" style="margin:0 0 10px;font-size:12.5px"&gt;Что получат приведённые вами, когда сами приведут покупателя. Пусто — глобальная ставка.&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="rate-row"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;select class="select" id="rateType" aria-label="Тип ставки"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;option value=""&gt;Глобальная ставка&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;option value="percent"&gt;%&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;option value="fixed"&gt;₽&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;option value="days"&gt;дни&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/select&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;input class="input" id="rateValue" inputmode="numeric" placeholder="—" aria-label="Значение ставки"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;button class="btn btn-ghost" id="rateSave" style="flex:none"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M20 6 9 17l-5-5"/&gt;&lt;/svg&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div style="border-top:1px solid var(--line);padding-top:16px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;span class="label" style="display:block;margin-bottom:10px"&gt;История приглашений&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="inv-empty" id="invEmpty"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;span class="eic"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/&gt;&lt;circle cx="9" cy="7" r="4"/&gt;&lt;path d="M19 8v6M22 11h-6"/&gt;&lt;/svg&gt;&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;b style="font-size:13.5px"&gt;Пока никого&lt;/b&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;p class="dim" style="margin:0;font-size:12.5px;max-width:32ch"&gt;Отправьте ссылку — как только друг оплатит подписку, здесь появится запись и начислятся дни.&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="card reveal" style="--d:160ms;display:flex;align-items:center;gap:16px;flex-wrap:wrap"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;span class="gift-ic" style="animation:none"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;circle cx="12" cy="12" r="10"/&gt;&lt;path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24"/&gt;&lt;circle cx="12" cy="12" r="4"/&gt;&lt;/svg&gt;&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div style="flex:1;min-width:200px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;h3 style="font-size:16px;font-weight:600"&gt;Нужна помощь?&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;p class="muted" style="margin:4px 0 0;font-size:13px"&gt;Команда на связи круглосуточно, средний ответ — 4 минуты.&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;button class="btn btn-ghost" data-toast="Открыт чат поддержки — отвечаем за 2–5 минут"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/&gt;&lt;/svg&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>Написать</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/aside&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;/main&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;footer&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="f-inner"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="brand" style="font-size:15px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;svg class="mark" viewBox="0 0 32 32" fill="none" style="width:26px;height:26px"&gt;&lt;path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" fill="#1b2a1c"/&gt;&lt;path d="M11 16l3.5 3.5L21 13" stroke="#b7ff45" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/&gt;&lt;/svg&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;span&gt;3&lt;em&gt;set&lt;/em&gt;&lt;span class="dom mono"&gt;.online&lt;/span&gt;&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;p class="dim" style="font-size:12.5px;margin:8px 0 0"&gt;VPN-подписки: покупка и управление ключами · © 2026&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="f-links"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;a href="#account"&gt;Аккаунт&lt;/a&gt;&lt;a href="#security"&gt;Безопасность&lt;/a&gt;&lt;a href="#referrals"&gt;Рефералы&lt;/a&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button data-copy="support@3set.online" data-msg="Адрес поддержки скопирован"&gt;support@3set.online&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button data-toast="Политика конфиденциальности"&gt;Политика&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
+<p class="p1">&lt;/footer&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;!-- EMAIL MODAL --&gt;</p>
+<p class="p1">&lt;div class="overlay" id="ovEmail" role="dialog" aria-modal="true" aria-labelledby="emTitle"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="modal"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="modal-head"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;h3 id="emTitle"&gt;Смена email&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="icon-btn" data-close aria-label="Закрыть"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"&gt;&lt;path d="M18 6 6 18M6 6l12 12"/&gt;&lt;/svg&gt;&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="emailStep1"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="field" style="margin-bottom:14px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;label for="newEmail"&gt;Новый email&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;input class="input" id="newEmail" type="email" placeholder="name@example.com" autocomplete="email"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;span class="hint" id="emailHint"&gt;Пришлём 4-значный код подтверждения.&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div style="display:flex;gap:8px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;button class="btn btn-ghost" data-close style="flex:1"&gt;Отмена&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;button class="btn btn-primary" id="sendCode" style="flex:1"&gt;Получить код&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="emailStep2" style="display:none"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;p class="muted" style="font-size:13.5px;margin:0 0 14px;text-align:center"&gt;Код отправлен на &lt;b id="emailTo" class="mono" style="font-size:12.5px;color:var(--lime)"&gt;&lt;/b&gt;. Введите 4 цифры.&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="code-row" id="codeRow"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;input class="code-cell mono" maxlength="1" inputmode="numeric" aria-label="Цифра 1"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;input class="code-cell mono" maxlength="1" inputmode="numeric" aria-label="Цифра 2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;input class="code-cell mono" maxlength="1" inputmode="numeric" aria-label="Цифра 3"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;input class="code-cell mono" maxlength="1" inputmode="numeric" aria-label="Цифра 4"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;p class="hint" id="codeHint" style="text-align:center;margin:10px 0 14px"&gt;Код действует 5 минут. &lt;span id="demoCode"&gt;&lt;/span&gt;&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div style="display:flex;gap:8px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;button class="btn btn-ghost" id="backStep1" style="flex:1"&gt;Назад&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;button class="btn btn-primary" id="verifyCode" style="flex:1"&gt;Подтвердить&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="success" id="emailSuccess"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;span class="sic"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M20 6 9 17l-5-5"/&gt;&lt;/svg&gt;&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;b style="font-size:16px"&gt;Email обновлён&lt;/b&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;p class="muted" style="margin:0;font-size:13.5px"&gt;Новый адрес подтверждён и используется для входа и уведомлений.&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="btn btn-ghost sm" data-close&gt;Закрыть&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
+<p class="p1">&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;!-- NAME MODAL --&gt;</p>
+<p class="p1">&lt;div class="overlay" id="ovName" role="dialog" aria-modal="true" aria-labelledby="nmTitle"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="modal" style="width:min(420px,100%)"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="modal-head"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;h3 id="nmTitle"&gt;Изменить имя&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="icon-btn" data-close aria-label="Закрыть"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"&gt;&lt;path d="M18 6 6 18M6 6l12 12"/&gt;&lt;/svg&gt;&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="field" style="margin-bottom:16px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;label for="nameModalInput"&gt;Имя&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;input class="input" id="nameModalInput" maxlength="24" placeholder="Алексей"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div style="display:flex;gap:8px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="btn btn-ghost" data-close style="flex:1"&gt;Отмена&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="btn btn-primary" id="nameSave" style="flex:1"&gt;Сохранить&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
+<p class="p1">&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;!-- CONFIRM MODAL (универсальный) --&gt;</p>
+<p class="p1">&lt;div class="overlay" id="ovConfirm" role="dialog" aria-modal="true" aria-labelledby="cfTitle"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="modal" style="width:min(440px,100%)"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="modal-head"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;h3 id="cfTitle"&gt;Подтвердите действие&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="icon-btn" data-close aria-label="Закрыть"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"&gt;&lt;path d="M18 6 6 18M6 6l12 12"/&gt;&lt;/svg&gt;&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;p class="muted" id="cfText" style="font-size:13.5px;margin:0 0 14px"&gt;&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="cfExtra"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div style="display:flex;gap:8px;margin-top:16px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="btn btn-ghost" data-close style="flex:1"&gt;Отмена&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="btn btn-danger" id="cfOk" style="flex:1"&gt;Подтвердить&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
+<p class="p1">&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;!-- QR MODAL --&gt;</p>
+<p class="p1">&lt;div class="overlay" id="ovQr" role="dialog" aria-modal="true" aria-labelledby="qrTitle"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="modal" style="width:min(400px,100%)"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="modal-head"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;h3 id="qrTitle"&gt;QR вашей ссылки&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="icon-btn" data-close aria-label="Закрыть"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"&gt;&lt;path d="M18 6 6 18M6 6l12 12"/&gt;&lt;/svg&gt;&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div style="display:flex;flex-direction:column;align-items:center;gap:14px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="qr-frame"&gt;&lt;canvas id="qrCanvas" width="210" height="210"&gt;&lt;/canvas&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;p class="muted" style="font-size:13px;margin:0;text-align:center"&gt;Друг наведёт камеру — откроется страница регистрации с вашим кодом &lt;span class="mono" style="color:var(--lime)"&gt;3SET-YVFCL2&lt;/span&gt;.&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="btn btn-ghost block" data-close&gt;Закрыть&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
+<p class="p1">&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;button class="to-top" id="toTop" aria-label="Наверх"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M12 19V5M5 12l7-7 7 7"/&gt;&lt;/svg&gt;&lt;/button&gt;</p>
+<p class="p1">&lt;div class="toasts" id="toasts" aria-live="polite"&gt;&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;script&gt;</p>
+<p class="p1">(function(){</p>
+<p class="p1">"use strict";</p>
+<p class="p1">const $=(s,r)=&gt;(r||document).querySelector(s);</p>
+<p class="p1">const $$=(s,r)=&gt;Array.from((r||document).querySelectorAll(s));</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- utils ---------- */</p>
+<p class="p1">function toast(msg,type){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const box=$('#toasts'),el=document.createElement('div');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>el.className='toast'+(type==='err'?' err':'');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const ic=type==='err'</p>
+<p class="p1"><span class="Apple-converted-space">    </span>?'&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"&gt;&lt;path d="M18 6 6 18M6 6l12 12"/&gt;&lt;/svg&gt;'</p>
+<p class="p1"><span class="Apple-converted-space">    </span>:'&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M20 6 9 17l-5-5"/&gt;&lt;/svg&gt;';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>el.innerHTML='&lt;span class="ti"&gt;'+ic+'&lt;/span&gt;&lt;span&gt;'+msg+'&lt;/span&gt;';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>box.appendChild(el);requestAnimationFrame(()=&gt;el.classList.add('show'));</p>
+<p class="p1"><span class="Apple-converted-space">  </span>setTimeout(()=&gt;{el.classList.remove('show');setTimeout(()=&gt;el.remove(),420);},3200);</p>
+<p class="p1">}</p>
+<p class="p1">async function copyText(t){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>try{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(navigator.clipboard&amp;&amp;window.isSecureContext) await navigator.clipboard.writeText(t);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>else{const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return true;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}catch(e){return false;}</p>
+<p class="p1">}</p>
+<p class="p1">function countUp(el,to,dur,suffix){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>suffix=suffix||'';const st=performance.now(),from=parseInt(el.textContent,10)||0;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>(function step(now){const p=Math.min(1,(now-st)/dur),e=1-Math.pow(1-p,3);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>el.textContent=Math.round(from+(to-from)*e)+suffix; if(p&lt;1)requestAnimationFrame(step);})(st);</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- nav ---------- */</p>
+<p class="p1">const nav=$('#nav'),pbar=$('#progressBar'),toTop=$('#toTop');</p>
+<p class="p1">function onScroll(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const y=window.scrollY;nav.classList.toggle('scrolled',y&gt;10);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const h=document.documentElement.scrollHeight-window.innerHeight;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>pbar.style.width=(h&gt;0?(y/h*100):0)+'%';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>toTop.classList.toggle('show',y&gt;420);</p>
+<p class="p1">}</p>
+<p class="p1">window.addEventListener('scroll',onScroll,{passive:true});onScroll();</p>
+<p class="p1">toTop.addEventListener('click',()=&gt;window.scrollTo({top:0,behavior:'smooth'}));</p>
+<p class="p1">const burger=$('#burger'),mm=$('#mobileMenu');</p>
+<p class="p1">burger.addEventListener('click',()=&gt;{const o=mm.classList.toggle('open');burger.classList.toggle('open',o);burger.setAttribute('aria-expanded',String(o));});</p>
+<p class="p1">$$('#mobileMenu a').forEach(a=&gt;a.addEventListener('click',()=&gt;{mm.classList.remove('open');burger.classList.remove('open');}));</p>
+<p class="p1">const io=new IntersectionObserver(es=&gt;{es.forEach(en=&gt;{if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target);}});},{threshold:.1,rootMargin:'0px 0px -40px 0px'});</p>
+<p class="p1">$$('.reveal').forEach(el=&gt;io.observe(el));</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- состояние профиля ---------- */</p>
+<p class="p1">const USER={name:'Алексей',email:'xxldragon@mail.ru',username:'ao_mikhalkin',tg:'902227074',tgLinked:true,tfa:false};</p>
+<p class="p1">const secState={password:true,tg:false,tfa:false,alerts:true,sessions:true};</p>
+<p class="p2"><br></p>
+<p class="p1">function renderAvatar(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const l=(USER.name.trim()[0]||'А').toUpperCase();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#avIni').textContent=l;$('#navAvatar').textContent=l;</p>
+<p class="p1">}</p>
+<p class="p1">renderAvatar();</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- security ring ---------- */</p>
+<p class="p1">const C=2*Math.PI*54;</p>
+<p class="p1">const ring=$('#secVal');</p>
+<p class="p1">ring.setAttribute('stroke-dasharray',C.toFixed(2));</p>
+<p class="p1">ring.setAttribute('stroke-dashoffset',C.toFixed(2));</p>
+<p class="p1">const CHECKS=[</p>
+<p class="p1"><span class="Apple-converted-space">  </span>{k:'password',t:'Пароль длиной 8+ символов'},</p>
+<p class="p1"><span class="Apple-converted-space">  </span>{k:'tg',t:'Привязан Telegram для входа'},</p>
+<p class="p1"><span class="Apple-converted-space">  </span>{k:'tfa',t:'Включена двухфакторная защита'},</p>
+<p class="p1"><span class="Apple-converted-space">  </span>{k:'alerts',t:'Уведомления о новых входах'},</p>
+<p class="p1"><span class="Apple-converted-space">  </span>{k:'sessions',t:'Нет незнакомых сессий'}</p>
+<p class="p1">];</p>
+<p class="p1">function renderSecurity(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const list=$('#secList');list.innerHTML='';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>let done=0;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>CHECKS.forEach(c=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const ok=!!secState[c.k]; if(ok)done++;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const d=document.createElement('div');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>d.className='ck'+(ok?' done':'');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>d.innerHTML='&lt;i&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M20 6 9 17l-5-5"/&gt;&lt;/svg&gt;&lt;/i&gt;'+c.t;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>list.appendChild(d);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const pct=Math.round(done/CHECKS.length*100);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ring.style.strokeDashoffset=(C-C*pct/100).toFixed(2);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ring.style.stroke=pct&gt;=80?'url(#secGrad)':(pct&gt;=50?'#ffd166':'#ff7a6b');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>countUp($('#secPct'),pct,700,'%');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#secLbl').textContent = pct&gt;=80?'высокий':pct&gt;=50?'средний':'базовый';</p>
+<p class="p1">}</p>
+<p class="p1">renderSecurity();</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- tabs ---------- */</p>
+<p class="p1">$$('#tabs .tab').forEach(t=&gt;t.addEventListener('click',()=&gt;selectTab(t.dataset.tab)));</p>
+<p class="p1">function selectTab(id){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$$('#tabs .tab').forEach(t=&gt;t.classList.toggle('on',t.dataset.tab===id));</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$$('.panel').forEach(p=&gt;p.classList.remove('on'));</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const p=$('#p-'+id); if(p){p.classList.add('on');}</p>
+<p class="p1">}</p>
+<p class="p1">document.addEventListener('click',e=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const g=e.target.closest('[data-goto]');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(g){selectTab(g.dataset.goto);document.getElementById('account').scrollIntoView({behavior:'smooth',block:'start'});}</p>
+<p class="p1">});</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- имя ---------- */</p>
+<p class="p1">function setName(v){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const name=v.trim().replace(/[0-9&lt;&gt;{}]/g,'');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(name.length&lt;2){toast('Имя должно содержать минимум 2 символа','err');return false;}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>USER.name=name.slice(0,24);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#profName').textContent=USER.name;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#nameInput').value=USER.name;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>renderAvatar();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const h1=$('#profName');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>h1.animate([{opacity:0,transform:'translateY(-8px)'},{opacity:1,transform:'none'}],{duration:420,easing:'cubic-bezier(.22,.9,.28,1)'});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>toast('Имя обновлено');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>return true;</p>
+<p class="p1">}</p>
+<p class="p1">$('#saveName').addEventListener('click',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const i=$('#nameInput'),h=$('#nameHint');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(i.value.trim().length&lt;2){i.classList.add('err');h.textContent='Слишком короткое имя';h.className='hint bad';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>i.classList.add('shake');setTimeout(()=&gt;i.classList.remove('shake'),420);return;}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>i.classList.remove('err');h.textContent='Минимум 2 символа, без цифр и спецсимволов.';h.className='hint';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>setName(i.value);</p>
+<p class="p1">});</p>
+<p class="p1">$('#nameInput').addEventListener('input',e=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const ok=e.target.value.trim().length&gt;=2;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>e.target.classList.toggle('err',!ok&amp;&amp;e.target.value.length&gt;0);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const h=$('#nameHint');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>h.textContent=ok?'Выглядит отлично':'Минимум 2 символа, без цифр и спецсимволов.';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>h.className='hint'+(ok?' good':'');</p>
+<p class="p1">});</p>
+<p class="p1">$('#editName').addEventListener('click',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#nameModalInput').value=USER.name;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#ovName').classList.add('open');document.body.style.overflow='hidden';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>setTimeout(()=&gt;{const i=$('#nameModalInput');i.focus();i.select();},260);</p>
+<p class="p1">});</p>
+<p class="p1">$('#nameSave').addEventListener('click',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(setName($('#nameModalInput').value)){closeOv('#ovName');}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>else{const i=$('#nameModalInput');i.classList.add('shake');setTimeout(()=&gt;i.classList.remove('shake'),420);}</p>
+<p class="p1">});</p>
+<p class="p1">$('#nameModalInput').addEventListener('keydown',e=&gt;{if(e.key==='Enter')$('#nameSave').click();});</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- email ---------- */</p>
+<p class="p1">let demoCode='';</p>
+<p class="p1">$('#changeEmail').addEventListener('click',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#emailStep1').style.display='';$('#emailStep2').style.display='none';$('#emailSuccess').classList.remove('show');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#newEmail').value='';$('#newEmail').classList.remove('err');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#emailHint').textContent='Пришлём 4-значный код подтверждения.';$('#emailHint').className='hint';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>openOv('#ovEmail');</p>
+<p class="p1">});</p>
+<p class="p1">$('#sendCode').addEventListener('click',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const i=$('#newEmail'),v=i.value.trim();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(!/^[^\s@]+@[^\s@]+\.[a-zA-Zа-яА-Я]{2,}$/.test(v)){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>i.classList.add('err');i.classList.add('shake');setTimeout(()=&gt;i.classList.remove('shake'),420);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>$('#emailHint').textContent='Проверьте формат адреса';$('#emailHint').className='hint bad';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>toast('Введите корректный email','err');return;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>demoCode=String(Math.floor(1000+Math.random()*9000));</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#emailTo').textContent=v;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#demoCode').textContent='Демо-код: '+demoCode;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#emailStep1').style.display='none';$('#emailStep2').style.display='';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$$('.code-cell').forEach(c=&gt;c.value='');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>setTimeout(()=&gt;$$('.code-cell')[0].focus(),200);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>toast('Код отправлен на '+v);</p>
+<p class="p1">});</p>
+<p class="p1">$('#backStep1').addEventListener('click',()=&gt;{$('#emailStep2').style.display='none';$('#emailStep1').style.display='';});</p>
+<p class="p1">const cells=$$('.code-cell');</p>
+<p class="p1">cells.forEach((c,i)=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>c.addEventListener('input',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>c.value=c.value.replace(/\D/g,'').slice(0,1);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(c.value&amp;&amp;i&lt;cells.length-1)cells[i+1].focus();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>c.addEventListener('keydown',e=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(e.key==='Backspace'&amp;&amp;!c.value&amp;&amp;i&gt;0)cells[i-1].focus();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(e.key==='Enter')$('#verifyCode').click();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>c.addEventListener('paste',e=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const t=(e.clipboardData.getData('text')||'').replace(/\D/g,'').slice(0,4);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(t){e.preventDefault();t.split('').forEach((ch,k)=&gt;{if(cells[k])cells[k].value=ch;});cells[Math.min(t.length,3)].focus();}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>});</p>
+<p class="p1">});</p>
+<p class="p1">$('#verifyCode').addEventListener('click',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const code=cells.map(c=&gt;c.value).join('');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(code.length&lt;4){cells.forEach(c=&gt;{c.classList.add('shake');setTimeout(()=&gt;c.classList.remove('shake'),420);});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>toast('Введите 4 цифры кода','err');return;}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(code!==demoCode){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>$('#codeHint').innerHTML='Неверный код. Попробуйте ещё раз. &lt;span id="demoCode"&gt;Демо-код: '+demoCode+'&lt;/span&gt;';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>$('#codeHint').className='hint bad';$('#codeHint').style.textAlign='center';$('#codeHint').style.margin='10px 0 14px';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>cells.forEach(c=&gt;{c.classList.add('shake');setTimeout(()=&gt;c.classList.remove('shake'),420);});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>toast('Код не подошёл','err');return;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>USER.email=$('#emailTo').textContent;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#emailRow').textContent=USER.email;$('#profEmail').textContent=USER.email;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#emailStep2').style.display='none';$('#emailSuccess').classList.add('show');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>toast('Email '+USER.email+' подтверждён');</p>
+<p class="p1">});</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- telegram ---------- */</p>
+<p class="p1">$('#tgBtn').addEventListener('click',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(USER.tgLinked){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>confirmDialog('Отвязать Telegram?','Вход по Telegram станет недоступен, уведомления в мессенджер приходить не будут. Отвязать можно в любой момент.',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>'Отвязать',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">        </span>USER.tgLinked=false;secState.tg=false;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>$('#tgState').outerHTML='&lt;span id="tgState" class="dim" style="font-size:11px;font-weight:800"&gt;не привязан&lt;/span&gt;';</p>
+<p class="p1"><span class="Apple-converted-space">        </span>$('#tgValue').textContent='Нажмите «Привязать», чтобы войти без пароля';</p>
+<p class="p1"><span class="Apple-converted-space">        </span>$('#tgBtn').innerHTML='&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/&gt;&lt;path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/&gt;&lt;/svg&gt; Привязать';</p>
+<p class="p1"><span class="Apple-converted-space">        </span>$('#tgBtn').className='btn btn-primary sm';</p>
+<p class="p1"><span class="Apple-converted-space">        </span>renderSecurity();toast('Telegram отвязан');</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}else{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const b=$('#tgBtn');b.disabled=true;b.innerHTML='&lt;span class="spinner"&gt;&lt;/span&gt; Подключаем…';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>setTimeout(()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>b.disabled=false;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>USER.tgLinked=true;secState.tg=true;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>$('#tgState').outerHTML='&lt;span class="verified" id="tgState"&gt;&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="M20 6 9 17l-5-5"/&gt;&lt;/svg&gt;привязан&lt;/span&gt;';</p>
+<p class="p1"><span class="Apple-converted-space">      </span>$('#tgValue').textContent='ID 902227074 · вход без пароля разрешён';</p>
+<p class="p1"><span class="Apple-converted-space">      </span>b.innerHTML='&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="m18.84 12.25 1.72-1.71a5 5 0 0 0-7.07-7.07l-1.72 1.71"/&gt;&lt;path d="m5.17 11.75-1.71 1.71a5 5 0 0 0 7.07 7.07l1.71-1.71"/&gt;&lt;path d="M8 2v3M2 8h3M16 19v3M19 16h3"/&gt;&lt;/svg&gt; Отвязать';</p>
+<p class="p1"><span class="Apple-converted-space">      </span>b.className='btn btn-quiet sm';</p>
+<p class="p1"><span class="Apple-converted-space">      </span>renderSecurity();toast('Telegram привязан: вход без пароля включён');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>},1200);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1">});</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- switches ---------- */</p>
+<p class="p1">$('#tfaSwitch').addEventListener('click',function(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const on=this.classList.toggle('on');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>this.setAttribute('aria-checked',String(on));</p>
+<p class="p1"><span class="Apple-converted-space">  </span>USER.tfa=on;secState.tfa=on;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#tfaState').textContent=on?'Включена — код приходит в Telegram @3set_bot':'Выключена — вход только по паролю';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>renderSecurity();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>toast(on?'Двухфакторная аутентификация включена':'2FA выключена',on?'':'err');</p>
+<p class="p1">});</p>
+<p class="p1">$('#loginAlert').addEventListener('click',function(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const on=this.classList.toggle('on');this.setAttribute('aria-checked',String(on));</p>
+<p class="p1"><span class="Apple-converted-space">  </span>secState.alerts=on;renderSecurity();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>toast(on?'Уведомления о входах включены':'Уведомления о входах выключены');</p>
+<p class="p1">});</p>
+<p class="p1">$$('[data-not]').forEach(s=&gt;s.addEventListener('click',function(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const on=this.classList.toggle('on');this.setAttribute('aria-checked',String(on));</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const names={email:'Email-уведомления',tg:'Telegram-уведомления',expiry:'Напоминания о подписке',support:'Ответы поддержки',ref:'Реферальные начисления',news:'Новости и акции'};</p>
+<p class="p1"><span class="Apple-converted-space">  </span>toast(names[this.dataset.not]+(on?' включены':' выключены'));</p>
+<p class="p1">}));</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- пароль ---------- */</p>
+<p class="p1">const pwCur=$('#pwCur'),pwNew=$('#pwNew'),pwRep=$('#pwRep');</p>
+<p class="p1">$$('.eye').forEach(b=&gt;b.addEventListener('click',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const i=document.getElementById(b.dataset.eye);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const show=i.type==='password';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>i.type=show?'text':'password';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>b.style.color=show?'var(--lime)':'';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>b.title=show?'Скрыть':'Показать';</p>
+<p class="p1">}));</p>
+<p class="p1">function score(v){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>let s=0;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(v.length&gt;=8)s++;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(v.length&gt;=12)s++;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(/[a-zа-я]/.test(v)&amp;&amp;/[A-ZА-Я]/.test(v))s++;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(/\d/.test(v))s++;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(/[^\wа-яА-ЯёЁ]/.test(v))s++;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>return Math.min(4,Math.max(v.length?1:0,Math.round(s*0.8)));</p>
+<p class="p1">}</p>
+<p class="p1">function renderStrength(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const v=pwNew.value,s=score(v);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const colors=['#ff7a6b','#ff9f6b','#ffd166','#b7ff45'];</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const labels=['слабый','слабый','средний','хороший','надёжный'];</p>
+<p class="p1"><span class="Apple-converted-space">  </span>for(let i=1;i&lt;=4;i++){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const b=$('#sb'+i);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>b.style.width=(i&lt;=s?'100%':'0');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>b.style.background=colors[Math.max(0,s-1)];</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#sLabel').textContent=v?labels[s]:'—';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#sLabel').style.color=v?colors[Math.max(0,s-1)]:'var(--dim)';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>validatePw();</p>
+<p class="p1">}</p>
+<p class="p1">function validatePw(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const cur=pwCur.value,nw=pwNew.value,rp=pwRep.value;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>let ok=true;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const h1=$('#pwCurHint'),h2=$('#pwNewHint'),h3=$('#pwRepHint');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(!cur){h1.textContent='';h1.className='hint';pwCur.classList.remove('err','ok');ok=false;}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>else{h1.textContent='Введено';h1.className='hint good';pwCur.classList.remove('err');pwCur.classList.add('ok');}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(!nw){h2.textContent='';h2.className='hint';pwNew.classList.remove('err','ok');ok=false;}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>else if(nw.length&lt;8){h2.textContent='Минимум 8 символов';h2.className='hint bad';pwNew.classList.add('err');pwNew.classList.remove('ok');ok=false;}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>else if(nw===cur){h2.textContent='Новый пароль совпадает с текущим';h2.className='hint bad';pwNew.classList.add('err');ok=false;}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>else{h2.textContent='Длина подходит';h2.className='hint good';pwNew.classList.remove('err');pwNew.classList.add('ok');}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(!rp){h3.textContent='';h3.className='hint';pwRep.classList.remove('err','ok');ok=false;}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>else if(rp!==nw){h3.textContent='Пароли не совпадают';h3.className='hint bad';pwRep.classList.add('err');pwRep.classList.remove('ok');ok=false;}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>else{h3.textContent='Пароли совпадают';h3.className='hint good';pwRep.classList.remove('err');pwRep.classList.add('ok');}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#pwSubmit').disabled=!ok;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>return ok;</p>
+<p class="p1">}</p>
+<p class="p1">[pwCur,pwNew,pwRep].forEach(i=&gt;i.addEventListener('input',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(i===pwNew)renderStrength();else validatePw();</p>
+<p class="p1">}));</p>
+<p class="p1">$('#genPw').addEventListener('click',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const abc='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&amp;*';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>let p='';for(let i=0;i&lt;16;i++)p+=abc[Math.floor(Math.random()*abc.length)];</p>
+<p class="p1"><span class="Apple-converted-space">  </span>pwNew.value=p;pwRep.value=p;pwNew.type='text';pwRep.type='text';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>renderStrength();toast('Пароль сгенерирован — скопируйте его в менеджер паролей');</p>
+<p class="p1">});</p>
+<p class="p1">$('#pwForm').addEventListener('submit',e=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>e.preventDefault();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(!validatePw()){toast('Проверьте заполнение полей','err');return;}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const b=$('#pwSubmit'),l=$('#pwLabel');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>b.disabled=true;l.innerHTML='&lt;span class="spinner"&gt;&lt;/span&gt; Обновляем…';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>setTimeout(()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>b.disabled=false;l.textContent='Обновить пароль';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>secState.password=true;renderSecurity();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>pwCur.value=pwNew.value=pwRep.value='';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>[pwCur,pwNew,pwRep].forEach(i=&gt;i.classList.remove('ok','err'));</p>
+<p class="p1"><span class="Apple-converted-space">    </span>renderStrength();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>toast('Пароль обновлён. Другие сессии останутся активными.');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>killSessions(true);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>},1200);</p>
+<p class="p1">});</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- сессии ---------- */</p>
+<p class="p1">let SESSIONS=[</p>
+<p class="p1"><span class="Apple-converted-space">  </span>{id:1,name:'MacBook Pro 14" · Chrome 131',meta:'Москва, Россия · 89.22.xxx.14 · сейчас',icon:'laptop',current:true},</p>
+<p class="p1"><span class="Apple-converted-space">  </span>{id:2,name:'iPhone 15 Pro · 3set VPN',meta:'Москва, Россия · 89.22.xxx.14 · 2 ч назад',icon:'phone',current:false},</p>
+<p class="p1"><span class="Apple-converted-space">  </span>{id:3,name:'Windows 11 · Firefox 133',meta:'Санкт-Петербург, Россия · 5.165.xxx.88 · 3 дня назад',icon:'desktop',current:false}</p>
+<p class="p1">];</p>
+<p class="p1">const SICON={</p>
+<p class="p1"><span class="Apple-converted-space">  </span>laptop:'&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;rect width="18" height="12" x="3" y="4" rx="2"/&gt;&lt;path d="M2 20h20"/&gt;&lt;/svg&gt;',</p>
+<p class="p1"><span class="Apple-converted-space">  </span>phone:'&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;rect width="14" height="20" x="5" y="2" rx="2"/&gt;&lt;path d="M12 18h.01"/&gt;&lt;/svg&gt;',</p>
+<p class="p1"><span class="Apple-converted-space">  </span>desktop:'&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;rect width="20" height="14" x="2" y="3" rx="2"/&gt;&lt;path d="M8 21h8M12 17v4"/&gt;&lt;/svg&gt;'</p>
+<p class="p1">};</p>
+<p class="p1">function renderSessions(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const box=$('#sessList');box.innerHTML='';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(!SESSIONS.length){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>box.innerHTML='&lt;p class="dim" style="font-size:13px;margin:0"&gt;Активных сессий нет — кроме текущей.&lt;/p&gt;';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>SESSIONS.forEach(s=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const el=document.createElement('div');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>el.className='sess';el.dataset.id=s.id;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>el.innerHTML='&lt;span class="sic"&gt;'+SICON[s.icon]+'&lt;/span&gt;'+</p>
+<p class="p1"><span class="Apple-converted-space">      </span>'&lt;span class="stx"&gt;&lt;b&gt;'+s.name+'&lt;/b&gt;&lt;span&gt;'+s.meta+'&lt;/span&gt;&lt;/span&gt;'+</p>
+<p class="p1"><span class="Apple-converted-space">      </span>(s.current?'&lt;span class="cur"&gt;Это устройство&lt;/span&gt;':'&lt;button class="btn btn-quiet xs" type="button"&gt;Завершить&lt;/button&gt;');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const btn=el.querySelector('button');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(btn)btn.addEventListener('click',()=&gt;revoke([s.id],btn));</p>
+<p class="p1"><span class="Apple-converted-space">    </span>box.appendChild(el);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>});</p>
+<p class="p1">}</p>
+<p class="p1">function revoke(ids,btn){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(btn){btn.disabled=true;btn.innerHTML='&lt;span class="spinner" style="border-color:rgba(255,122,107,.3);border-top-color:var(--red)"&gt;&lt;/span&gt;';}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>setTimeout(()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>ids.forEach(id=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const el=$('#sessList .sess[data-id="'+id+'"]');</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(el)el.classList.add('removing');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>setTimeout(()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>SESSIONS=SESSIONS.filter(s=&gt;!ids.includes(s.id));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>secState.sessions=SESSIONS.length&lt;=1;renderSessions();renderSecurity();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>toast(ids.length&gt;1?'Завершено сессий: '+ids.length:'Сессия завершена');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>},380);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>},700);</p>
+<p class="p1">}</p>
+<p class="p1">function killSessions(keepCurrent){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>SESSIONS=SESSIONS.filter(s=&gt;keepCurrent?s.current:false);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>secState.sessions=true;renderSessions();renderSecurity();</p>
+<p class="p1">}</p>
+<p class="p1">$('#killAll').addEventListener('click',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const ids=SESSIONS.filter(s=&gt;!s.current).map(s=&gt;s.id);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(!ids.length){toast('Других активных сессий нет');return;}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>confirmDialog('Завершить другие сессии?','Вход будет сохранён только на этом устройстве. На остальных потребуется войти заново.','Завершить',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>ids.forEach(id=&gt;{const el=$('#sessList .sess[data-id="'+id+'"]');if(el)el.classList.add('removing');});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>setTimeout(()=&gt;{killSessions(true);toast('Завершено сессий: '+ids.length);},380);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>});</p>
+<p class="p1">});</p>
+<p class="p1">renderSessions();</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- рефералы ---------- */</p>
+<p class="p1">const REF='https://dash.3set.online/?ref=3SET-YVFCL2';</p>
+<p class="p1">const refState={invited:0,days:0,sum:0};</p>
+<p class="p1">function renderRef(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>countUp($('#rsInv'),refState.invited,600);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>countUp($('#rsDays'),refState.days,600);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>countUp($('#rsSum'),refState.sum,600,' ₽');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#refProgTxt').textContent=refState.invited+' / 3 друзей';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#refBar').style.width=Math.min(100,refState.invited/3*100)+'%';</p>
+<p class="p1">}</p>
+<p class="p1">setTimeout(renderRef,400);</p>
+<p class="p1">$('#copyRef').addEventListener('click',async()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const ok=await copyText(REF);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>toast(ok?'Реферальная ссылка скопирована':'Не удалось скопировать',ok?'':'err');</p>
+<p class="p1">});</p>
+<p class="p1">$('#shareRef').addEventListener('click',async()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const data={title:'3set VPN',text:'Дарю 5 дней VPN-подписки по своей ссылке',url:REF};</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(navigator.share){try{await navigator.share(data);return;}catch(e){}}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const ok=await copyText(REF);toast(ok?'Ссылка скопирована — отправьте другу':'Не удалось поделиться',ok?'':'err');</p>
+<p class="p1">});</p>
+<p class="p1">$('#tgShare').addEventListener('click',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>copyText(REF).then(ok=&gt;toast(ok?'Ссылка скопирована — вставьте её в Telegram':'Ошибка копирования',ok?'':'err'));</p>
+<p class="p1">});</p>
+<p class="p1">function drawQR(canvas,text){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(typeof window.qrcode!=='function')return false;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>try{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const qr=window.qrcode(0,'M');qr.addData(text);qr.make();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const n=qr.getModuleCount(),size=210,cell=size/n,ctx=canvas.getContext('2d');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>canvas.width=size;canvas.height=size;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>ctx.fillStyle='#f2f7ee';ctx.fillRect(0,0,size,size);ctx.fillStyle='#0e1512';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>for(let r=0;r&lt;n;r++)for(let c=0;c&lt;n;c++) if(qr.isDark(r,c)) ctx.fillRect(c*cell,r*cell,cell+.6,cell+.6);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return true;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}catch(e){return false;}</p>
+<p class="p1">}</p>
+<p class="p1">$('#qrRef').addEventListener('click',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const c=$('#qrCanvas');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(!drawQR(c,REF)){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const ctx=c.getContext('2d');c.width=210;c.height=210;ctx.fillStyle='#f2f7ee';ctx.fillRect(0,0,210,210);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>ctx.fillStyle='#0e1512';ctx.font='600 13px Manrope, sans-serif';ctx.textAlign='center';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>ctx.fillText('QR недоступен офлайн',105,100);ctx.fillText('скопируйте ссылку',105,120);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>openOv('#ovQr');</p>
+<p class="p1">});</p>
+<p class="p1">$('#rateSave').addEventListener('click',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const t=$('#rateType'),v=$('#rateValue'),val=v.value.trim();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(t.value===''||val===''){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(t.value===''){t.classList.add('shake');setTimeout(()=&gt;t.classList.remove('shake'),420);toast('Выберите тип ставки','err');return;}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>v.classList.add('err');v.classList.add('shake');setTimeout(()=&gt;v.classList.remove('shake'),420);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>toast('Укажите значение ставки','err');return;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const num=parseInt(val,10);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const lim={percent:[1,50],fixed:[1,10000],days:[1,90]}[t.value];</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(isNaN(num)||num&lt;lim[0]||num&gt;lim[1]){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>v.classList.add('err');v.classList.add('shake');setTimeout(()=&gt;v.classList.remove('shake'),420);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>toast('Допустимый диапазон: '+lim[0]+'–'+lim[1],'err');return;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>v.classList.remove('err');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const units={percent:'%',fixed:' ₽',days:' дн.'}[t.value];</p>
+<p class="p1"><span class="Apple-converted-space">  </span>toast('Ставка сохранена: '+num+units+' для ваших рефералов');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>t.value='';v.value='';</p>
+<p class="p1">});</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- confirm modal ---------- */</p>
+<p class="p1">let confirmCb=null;</p>
+<p class="p1">function confirmDialog(title,text,okText,cb,extraHtml){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#cfTitle').textContent=title;$('#cfText').textContent=text;$('#cfOk').textContent=okText;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>$('#cfExtra').innerHTML=extraHtml||'';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>confirmCb=cb;openOv('#ovConfirm');</p>
+<p class="p1">}</p>
+<p class="p1">$('#cfOk').addEventListener('click',()=&gt;{closeOv('#ovConfirm');if(confirmCb){const f=confirmCb;confirmCb=null;f();}});</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- выход / удаление ---------- */</p>
+<p class="p1">$('#logoutBtn').addEventListener('click',()=&gt;logout());</p>
+<p class="p1">$('#logoutMobile').addEventListener('click',()=&gt;{mm.classList.remove('open');burger.classList.remove('open');logout();});</p>
+<p class="p1">function logout(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>confirmDialog('Выйти из аккаунта?','Сессия на этом устройстве будет завершена. Ключи и подписки сохранятся — войдите снова в любой момент.','Выйти',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const b=$('#logoutBtn');b.disabled=true;b.innerHTML='&lt;span class="spinner" style="border-color:rgba(238,245,234,.3);border-top-color:var(--fg)"&gt;&lt;/span&gt; Выходим…';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>setTimeout(()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>b.disabled=false;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>b.innerHTML='&lt;svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;path d="m16 17 5-5-5-5"/&gt;&lt;path d="M21 12H9"/&gt;&lt;path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/&gt;&lt;/svg&gt; Выйти из аккаунта';</p>
+<p class="p1"><span class="Apple-converted-space">      </span>toast('Вы вышли из аккаунта. Перенаправляем на страницу входа…');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>},1200);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>});</p>
+<p class="p1">}</p>
+<p class="p1">$('#deleteBtn').addEventListener('click',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>confirmDialog('Удалить аккаунт навсегда?','Будут удалены ключи, подписки, история обращений и реферальные начисления. Действие нельзя отменить. Для подтверждения введите слово УДАЛИТЬ.',</p>
+<p class="p1"><span class="Apple-converted-space">    </span>'Удалить аккаунт',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const i=$('#delInput');</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(i &amp;&amp; i.value.trim().toUpperCase()!=='УДАЛИТЬ'){toast('Введите слово УДАЛИТЬ для подтверждения','err');return;}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>toast('Запрос на удаление принят. Аккаунт будет удалён через 7 дней.');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>},</p>
+<p class="p1"><span class="Apple-converted-space">    </span>'&lt;input class="input" id="delInput" placeholder="УДАЛИТЬ" autocomplete="off" style="height:48px"&gt;');</p>
+<p class="p1">});</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- overlays ---------- */</p>
+<p class="p1">function openOv(id){$(id).classList.add('open');document.body.style.overflow='hidden';}</p>
+<p class="p1">function closeOv(id){$(id).classList.remove('open');document.body.style.overflow='';}</p>
+<p class="p1">$$('.overlay').forEach(o=&gt;o.addEventListener('click',e=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(e.target===o||e.target.closest('[data-close]')) closeOv('#'+o.id);</p>
+<p class="p1">}));</p>
+<p class="p1">document.addEventListener('keydown',e=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(e.key==='Escape'){$$('.overlay.open').forEach(o=&gt;{o.classList.remove('open');});document.body.style.overflow='';}</p>
+<p class="p1">});</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- глобальные клики ---------- */</p>
+<p class="p1">document.addEventListener('click',async e=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const c=e.target.closest('[data-copy]');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(c){e.preventDefault();const ok=await copyText(c.dataset.copy);toast(ok?(c.dataset.msg||'Скопировано'):'Не удалось скопировать',ok?'':'err');return;}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const t=e.target.closest('[data-toast]');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(t){e.preventDefault();toast(t.dataset.toast);}</p>
+<p class="p1">});</p>
+<p class="p2"><br></p>
+<p class="p1">/* ---------- демо-динамика: приглашение ---------- */</p>
+<p class="p1">setTimeout(()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(refState.invited===0){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>refState.invited=1;refState.days=5;refState.sum=0;renderRef();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>$('#invEmpty').innerHTML='&lt;div style="width:100%;display:flex;flex-direction:column;gap:9px"&gt;'+</p>
+<p class="p1"><span class="Apple-converted-space">      </span>'&lt;div style="display:flex;align-items:center;gap:11px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2)"&gt;'+</p>
+<p class="p1"><span class="Apple-converted-space">      </span>'&lt;span style="width:32px;height:32px;flex:none;border-radius:10px;display:grid;place-items:center;background:rgba(183,255,69,.14);color:var(--lime);font-size:12px;font-weight:800"&gt;Д&lt;/span&gt;'+</p>
+<p class="p1"><span class="Apple-converted-space">      </span>'&lt;span style="flex:1;min-width:0"&gt;&lt;b style="display:block;font-size:13px"&gt;Друг зарегистрировался&lt;/b&gt;&lt;span class="dim" style="font-size:11.5px"&gt;код 3SET-YVFCL2 · ожидает первой оплаты&lt;/span&gt;&lt;/span&gt;'+</p>
+<p class="p1"><span class="Apple-converted-space">      </span>'&lt;span class="pill warn" style="padding:4px 10px;font-size:11px"&gt;&lt;span class="pdot"&gt;&lt;/span&gt;Ожидание&lt;/span&gt;&lt;/div&gt;'+</p>
+<p class="p1"><span class="Apple-converted-space">      </span>'&lt;p class="dim" style="margin:0;font-size:11.5px;text-align:center"&gt;После его оплаты вам и другу начислится по 5 дней&lt;/p&gt;&lt;/div&gt;';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>toast('По вашей ссылке зарегистрировался друг');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1">},7000);</p>
+<p class="p1">})();</p>
+<p class="p1">&lt;/script&gt;</p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+</body>
+</html>

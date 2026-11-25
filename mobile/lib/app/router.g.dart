@@ -1,0 +1,73 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'router.dart';
+
+// **************************************************************************
+// RiverpodGenerator
+// **************************************************************************
+
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+/// App router configuration using GoRouter.
+/// Routes:
+/// - /auth: Login screen
+/// - /register: Registration screen
+/// - /telegram-wait: Telegram authentication wait screen
+/// - /: Main app screen (placeholder for now)
+/// Riverpod provider for the GoRouter instance
+
+@ProviderFor(router)
+final routerProvider = RouterProvider._();
+
+/// App router configuration using GoRouter.
+/// Routes:
+/// - /auth: Login screen
+/// - /register: Registration screen
+/// - /telegram-wait: Telegram authentication wait screen
+/// - /: Main app screen (placeholder for now)
+/// Riverpod provider for the GoRouter instance
+
+final class RouterProvider
+    extends $FunctionalProvider<GoRouter, GoRouter, GoRouter>
+    with $Provider<GoRouter> {
+  /// App router configuration using GoRouter.
+  /// Routes:
+  /// - /auth: Login screen
+  /// - /register: Registration screen
+  /// - /telegram-wait: Telegram authentication wait screen
+  /// - /: Main app screen (placeholder for now)
+  /// Riverpod provider for the GoRouter instance
+  RouterProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'routerProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$routerHash();
+
+  @$internal
+  @override
+  $ProviderElement<GoRouter> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  GoRouter create(Ref ref) {
+    return router(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(GoRouter value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<GoRouter>(value),
+    );
+  }
+}
+
+String _$routerHash() => r'b2b76baf0871a3fda74c0879c1cdabf77718b1f2';

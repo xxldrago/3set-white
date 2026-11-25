@@ -1210,32 +1210,33 @@ class _LifecycleObserver extends WidgetsBindingObserver {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Telegram Bot Username for Deep Links**
-   - What we know: `lib/telegram-login.ts` has `resolveBotUsername()` with `TELEGRAM_BOT_USERNAME` env fallback
-   - What's unclear: Whether the mobile app should use the same bot (`set3vpn_bot`) or a dedicated mobile bot
-   - Recommendation: Use existing bot; deep link format `t.me/set3vpn_bot?start=nonce_{nonce}`
+1. **Telegram Bot Username for Deep Links** ✅ RESOLVED
+   - Decision: Use existing bot `set3vpn_bot`; deep link format `t.me/set3vpn_bot?start=nonce_{nonce}`
+   - Rationale: Single bot simplifies operations; existing `TELEGRAM_BOT_USERNAME` env already configured
+   - Implementation: Mobile app requests nonce → builds `t.me/set3vpn_bot?start=nonce_{nonce}` → Telegram bot `/start` handler calls `bindTelegramId(nonce, telegramId)`
 
-2. **Refresh Token Storage & Rotation**
-   - What we know: Backend issues new refresh token on each refresh; old one revoked via `credentialsChangedAt`
-   - What's unclear: Whether to store refresh token hash in DB for additional validation
-   - Recommendation: Current watermark approach is sufficient; no refresh token DB storage needed
+2. **Refresh Token Storage & Rotation** ✅ RESOLVED
+   - Decision: Current watermark approach (`credentialsChangedAt`) is sufficient; no refresh token DB storage needed
+   - Rationale: JWT rotation on each refresh + watermark revocation provides equivalent security; avoids DB bloat
+   - Implementation: Refresh endpoint bumps `credentialsChangedAt`; old refresh tokens rejected on subsequent use
 
-3. **Platform-Specific Biometric Behavior**
-   - What we know: `flutter_secure_storage` 11.2 supports `requireBiometricsPerOperation` on Android
-   - What's unclear: iOS behavior when Face ID/Touch ID not enrolled; graceful degradation
-   - Recommendation: Test on physical devices; `enforceBiometrics: false` allows fallback to device passcode
+3. **Platform-Specific Biometric Behavior** ✅ RESOLVED
+   - Decision: `enforceBiometrics: false` allows fallback to device passcode on both platforms
+   - Rationale: iOS Keychain `kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly` + Android `setUserAuthenticationRequired(false)` provide graceful degradation
+   - Implementation: TokenStore read uses biometric options; if cancelled/failed → clear storage + redirect to auth
 
-4. **Android VpnService + Foreground Service Setup (Future Phase)**
-   - What we know: Phase 18 only does auth; VPN tunnel is later phases
-   - What's unclear: Whether to configure `AndroidManifest.xml` permissions now
-   - Recommendation: Add `android.permission.FOREGROUND_SERVICE` and `android.permission.VPN_MANAGE` now to avoid rebuild
+4. **Android VpnService + Foreground Service Setup (Future Phase)** ✅ RESOLVED
+   - Decision: Add permissions now in Plan 01 native config to avoid rebuild
+   - Rationale: Adding `FOREGROUND_SERVICE` + `VPN_MANAGE` + `FOREGROUND_SERVICE_TYPE_VPN` to AndroidManifest now is zero-cost
+   - Implementation: Manifest entries added in Plan 01 Task 2; no runtime impact until VPN phases
 
-5. **iOS NetworkExtension Entitlement (Blocker)**
-   - What we know: Listed as blocker in REQUIREMENTS.md; requires Apple Developer Portal approval
-   - What's unclear: Timeline for approval
-   - Recommendation: Apply immediately; development can proceed with simulator
+5. **iOS NetworkExtension Entitlement (Blocker)** ✅ RESOLVED
+   - Decision: Apply via Apple Developer Portal immediately; development proceeds on simulator
+   - Rationale: Entitlement approval can take weeks; simulator supports NetworkExtension for dev
+   - Action: Submit entitlement request now; add `com.apple.developer.networking.networkextension` to `Runner.entitlements` placeholder
+   - Fallback: Simulator testing unblocks Phases 18-21; physical device testing deferred until approval
 
 ---
 

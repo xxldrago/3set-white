@@ -473,8 +473,8 @@ model LoginAttempt {
 
 model TelegramLinkToken {
   token      String    @id
-  userId     Int       @map("user_id")
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int?      @map("user_id")
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   telegramId BigInt?   @map("telegram_id")
   expiresAt  DateTime  @map("expires_at")
   consumedAt DateTime? @map("consumed_at")

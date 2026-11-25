@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0e1512">
+    <title>Мои ключи — 3set VPN</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link href="https://cdn.jsdelivr.net/npm/@fontsource-variable/manrope/index.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fontsource-variable/unbounded/index.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fontsource-variable/jetbrains-mono/index.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+    <style>
+        :root{
+            --bg:#0e1512; --bg-2:#0b110e;
+            --panel:#131c17; --panel-2:#18231d; --panel-3:#1e2b23;
+            --line:rgba(233,255,214,.09); --line-2:rgba(233,255,214,.16);
+            --fg:#eef5ea; --muted:#9daba1; --dim:#6b7b70;
+            --lime:#b7ff45; --lime-2:#d4ff85; --green:#8fdc2c;
+            --amber:#ffd166; --red:#ff7a6b;
+            --r-lg:22px; --r-md:16px; --r-sm:12px;
+            --shadow:0 24px 60px -30px rgba(0,0,0,.9);
+            --glow:0 10px 34px -12px rgba(183,255,69,.55);
+            --ease:cubic-bezier(.22,.9,.28,1);
+        }
+        *{box-sizing:border-box}
+        html{scroll-behavior:smooth}
+        body{margin:0;min-height:100vh;background:var(--bg);color:var(--fg);
+            font-family:"Manrope Variable",Manrope,system-ui,sans-serif;font-size:15px;line-height:1.55;
+            -webkit-font-smoothing:antialiased;overflow-x:hidden}
+        h1,h2,h3,.display{font-family:"Unbounded Variable",Unbounded,Manrope,sans-serif;letter-spacing:-.02em;margin:0}
+        .mono{font-family:"JetBrains Mono Variable","JetBrains Mono",ui-monospace,monospace}
+        button,input,select{font:inherit;color:inherit}
+        a{color:inherit;text-decoration:none}
+        ::selection{background:rgba(183,255,69,.28)}
+
+        /* bg */
+        .bg-fx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+        .bg-fx .grid{position:absolute;inset:-2px;
+            background-image:linear-gradient(rgba(183,255,69,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(183,255,69,.045) 1px,transparent 1px);
+            background-size:64px 64px;mask-image:radial-gradient(120% 80% at 50% 0%,#000 20%,transparent 78%)}
+        .blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5}
+        .blob.b1{width:520px;height:520px;top:-220px;left:-120px;background:radial-gradient(circle,rgba(140,220,44,.30),transparent 65%);animation:float1 22s var(--ease) infinite}
+        .blob.b2{width:600px;height:600px;top:120px;right:-260px;background:radial-gradient(circle,rgba(60,180,120,.20),transparent 65%);animation:float2 28s var(--ease) infinite}
+        .blob.b3{width:460px;height:460px;bottom:-180px;left:32%;background:radial-gradient(circle,rgba(183,255,69,.14),transparent 65%);animation:float1 34s var(--ease) infinite reverse}
+        @keyframes float1{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(40px,50px,0) scale(1.12)}}
+        @keyframes float2{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-50px,40px,0) scale(1.08)}}
+        .wrap{position:relative;z-index:1;display:flex;flex-direction:column;min-height:100vh}
+
+        /* progress + nav */
+        .progress-bar{position:fixed;top:0;left:0;height:2px;width:0;z-index:60;
+            background:linear-gradient(90deg,var(--green),var(--lime-2));box-shadow:0 0 14px rgba(183,255,69,.7);transition:width .12s linear}
+        nav.top{position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line);
+            background:rgba(11,17,14,.72);backdrop-filter:blur(16px) saturate(140%);transition:background .3s var(--ease)}
+        nav.top .inner{max-width:1200px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:18px;justify-content:space-between}
+        nav.top.scrolled{background:rgba(9,14,11,.92)}
+        nav.top.scrolled .inner{padding-top:8px;padding-bottom:8px;transition:padding .3s var(--ease)}
+        .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px}
+        .brand .mark{width:36px;height:36px;flex:none;filter:drop-shadow(0 4px 12px rgba(183,255,69,.35));transition:transform .5s var(--ease)}
+        .brand:hover .mark{transform:rotate(-8deg) scale(1.06)}
+        .brand em{font-style:normal;color:var(--lime)}
+        .brand .dom{font-size:11px;color:var(--dim);font-weight:500;margin-left:2px}
+        .nav-links{display:flex;align-items:center;gap:4px}
+        .nav-links a.nl{display:flex;align-items:center;gap:7px;padding:9px 13px;border-radius:11px;font-weight:700;font-size:13.5px;
+            color:var(--muted);position:relative;border:1px solid transparent;transition:color .25s,background .25s,border-color .25s,transform .25s var(--ease)}
+        .nav-links a.nl svg{width:16px;height:16px;opacity:.9}
+        .nav-links a.nl::after{content:"";position:absolute;left:13px;right:13px;bottom:5px;height:2px;border-radius:2px;background:var(--lime);
+            transform:scaleX(0);transform-origin:left;transition:transform .3s var(--ease)}
+        .nav-links a.nl:hover{color:var(--fg);background:rgba(183,255,69,.07)}
+        .nav-links a.nl:hover::after{transform:scaleX(1)}
+        .nav-links a.nl.active{color:#101a05;background:linear-gradient(135deg,var(--lime-2),var(--green));border-color:transparent;box-shadow:var(--glow)}
+        .nav-links a.nl.active::after{display:none}
+        .nav-right{display:flex;align-items:center;gap:10px}
+        .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:13px;
+            padding:0 18px;height:44px;font-weight:800;font-size:13.5px;cursor:pointer;white-space:nowrap;
+            transition:transform .2s var(--ease),box-shadow .3s,background .25s,border-color .25s,color .25s,opacity .25s}
+        .btn svg{width:17px;height:17px}
+        .btn:active{transform:scale(.975)}
+        .btn-primary{background:linear-gradient(135deg,var(--lime-2),var(--green));color:#101a05;box-shadow:var(--glow)}
+        .btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 40px -14px rgba(183,255,69,.75)}
+        .btn-light{background:#eef5ea;color:#101a05}
+        .btn-light:hover{background:#fff;transform:translateY(-2px);box-shadow:0 14px 30px -16px rgba(255,255,255,.5)}
+        .btn-ghost{border-color:var(--line-2);background:rgba(255,255,255,.02);color:var(--fg)}
+        .btn-ghost:hover{border-color:rgba(183,255,69,.45);background:rgba(183,255,69,.09);transform:translateY(-2px)}
+        .btn-quiet{border-color:var(--line);background:transparent;color:var(--muted)}
+        .btn-quiet:hover{color:var(--fg);border-color:var(--line-2);background:rgba(255,255,255,.04)}
+        .btn.sm{height:38px;padding:0 14px;font-size:12.5px;border-radius:11px}
+        .btn.xs{height:34px;padding:0 11px;font-size:12px;border-radius:10px}
+        .btn.block{width:100%}
+        .avatar{width:42px;height:42px;flex:none;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line-2);
+            background:radial-gradient(circle at 30% 25%,#22301f,#141d18);font-weight:800;font-size:13px;cursor:pointer;position:relative;
+            transition:transform .3s var(--ease),border-color .3s,box-shadow .3s}
+        .avatar:hover{transform:translateY(-2px) scale(1.04);border-color:rgba(183,255,69,.5);box-shadow:0 0 0 4px rgba(183,255,69,.1)}
+        .avatar .dot{position:absolute;right:-1px;bottom:-1px;width:12px;height:12px;border-radius:50%;background:var(--lime);
+            border:2.5px solid var(--bg);animation:pulseDot 2.4s infinite}
+        @keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(183,255,69,.55)}50%{box-shadow:0 0 0 6px rgba(183,255,69,0)}}
+        .burger{display:none;width:42px;height:42px;border-radius:12px;border:1px solid var(--line-2);background:rgba(255,255,255,.03);
+            cursor:pointer;align-items:center;justify-content:center}
+        .burger span{display:block;width:17px;height:2px;background:var(--fg);border-radius:2px;position:relative;transition:.3s var(--ease)}
+        .burger span::before,.burger span::after{content:"";position:absolute;left:0;width:17px;height:2px;background:var(--fg);border-radius:2px;transition:.3s var(--ease)}
+        .burger span::before{top:-6px}.burger span::after{top:6px}
+        .burger.open span{background:transparent}
+        .burger.open span::before{top:0;transform:rotate(45deg)}
+        .burger.open span::after{top:0;transform:rotate(-45deg)}
+        .mobile-menu{display:none;overflow:hidden;max-height:0;transition:max-height .45s var(--ease)}
+        .mobile-menu.open{max-height:360px}
+        .mobile-menu .mm-inner{padding:6px 20px 16px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line)}
+        .mobile-menu a.nl{padding:12px 10px;border-radius:12px;font-weight:700;color:var(--muted)}
+        .mobile-menu a.nl:hover{background:rgba(183,255,69,.08);color:var(--fg)}
+
+        /* layout */
+        main{flex:1;width:100%;max-width:1200px;margin:0 auto;padding:34px 20px 60px;display:flex;flex-direction:column;gap:28px}
+        .card{background:linear-gradient(160deg,rgba(255,255,255,.035),rgba(255,255,255,0) 42%),var(--panel);
+            border:1px solid var(--line);border-radius:var(--r-lg);padding:26px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+        .card::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+            background:radial-gradient(420px 160px at 88% -10%,rgba(183,255,69,.10),transparent 70%)}
+        .sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+        .kicker{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--green);font-weight:700}
+        h1.page-title{font-size:clamp(26px,4.2vw,36px);line-height:1.14;font-weight:700}
+        h2.sec-title{font-size:clamp(19px,2.6vw,24px);font-weight:600;line-height:1.25}
+        .muted{color:var(--muted)} .dim{color:var(--dim)}
+        .label{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:700}
+        .pill{display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;font-size:12px;font-weight:800;
+            border:1px solid var(--line-2);background:rgba(255,255,255,.03)}
+        .pill .pdot{width:8px;height:8px;border-radius:50%;background:var(--lime);animation:pulseDot 2.2s infinite}
+        .pill.ok{border-color:rgba(183,255,69,.35);background:rgba(183,255,69,.10);color:var(--lime)}
+        .pill.warn{border-color:rgba(255,209,102,.32);background:rgba(255,209,102,.10);color:var(--amber)}
+        .pill.warn .pdot{background:var(--amber)}
+        .pill.dead{border-color:rgba(255,122,107,.3);background:rgba(255,122,107,.10);color:var(--red)}
+        .pill.dead .pdot{background:var(--red);animation:none}
+
+        /* page head */
+        .page-head{display:flex;gap:20px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
+        .page-head .desc{color:var(--muted);max-width:56ch;margin:10px 0 0;font-size:14.5px}
+        .head-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+        .search{position:relative;display:flex;align-items:center}
+        .search svg{position:absolute;left:13px;width:16px;height:16px;color:var(--dim);pointer-events:none}
+        .input{height:44px;border-radius:13px;border:1px solid var(--line-2);background:rgba(0,0,0,.25);padding:0 14px;font-size:14px;
+            outline:none;transition:.25s var(--ease)}
+        .input::placeholder{color:var(--dim)}
+        .input:focus{border-color:rgba(183,255,69,.55);box-shadow:0 0 0 4px rgba(183,255,69,.10);background:rgba(0,0,0,.35)}
+        .search .input{padding-left:38px;width:230px}
+        .seg{display:flex;border:1px solid var(--line-2);border-radius:13px;overflow:hidden;background:rgba(0,0,0,.22)}
+        .seg button{width:42px;height:44px;background:none;border:none;cursor:pointer;display:grid;place-items:center;color:var(--dim);transition:.25s}
+        .seg button svg{width:17px;height:17px}
+        .seg button:hover{color:var(--fg);background:rgba(255,255,255,.05)}
+        .seg button.on{color:#101a05;background:linear-gradient(135deg,var(--lime-2),var(--green))}
+
+        /* stats strip */
+        .stats-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+        .mini{border:1px solid var(--line);border-radius:var(--r-md);padding:16px;background:linear-gradient(160deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--panel);
+            display:flex;flex-direction:column;gap:7px;position:relative;overflow:hidden;
+            transition:transform .35s var(--ease),border-color .35s,background .35s}
+        .mini:hover{transform:translateY(-3px);border-color:rgba(183,255,69,.35);background:linear-gradient(160deg,rgba(183,255,69,.08),rgba(255,255,255,0)),var(--panel)}
+        .mini b{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1}
+        .mini b small{font-size:12px;color:var(--dim);font-weight:700;margin-left:3px}
+        .mini .ic{position:absolute;right:12px;top:12px;width:26px;height:26px;color:var(--dim);opacity:.55}
+        .mini .ic svg{width:100%;height:100%}
+        .bar{height:5px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+        .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),var(--lime));width:0;transition:width 1.1s var(--ease)}
+
+        /* filters */
+        .tabs{display:flex;gap:8px;flex-wrap:wrap;position:relative}
+        .tab{border:1px solid var(--line-2);background:rgba(255,255,255,.02);color:var(--muted);border-radius:999px;height:38px;padding:0 15px;
+            font-size:12.5px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:.28s var(--ease)}
+        .tab span.c{font-size:11px;padding:1px 7px;border-radius:99px;background:rgba(255,255,255,.08);color:var(--fg);font-variant-numeric:tabular-nums}
+        .tab:hover{color:var(--fg);border-color:rgba(183,255,69,.4);transform:translateY(-2px)}
+        .tab.on{color:#101a05;background:linear-gradient(135deg,var(--lime-2),var(--green));border-color:transparent;box-shadow:var(--glow)}
+        .tab.on span.c{background:rgba(16,26,5,.18);color:#101a05}
+
+        /* keys grid */
+        .keys{display:grid;gap:18px;grid-template-columns:repeat(2,minmax(0,1fr))}
+        .key-card{
+            position:relative;overflow:hidden;border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;
+            background:linear-gradient(165deg,rgba(255,255,255,.04),rgba(255,255,255,0) 45%),var(--panel);
+            box-shadow:var(--shadow);display:flex;flex-direction:column;gap:18px;
+            transition:transform .4s var(--ease),border-color .4s,box-shadow .4s,opacity .35s;
+            animation:cardIn .55s var(--ease) both;
+        }
+        @keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
+        .key-card::after{content:"";position:absolute;top:-60%;left:-50%;width:45%;height:220%;transform:rotate(16deg);
+            background:linear-gradient(90deg,transparent,rgba(183,255,69,.10),transparent);opacity:0;transition:opacity .3s}
+        .key-card:hover{transform:translateY(-4px);border-color:rgba(183,255,69,.3);box-shadow:0 30px 70px -34px rgba(0,0,0,.95),0 0 0 1px rgba(183,255,69,.12)}
+        .key-card:hover::after{opacity:1;animation:shine 1.5s var(--ease)}
+        @keyframes shine{0%{left:-50%}100%{left:130%}}
+        .key-card.flash{animation:flash .9s var(--ease)}
+        @keyframes flash{0%{box-shadow:0 0 0 0 rgba(183,255,69,.55)}100%{box-shadow:0 0 0 18px rgba(183,255,69,0)}}
+        .key-card.removing{opacity:0;transform:translateX(28px) scale(.97);max-height:0;padding-top:0;padding-bottom:0;margin:0;border-width:0}
+        .kc-head{display:flex;gap:13px;align-items:flex-start}
+        .kc-ic{width:46px;height:46px;flex:none;border-radius:15px;display:grid;place-items:center;background:rgba(183,255,69,.15);
+            color:var(--lime);border:1px solid rgba(183,255,69,.22);transition:.4s var(--ease)}
+        .key-card:hover .kc-ic{transform:rotate(-6deg) scale(1.06);box-shadow:0 0 0 5px rgba(183,255,69,.08)}
+        .kc-ic svg{width:22px;height:22px}
+        .kc-t{flex:1;min-width:0}
+        .kc-t h3{font-size:16.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .kc-tools{display:flex;gap:6px;flex:none}
+        .tbtn{width:34px;height:34px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.02);color:var(--muted);
+            cursor:pointer;display:grid;place-items:center;transition:.25s var(--ease);position:relative}
+        .tbtn svg{width:16px;height:16px}
+        .tbtn:hover{color:var(--lime);border-color:rgba(183,255,69,.45);background:rgba(183,255,69,.1);transform:translateY(-2px)}
+        .kc-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+        .kc-prog{display:flex;flex-direction:column;gap:8px}
+        .kc-prog .row{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--dim);font-weight:700}
+        .kc-prog .row b{font-size:14px;color:var(--fg);font-variant-numeric:tabular-nums}
+        .kc-prog .bar{height:8px}
+        .kc-prog .bar i.warn{background:linear-gradient(90deg,#e0a72e,var(--amber))}
+        .kc-prog .bar i.dead{background:linear-gradient(90deg,#c9564a,var(--red))}
+        .kc-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+        .stat{border:1px solid var(--line);border-radius:var(--r-sm);padding:12px;background:var(--panel-2);display:flex;flex-direction:column;gap:4px;
+            position:relative;overflow:hidden;transition:transform .35s var(--ease),border-color .35s,background .35s}
+        .stat::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--lime),transparent);
+            transform:scaleX(0);transition:transform .45s var(--ease)}
+        .stat:hover{transform:translateY(-3px);border-color:rgba(183,255,69,.3);background:var(--panel-3)}
+        .stat:hover::after{transform:scaleX(1)}
+        .stat b{font-size:14.5px;font-weight:800;font-variant-numeric:tabular-nums}
+        .link-box{border:1px solid var(--line);border-radius:var(--r-md);background:var(--panel-2);padding:13px;display:flex;flex-direction:column;gap:10px}
+        .link-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+        .link-val{display:flex;align-items:center;gap:10px;min-width:0;flex:1;border:1px dashed var(--line-2);border-radius:11px;padding:9px 12px;background:rgba(0,0,0,.24);position:relative;overflow:hidden}
+        .link-val code{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:"JetBrains Mono Variable",monospace;transition:filter .35s var(--ease)}
+        .link-val.blurred code{filter:blur(5px);opacity:.75}
+        .link-val .eye{background:none;border:none;cursor:pointer;color:var(--dim);display:grid;place-items:center;padding:2px;transition:.25s;flex:none}
+        .link-val .eye:hover{color:var(--lime);transform:scale(1.12)}
+        .link-val .eye svg{width:16px;height:16px}
+        .kc-actions{display:flex;gap:9px;flex-wrap:wrap}
+        .kc-actions .btn{flex:1 1 auto;min-width:132px;height:46px}
+        .kc-actions .btn.iconic{flex:0 0 auto;min-width:46px;width:46px;padding:0}
+
+        /* add-key card */
+        .add-card{border:1.6px dashed var(--line-2);border-radius:var(--r-lg);padding:26px;display:flex;flex-direction:column;
+            align-items:center;justify-content:center;gap:12px;text-align:center;background:rgba(255,255,255,.015);cursor:pointer;
+            transition:.35s var(--ease);min-height:220px}
+        .add-card:hover{border-color:rgba(183,255,69,.5);background:rgba(183,255,69,.06);transform:translateY(-4px)}
+        .add-card .plus{width:52px;height:52px;border-radius:18px;display:grid;place-items:center;background:rgba(183,255,69,.14);color:var(--lime);
+            border:1px solid rgba(183,255,69,.25);transition:.4s var(--ease)}
+        .add-card:hover .plus{transform:rotate(90deg) scale(1.08)}
+        .add-card .plus svg{width:24px;height:24px}
+
+        /* list view */
+        .keys.list{grid-template-columns:1fr}
+        .keys.list .key-card{flex-direction:row;align-items:center;gap:20px;flex-wrap:wrap;padding:18px 20px}
+        .keys.list .kc-head{flex:1 1 260px;align-items:center}
+        .keys.list .kc-prog{flex:1 1 200px}
+        .keys.list .kc-stats{flex:1 1 300px;grid-template-columns:repeat(3,1fr)}
+        .keys.list .link-box,.keys.list .kc-status{display:none}
+        .keys.list .kc-actions{flex:0 1 auto;justify-content:flex-end}
+        .keys.list .kc-actions .btn span.tx{display:none}
+        .keys.list .kc-actions .btn{min-width:46px;width:46px;padding:0;flex:none}
+        .keys.list .add-card{min-height:120px;flex-direction:row;justify-content:flex-start;text-align:left;gap:16px}
+
+        /* empty */
+        .empty{display:none;flex-direction:column;align-items:center;gap:12px;padding:48px 20px;text-align:center;
+            border:1px dashed var(--line-2);border-radius:var(--r-lg);background:rgba(255,255,255,.015)}
+        .empty.show{display:flex;animation:cardIn .5s var(--ease) both}
+        .empty .eic{width:56px;height:56px;border-radius:18px;display:grid;place-items:center;background:rgba(183,255,69,.1);color:var(--lime)}
+        .empty .eic svg{width:26px;height:26px}
+
+        /* tariff */
+        .tariff{display:grid;grid-template-columns:1.15fr .85fr;gap:22px;align-items:start}
+        .opt-label{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:10px;display:block}
+        .terms{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+        .term{position:relative;border:1px solid var(--line-2);border-radius:var(--r-md);background:rgba(255,255,255,.02);padding:16px 12px 14px;
+            cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:3px;overflow:hidden;
+            transition:transform .3s var(--ease),border-color .3s,background .3s,box-shadow .3s}
+        .term .t-label{font-weight:800;font-size:13.5px;margin-top:18px}
+        .term .t-price{font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+        .term .t-per{font-size:10.5px;color:var(--dim)}
+        .term .badge{position:absolute;top:9px;right:9px;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+            padding:3px 7px;border-radius:99px;background:rgba(183,255,69,.16);color:var(--lime);border:1px solid rgba(183,255,69,.28)}
+        .term .check{position:absolute;left:12px;top:12px;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line-2);
+            display:grid;place-items:center;opacity:0;transform:scale(.6);transition:.3s var(--ease)}
+        .term .check svg{width:11px;height:11px;stroke:#101a05;stroke-width:3.2}
+        .term[aria-pressed="true"] .check{opacity:1;transform:scale(1);background:var(--lime);border-color:var(--lime)}
+        .term:hover{transform:translateY(-3px);border-color:rgba(183,255,69,.4)}
+        .term[aria-pressed="true"]{border-color:rgba(183,255,69,.6);background:linear-gradient(160deg,rgba(183,255,69,.16),rgba(183,255,69,.04));
+            box-shadow:0 14px 34px -20px rgba(183,255,69,.7)}
+        .term[aria-pressed="true"] .t-price{color:var(--lime)}
+        .stepper{display:flex;align-items:center;gap:12px}
+        .step-btn{width:44px;height:44px;flex:none;border-radius:13px;border:1px solid var(--line-2);background:rgba(255,255,255,.03);cursor:pointer;
+            display:grid;place-items:center;transition:.25s var(--ease)}
+        .step-btn svg{width:17px;height:17px}
+        .step-btn:hover:not(:disabled){border-color:rgba(183,255,69,.5);background:rgba(183,255,69,.12);transform:translateY(-2px)}
+        .step-btn:active:not(:disabled){transform:scale(.93)}
+        .step-btn:disabled{opacity:.35;cursor:not-allowed}
+        .step-input{width:78px;height:44px;text-align:center;border-radius:13px;border:1px solid var(--line-2);background:rgba(0,0,0,.25);
+            font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;outline:none;transition:.25s var(--ease)}
+        .step-input:focus{border-color:rgba(183,255,69,.55);box-shadow:0 0 0 4px rgba(183,255,69,.10)}
+        .summary{border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;display:flex;flex-direction:column;gap:16px;position:sticky;top:88px;
+            background:linear-gradient(170deg,rgba(183,255,69,.07),rgba(255,255,255,.015)),var(--panel)}
+        .price-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+        .price{font-size:36px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+        .price.pop{animation:pop .45s var(--ease)}
+        @keyframes pop{0%{transform:scale(.86);opacity:.5}60%{transform:scale(1.05)}100%{transform:scale(1)}}
+        .old-price{font-size:14px;color:var(--dim);text-decoration:line-through;font-variant-numeric:tabular-nums}
+        .sum-lines{display:flex;flex-direction:column;gap:9px;border-top:1px solid var(--line);padding-top:14px}
+        .sum-line{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--muted)}
+        .sum-line b{color:var(--fg);font-variant-numeric:tabular-nums;font-weight:700}
+        .sum-line.discount b{color:var(--lime)}
+        .target-chips{display:flex;gap:8px;flex-wrap:wrap}
+        .chip{border:1px solid var(--line-2);background:rgba(255,255,255,.02);border-radius:11px;padding:9px 12px;font-size:12.5px;font-weight:700;
+            color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:.28s var(--ease)}
+        .chip svg{width:14px;height:14px}
+        .chip:hover{color:var(--fg);border-color:rgba(183,255,69,.4);transform:translateY(-2px)}
+        .chip.on{color:#101a05;background:linear-gradient(135deg,var(--lime-2),var(--green));border-color:transparent}
+        .promo{display:flex;gap:8px}
+        .promo .input{flex:1;min-width:0;height:46px}
+        .promo-applied{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--lime);font-weight:700;
+            border:1px dashed rgba(183,255,69,.4);border-radius:11px;padding:9px 12px;background:rgba(183,255,69,.08)}
+        .promo-applied button{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;font-weight:700}
+        .promo-applied button:hover{color:var(--red)}
+        .input.shake{animation:shake .4s}
+        @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+        .spinner{width:17px;height:17px;border-radius:50%;border:2px solid rgba(16,26,5,.3);border-top-color:#101a05;animation:spin .7s linear infinite;display:inline-block}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .pay-icons{display:flex;align-items:center;gap:8px;justify-content:center;font-size:11px;color:var(--dim);flex-wrap:wrap}
+
+        /* support */
+        .support{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+        .support .sic{width:52px;height:52px;flex:none;border-radius:18px;display:grid;place-items:center;background:rgba(183,255,69,.13);color:var(--lime);border:1px solid rgba(183,255,69,.22)}
+        .support .sic svg{width:24px;height:24px}
+        .chan{display:flex;gap:8px;flex-wrap:wrap}
+
+        /* footer */
+        footer{border-top:1px solid var(--line);background:rgba(9,14,11,.6);position:relative;z-index:1}
+        .f-inner{max-width:1200px;margin:0 auto;padding:26px 20px;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+        .f-links{display:flex;gap:8px;flex-wrap:wrap}
+        .f-links a{font-size:13px;color:var(--muted);font-weight:700;padding:8px 12px;border-radius:10px;transition:.25s}
+        .f-links a:hover{color:var(--lime);background:rgba(183,255,69,.08)}
+
+        /* modal */
+        .overlay{position:fixed;inset:0;z-index:70;background:rgba(6,10,8,.72);backdrop-filter:blur(6px);display:grid;place-items:center;padding:20px;
+            opacity:0;pointer-events:none;transition:opacity .35s var(--ease)}
+        .overlay.open{opacity:1;pointer-events:auto}
+        .modal{width:min(520px,100%);max-height:86vh;overflow:auto;border-radius:var(--r-lg);border:1px solid var(--line-2);
+            background:linear-gradient(170deg,#18231d,#111a15);box-shadow:0 40px 90px -30px #000;padding:24px;
+            transform:translateY(22px) scale(.96);opacity:0;transition:.45s var(--ease)}
+        .overlay.open .modal{transform:none;opacity:1}
+        .modal-head{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+        .modal-head h3{font-size:18px;font-weight:600;flex:1}
+        .icon-btn{width:38px;height:38px;flex:none;border-radius:11px;border:1px solid var(--line-2);background:rgba(255,255,255,.03);cursor:pointer;
+            display:grid;place-items:center;transition:.25s var(--ease)}
+        .icon-btn svg{width:17px;height:17px}
+        .icon-btn:hover{background:rgba(255,122,107,.14);border-color:rgba(255,122,107,.45);color:var(--red);transform:rotate(90deg)}
+        .dev{display:flex;align-items:center;gap:13px;padding:14px;border:1px solid var(--line);border-radius:var(--r-md);
+            background:rgba(255,255,255,.022);margin-bottom:10px;transition:.35s var(--ease);overflow:hidden}
+        .dev.removing{opacity:0;transform:translateX(26px) scale(.96);max-height:0;padding-top:0;padding-bottom:0;margin-bottom:0;border-width:0}
+        .dev .d-ic{width:40px;height:40px;flex:none;border-radius:12px;display:grid;place-items:center;background:rgba(183,255,69,.12);color:var(--lime);border:1px solid rgba(183,255,69,.2)}
+        .dev .d-ic svg{width:19px;height:19px}
+        .dev .d-tx{flex:1;min-width:0}
+        .dev .d-tx b{display:block;font-size:14px}
+        .dev .d-tx span{font-size:12px;color:var(--dim)}
+        .qr-box{display:flex;flex-direction:column;align-items:center;gap:14px}
+        .qr-frame{padding:14px;border-radius:18px;background:#f2f7ee;box-shadow:0 0 0 1px rgba(183,255,69,.35),0 20px 50px -20px rgba(183,255,69,.4);
+            animation:cardIn .5s var(--ease) both}
+        .qr-frame canvas{display:block;width:220px;height:220px;image-rendering:pixelated}
+
+        /* menu */
+        .menu{position:absolute;z-index:20;min-width:200px;border-radius:14px;border:1px solid var(--line-2);
+            background:rgba(18,27,22,.98);backdrop-filter:blur(10px);box-shadow:0 26px 60px -24px #000;padding:6px;
+            opacity:0;transform:translateY(-8px) scale(.97);pointer-events:none;transition:.28s var(--ease);transform-origin:top right}
+        .menu.open{opacity:1;transform:none;pointer-events:auto}
+        .menu button{width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:10px 11px;border-radius:10px;
+            font-size:13px;font-weight:700;color:var(--muted);text-align:left;transition:.2s}
+        .menu button svg{width:16px;height:16px}
+        .menu button:hover{background:rgba(183,255,69,.1);color:var(--fg)}
+        .menu button.danger:hover{background:rgba(255,122,107,.14);color:var(--red)}
+        .menu hr{border:none;border-top:1px solid var(--line);margin:5px 4px}
+
+        /* toasts + confetti */
+        .toasts{position:fixed;z-index:90;right:20px;bottom:20px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}
+        .toast{display:flex;align-items:center;gap:11px;padding:13px 16px;border-radius:14px;min-width:230px;max-width:min(380px,86vw);
+            border:1px solid var(--line-2);background:rgba(20,30,24,.95);backdrop-filter:blur(10px);box-shadow:0 20px 44px -20px #000;
+            font-size:13.5px;font-weight:700;transform:translateY(16px) scale(.94);opacity:0;transition:.4s var(--ease)}
+        .toast.show{transform:none;opacity:1}
+        .toast .ti{width:26px;height:26px;flex:none;border-radius:8px;display:grid;place-items:center;background:rgba(183,255,69,.16);color:var(--lime)}
+        .toast .ti svg{width:15px;height:15px}
+        .toast.err .ti{background:rgba(255,122,107,.16);color:var(--red)}
+        .confetti{position:fixed;inset:0;z-index:80;pointer-events:none;overflow:hidden}
+        .cf{position:absolute;width:9px;height:14px;border-radius:2px;opacity:.95;animation:cfall linear forwards}
+        @keyframes cfall{0%{transform:translateY(-10vh) rotate(0)}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+        /* reveal */
+        .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s var(--ease),transform .7s var(--ease);transition-delay:var(--d,0ms)}
+        .reveal.in{opacity:1;transform:none}
+
+        @media (max-width:1040px){
+            .keys{grid-template-columns:1fr}
+            .terms{grid-template-columns:repeat(3,1fr)}
+            .tariff{grid-template-columns:1fr}
+            .summary{position:static}
+            .stats-strip{grid-template-columns:repeat(2,1fr)}
+        }
+        @media (max-width:860px){
+            .nav-links,.nav-right .btn-light{display:none}
+            .burger{display:flex}
+            .mobile-menu{display:block}
+        }
+        @media (max-width:620px){
+            main{padding:24px 14px 44px;gap:22px}
+            .card{padding:20px;border-radius:18px}
+            .key-card{padding:18px;border-radius:18px}
+            .kc-stats{grid-template-columns:1fr 1fr}
+            .kc-stats .stat:last-child{grid-column:span 2}
+            .kc-actions .btn{min-width:100%}
+            .kc-actions .btn.iconic{min-width:46px;width:46px}
+            .terms{grid-template-columns:1fr 1fr}
+            .head-tools{width:100%}
+            .search .input{width:100%}
+            .search{flex:1}
+            .toasts{left:14px;right:14px;align-items:stretch}
+            .toast{max-width:none}
+            .keys.list .key-card{flex-direction:column;align-items:stretch}
+            .keys.list .kc-actions .btn span.tx{display:inline}
+            .keys.list .kc-actions .btn{min-width:100%;width:auto}
+        }
+        @media (prefers-reduced-motion:reduce){*{animation-duration:.001s!important;transition-duration:.001s!important}.reveal{opacity:1;transform:none}}
+    </style>
+</head>
+<body>
+
+<div class="bg-fx"><div class="grid"></div><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<div class="progress-bar" id="progressBar"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b7ff45" stop-opacity=".5"/><stop offset="100%" stop-color="#b7ff45" stop-opacity="0"/></linearGradient>
+</defs></svg>
+
+<div class="wrap">
+
+    <nav class="top" id="nav">
+        <div class="inner">
+            <a class="brand" href="#" aria-label="3set — на главную">
+                <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                    <path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" fill="#1b2a1c"/>
+                    <path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" stroke="#b7ff45" stroke-opacity=".35"/>
+                    <path d="M11 16l3.5 3.5L21 13" stroke="#b7ff45" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>3<em>set</em><span class="dom mono">.online</span></span>
+            </a>
+            <div class="nav-links">
+                <a class="nl active" href="#keys"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="15.5" cy="7.5" r="5.5"/><path d="m2 21 9.6-9.6M7.5 15.5l2.3 2.3a1 1 0 0 1 0 1.4L7.7 21.3a1 1 0 0 1-1.4 0L4 19"/></svg>Мои ключи</a>
+                <a class="nl" href="#tariff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20M6 14h2"/></svg>Тарифы</a>
+                <a class="nl" href="#guides"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.3 20.3a2.4 2.4 0 0 0 3.4 0L12 18l-6-6-2.3 2.3a2.4 2.4 0 0 0 0 3.4Z"/><path d="m2 22 3-3M18 3l-4 4h6l-4 4"/></svg>Инструкции</a>
+                <a class="nl" href="#support"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24"/><circle cx="12" cy="12" r="4"/></svg>Поддержка</a>
+            </div>
+            <div class="nav-right">
+                <a class="btn btn-light sm" href="#tariff" style="height:40px">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                    Админ-панель
+                </a>
+                <a class="avatar" href="#" title="xxldragon@mail.ru" aria-label="Профиль">А<span class="dot"></span></a>
+                <button class="burger" id="burger" aria-label="Меню" aria-expanded="false"><span></span></button>
+            </div>
+        </div>
+        <div class="mobile-menu" id="mobileMenu">
+            <div class="mm-inner">
+                <a class="nl" href="#keys">Мои ключи</a>
+                <a class="nl" href="#tariff">Тарифы</a>
+                <a class="nl" href="#guides">Инструкции</a>
+                <a class="nl" href="#support">Поддержка</a>
+                <a class="btn btn-primary block" href="#tariff" style="margin-top:6px">Купить подписку</a>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+
+        <!-- HEAD -->
+        <header class="page-head reveal">
+            <div>
+                <span class="kicker">Управление доступом</span>
+                <h1 class="page-title" style="margin-top:8px">Ваши подписки</h1>
+                <p class="desc">Каждая покупка создаёт отдельную ссылку подписки — ограничений по количеству нет. Переименовывайте ключи, следите за сроком и управляйте устройствами.</p>
+            </div>
+            <div class="head-tools">
+                <div class="search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+                    <input class="input" id="searchInput" type="search" placeholder="Поиск по названию или ID" aria-label="Поиск ключей">
+                </div>
+                <div class="seg" role="group" aria-label="Вид списка">
+                    <button id="viewGrid" class="on" title="Плитка" aria-label="Плитка"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1.5"/><rect width="7" height="7" x="14" y="3" rx="1.5"/><rect width="7" height="7" x="3" y="14" rx="1.5"/><rect width="7" height="7" x="14" y="14" rx="1.5"/></svg></button>
+                    <button id="viewList" title="Список" aria-label="Список"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg></button>
+                </div>
+                <a class="btn btn-primary" href="#guides">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.3 20.3a2.4 2.4 0 0 0 3.4 0L12 18l-6-6-2.3 2.3a2.4 2.4 0 0 0 0 3.4Z"/><path d="m2 22 3-3M7.5 13.5 10 11M10.5 16.5 13 14M18 3l-4 4h6l-4 4"/></svg>
+                    Подключить
+                </a>
+            </div>
+        </header>
+
+        <!-- STATS -->
+        <section class="stats-strip reveal" style="--d:80ms">
+            <div class="mini"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="15.5" cy="7.5" r="5.5"/><path d="m2 21 9.6-9.6"/></svg></span><span class="label">Всего ключей</span><b id="stTotal">0</b><div class="bar"><i id="stTotalBar" style="width:100%"></i></div></div>
+            <div class="mini"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="label">Активных</span><b id="stActive">0</b><div class="bar"><i id="stActiveBar"></i></div></div>
+            <div class="mini"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="label">Истекают ≤ 7 дней</span><b id="stSoon">0</b><div class="bar"><i id="stSoonBar" style="background:linear-gradient(90deg,#e0a72e,#ffd166)"></i></div></div>
+            <div class="mini"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg></span><span class="label">Устройств</span><b id="stDev">0<small id="stDevLim">/0</small></b><div class="bar"><i id="stDevBar"></i></div></div>
+        </section>
+
+        <!-- KEYS -->
+        <section id="keys">
+            <div class="sec-head reveal">
+                <div>
+                    <span class="kicker">Подключения 3set</span>
+                    <h2 class="sec-title" style="margin-top:6px">Ваши ключи <span class="dim mono" style="font-size:13px" id="keysCount"></span></h2>
+                </div>
+                <div class="tabs" id="tabs" role="tablist"></div>
+            </div>
+
+            <div class="keys" id="keysGrid"></div>
+
+            <div class="empty" id="emptyState">
+                <span class="eic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg></span>
+                <b style="font-size:16px">Ничего не найдено</b>
+                <p class="muted" style="margin:0;font-size:13.5px;max-width:38ch">Попробуйте изменить фильтр или поисковый запрос — либо создайте новую подписку.</p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+                    <button class="btn btn-ghost sm" id="resetFilters">Сбросить фильтры</button>
+                    <a class="btn btn-primary sm" href="#tariff">Купить подписку</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- TARIFF -->
+        <section id="tariff">
+            <div class="sec-head reveal">
+                <div>
+                    <span class="kicker">Выберите тариф</span>
+                    <h2 class="sec-title" style="margin-top:6px">Срок и устройства — цена считается автоматически</h2>
+                    <p class="muted" style="margin:6px 0 0;font-size:13.5px">Оплата продлевает выбранный ключ. Чем дольше срок — тем ниже цена за день.</p>
+                </div>
+                <span class="pill ok"><span class="pdot"></span>Мгновенная активация</span>
+            </div>
+
+            <div class="tariff">
+                <div class="card reveal">
+                    <span class="opt-label">Срок подписки</span>
+                    <div class="terms" id="terms" role="group" aria-label="Срок подписки"></div>
+
+                    <div style="margin-top:26px;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+                        <div>
+                            <span class="opt-label">Устройства</span>
+                            <div class="stepper">
+                                <button class="step-btn" id="devMinus" aria-label="Уменьшить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+                                <input class="step-input" id="devInput" type="number" inputmode="numeric" min="1" max="9999" value="1" aria-label="Число устройств">
+                                <button class="step-btn" id="devPlus" aria-label="Увеличить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5v14"/></svg></button>
+                            </div>
+                        </div>
+                        <p class="dim" style="font-size:12px;margin:0;max-width:26ch">Быстрые пакеты: <b style="color:var(--muted)">+1 · +3 · +5</b></p>
+                        <div style="display:flex;gap:8px">
+                            <button class="btn btn-quiet xs quick-dev" data-add="1">+1</button>
+                            <button class="btn btn-quiet xs quick-dev" data-add="3">+3</button>
+                            <button class="btn btn-quiet xs quick-dev" data-add="5">+5</button>
+                        </div>
+                    </div>
+                </div>
+
+                <aside class="card summary reveal" style="--d:120ms">
+                    <div>
+                        <span class="label">К оплате</span>
+                        <div class="price-row" style="margin-top:8px">
+                            <span class="price" id="priceVal">110 ₽</span>
+                            <span class="old-price" id="oldPrice" style="display:none"></span>
+                        </div>
+                        <div class="dim" style="font-size:12px;margin-top:4px" id="perDay">≈ 3,7 ₽ / день · 1 устройство</div>
+                    </div>
+
+                    <div>
+                        <span class="label" style="display:block;margin-bottom:8px">Продлить ключ</span>
+                        <div class="target-chips" id="targetChips"></div>
+                    </div>
+
+                    <div class="sum-lines">
+                        <div class="sum-line"><span id="sumTerm">1 месяц</span><b id="sumBase">110 ₽</b></div>
+                        <div class="sum-line"><span>Доп. устройства (<span id="sumDevCount">0</span>)</span><b id="sumDev">—</b></div>
+                        <div class="sum-line discount" id="sumDiscountRow" style="display:none"><span>Промокод <b class="mono" id="sumPromoName" style="font-size:12px"></b></span><b id="sumDiscount">−0 ₽</b></div>
+                    </div>
+
+                    <div>
+                        <span class="opt-label" style="margin-bottom:8px">Промокод (необязательно)</span>
+                        <div id="promoWrap">
+                            <div class="promo">
+                                <input class="input" id="promoInput" placeholder="Например, LIME15" autocomplete="off" aria-label="Промокод">
+                                <button class="btn btn-ghost" id="promoBtn" style="height:46px">Применить</button>
+                            </div>
+                            <p class="dim" style="font-size:11.5px;margin:8px 0 0">Коды: <span class="mono">WELCOME10</span> · <span class="mono">LIME15</span> · <span class="mono">3SET20</span></p>
+                        </div>
+                        <div class="promo-applied" id="promoApplied" style="display:none">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M20 6 9 17l-5-5"/></svg>
+                            <span id="promoAppliedText">Скидка применена</span>
+                            <button id="promoRemove">убрать</button>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary block" id="buyBtn" style="height:52px">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20M6 14h2"/></svg>
+                        <span id="buyLabel">Купить</span>
+                    </button>
+                    <div class="pay-icons"><span class="mono">МИР</span>·<span class="mono">VISA</span>·<span class="mono">MC</span>·<span class="mono">SBP</span>·<span class="mono">CRYPTO</span></div>
+                </aside>
+            </div>
+        </section>
+
+        <!-- GUIDES / SUPPORT -->
+        <section id="guides">
+            <div class="card support reveal">
+                <div class="sic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24"/><circle cx="12" cy="12" r="4"/></svg></div>
+                <div style="flex:1;min-width:240px">
+                    <h3 style="font-size:18px;font-weight:600">Поможем разобраться</h3>
+                    <p class="muted" style="margin:6px 0 0;font-size:13.5px">Если подписка не обновилась, серверы не появились или устройство не отвязывается — напишите поддержке. Среднее время ответа — 4 минуты.</p>
+                </div>
+                <div class="chan">
+                    <button class="btn btn-primary" data-toast="Открыт чат поддержки в Telegram — отвечаем за 2–5 минут">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg>
+                        <span>Telegram</span>
+                    </button>
+                    <button class="btn btn-ghost" data-copy="support@3set.online" data-msg="Адрес поддержки скопирован">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
+                        <span>E-mail</span>
+                    </button>
+                    <a class="btn btn-quiet" href="#guides">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                        <span>Инструкции</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="f-inner">
+            <div>
+                <div class="brand" style="font-size:15px">
+                    <svg class="mark" viewBox="0 0 32 32" fill="none" style="width:26px;height:26px"><path d="M16 3l10 4.5V15c0 7-4.5 11-10 13C10.5 26 6 22 6 15V7.5L16 3z" fill="#1b2a1c"/><path d="M11 16l3.5 3.5L21 13" stroke="#b7ff45" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span>3<em>set</em><span class="dom mono">.online</span></span>
+                </div>
+                <p class="dim" style="font-size:12.5px;margin:8px 0 0">VPN-подписки: покупка и управление ключами · © 2026</p>
+            </div>
+            <div class="f-links">
+                <a href="#keys">Мои ключи</a><a href="#tariff">Тарифы</a><a href="#guides">Инструкции</a>
+                <a href="#" data-toast="Политика конфиденциальности">Политика</a><a href="#" data-toast="Публичная оферта">Оферта</a>
+            </div>
+        </div>
+    </footer>
+
+</div>
+
+<!-- MODALS -->
+<div class="overlay" id="ovDevices" role="dialog" aria-modal="true" aria-labelledby="devTitle">
+    <div class="modal">
+        <div class="modal-head">
+            <h3 id="devTitle">Устройства <span class="dim mono" style="font-size:12px" id="devCounter">0/0</span></h3>
+            <button class="icon-btn" data-close aria-label="Закрыть"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        </div>
+        <div id="devList"></div>
+        <p class="dim" style="font-size:12px;margin:14px 0 0">Отключение устройства освобождает слот — подключите другое в любой момент.</p>
+        <div style="display:flex;gap:8px;margin-top:14px">
+            <button class="btn btn-ghost" id="devAddMore" style="flex:1">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5v14"/></svg>Добавить слоты
+            </button>
+            <button class="btn btn-primary" data-close style="flex:1">Готово</button>
+        </div>
+    </div>
+</div>
+
+<div class="overlay" id="ovRename" role="dialog" aria-modal="true" aria-labelledby="renTitle">
+    <div class="modal" style="width:min(440px,100%)">
+        <div class="modal-head">
+            <h3 id="renTitle">Переименовать ключ</h3>
+            <button class="icon-btn" data-close aria-label="Закрыть"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        </div>
+        <label class="label" for="renameInput" style="display:block;margin-bottom:8px">Название</label>
+        <input class="input" id="renameInput" style="width:100%;height:48px" maxlength="42" placeholder="Например, Домашний роутер">
+        <p class="dim" style="font-size:12px;margin:10px 0 0">Название видно только вам — удобно, когда ключей несколько.</p>
+        <div style="display:flex;gap:8px;margin-top:18px">
+            <button class="btn btn-ghost" data-close style="flex:1">Отмена</button>
+            <button class="btn btn-primary" id="renameSave" style="flex:1">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<div class="overlay" id="ovQr" role="dialog" aria-modal="true" aria-labelledby="qrTitle">
+    <div class="modal" style="width:min(420px,100%)">
+        <div class="modal-head">
+            <h3 id="qrTitle">QR-код ключа</h3>
+            <button class="icon-btn" data-close aria-label="Закрыть"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        </div>
+        <div class="qr-box">
+            <div class="qr-frame"><canvas id="qrCanvas" width="220" height="220"></canvas></div>
+            <p class="muted" style="font-size:13px;margin:0;text-align:center">Наведите камеру телефона — подписка подключится автоматически.</p>
+            <code class="mono dim" id="qrUrl" style="font-size:11px;word-break:break-all;text-align:center"></code>
+            <div style="display:flex;gap:8px;width:100%">
+                <button class="btn btn-ghost" id="qrCopy" style="flex:1">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    Скопировать
+                </button>
+                <button class="btn btn-primary" data-close style="flex:1">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="menu" id="cardMenu" role="menu"></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="confetti" id="confetti"></div>
+
+<script>
+    (function(){
+        "use strict";
+        const $ = (s,r)=> (r||document).querySelector(s);
+        const $$ = (s,r)=> Array.from((r||document).querySelectorAll(s));
+        const RUB = n => new Intl.NumberFormat('ru-RU').format(Math.round(n)) + ' ₽';
+        const fmtDate = d => d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'});
+        const DAY = 86400000;
+
+        /* ---------- utils ---------- */
+        function toast(msg,type){
+            const box=$('#toasts'), el=document.createElement('div');
+            el.className='toast'+(type==='err'?' err':'');
+            const ic = type==='err'
+                ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>'
+                : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+            el.innerHTML='<span class="ti">'+ic+'</span><span>'+msg+'</span>';
+            box.appendChild(el); requestAnimationFrame(()=>el.classList.add('show'));
+            setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),420);},2900);
+        }
+        async function copyText(t){
+            try{
+                if(navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(t);
+                else{const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}
+                return true;
+            }catch(e){return false;}
+        }
+        function countUp(el,from,to,dur,suffix){
+            suffix=suffix||'';const st=performance.now();
+            (function step(now){
+                const p=Math.min(1,(now-st)/dur), e=1-Math.pow(1-p,3);
+                el.textContent=Math.round(from+(to-from)*e)+suffix;
+                if(p<1)requestAnimationFrame(step);
+            })(performance.now());
+        }
+        function confetti(){
+            const box=$('#confetti'), colors=['#b7ff45','#d4ff85','#8fdc2c','#eef5ea','#ffd166'];
+            for(let i=0;i<44;i++){
+                const p=document.createElement('i');p.className='cf';
+                p.style.left=(Math.random()*100)+'vw';p.style.background=colors[i%colors.length];
+                p.style.animationDuration=(1.6+Math.random()*1.6)+'s';p.style.animationDelay=(Math.random()*.5)+'s';
+                box.appendChild(p);setTimeout(()=>p.remove(),3600);
+            }
+        }
+
+        /* ---------- nav / progress ---------- */
+        const nav=$('#nav'),pbar=$('#progressBar');
+        function onScroll(){
+            const y=window.scrollY;
+            nav.classList.toggle('scrolled',y>10);
+            const h=document.documentElement.scrollHeight-window.innerHeight;
+            pbar.style.width=(h>0?(y/h*100):0)+'%';
+        }
+        window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+        const burger=$('#burger'),mm=$('#mobileMenu');
+        burger.addEventListener('click',()=>{const o=mm.classList.toggle('open');burger.classList.toggle('open',o);burger.setAttribute('aria-expanded',String(o));});
+        $$('#mobileMenu a').forEach(a=>a.addEventListener('click',()=>{mm.classList.remove('open');burger.classList.remove('open');}));
+
+        /* ---------- reveal ---------- */
+        const io=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target);}});},{threshold:.1,rootMargin:'0px 0px -40px 0px'});
+        function observeNew(){$$('.reveal:not(.in)').forEach(el=>io.observe(el));}
+        observeNew();
+
+        /* ---------- data ---------- */
+        const now0=new Date();
+        const ICONS={
+            phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg>',
+            laptop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="12" x="3" y="4" rx="2"/><path d="M2 20h20"/></svg>',
+            tv:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="m8 21 4-4 4 4"/></svg>',
+            desktop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8M12 17v4"/></svg>'
+        };
+        const KEYS=[
+            {id:'key_9f603bde96971407',name:'3set VPN — Основной',termDays:30,limit:2,
+                expires:new Date(2026,10,2,5,58),url:'https://xskx.artemida.live/M2HGD-qjFynCB9Ns',
+                devices:[
+                    {id:1,name:'iPhone 15 Pro',meta:'iOS 18 · Москва',icon:'phone',online:true},
+                    {id:2,name:'MacBook Air M2',meta:'macOS 15 · Amsterdam',icon:'laptop',online:false}
+                ]},
+            {id:'key_4b21ac7f0e55d219',name:'3set VPN — Семья',termDays:30,limit:3,
+                expires:new Date(now0.getTime()+24*DAY),url:'https://xskx.artemida.live/Kp83Z-QrT2wXa7Lm',
+                devices:[
+                    {id:1,name:'iPad Air',meta:'iPadOS 18 · Москва',icon:'phone',online:true},
+                    {id:2,name:'Windows 11 PC',meta:'Windows · Москва',icon:'desktop',online:true}
+                ]},
+            {id:'key_77de10a4c93b8f02',name:'3set VPN — Smart TV',termDays:90,limit:1,
+                expires:new Date(now0.getTime()+5*DAY),url:'https://xskx.artemida.live/Tv-9912-XkQ7Lm',
+                devices:[{id:1,name:'Android TV Xiaomi',meta:'Android 12 · Гостиная',icon:'tv',online:false}]}
+        ];
+
+        function daysLeft(k){return Math.max(0,Math.ceil((k.expires-new Date())/DAY));}
+        function statusOf(k){const d=daysLeft(k);return d<=0?'expired':(d<=7?'soon':'active');}
+        const STATUS={
+            active:{cls:'ok',txt:'Активна'},
+            soon:{cls:'warn',txt:'Истекает'},
+            expired:{cls:'dead',txt:'Истёк'}
+        };
+
+        /* ---------- filters ---------- */
+        const FILTERS=[{id:'all',label:'Все'},{id:'active',label:'Активные'},{id:'soon',label:'Истекают'},{id:'expired',label:'Истёкшие'}];
+        let filter='all', query='', view='grid';
+
+        function renderTabs(){
+            const box=$('#tabs');box.innerHTML='';
+            FILTERS.forEach(f=>{
+                const n = f.id==='all' ? KEYS.length : KEYS.filter(k=>statusOf(k)===f.id).length;
+                const b=document.createElement('button');
+                b.className='tab'+(filter===f.id?' on':'');b.type='button';b.setAttribute('role','tab');
+                b.innerHTML=f.label+'<span class="c">'+n+'</span>';
+                b.addEventListener('click',()=>{filter=f.id;renderTabs();renderKeys();});
+                box.appendChild(b);
+            });
+        }
+
+        /* ---------- stats ---------- */
+        function renderStats(){
+            const total=KEYS.length;
+            const act=KEYS.filter(k=>statusOf(k)==='active').length;
+            const soon=KEYS.filter(k=>statusOf(k)!=='active').length;
+            const dev=KEYS.reduce((s,k)=>s+k.devices.length,0);
+            const lim=KEYS.reduce((s,k)=>s+k.limit,0);
+            const t=$('#stTotal'),a=$('#stActive'),s=$('#stSoon');
+            countUp(t,parseInt(t.textContent,10)||0,total,600);
+            countUp(a,parseInt(a.textContent,10)||0,act,600);
+            countUp(s,parseInt(s.textContent,10)||0,soon,600);
+            countUp($('#stDev'),parseInt($('#stDev').textContent,10)||0,dev,600);
+            $('#stDevLim').textContent='/'+lim;
+            $('#stActiveBar').style.width=(total?act/total*100:0)+'%';
+            $('#stSoonBar').style.width=(total?soon/total*100:0)+'%';
+            $('#stDevBar').style.width=(lim?dev/lim*100:0)+'%';
+        }
+
+        /* ---------- keys ---------- */
+        function keyCard(k,idx){
+            const st=statusOf(k), s=STATUS[st], d=daysLeft(k);
+            const pct=st==='expired'?0:Math.max(2,Math.min(100,d/k.termDays*100));
+            const barCls=st==='expired'?'dead':(st==='soon'?'warn':'');
+            const el=document.createElement('article');
+            el.className='key-card reveal';el.style.setProperty('--d',(idx*70)+'ms');el.dataset.id=k.id;
+            el.innerHTML=
+                '<div class="kc-head">'+
+                '<span class="kc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="8" cy="8" r="4"/><path d="M11 11l9 9M17 17l2-2M14 14l2-2"/></svg></span>'+
+                '<div class="kc-t"><h3 title="'+k.name+'">'+k.name+'</h3><span class="label mono" style="margin-top:4px;display:block">'+k.id.slice(0,10)+'…'+k.id.slice(-4)+'</span></div>'+
+                '<div class="kc-tools">'+
+                '<button class="tbtn" data-act="rename" title="Переименовать" aria-label="Переименовать"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/><path d="m15 5 4 4"/></svg></button>'+
+                '<button class="tbtn" data-act="qr" title="QR-код" aria-label="QR-код"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M16 16h5v5h-5zM21 21h.01M16 21h.01M21 16h.01"/></svg></button>'+
+                '<button class="tbtn" data-act="menu" title="Ещё" aria-label="Ещё"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5h.01M12 12h.01M12 19h.01"/></svg></button>'+
+                '</div>'+
+                '</div>'+
+                '<div class="kc-status"><span class="pill '+s.cls+'"><span class="pdot"></span>'+s.txt+'</span>'+
+                '<span class="pill" style="color:var(--muted)">'+k.termDays+' дн. тариф</span>'+
+                '<span class="pill" style="color:var(--dim)">WireGuard</span></div>'+
+                '<div class="kc-prog"><div class="row"><span>Осталось</span><b>'+d+' дн.</b></div><div class="bar"><i class="'+barCls+'" data-w="'+pct+'"></i></div>'+
+                '<div class="row" style="font-size:11px"><span>до '+fmtDate(k.expires)+'</span><span>'+Math.round(pct)+'%</span></div></div>'+
+                '<div class="kc-stats">'+
+                '<div class="stat"><span class="label">Осталось</span><b>'+d+' дн.</b></div>'+
+                '<div class="stat"><span class="label">Устройства</span><b class="mono">'+k.devices.length+'/'+k.limit+'</b></div>'+
+                '<div class="stat"><span class="label">Действует до</span><b>'+fmtDate(k.expires)+'</b></div>'+
+                '</div>'+
+                '<div class="link-box">'+
+                '<div class="link-row"><span class="label">Ссылка подписки</span>'+
+                '<button class="btn btn-ghost xs" data-act="copy">'+
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>Скопировать</button></div>'+
+                '<div class="link-val blurred">'+
+                '<svg viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex:none"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>'+
+                '<code title="'+k.url+'">'+k.url+'</code>'+
+                '<button class="eye" data-act="eye" title="Показать ссылку" aria-label="Показать ссылку"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button>'+
+                '</div>'+
+                '</div>'+
+                '<div class="kc-actions">'+
+                '<a class="btn btn-primary" href="#guides" data-act="install"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.3 20.3a2.4 2.4 0 0 0 3.4 0L12 18l-6-6-2.3 2.3a2.4 2.4 0 0 0 0 3.4Z"/><path d="m2 22 3-3M7.5 13.5 10 11M10.5 16.5 13 14M18 3l-4 4h6l-4 4"/></svg><span class="tx">Подключить</span></a>'+
+                '<button class="btn btn-ghost" data-act="renew"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg><span class="tx">Продлить</span></button>'+
+                '<button class="btn btn-ghost" data-act="addslots"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5v14"/></svg><span class="tx">Добавить устройства</span></button>'+
+                '<button class="btn btn-ghost iconic" data-act="devices" title="Устройства" aria-label="Устройства"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg></button>'+
+                '</div>';
+            setTimeout(()=>{const b=$('.kc-prog .bar i',el);if(b)b.style.width=b.dataset.w+'%';},260+idx*80);
+            return el;
+        }
+
+        function addCard(){
+            const el=document.createElement('div');
+            el.className='add-card reveal';el.style.setProperty('--d','180ms');el.dataset.add='1';el.tabIndex=0;el.setAttribute('role','button');
+            el.innerHTML='<span class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M12 5v14"/></svg></span>'+
+                '<div><b style="font-size:15px">Новая подписка</b><p class="muted" style="margin:4px 0 0;font-size:13px">Отдельный ключ и ссылка — для друзей, работы или роутера.</p></div>';
+            return el;
+        }
+
+        function renderKeys(){
+            const grid=$('#keysGrid');
+            grid.classList.toggle('list',view==='list');
+            grid.innerHTML='';
+            const q=query.trim().toLowerCase();
+            const list=KEYS.filter(k=>{
+                if(filter!=='all' && statusOf(k)!==filter) return false;
+                if(q && !(k.name.toLowerCase().includes(q)||k.id.toLowerCase().includes(q))) return false;
+                return true;
+            });
+            $('#keysCount').textContent='· '+list.length;
+            list.forEach((k,i)=>grid.appendChild(keyCard(k,i)));
+            if(filter==='all'&&!q) grid.appendChild(addCard());
+            $('#emptyState').classList.toggle('show',list.length===0);
+            observeNew();
+        }
+
+        /* ---------- card interactions ---------- */
+        let activeKey=null;
+        $('#keysGrid').addEventListener('click',e=>{
+            const card=e.target.closest('.key-card');
+            const add=e.target.closest('[data-add]');
+            if(add){document.getElementById('tariff').scrollIntoView({behavior:'smooth',block:'start'});toast('Выберите срок и число устройств');return;}
+            if(!card)return;
+            const k=KEYS.find(x=>x.id===card.dataset.id); if(!k)return;
+            const btn=e.target.closest('[data-act]'); if(!btn)return;
+            const act=btn.dataset.act;
+
+            if(act==='copy'){ copyText(k.url).then(ok=>toast(ok?'Ссылка подписки скопирована':'Не удалось скопировать',ok?'':'err')); }
+            else if(act==='eye'){
+                const box=btn.closest('.link-val'); box.classList.toggle('blurred');
+                btn.title=box.classList.contains('blurred')?'Показать ссылку':'Скрыть ссылку';
+            }
+            else if(act==='rename'){ openRename(k); }
+            else if(act==='qr'){ openQr(k); }
+            else if(act==='devices'){ activeKey=k; openDevices(k); }
+            else if(act==='renew'){ selectTarget(k.id); document.getElementById('tariff').scrollIntoView({behavior:'smooth',block:'start'}); toast('Продляем «'+k.name+'»'); }
+            else if(act==='addslots'){ activeKey=k; openAddSlots(k); }
+            else if(act==='install'){ toast('Открыта инструкция по подключению'); }
+            else if(act==='menu'){ openMenu(btn,k); }
+        });
+
+        /* ---------- menu ---------- */
+        const menu=$('#cardMenu');let menuKey=null;
+        function openMenu(anchor,k){
+            menuKey=k;
+            menu.innerHTML=
+                '<button data-m="rename"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/><path d="m15 5 4 4"/></svg>Переименовать</button>'+
+                '<button data-m="qr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M16 16h5v5h-5z"/></svg>Показать QR-код</button>'+
+                '<button data-m="share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M16 6l-4-4-4 4M12 2v14"/></svg>Поделиться ключом</button>'+
+                '<hr><button data-m="delete" class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>Удалить ключ</button>';
+            const r=anchor.getBoundingClientRect();
+            menu.style.top=(r.bottom+window.scrollY+8)+'px';
+            menu.style.left=Math.max(12,r.right+window.scrollX-210)+'px';
+            menu.classList.add('open');
+        }
+        function closeMenu(){menu.classList.remove('open');menuKey=null;}
+        document.addEventListener('click',e=>{ if(menu.classList.contains('open') && !menu.contains(e.target) && !e.target.closest('[data-act="menu"]')) closeMenu(); });
+        menu.addEventListener('click',async e=>{
+            const b=e.target.closest('[data-m]'); if(!b||!menuKey)return;
+            const k=menuKey, m=b.dataset.m; closeMenu();
+            if(m==='rename') openRename(k);
+            else if(m==='qr') openQr(k);
+            else if(m==='share'){
+                if(navigator.share){try{await navigator.share({title:k.name,text:'Ключ 3set VPN',url:k.url});return;}catch(err){}}
+                const ok=await copyText(k.url);toast(ok?'Ссылка скопирована — отправьте другу':'Не удалось поделиться',ok?'':'err');
+            }
+            else if(m==='delete') deleteKey(k);
+        });
+
+        function deleteKey(k){
+            if(b.dataset){}
+            const card=$('#keysGrid .key-card[data-id="'+k.id+'"]');
+            const i=KEYS.indexOf(k);
+            if(card) card.classList.add('removing');
+            setTimeout(()=>{
+                if(i>-1)KEYS.splice(i,1);
+                renderKeys();renderStats();renderTabs();renderTargets();
+                toast('Ключ «'+k.name+'» удалён');
+            },420);
+        }
+
+        /* ---------- modals ---------- */
+        function openOv(id){$(id).classList.add('open');document.body.style.overflow='hidden';}
+        function closeOv(id){$(id).classList.remove('open');document.body.style.overflow='';}
+        function closeAll(){$$('.overlay').forEach(o=>o.classList.remove('open'));document.body.style.overflow='';}
+        $$('.overlay').forEach(o=>{
+            o.addEventListener('click',e=>{ if(e.target===o||e.target.closest('[data-close]')) closeOv('#'+o.id); });
+        });
+        document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeAll(); closeMenu(); } });
+
+        /* devices modal */
+        function openDevices(k){
+            activeKey=k;
+            $('#devCounter').textContent=k.devices.length+'/'+k.limit;
+            const list=$('#devList');list.innerHTML='';
+            if(!k.devices.length) list.innerHTML='<p class="dim" style="font-size:13px;margin:6px 0 0">Устройств нет. Подключите первое по ссылке подписки или QR-коду.</p>';
+            k.devices.forEach(d=>{
+                const el=document.createElement('div');el.className='dev';el.dataset.id=d.id;
+                el.innerHTML='<span class="d-ic">'+(ICONS[d.icon]||ICONS.phone)+'</span>'+
+                    '<span class="d-tx"><b>'+d.name+'</b><span>'+d.meta+' · '+(d.online?'<span style="color:var(--lime)">онлайн</span>':'был недавно')+'</span></span>'+
+                    '<button class="btn btn-quiet xs" type="button">Отключить</button>';
+                el.querySelector('button').addEventListener('click',()=>{
+                    el.classList.add('removing');
+                    setTimeout(()=>{
+                        const i=k.devices.findIndex(x=>x.id===d.id); if(i>-1)k.devices.splice(i,1);
+                        openDevices(k); renderKeys(); renderStats();
+                        toast(d.name+' отключено — слот свободен');
+                    },380);
+                });
+                list.appendChild(el);
+            });
+            openOv('#ovDevices');
+        }
+        $('#devAddMore').addEventListener('click',()=>{ if(activeKey){ closeOv('#ovDevices'); openAddSlots(activeKey); } });
+
+        /* rename modal */
+        let renameKey=null;
+        function openRename(k){ renameKey=k; $('#renameInput').value=k.name; openOv('#ovRename'); setTimeout(()=>{const i=$('#renameInput');i.focus();i.select();},260); }
+        $('#renameSave').addEventListener('click',()=>{
+            const v=$('#renameInput').value.trim();
+            if(!v){ $('#renameInput').classList.add('shake'); setTimeout(()=>$('#renameInput').classList.remove('shake'),420); toast('Название не может быть пустым','err'); return; }
+            renameKey.name=v.slice(0,42);
+            closeOv('#ovRename'); renderKeys(); renderTargets();
+            const card=$('#keysGrid .key-card[data-id="'+renameKey.id+'"]');
+            if(card){ card.classList.add('flash'); setTimeout(()=>card.classList.remove('flash'),900); }
+            toast('Название обновлено');
+        });
+        $('#renameInput').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#renameSave').click(); });
+
+        /* qr modal */
+        let qrKey=null;
+        function drawQR(canvas,text){
+            if(typeof window.qrcode!=='function') return false;
+            try{
+                const qr=window.qrcode(0,'M'); qr.addData(text); qr.make();
+                const n=qr.getModuleCount(), size=220, cell=size/n, ctx=canvas.getContext('2d');
+                canvas.width=size;canvas.height=size;
+                ctx.fillStyle='#f2f7ee';ctx.fillRect(0,0,size,size);
+                ctx.fillStyle='#0e1512';
+                for(let r=0;r<n;r++)for(let c=0;c<n;c++) if(qr.isDark(r,c)) ctx.fillRect(c*cell,r*cell,cell+.6,cell+.6);
+                return true;
+            }catch(e){ return false; }
+        }
+        function openQr(k){
+            qrKey=k;$('#qrUrl').textContent=k.url;
+            const c=$('#qrCanvas');
+            if(!drawQR(c,k.url)){
+                const ctx=c.getContext('2d');c.width=220;c.height=220;ctx.fillStyle='#f2f7ee';ctx.fillRect(0,0,220,220);
+                ctx.fillStyle='#0e1512';ctx.font='600 14px Manrope, sans-serif';ctx.textAlign='center';
+                ctx.fillText('QR недоступен офлайн',110,105);ctx.fillText('скопируйте ссылку',110,126);
+            }
+            openOv('#ovQr');
+        }
+        $('#qrCopy').addEventListener('click',()=>{ if(qrKey) copyText(qrKey.url).then(ok=>toast(ok?'Ссылка скопирована':'Ошибка копирования',ok?'':'err')); });
+
+        /* add slots modal (reuses tariff summary) */
+        function openAddSlots(k){
+            selectTarget(k.id);
+            curDev=k.limit+1; $('#devInput').value=curDev; calc();
+            document.getElementById('tariff').scrollIntoView({behavior:'smooth',block:'start'});
+            const s=$('.summary');
+            if(s) s.animate([{boxShadow:'0 0 0 0 rgba(183,255,69,0)'},{boxShadow:'0 0 0 7px rgba(183,255,69,.22)'},{boxShadow:'0 0 0 0 rgba(183,255,69,0)'}],{duration:1400,easing:'ease-out'});
+            toast('Добавьте слоты для «'+k.name+'»');
+        }
+
+        /* ---------- tariff ---------- */
+        const TERMS=[
+            {id:7,label:'7 дней',base:49,perDev:20,badge:''},
+            {id:30,label:'1 месяц',base:110,perDev:45,badge:'Хит'},
+            {id:90,label:'3 месяца',base:297,perDev:120,badge:'−10%'},
+            {id:180,label:'6 месяцев',base:528,perDev:210,badge:'−20%'},
+            {id:365,label:'1 год',base:899,perDev:380,badge:'−32%'}
+        ];
+        const PROMOS={WELCOME10:.10,LIME15:.15,'3SET20':.20};
+        let curTerm=TERMS[1],curDev=1,promo=null,targetId=KEYS[0].id,lastPrice=0;
+
+        const termsBox=$('#terms');
+        TERMS.forEach(t=>{
+            const b=document.createElement('button');
+            b.type='button';b.className='term';b.dataset.id=t.id;b.setAttribute('aria-pressed',String(t.id===curTerm.id));
+            b.innerHTML=(t.badge?'<span class="badge">'+t.badge+'</span>':'')+
+                '<span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>'+
+                '<span class="t-label">'+t.label+'</span><span class="t-price">'+RUB(t.base)+'</span>'+
+                '<span class="t-per">'+(t.base/t.id).toFixed(1).replace('.',',')+' ₽/день</span>';
+            b.addEventListener('click',()=>{
+                curTerm=t;$$('.term',termsBox).forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.id===String(t.id))));calc();
+            });
+            termsBox.appendChild(b);
+        });
+
+        function renderTargets(){
+            const box=$('#targetChips');box.innerHTML='';
+            if(!KEYS.length){box.innerHTML='<span class="dim" style="font-size:12.5px">Нет ключей</span>';return;}
+            if(!KEYS.some(k=>k.id===targetId)) targetId=KEYS[0].id;
+            KEYS.forEach(k=>{
+                const b=document.createElement('button');
+                b.type='button';b.className='chip'+(k.id===targetId?' on':'');
+                const st=STATUS[statusOf(k)];
+                b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="15.5" cy="7.5" r="5.5"/><path d="m2 21 9.6-9.6"/></svg>'+k.name.replace('3set VPN — ','');
+                b.title=k.name+' · '+st.txt;
+                b.addEventListener('click',()=>{targetId=k.id;renderTargets();});
+                box.appendChild(b);
+            });
+        }
+        function selectTarget(id){ targetId=id; renderTargets(); }
+
+        function calc(){
+            curDev=Math.max(1,Math.min(9999,curDev|0));
+            const gross=curTerm.base+curTerm.perDev*(curDev-1);
+            const disc=promo?gross*PROMOS[promo]:0;
+            const total=gross-disc;
+            const pv=$('#priceVal');
+            countUp(pv,lastPrice,total,520,' ₽');lastPrice=total;
+            pv.classList.remove('pop');void pv.offsetWidth;pv.classList.add('pop');
+            const op=$('#oldPrice');
+            if(promo){op.style.display='';op.textContent=RUB(gross);}else op.style.display='none';
+            $('#perDay').textContent='≈ '+(total/curTerm.id).toFixed(1).replace('.',',')+' ₽ / день · '+curDev+' устр.';
+            $('#sumTerm').textContent=curTerm.label;
+            $('#sumBase').textContent=RUB(curTerm.base);
+            $('#sumDevCount').textContent=Math.max(0,curDev-1);
+            $('#sumDev').textContent=curDev>1?'+'+RUB(curTerm.perDev*(curDev-1)):'—';
+            const dr=$('#sumDiscountRow');
+            if(promo){dr.style.display='flex';$('#sumPromoName').textContent=promo;$('#sumDiscount').textContent='−'+RUB(disc);}else dr.style.display='none';
+            $('#devInput').value=curDev;
+        }
+        $('#devPlus').addEventListener('click',()=>{curDev++;calc();bump($('#devInput'));});
+        $('#devMinus').addEventListener('click',()=>{if(curDev>1)curDev--;calc();bump($('#devInput'));});
+        $$('.quick-dev').forEach(b=>b.addEventListener('click',()=>{curDev+=parseInt(b.dataset.add,10);calc();bump($('#devInput'));}));
+        $('#devInput').addEventListener('input',e=>{const v=parseInt(e.target.value,10);curDev=isNaN(v)?1:v;calc();});
+        $('#devInput').addEventListener('blur',()=>{if(!curDev||curDev<1)curDev=1;calc();});
+        function bump(el){el.animate([{transform:'scale(1)'},{transform:'scale(1.14)'},{transform:'scale(1)'}],{duration:320,easing:'cubic-bezier(.22,.9,.28,1)'});}
+
+        /* promo */
+        function applyPromo(){
+            const inp=$('#promoInput'),code=inp.value.trim().toUpperCase();
+            if(!code){inp.classList.remove('shake');void inp.offsetWidth;inp.classList.add('shake');toast('Введите промокод','err');return;}
+            if(PROMOS[code]){
+                promo=code;$('#promoWrap').style.display='none';$('#promoApplied').style.display='flex';
+                $('#promoAppliedText').textContent='Промокод '+code+' · скидка '+Math.round(PROMOS[code]*100)+'%';
+                calc();toast('Промокод '+code+' применён: −'+Math.round(PROMOS[code]*100)+'%');
+            }else{inp.classList.remove('shake');void inp.offsetWidth;inp.classList.add('shake');toast('Промокод «'+code+'» не найден','err');}
+        }
+        $('#promoBtn').addEventListener('click',applyPromo);
+        $('#promoInput').addEventListener('keydown',e=>{if(e.key==='Enter')applyPromo();});
+        $('#promoRemove').addEventListener('click',()=>{promo=null;$('#promoApplied').style.display='none';$('#promoWrap').style.display='';$('#promoInput').value='';calc();toast('Промокод убран');});
+
+        /* buy */
+        const buyBtn=$('#buyBtn'),buyLabel=$('#buyLabel');
+        buyBtn.addEventListener('click',()=>{
+            if(buyBtn.disabled)return;
+            const k=KEYS.find(x=>x.id===targetId);
+            if(!k){toast('Сначала создайте ключ','err');return;}
+            buyBtn.disabled=true;buyLabel.innerHTML='<span class="spinner"></span> Обработка платежа…';
+            setTimeout(()=>{
+                buyBtn.disabled=false;buyLabel.textContent='Купить';
+                const from=k.expires>new Date()?k.expires:new Date();
+                k.expires=new Date(from.getTime()+curTerm.id*DAY);
+                k.termDays=curTerm.id;
+                if(curDev>k.limit) k.limit=curDev;
+                renderKeys();renderStats();renderTabs();renderTargets();
+                const card=$('#keysGrid .key-card[data-id="'+k.id+'"]');
+                if(card){card.classList.add('flash');card.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>card.classList.remove('flash'),1000);}
+                toast('Оплата прошла · «'+k.name.replace('3set VPN — ','')+'» продлён на '+curTerm.label.toLowerCase());
+                confetti();
+            },1300);
+        });
+
+        /* ---------- search / view ---------- */
+        $('#searchInput').addEventListener('input',e=>{query=e.target.value;renderKeys();});
+        $('#viewGrid').addEventListener('click',()=>{view='grid';$('#viewGrid').classList.add('on');$('#viewList').classList.remove('on');renderKeys();});
+        $('#viewList').addEventListener('click',()=>{view='list';$('#viewList').classList.add('on');$('#viewGrid').classList.remove('on');renderKeys();});
+        $('#resetFilters').addEventListener('click',()=>{filter='all';query='';$('#searchInput').value='';renderTabs();renderKeys();});
+
+        /* ---------- init ---------- */
+        renderTabs();renderKeys();renderStats();renderTargets();calc();
+        observeNew();
+    })();
+</script>
+</body>
+</html>

@@ -63,6 +63,7 @@ void main() {
       when(() => mockAppLinks.uriLinkStream).thenAnswer((_) => linkStreamController.stream);
       when(() => mockTokenStore.saveTokenPair(any())).thenAnswer((_) async {});
       when(() => mockAuthNotifier.restoreSession()).thenAnswer((_) async {});
+      when(() => mockAuthNotifier.setError(any())).thenAnswer((_) {});
 
       // Create handler with mocked AppLinks using internal constructor
       handler = DeepLinkHandler.internal(
@@ -212,7 +213,7 @@ void main() {
 
         expect(handler.isPolling, false);
         // Verify error state was set on AuthNotifier
-        verify(() => mockAuthNotifier.state = any(that: isA<AsyncData<AuthState>>())).called(1);
+        verify(() => mockAuthNotifier.setError(any())).called(1);
       });
 
       test('polling on 409 stops and sets error', () async {
@@ -232,7 +233,7 @@ void main() {
         await Future.delayed(const Duration(milliseconds: 100));
 
         expect(handler.isPolling, false);
-        verify(() => mockAuthNotifier.state = any(that: isA<AsyncData<AuthState>>())).called(1);
+        verify(() => mockAuthNotifier.setError(any())).called(1);
       });
 
       test('cancelPolling stops polling and sets error', () async {
@@ -252,7 +253,7 @@ void main() {
         handler.cancelPolling();
 
         expect(handler.isPolling, false);
-        verify(() => mockAuthNotifier.state = any(that: isA<AsyncData<AuthState>>())).called(1);
+        verify(() => mockAuthNotifier.setError(any())).called(1);
       });
     });
 

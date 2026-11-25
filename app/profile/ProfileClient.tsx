@@ -2,7 +2,7 @@
 
 // /profile — client island rendered by the session-gated server page. Real
 // data only: mutations hit the session-gated BFF routes (name/email/password/
-// 2FA/sessions/referral-rate/logout), never mock state. Falling back to the
+// sessions/referral-rate/logout), never mock state. Falling back to the
 // template's visuals where no real API exists yet.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -447,12 +447,13 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
   /* ---------- security ring ---------- */
   const [secPct, setSecPct] = useState(0);
   const [secLbl, setSecLbl] = useState('базовый');
-  const [tfaEnabled, setTfaEnabled] = useState(false);
-  const [secChecks, setSecChecks] = useState<Array<{ k: string; t: string; ok: boolean }>>([
-    { k: 'email', t: 'Email подтверждён', ok: !!user?.emailVerifiedAt },
-    { k: 'tg', t: 'Привязан Telegram для входа', ok: user?.telegramId !== null && user?.telegramId !== undefined },
-    { k: 'tfa', t: 'Включена двухфакторная защита', ok: false },
-  ]);
+  const secChecks = useMemo(
+    () => [
+      { k: 'email', t: 'Email подтверждён', ok: !!user?.emailVerifiedAt },
+      { k: 'tg', t: 'Привязан Telegram для входа', ok: user?.telegramId != null },
+    ],
+    [user?.emailVerifiedAt, user?.telegramId],
+  );
 
   const C = 2 * Math.PI * 54;
 
@@ -481,15 +482,9 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
   }, [secChecks]);
 
   useEffect(() => {
-    fetch('/api/user/tfa')
-      .then(async (r) => {
-        const j = await r.json().catch(() => ({}));
-        setTfaEnabled(!!j.enabled);
-        setSecChecks((xs) => xs.map((c) => c.k === 'tfa' ? { ...c, ok: !!j.enabled } : c));
-        renderSecurity();
-      })
-      .catch(() => renderSecurity());
-  }, [user, tgLinked, renderSecurity]);
+    const id = window.requestAnimationFrame(() => renderSecurity());
+    return () => window.cancelAnimationFrame(id);
+  }, [renderSecurity]);
 
   /* ---------- referral ---------- */
   const renderReferral = useCallback(() => {
@@ -564,21 +559,6 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
     if (okDiv) okDiv.classList.add('show');
     addToast('Email ' + to + ' подтверждён');
     setTimeout(() => { window.location.reload(); }, 900);
-  };
-
-  /* ---------- 2FA ---------- */
-  const toggleTfa = async () => {
-    try {
-      const res = await api('/api/user/tfa', { method: 'POST', body: JSON.stringify({ enable: !tfaEnabled }) });
-      const j = await res.json().catch(() => ({}));
-      if (j.enabled === undefined) { addToast('Не удалось изменить 2FA', 'err'); return; }
-      setTfaEnabled(!!j.enabled);
-      setSecChecks((xs) => xs.map((c) => c.k === 'tfa' ? { ...c, ok: j.enabled } : c));
-      renderSecurity();
-      addToast(j.enabled ? 'Двухфакторная аутентификация включена' : '2FA выключена');
-    } catch {
-      addToast('Не удалось изменить 2FA', 'err');
-    }
   };
 
   /* ---------- sessions ---------- */
@@ -1060,19 +1040,6 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
                           <span id="pwLabel">Обновить пароль</span>
                         </button>
                       </form>
-                    </div>
-
-                    <div className="block">
-                      <div className="block-head">
-                        <div>
-                          <h3>Двухфакторная аутентификация</h3>
-                          <p>Дополнительный код при входе с нового устройства. Рекомендуется включить.</p>
-                        </div>
-                      </div>
-                      <div className="row">
-                        <div className="rt"><b>2FA через Telegram</b><span>{tfaEnabled ? 'Включена — код при входе с нового устройства' : 'Выключена — вход только по паролю'}</span></div>
-                        <button className={`switch${tfaEnabled ? ' on' : ''}`} id="tfaSwitch" role="switch" aria-checked={tfaEnabled} aria-label="Двухфакторная аутентификация" onClick={toggleTfa}><i /></button>
-                      </div>
                     </div>
 
                     <div className="block danger">

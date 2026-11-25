@@ -309,6 +309,13 @@ body::after {
 .cabinet .alert .txt{flex:1;min-width:0}
 .cabinet .alert .txt b{display:block;font-size:14.5px}
 .cabinet .alert .txt span{font-size:13px;color:var(--muted)}
+@media(max-width:640px){
+  .cabinet .alert{flex-wrap:wrap;align-items:center}
+  .cabinet .alert .ic{order:1}
+  .cabinet .alert>.icon-btn{order:2;margin-left:auto}
+  .cabinet .alert .txt{order:3;flex:1 1 100%}
+  .cabinet .alert>.btn{order:4;width:100%}
+}
 .cabinet .icon-btn{width:38px;height:38px;flex:none;border-radius:11px;border:1px solid var(--line-2);background:rgba(255,255,255,.03);
   cursor:pointer;display:grid;place-items:center;transition:.25s var(--ease);color:var(--foreground)}
 .cabinet .icon-btn:hover{background:rgba(255,122,107,.14);border-color:rgba(255,122,107,.45);color:var(--danger);transform:rotate(90deg)}

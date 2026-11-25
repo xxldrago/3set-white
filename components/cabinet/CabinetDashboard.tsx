@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Smartphone,
   X,
+  Zap,
 } from 'lucide-react';
 import LabelEditor from '@/components/LabelEditor';
 import PwaInstallCta from '@/components/PwaInstallCta';
@@ -43,6 +44,9 @@ interface Props {
   referralLink: string | null;
   refDays: { user: number; invitee: number };
   unreadInitial: number;
+  emailVerified: boolean;
+  telegramLinked: boolean;
+  trialUsed: boolean;
 }
 
 const RUB = (n: number) => `${new Intl.NumberFormat('ru-RU').format(Math.round(n))} ₽`;
@@ -102,6 +106,9 @@ export default function CabinetDashboard({
   referralLink,
   refDays,
   unreadInitial,
+  emailVerified,
+  telegramLinked,
+  trialUsed,
 }: Props) {
   const pathname = usePathname();
   const key = keys[0] ?? null;
@@ -109,6 +116,10 @@ export default function CabinetDashboard({
   const daysLeft = key?.daysLeft ?? 0;
   const deviceLimit = key?.deviceLimit ?? 0;
   const devices = key?.devices ?? 0;
+  // Trial needs a confirmed email OR a linked Telegram (the API enforces the
+  // same rule), so only show the claim CTA once one of them is proven.
+  const trialReady = emailVerified || telegramLinked;
+  const showTrial = !key && !trialUsed;
 
   const [greeting, setGreeting] = useState('Привет');
   const [today, setToday] = useState('');
@@ -131,6 +142,7 @@ export default function CabinetDashboard({
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
+  const [trialBusy, setTrialBusy] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -323,6 +335,28 @@ export default function CabinetDashboard({
     if (el) window.scrollTo({ top: el.offsetTop - 90, behavior: 'smooth' });
   };
 
+  // One-tap trial claim. The API re-checks verification and trial usage, so
+  // the client state is only a hint — every refusal maps to clean copy.
+  const claimTrial = async () => {
+    if (trialBusy) return;
+    setTrialBusy(true);
+    try {
+      const res = await fetch('/api/trial', { method: 'POST' });
+      if (res.ok) {
+        window.location.reload();
+        return;
+      }
+      if (res.status === 409) toastBox('Вы уже использовали пробный период', true);
+      else if (res.status === 403) toastBox('Сначала подтвердите email или привяжите Telegram', true);
+      else if (res.status === 429) toastBox('Слишком много попыток — повторите через минуту', true);
+      else toastBox('Не удалось получить пробную подписку', true);
+    } catch {
+      toastBox('Не удалось получить пробную подписку', true);
+    } finally {
+      setTrialBusy(false);
+    }
+  };
+
   const doPay = async (body: Record<string, unknown>) => {
     if (paying) return;
     setPaying(true);
@@ -473,8 +507,10 @@ export default function CabinetDashboard({
                   Управляй ключами, устройствами и подпиской 3set VPN в одном месте. Быстро, безопасно, без лишних кликов.
                 </p>
               </div>
-          {/* ALERT */}
-          {!active && !alertHidden && (
+          {/* EXPIRED SUBSCRIPTION ALERT — only when a key exists but lapsed.
+              With no key at all the trial block below replaces it (a renew CTA
+              over an empty state just duplicates "Выбрать тариф"). */}
+          {!active && key && !alertHidden && (
             <div className="alert reveal" id="expiredAlert">
               <div className="ic">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -482,13 +518,43 @@ export default function CabinetDashboard({
                 </svg>
               </div>
               <div className="txt">
-                <b>{key ? `Подписка истекла ${fmtDate(key.expiresAt)}` : 'Подписки ещё нет'}</b>
+                <b>Подписка истекла {fmtDate(key.expiresAt)}</b>
                 <span>Продлите доступ, чтобы устройства остались защищёнными.</span>
               </div>
               <button className="btn btn-primary" onClick={() => scrollTo('tariff')}>Продлить подписку</button>
               <button className="icon-btn" onClick={() => setAlertHidden(true)} aria-label="Скрыть">
                 <X aria-hidden />
               </button>
+            </div>
+          )}
+
+          {/* TRIAL — no subscription yet. Claim is gated by email verification
+              or a linked Telegram (same rule as /api/trial); until then the
+              block explains the condition and links to the profile. */}
+          {showTrial && (
+            <div
+              className="alert reveal"
+              id="trialBlock"
+              style={{ borderColor: 'rgba(183,255,69,.28)', background: 'linear-gradient(100deg,rgba(183,255,69,.10),rgba(183,255,69,.02))' }}
+            >
+              <div className="ic" style={{ background: 'rgba(183,255,69,.16)', color: 'var(--lime)' }}>
+                <Zap aria-hidden />
+              </div>
+              <div className="txt">
+                <b>Пробная подписка · 1 день · 2 устройства</b>
+                <span>
+                  {trialReady
+                    ? 'Бесплатный период доступен один раз на аккаунт. Подключение займёт пару минут.'
+                    : 'Пробный период станет доступен после подтверждения email или привязки Telegram.'}
+                </span>
+              </div>
+              {trialReady ? (
+                <button className="btn btn-primary" onClick={() => void claimTrial()} disabled={trialBusy}>
+                  {trialBusy ? 'Получаем ключ…' : 'Получить пробную подписку'}
+                </button>
+              ) : (
+                <Link href="/profile" className="btn btn-primary">Подтвердить</Link>
+              )}
             </div>
           )}
 

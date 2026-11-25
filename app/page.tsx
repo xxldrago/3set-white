@@ -21,6 +21,7 @@ import {
 } from '@/lib/keys-service';
 import { getReferralSettings, ensureReferralCode } from '@/lib/referrals';
 import { logger } from '@/lib/logger';
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -125,6 +126,21 @@ export default async function Home({
   const displayName =
     navUser.firstName?.trim() || navUser.username?.trim() || navUser.email?.split('@')[0] || 'друг';
 
+  // Trial gate: the trial needs a confirmed email or a linked Telegram, and it
+  // is available once per account. The dashboard uses this to show the trial
+  // block instead of an empty "no subscription" alert.
+  let trialUsed = false;
+  try {
+    const row = await prisma.user.findUnique({
+      where: { id: navUser.userId },
+      select: { trialUsed: true },
+    });
+    trialUsed = row?.trialUsed ?? false;
+  } catch {
+    // Cosmetic: default to hiding the trial block rather than offering a 409.
+    trialUsed = true;
+  }
+
   return (
     <>
       <RefCapture />
@@ -136,6 +152,9 @@ export default async function Home({
         referralLink={referralLink}
         refDays={refDays}
         unreadInitial={unread}
+        emailVerified={navUser.emailVerifiedAt !== null}
+        telegramLinked={navUser.telegramId !== null}
+        trialUsed={trialUsed}
       />
     </>
   );

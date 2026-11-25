@@ -77,3 +77,17 @@
 .admin .chbars .hint b{font-size:10.5px;color:#6b7b70}
 @media(max-width:1100px){.admin .kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:720px){.admin .kpi-grid{grid-template-columns:1fr}.admin .content>.sec{padding:18px 12px 45px}}
+
+/* Шаблонные дополнения: чипы с счётчиком, полосы без фиксированной ширины. */
+.admin .chips{display:flex;gap:6px;flex-wrap:wrap}
+.admin .chip-with-count{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;font-size:10.5px;font-weight:700;background:#101c14;border:1px solid rgba(183,255,69,.2);color:#6b7b70}
+.admin .chip-with-count.on{color:#101a05;background:#b7ff45;border-color:transparent}
+.admin .muted-adm{color:#6b7b70;font-size:11px;display:block}
+.admin .table-mobile{width:100%;border-collapse:separate;border-spacing:0}
+.admin .table-mobile th{font-size:9.8px;letter-spacing:.13em;text-transform:uppercase;color:#6b7b70;font-weight:800;text-align:left;padding:9px 12px;border-bottom:1px solid rgba(233,255,214,.07);white-space:nowrap}
+.admin .table-mobile td{padding:11px 12px;border-bottom:1px solid rgba(233,255,214,.06);font-size:12.5px;text-align:right}
+.admin .table-mobile td:first-child{text-align:left}
+.admin .table-mobile td:last-child{text-align:right}
+.admin .table-mobile .empty-row{text-align:center;color:#6b7b70;padding:34px 12px}
+.admin .chbars-with-values{display:flex;gap:6px;align-items:flex-end;height:120px;min-width:100%;flex-wrap:wrap}
+@media(max-width:900px){.admin .table-mobile{display:block;overflow-x:auto}.admin .table-mobile td{text-align:left}.admin .table-mobile td:last-child{text-align:left}}

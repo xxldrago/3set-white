@@ -8,27 +8,22 @@
 
 Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
 
-## Current Milestone: v1.2 Стабилизация и качество
+## Current Milestone: v2.0 Мобильный клиент
 
-**Goal:** Закрыть техдолг и стабилизировать аналитику: исправить pre-existing failing тесты, добавить алерты и WoW/MoM-сравнения, CSV-экспорт и expiry save-list, promo/referral quality & fraud-сигналы, метрический словарь и upsell-радар.
+**Goal:** Добавить нативный мобильный клиент VPN (Flutter + libbox/Karing + нативный VPN-слой + backend-контракт аккаунтов/ключей/оплаты) с двумя пулами серверов и одной кнопкой подключения.
 
 **Target features:**
-- Закрыть pre-existing failing tests: analytics-mrr.test.ts:190, auth-widget/auth-flow (Postgres), i18n gate
-- Алерты (ALR-01..04): WoW/MoM-сравнения, алерты на падение оплат/рост failed/всплеск тикетов/runway ниже порога, доставка через outbox/Telegram
-- CSV-экспорт списков (EXT-06) + expiry save-list (EXT-08) с push-напоминанием за 7 дней
-- Promo/referral quality & fraud (PRM-01..04): воронка click→register→pay, ROI промокодов, partner ROI, fraud-сигналы
-- Метрический словарь (EXT-02) + upsell-радар (EXT-05)
+- Архитектура клиента (Flutter UI + libbox core + VpnService/NetworkExtension + backend contracts: accounts/pools/keys/payments)
+- Авторизация: email+password (min 8), Telegram deep-link flow, JWT, tokens в secure storage
+- Два таба пулов: «Простой VPN» (WireGuard/Shadowsocks/VLESS/Hysteria2/Trojan) / «Обход белых списков» (VLESS+Reality, SNI allowlist)
+- Автопинг через urltest (HTTP), quick-path по last-good (≤3, 800мс) → full ping (2с), cache TTL 60s, инвалидация при смене сети
+- Машина состояний подключения, отмена connecting, reconnect, core restart ×3 backoff
+- Покупка/продление ключа (тарифы 115/400/1000/1900/3800 ₽, устройства 2–10, промокоды, платежи, grace)
+- Переход прототипа → живые API (оперативно)
 
-**Out of this milestone (deferred):** multi-server/queue/monitoring infra, английская локализация, лимитные тарифы трафика, пополнение баланса юзера.
+**Shipped (v1.2, 5 phases):** — мобильный клиент — следующий milestone, v2.0.
 
-**Shipped (5 phases, 17 plans):**
-- Phase 7: Analytics Foundation & Revenue Metrics (MRR/ARR, waterfall, ARPU/ARPPU, daily_metrics rollup, backfill, providerCost)
-- Phase 8: Unit Economics & Retention (LTV gross/net, renewal, churn, margin, burn-rate/runway)
-- Phase 9: Payment Funnel & Failure Analysis (funnel, errorCode, timing, expired-by-age)
-- Phase 10: Cohorts & Retention Analytics (registration/payer matrices, channel & device slices)
-- Phase 11: RFM Segments & Targeting (user_rfm, 7 named segments, drill-down, broadcast targeting, configurable thresholds)
-
-**Next:** v1.2 (not started) — run `/gsd-new-milestone` to define scope.
+**Next:** v2.0 Мобильный клиент (not started) — run `/gsd-new-milestone` to define scope.
 
 ## Requirements
 
@@ -47,7 +42,7 @@
 
 ### Active
 
-(None — next milestone not yet defined; run `/gsd-new-milestone`)
+- **v2.0 Мобильный клиент**: нативный VPN-клиент (Flutter + libbox/Karing) — архитектура, auth, пули, автопинг, покупка, live API; требует определения требований до планирования.
 
 ### Out of Scope
 
@@ -108,4 +103,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-31 — v1.2 milestone started*
+*Last updated: 2026-11-25 — v2.0 Мобильный клиент started*

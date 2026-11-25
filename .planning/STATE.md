@@ -1,19 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-current_phase: 16
-status: completed
-last_updated: "2026-11-20T11:35:35.075Z"
-last_activity: 2026-11-17
-last_activity_desc: Phases 12-16 complete (alerts, promo/referral quality, save-list/upsell, CSV/dictionary) — milestone v1.2 complete
-state_head: 7f78ccbc27c63de55c080519f25357a786789461
+milestone: v2.0
+milestone_name: Мобильный клиент
+status: planning
+last_updated: "2026-11-25T06:30:43.912Z"
+last_activity: 2026-11-25
 progress:
-  total_phases: 5
-  completed_phases: 4
-  total_plans: 9
-  completed_plans: 9
-milestone_name: Стабилизация и качество
-stopped_at: Phase 12 completed (Period Comparison & Data-Quality Foundation) — milestone v1.2 complete
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -27,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-10-31)
 
 ## Current Position
 
-Phase: 16
-Plan: Not started
-Status: All phases complete
-Last activity: 2026-11-17 — Phase 16 complete
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-11-25 — Milestone v2.0 started
 
 ## Performance Metrics
 

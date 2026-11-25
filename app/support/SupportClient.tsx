@@ -141,10 +141,14 @@ export default function SupportClient({ tickets, user, isStaff, unread, now }: P
   const createTicket = async (subject: string, body: string) => {
     setSending(true);
     try {
+      // The route accepts multipart FormData (browser can't set Content-Type
+      // for FormData), so keep the browser sending JSON-free form fields.
+      const form = new FormData();
+      form.append('subject', subject.slice(0, 120));
+      form.append('body', body.slice(0, 4000));
       const res = await fetch('/api/tickets', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject: subject.slice(0, 120), body: body.slice(0, 4000) }),
+        body: form,
       });
       if (res.ok) {
         const data = await res.json();

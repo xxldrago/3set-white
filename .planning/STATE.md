@@ -4,17 +4,17 @@ milestone: v2.0
 milestone_name: Мобильный клиент
 current_phase: 18
 status: executing
-stopped_at: Completed 18-01e-PLAN.md — Native deep link configuration, integration test
+stopped_at: Completed 18-03-PLAN.md — Flutter auth UI layer with login, register, Telegram wait screens
 last_updated: "2026-11-25T11:07:53.385Z"
 last_activity: 2026-11-25
-last_activity_desc: Completed Plan 18-01e — Native deep link configuration, integration test
-state_head: 5f7f4bb778f2341943b70a8fb339486241df0a98
+last_activity_desc: Completed Plan 18-03 — Flutter auth UI layer
+state_head: b711c3c4d8f2341943b70a8fb339486241df0a98
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 7
-  completed_plans: 6
-  percent: 85
+  completed_plans: 7
+  percent: 100
 ---
 
 # Project State
@@ -29,9 +29,9 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 ## Current Position
 
 Phase: 18
-Plan: 18-01e (complete)
-Status: Executing — Native deep link configuration, integration test complete
-Last activity: 2026-11-25 — Plan 18-01e complete
+Plan: 18-03 (complete)
+Status: Executing — Flutter auth UI layer complete
+Last activity: 2026-11-25 — Plan 18-03 complete
 
 ## Per-Milestone Progress
 
@@ -54,7 +54,7 @@ None (flat mode)
 
 ## Next Actions
 
-1. Begin Plan 18-03 — Flutter authentication UI layer (login, register, Telegram wait, logout, providers, tests)
+1. Begin Phase 19 — Server Pools & Auto-Ping
 
 ## Decisions
 
@@ -68,6 +68,7 @@ None (flat mode)
 - [Phase 18-01d]: BiometricGate (WidgetsBindingObserver) triggers on app resume when tokens exist; ConnectivityService emits distinct connectivity stream; DeepLinkHandler parses Telegram deep links (t.me/set3vpn_bot, three-set-vpn://) and polls /api/mobile/auth/telegram/poll; unit tests cover all three providers
 - [Phase 18-02]: All 6 mobile auth API routes implemented (login, register, refresh, telegram nonce, telegram poll, subscription); JWT access 15m / refresh 30d with rotation; Telegram nonce/poll flow with 10min TTL; credentialsChangedAt watermark for token revocation; assetlinks.json & apple-app-site-association served from /.well-known/; Prisma schema includes TelegramLinkToken; curl test suite validates all endpoints
 - [Phase 18-01e]: Android App Links with autoVerify for dash.3set.online/3set.online; iOS Universal Links with associated domains; Android VPN/foreground permissions declared; integration test covers cold start deep link → polling → authenticated → biometric resume → logout vertical slice; DeepLinkHandler.extractNonce unit tests for Telegram and custom scheme formats; flutter analyze clean (0 errors); iOS build succeeds
+- [Phase 18-03]: Flutter auth UI layer complete with LoginScreen, RegisterScreen, TelegramWaitScreen; AuthForm widget with validation; ErrorToast service; Riverpod providers for auth, home, subscription; GoRouter with auth-based redirects; home screen with bottom navigation and logout; widget tests for auth screens; flutter analyze clean (0 errors); all 83 unit tests pass; iOS build succeeds
 
 ## Performance Metrics
 
@@ -79,9 +80,10 @@ None (flat mode)
 | Phase 18 P01d | 300 | 1 tasks | 3 files |
 | Phase 18 P02 | 400 | 3 tasks | 12 files |
 | Phase 18 P01e | 7200 | 1 tasks | 1 files |
+| Phase 18 P03 | 7200 | 1 tasks | 13 files |
 
 ## Session
 
 **Last session:** 2026-11-25T21:30:00.000Z
-**Stopped at:** Completed 18-01e-PLAN.md — Native deep link configuration, integration test
+**Stopped at:** Completed 18-03-PLAN.md — Flutter auth UI layer with login, register, Telegram wait screens
 **Resume file:** None

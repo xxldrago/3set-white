@@ -42,7 +42,7 @@
 | 18-01d | DeepLinkHandler + AppRouter | 1 | 18-01c | ✅ Complete | Telegram deep link polling, GoRouter redirect on auth state, ConnectivityService. |
 | 18-01e | Native Deep Links + Integration Test | 2 | 18-01d, 18-02 | ✅ Complete | Android App Links (autoVerify), iOS Universal Links (associated domains), VPN/foreground permissions, deep_link_tracer_test.dart vertical slice test. |
 | 18-02 | Backend Mobile Auth Routes | 1 | — | ✅ Complete | `POST /api/mobile/auth/login`, `register`, `refresh`, `telegram/nonce`, `telegram/poll`, `GET /api/mobile/subscription`. `lib/mobile-auth.ts` shared logic. `TelegramLinkToken` Prisma model. `assetlinks.json` + `apple-app-site-association`. 33 integration tests pass. |
-| 18-03 | Auth Screens + Telegram Flow + Providers | 2 | 18-01e, 18-02 | 🔄 In Progress | Login/Register/TelegramWait screens. AuthForm + ErrorToast widgets. Router redirect on auth state. Logout. Session restore routing. `currentTabProvider`, `subscriptionProvider`. Widget + integration tests. |
+| 18-03 | Auth Screens + Telegram Flow + Providers | 2 | 18-01e, 18-02 | ✅ Complete | Login/Register/TelegramWait screens. AuthForm + ErrorToast widgets. Router redirect on auth state. Logout. Session restore routing. `currentTabProvider`, `subscriptionProvider`. Widget + integration tests. |
 
 #### Deliverables
 

@@ -102,18 +102,194 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
   // local UI state
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // Telegram link/unlink (link-via-bot). The server owns token ownership,
+  // claim checks and session re-minting; this island only drives
+  // request → open bot → poll status → consume, plus the two-step unlink.
+  const [tgLinkState, setTgLinkState] = useState<'idle' | 'requesting' | 'waiting' | 'expired' | 'error'>('idle');
+  const [tgBotUrl, setTgBotUrl] = useState<string | null>(null);
+  const [tgUnlinkOpen, setTgUnlinkOpen] = useState(false);
+  const [tgUnlinkLast, setTgUnlinkLast] = useState(false);
+  const [tgBusy, setTgBusy] = useState(false);
+  const tgPollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tgAliveRef = useRef(true);
+
   const addToast = (msg: string, type: 'ok' | 'err' = 'ok') => {
     const id = ++toastIdRef.current;
     setToasts((xs) => [...xs, { id, msg, type }]);
     setTimeout(() => setToasts((xs) => xs.filter((t) => t.id !== id)), 3200);
   };
 
+  useEffect(() => {
+    tgAliveRef.current = true;
+    return () => {
+      tgAliveRef.current = false;
+      if (tgPollRef.current !== null) clearTimeout(tgPollRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!tgUnlinkOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !tgBusy) setTgUnlinkOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [tgUnlinkOpen, tgBusy]);
+
+  /* ---------- telegram link/unlink ---------- */
+  function stopTgPoll() {
+    if (tgPollRef.current !== null) {
+      clearTimeout(tgPollRef.current);
+      tgPollRef.current = null;
+    }
+  }
+
+  async function consumeTgLink(token: string) {
+    try {
+      const res = await fetch('/api/auth/email/link/consume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+      if (!tgAliveRef.current) return;
+      if (res.ok) {
+        stopTgPoll();
+        setTgLinkState('idle');
+        setTgBotUrl(null);
+        addToast('Telegram привязан — теперь можно входить без пароля');
+        router.refresh();
+        return;
+      }
+      const body = (await res.json().catch(() => ({}))) as { error?: unknown };
+      if (body.error === 'not_ready') {
+        scheduleTgPoll(token);
+        return;
+      }
+      setTgLinkState('error');
+      addToast('Не удалось привязать Telegram', 'err');
+    } catch {
+      if (tgAliveRef.current) {
+        setTgLinkState('error');
+        addToast('Не удалось привязать Telegram', 'err');
+      }
+    }
+  }
+
+  function scheduleTgPoll(token: string) {
+    stopTgPoll();
+    tgPollRef.current = setTimeout(async () => {
+      if (!tgAliveRef.current) return;
+      try {
+        const res = await fetch('/api/auth/email/link/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        });
+        if (!tgAliveRef.current) return;
+        const body = (await res.json().catch(() => ({}))) as { status?: unknown };
+        if (body.status === 'ready') {
+          await consumeTgLink(token);
+        } else if (body.status === 'pending') {
+          scheduleTgPoll(token);
+        } else {
+          setTgLinkState('expired');
+        }
+      } catch {
+        if (tgAliveRef.current) setTgLinkState('error');
+      }
+    }, 2000);
+  }
+
+  async function startTgLink() {
+    if (tgLinkState === 'requesting' || tgLinkState === 'waiting') return;
+    setTgLinkState('requesting');
+    try {
+      const res = await fetch('/api/auth/email/link/request', { method: 'POST' });
+      if (res.status === 401) {
+        setTgLinkState('idle');
+        addToast('Сессия истекла — войдите заново', 'err');
+        return;
+      }
+      if (res.status === 429) {
+        const body = (await res.json().catch(() => ({}))) as { retryAfterSec?: unknown };
+        const retry = typeof body.retryAfterSec === 'number' ? body.retryAfterSec : 0;
+        setTgLinkState('idle');
+        addToast(retry > 0 ? `Слишком много попыток — повторите через ${retry} сек.` : 'Слишком много попыток — повторите позже', 'err');
+        return;
+      }
+      if (!res.ok) throw new Error('link_request_failed');
+      const body = (await res.json()) as { token?: unknown; botUrl?: unknown };
+      if (typeof body.token !== 'string' || typeof body.botUrl !== 'string') {
+        throw new Error('link_shape_invalid');
+      }
+      if (!tgAliveRef.current) return;
+      setTgBotUrl(body.botUrl);
+      setTgLinkState('waiting');
+      window.open(body.botUrl, '_blank', 'noopener');
+      scheduleTgPoll(body.token);
+    } catch {
+      if (!tgAliveRef.current) return;
+      setTgLinkState('error');
+      addToast('Не удалось создать ссылку для привязки', 'err');
+    }
+  }
+
+  async function openTgUnlink() {
+    setTgBusy(true);
+    try {
+      // Bare POST never unlinks: the route answers 400 with the `lastMethod`
+      // hint, which drives the warning copy before the explicit second tap.
+      const res = await fetch('/api/auth/email/unlink', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      const body = (await res.json().catch(() => ({}))) as { error?: unknown; lastMethod?: unknown };
+      if (res.status === 400 && body.error === 'confirmation_required') {
+        setTgUnlinkLast(body.lastMethod === true);
+        setTgUnlinkOpen(true);
+      } else if (res.status === 401) {
+        addToast('Сессия истекла — войдите заново', 'err');
+      } else {
+        addToast('Не удалось проверить привязку Telegram', 'err');
+      }
+    } catch {
+      addToast('Не удалось проверить привязку Telegram', 'err');
+    } finally {
+      setTgBusy(false);
+    }
+  }
+
+  async function confirmTgUnlink() {
+    setTgBusy(true);
+    try {
+      const res = await fetch('/api/auth/email/unlink', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: true }),
+      });
+      if (!res.ok) throw new Error('unlink_failed');
+      setTgUnlinkOpen(false);
+      addToast('Telegram отвязан');
+      router.refresh();
+    } catch {
+      addToast('Не удалось отвязать Telegram', 'err');
+    } finally {
+      setTgBusy(false);
+    }
+  }
+
   // derived
   const name = user?.firstName ?? '';
   const email = user?.email ?? '—';
   const username = user?.username ?? '';
   const isEmailVerified = !!user?.emailVerifiedAt;
-  const tgLinked = user?.telegramId !== null;
+  const tgLinked = user?.telegramId != null;
   const userId = user?.userId ?? 0;
   const summaryOrEmpty = useMemo(
     () => summary ?? ({} as ReferralSummaryShape),
@@ -782,10 +958,38 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
                           <b>Telegram <span className="verified" id="tgState">{tgLinked ? <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>привязан</> : <span style={{ color: 'var(--dim)' }}>не привязан</span>}</span></b>
                           <span id="tgValue">{tgLinked ? `ID ${user?.telegramId} · вход без пароля разрешён` : 'Нажмите «Привязать», чтобы войти без пароля'}</span>
                         </div>
-                        <button className={`btn ${tgLinked ? 'btn-quiet' : 'btn-primary'} sm`} id="tgBtn" onClick={() => addToast(tgLinked ? 'Отвязка Telegram пока доступна через поддержку' : 'Привязка Telegram пока доступна через поддержку', 'err')}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{tgLinked ? (<><path d="m18.84 12.25 1.72-1.71a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="m5.17 11.75-1.71 1.71a5 5 0 0 0 7.07 7.07l1.71-1.71" /><path d="M8 2v3M2 8h3M16 19v3M19 16h3" /></>) : (<><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" /><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" /></>)}</svg> {tgLinked ? 'Отвязать' : 'Привязать'}
+                        <button className={`btn ${tgLinked ? 'btn-quiet' : 'btn-primary'} sm`} id="tgBtn" disabled={tgBusy || tgLinkState === 'requesting'} onClick={() => { if (tgLinked) void openTgUnlink(); else void startTgLink(); }}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{tgLinked ? (<><path d="m18.84 12.25 1.72-1.71a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="m5.17 11.75-1.71 1.71a5 5 0 0 0 7.07 7.07l1.71-1.71" /><path d="M8 2v3M2 8h3M16 19v3M19 16h3" /></>) : (<><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" /><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" /></>)}</svg> {tgLinked ? 'Отвязать' : tgLinkState === 'requesting' ? 'Готовим ссылку…' : tgLinkState === 'waiting' ? 'Ожидаем бота…' : 'Привязать'}
                         </button>
                       </div>
+                      {!tgLinked && tgLinkState !== 'idle' && (
+                        <div className="row" id="tgLinkRow">
+                          <div className="rt">
+                            <b>
+                              {tgLinkState === 'requesting' && 'Готовим ссылку…'}
+                              {tgLinkState === 'waiting' && 'Ждём подтверждение в Telegram'}
+                              {tgLinkState === 'expired' && 'Ссылка истекла'}
+                              {tgLinkState === 'error' && 'Не удалось привязать Telegram'}
+                            </b>
+                            <span>
+                              {tgLinkState === 'requesting' && 'Открываем Telegram — это займёт пару секунд.'}
+                              {tgLinkState === 'waiting' && 'Откройте бота, нажмите Start и вернитесь на эту страницу — привязка произойдёт автоматически.'}
+                              {tgLinkState === 'expired' && 'Ссылка действует 10 минут. Запросите новую.'}
+                              {tgLinkState === 'error' && 'Проверьте соединение и попробуйте ещё раз.'}
+                            </span>
+                          </div>
+                          {tgLinkState === 'waiting' && tgBotUrl && (
+                            <a className="btn btn-primary sm" href={tgBotUrl} target="_blank" rel="noopener noreferrer">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4z" /><path d="M22 2 11 13" /></svg> Открыть бота
+                            </a>
+                          )}
+                          {(tgLinkState === 'expired' || tgLinkState === 'error') && (
+                            <button className="btn btn-ghost sm" onClick={() => void startTgLink()} disabled={tgBusy}>
+                              Повторить
+                            </button>
+                          )}
+                        </div>
+                      )}
                       <div className="row">
                         <div className="rt"><b>Пароль</b><span>Используется для входа по email</span></div>
                         <button className="btn btn-ghost sm" data-goto="sec" onClick={() => setTab('sec')}>
@@ -1078,6 +1282,27 @@ export default function ProfileClient ({ user, summary, referralLink, isAdmin, h
             </div>
           </div>
         </div>
+
+        {/* TELEGRAM UNLINK MODAL */}
+        {tgUnlinkOpen && (
+          <div className="overlay open" role="dialog" aria-modal="true" aria-labelledby="tgUnTitle">
+            <div className="modal" style={{ width: 'min(440px,100%)' }}>
+              <div className="modal-head">
+                <h3 id="tgUnTitle">Отвязать Telegram?</h3>
+                <button className="icon-btn" onClick={() => setTgUnlinkOpen(false)} aria-label="Закрыть" disabled={tgBusy}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg></button>
+              </div>
+              <p className="muted" style={{ fontSize: 13.5, margin: '0 0 14px' }}>
+                {tgUnlinkLast
+                  ? 'Это последний способ входа. После отвязки войти в аккаунт не получится — восстановление только через поддержку.'
+                  : 'Вход через Telegram и уведомления в боте перестанут работать. Вход по email и паролю останется.'}
+              </p>
+              <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+                <button className="btn btn-ghost" onClick={() => setTgUnlinkOpen(false)} style={{ flex: 1 }} disabled={tgBusy}>Отмена</button>
+                <button className="btn btn-danger" style={{ flex: 1 }} onClick={() => void confirmTgUnlink()} disabled={tgBusy}>{tgBusy ? 'Отвязываем…' : 'Отвязать'}</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* QR MODAL */}
         <div className="overlay" id="ovQr" role="dialog" aria-modal="true" aria-labelledby="qrTitle">

@@ -13,7 +13,7 @@ part of 'router.dart';
 /// - /auth: Login screen
 /// - /register: Registration screen
 /// - /telegram-wait: Telegram authentication wait screen
-/// - /: Main app screen (placeholder for now)
+/// - /: Main app screen (home)
 /// Riverpod provider for the GoRouter instance
 
 @ProviderFor(router)
@@ -24,7 +24,7 @@ final routerProvider = RouterProvider._();
 /// - /auth: Login screen
 /// - /register: Registration screen
 /// - /telegram-wait: Telegram authentication wait screen
-/// - /: Main app screen (placeholder for now)
+/// - /: Main app screen (home)
 /// Riverpod provider for the GoRouter instance
 
 final class RouterProvider
@@ -35,7 +35,7 @@ final class RouterProvider
   /// - /auth: Login screen
   /// - /register: Registration screen
   /// - /telegram-wait: Telegram authentication wait screen
-  /// - /: Main app screen (placeholder for now)
+  /// - /: Main app screen (home)
   /// Riverpod provider for the GoRouter instance
   RouterProvider._()
     : super(
@@ -70,4 +70,4 @@ final class RouterProvider
   }
 }
 
-String _$routerHash() => r'b2b76baf0871a3fda74c0879c1cdabf77718b1f2';
+String _$routerHash() => r'f5f8eb89f1b2eb96fbe6a888c2c23267a69df3ba';

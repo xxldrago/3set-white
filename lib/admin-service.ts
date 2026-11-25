@@ -652,3 +652,52 @@ export async function loadAdminProfile(userId: number): Promise<AdminProfile | n
 
   return { header, keys, payments, tickets };
 }
+
+export interface AdminTopRef {
+  userId: number;
+  telegramId: string | null;
+  displayName: string | null;
+  email: string | null;
+  referrals: number;
+  earned: number;
+}
+
+/**
+ * Топ-рефералы (T5): кто больше всего привёл платежей — сумма
+ * `walletTx.reason = "referral_bonus"` на пользователя + число приведённых
+ * аккаунтов (`User.referredById`). Данные — из кошелька и дерева рефералов;
+ * без гаданий.
+ */
+export async function adminTopRefs(limit = 5): Promise<AdminTopRef[]> {
+  const txs = await prisma.walletTx.findMany({
+    where: { reason: "referral_bonus" },
+    select: { userId: true, amount: true },
+  });
+  const byUser = new Map<number, number>();
+  for (const tx of txs) {
+    byUser.set(tx.userId, (byUser.get(tx.userId) ?? 0) + tx.amount);
+  }
+  if (byUser.size === 0) return [];
+  const users = await prisma.user.findMany({
+    where: { id: { in: [...byUser.keys()] } },
+    orderBy: { id: "asc" },
+    select: { id: true, telegramId: true, email: true, firstName: true, lastName: true, username: true },
+  });
+  const counts = await prisma.user.groupBy({
+    by: ["referredById"],
+    where: { referredById: { not: null, in: [...byUser.keys()] } },
+    _count: { _all: true },
+  });
+  const countById = new Map(counts.map((c) => [c.referredById as number, c._count._all]));
+  return users
+    .map((u) => ({
+      userId: u.id,
+      telegramId: u.telegramId === null ? null : String(u.telegramId),
+      displayName: displayNameOf(u),
+      email: u.email,
+      referrals: countById.get(u.id) ?? 0,
+      earned: byUser.get(u.id) ?? 0,
+    }))
+    .sort((a, b) => b.earned - a.earned || a.userId - b.userId)
+    .slice(0, Math.max(0, limit));
+}

@@ -14,7 +14,7 @@
 // loser aborts (Prisma P2034) and reports `not_found` rather than both
 // succeeding. The self-change block lives in the route as the first line of
 // defence.
-import type { AdminRole } from "./admin-auth";
+import type { AdminRole, AdminSection } from "./admin-auth";
 import { isUniqueViolation, isWriteConflict } from "./prisma-errors";
 import { prisma } from "./prisma";
 
@@ -80,6 +80,106 @@ export async function removeAdminRole(
     if (isWriteConflict(err)) return "not_found";
     throw err;
   }
+}
+
+/** Дескриптор роли для справочника ролей (T4/T5). */
+export interface RoleDescriptor {
+  name: string;
+  description: string;
+  /** Максимум пользователей — null = без лимита. */
+  maxUsers: number | null;
+  /** Разделы (секции), доступные роли (тип `can()`). */
+  features: readonly AdminSection[];
+  /** Приоритет роли (чем выше — тем шире доступ; administrator = 10). */
+  priority: number | null;
+  isDefault: boolean;
+  /** Глобальная роль (сотрудники) против роли только в кабинете (partner). */
+  globalScope: boolean;
+  /** Роль защищает домен (например, «оператор»). */
+  protectsDomain: boolean;
+  /** Необязательное примечание (как применяется в интерфейсе). */
+  apply: string | null;
+  hidden: boolean;
+}
+
+/** ROLE_MATRIX (T5): статический справочник ролей — источник правды для таблицы. */
+export const ROLE_MATRIX: readonly RoleDescriptor[] = [
+  {
+    name: "administrator",
+    description: "Полный доступ: все секции — обзор, аналитика, пользователи, баланс, промокоды, рефералы, роли; смена ролей и вывод на сервер.",
+    maxUsers: null,
+    features: [
+      "overview",
+      "analytics",
+      "users",
+      "profileKeys",
+      "profilePayments",
+      "profileTickets",
+      "tickets",
+      "broadcast",
+      "pricing",
+      "promos",
+      "referrals",
+      "roles",
+      "segments",
+      "alerts",
+      "fraud",
+      "providers",
+      "wallet",
+    ] as const,
+    priority: 10,
+    isDefault: false,
+    globalScope: true,
+    protectsDomain: true,
+    apply: null,
+    hidden: false,
+  },
+  {
+    name: "manager",
+    description: "Руководитель: обзор, аналитика, пользователи, платежи, сегменты — без настройки кошелька и смены ролей.",
+    maxUsers: null,
+    features: ["overview", "analytics", "users", "profilePayments", "segments"] as const,
+    priority: 5,
+    isDefault: false,
+    globalScope: false,
+    protectsDomain: false,
+    apply: null,
+    hidden: false,
+  },
+  {
+    name: "support",
+    description: "Сотрудник поддержки: пользователи, ключи, тикеты — читает, помогает участникам.",
+    maxUsers: null,
+    features: ["users", "profileKeys", "profileTickets", "tickets"] as const,
+    priority: 5,
+    isDefault: false,
+    globalScope: false,
+    protectsDomain: false,
+    apply: null,
+    hidden: false,
+  },
+  {
+    name: "partner",
+    description: "Партнёр: видит только свою партнёрскую панель.",
+    maxUsers: null,
+    features: ["partner"] as const,
+    priority: 1,
+    isDefault: false,
+    globalScope: true,
+    protectsDomain: false,
+    apply: null,
+    hidden: false,
+  },
+];
+
+/**
+ * Таблица ролей (T4/T5): ROLE_MATRIX + динамическое поле `users` — число
+ * сотрудников с ролью в `admin_users`.
+ */
+export async function adminRolesTable(): Promise<Array<RoleDescriptor & { users: number }>> {
+  const counts = await prisma.adminUser.groupBy({ by: ["role"], _count: { _all: true } });
+  const byRole = new Map(counts.map((c) => [c.role, c._count._all]));
+  return ROLE_MATRIX.map((d) => ({ ...d, users: byRole.get(d.name) ?? 0 }));
 }
 
 export async function changeAdminRole(

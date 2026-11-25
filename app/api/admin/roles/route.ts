@@ -12,6 +12,7 @@
 import { z } from "zod";
 import { requireRole, type AdminRole } from "../../../../lib/admin-auth";
 import {
+  adminRolesTable,
   assignAdminRole,
   changeAdminRole,
   removeAdminRole,
@@ -26,6 +27,27 @@ const payloadSchema = z.object({
   // `client` is the absence of a staff row — the all-users default.
   role: z.enum(["client", "administrator", "support", "manager", "partner"]),
 });
+
+export async function GET(): Promise<Response> {
+  try {
+    await requireRole("administrator");
+  } catch (err) {
+    if (err instanceof SessionError) {
+      return Response.json({ error: "unauthorized" }, { status: 401 });
+    }
+    if (err instanceof AdminError) {
+      return Response.json({ error: "not_found" }, { status: 404 });
+    }
+    logger.error({ route: "admin-roles-get", outcome: "session_error" });
+    return Response.json({ error: "internal" }, { status: 500 });
+  }
+  try {
+    return Response.json({ roles: await adminRolesTable() });
+  } catch {
+    logger.error({ route: "admin-roles-get", outcome: "list_error" });
+    return Response.json({ error: "internal" }, { status: 500 });
+  }
+}
 
 export async function POST(req: Request): Promise<Response> {
   let caller: { telegramId: number; role: AdminRole };

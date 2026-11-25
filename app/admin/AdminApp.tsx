@@ -5,7 +5,6 @@
 // /api/admin/wallet, /api/admin/promos, /api/admin/users/search?q=, /api/admin/roles.
 // Гаданий и заглушек нет — секции без данных показываются честно пустыми.
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Search, Download, RotateCcw } from 'lucide-react';
 import './admin.css';
 
@@ -53,7 +52,6 @@ function UserAvatar({ name }: { name: string | null }) {
 }
 
 export default function AdminApp() {
-  const router = useRouter();
   const [period, setPeriod] = useState(30);
   const [searchQ, setSearchQ] = useState('');
   const [rows, setRows] = useState<Array<{ userId: number; telegramId: string | null; email: string | null; displayName: string | null; staffRole?: string | null }>>([]);
@@ -379,7 +377,7 @@ function TopRefs({ refs }: { refs: TopRef[] }) {
           <thead><tr><th>Пользователь</th><th>Telegram</th><th>Приведёно</th><th>Заработано, ₽</th></tr></thead>
           <tbody>
             {refs.length === 0 && <tr><td colSpan={4} className="empty-row">Нет данных о заработке рефералов</td></tr>}
-            {refs.map((r, i) => (
+            {refs.map((r) => (
               <tr key={r.userId}><td><UserAvatar name={r.displayName} /><b>{r.displayName ?? r.telegramId ?? '#' + r.userId}</b></td><td><span>{r.telegramId ?? '—'}</span></td><td><b>{r.referrals}</b></td><td><b>{money(r.earned)}</b></td></tr>
             ))}
           </tbody>

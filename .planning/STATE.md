@@ -1,135 +1,51 @@
 ---
 gsd_state_version: 1.0
 milestone: v2.0
-milestone_name: Мобильный клиент
+current_phase: 18
 status: planning
-last_updated: "2026-11-25T06:30:43.912Z"
+last_updated: "2026-11-25T16:50:00.000Z"
 last_activity: 2026-11-25
+last_activity_desc: Milestone v2.0 started — research complete, requirements & roadmap defined
+state_head: ""
 progress:
-  total_phases: 0
+  total_phases: 6
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
-  percent: 0
+milestone_name: Мобильный клиент
+stopped_at: Milestone v2.0 planning complete — ready for Phase 18
 ---
 
 # Project State
 
 ## Project Reference
-
-See: .planning/PROJECT.md (updated 2026-10-31)
+See: .planning/PROJECT.md (updated 2026-11-25)
 
 **Core value:** Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
-**Current focus:** v1.2 Стабилизация и качество (Phase 12 — completed, milestone v1.2 complete)
+**Current focus:** v2.0 Мобильный клиент (Phase 18 — not started)
 
 ## Current Position
-
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
+Phase: 18
+Plan: Not started
+Status: Planning complete — research, requirements, roadmap defined
 Last activity: 2026-11-25 — Milestone v2.0 started
 
-## Performance Metrics
+## Per-Milestone Progress
+| Milestone | Phases | Completed | Status |
+|-----------|--------|-----------|--------|
+| v1.0 MVP | 6 | 6 | Shipped |
+| v1.1 Расширенная аналитика | 5 | 5 | Shipped |
+| v1.2 Стабилизация и качество | 5 | 5 | Completed |
+| **v2.0 Мобильный клиент** | **6** | **0** | **Planning** |
 
-**Velocity:**
+## Active Workstreams
+None (flat mode)
 
-- Total plans completed: 21
-- Average duration: -
-- Total execution time: -
+## Blockers
+- Apple NetworkExtension entitlement (apply ASAP)
+- Platega test credentials (requested)
+- GPL-3.0 legal review (schedule)
 
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 07 | 5 | - | - |
-| 8 | 3 | - | - |
-| 9 | 3 | - | - |
-| 10 | 3 | - | - |
-| 11 | 3 | - | - |
-| 13 | 1 | - | - |
-| 14 | 1 | - | - |
-| 15 | 1 | - | - |
-| 16 | 1 | - | - |
-
-**Recent Trend:**
-
-- Last 5 plans: -
-- Trend: -
-
-*Updated after each plan completion*
-**Per-Plan Metrics:**
-
-| Plan | Duration | Tasks | Files |
-|------|----------|-------|-------|
-| Phase 08 P01 | 4min | 2 tasks | 4 files |
-| Phase 08 P02 | 4 | 2 tasks | 2 files |
-| Phase 08 P03 | 61 | 2 tasks | 9 files |
-| Phase 09 P01 | 3min | 2 tasks | 2 files |
-| Phase 09 P02 | 6min | 2 tasks | 2 files |
-| Phase 09 P03 | 9 | 2 tasks | 9 files |
-
-## Accumulated Context
-
-### Decisions
-
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
-
-- [Roadmap v1.1]: Порядок фаз по зависимостям — фундамент rollup (`ANL-12`, `ANL-15`) в Phase 7 раньше метрик, потребляющих `providerCost` (`ANL-05`, `ANL-13`, `ANL-14`) в Phase 8
-- [Roadmap v1.1]: Когорты (Phase 10) и сегменты (Phase 11) зависят от rollup Phase 7; сегменты питают существующий broadcast-composer
-- [Roadmap v1.1]: Retention/churn считаем по подписке/ключу (`Order.keyId`, `kind='renew'`), не по аккаунту; `expired` = pending-by-age в аналитике, без нового OrderStatus
-- [Roadmap v1.1]: Хранение = daily rollup-таблицы (`daily_metrics`, `user_rfm`, `artemida_balance_snapshots`) + nightly cron 03:00 + backfill-скрипт; без внешнего BI
-- [Phase 08]: A1 lostMrr uses finalAmount×30/days (D-07 literal), not cashOf
-- [Phase 08]: A2 liveExpiry extends only the latest term per keyRef
-- [Phase 08]: A6/A7 activeAtStart is order-bearing coverage incl. 0₽ bonus terms; churn cohort-clamped
-- [Phase 08]: Phase 08: trailingMonthLabels extracted from loadWaterfall — shared month-slot helper; reconciliation test pins output-identity
-- [Phase 08]: Phase 08: loadBurnRunway calls artemida.getBalance() once with .then(unlimited→null).catch(() => null) — never rejects the loader
-- [Phase 08]: Phase 08: costed-subset discipline — providerCost !== null filters net LTV / margin / burn; coverage counts reported, never zero-filled
-- [Phase 08]: Phase 08: error body = single-CARD common.errorLoad per PATTERNS degradation skeleton (plan action text supersedes the UI-SPEC heading-survives variant)
-- [Phase 08]: Phase 08: BurnRunwayCards source avoids the strings artemida/providerCost/userId even in comments — the component passes the strongest no-leak/no-provider scan
-- [Phase 09]: P01 funnel stages are reach-based (paidAt/key/status), never current-status-only; paid→failed fallback and keyless CHARGEBACKED-from-provisioning rows declared as DOCUMENTED APPROXIMATIONS in the module header
-- [Phase 09]: P01 errorBreakdown keeps null errorCode (component owns «unknown» label); tie-break count desc, code asc with null as ''
-- [Phase 09]: P01 timingStats = successful chains only; paidToProvisioned uses the updatedAt proxy, guarded by the status='provisioned' scope
-- [Phase 09]: P01 PAYMENT_WINDOW_MS = 24h hardcoded code constant; expiredCount strict `<` (±1 ms boundary pinned)
-- [Phase 09]: Phase 09 loaders: funnel/error/timing share the loadKpis createdAt cohort window — a paidAt window would drop pending orders from the funnel base; loadExpired is the only point-in-time read and derives windowHours from PAYMENT_WINDOW_MS
-- [Phase 09]: Phase 09 DB loader tests use the identity pattern (re-run the loader's own WHERE/SELECT, derive via lib/analytics/funnel.ts) because funnel/expired counts are global across the shared test Postgres
-- [Phase 09]: Phase 9 UI: funnel step labels go through a literal switch (a Record map fails the i18n unused-key scan); ErrorTable renders raw error codes verbatim with the i18n «unknown» label for the null group; shared formatDuration exported from TimeToPayCards and imported by TimeToProvisionCards
-- [Phase 12]: Write-guard rollup — degraded day cannot overwrite healthy `daily_metrics` (D-08)
-- [Phase 12]: Metric registry D-15 — single source of truth for all analytics metrics
-
-### Pending Todos
-
-None yet.
-
-### Blockers/Concerns
-
-- `Order.providerCost` — новое поле, требуется миграция Prisma; исторические заказы останутся без стоимости (backfill не может её восстановить) — метрики net/margin за прошлое неполны, помечать как таковые
-- `artemida_balance_snapshots` — единственный источник истории баланса: `GET /balance` не имеет wallet-history endpoint, snapshots копятся только с момента деплоя Phase 7
-- Пересчёт rollup должен быть дешёвым (один сервер, `docker compose ... up -d web`): backfill обязан быть runnable on demand, не блокируя запросы
-- `[Phase 09]` `paidAt → provisioned` считается через `Order.updatedAt` (proxy): merge аккаунтов (`lib/accounts.ts:164`) переписывает `updatedAt` историческим provisioned-заказам и может завысить среднее. Нужна nullable-колонка `Order.provisionedAt` + миграция + `provisionedAt ?? updatedAt` (MD-01 в `09-REVIEW.md`, AR-09-01 в `09-SECURITY.md`)
-
-### Quick Tasks Completed
-
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 261029-gni | Yandex Metrika counter 113865085 on 3set.online landing (14 pages) | 2026-10-29 | c77c820 | [20261029-yandex-metrika-landing](./quick/20261029-yandex-metrika-landing/) |
-| 2 | Rebuild /subscription in keys.html template with live data | 2026-11-20 | 71f0a36 | — |
-| 3 | PWA mobile install CTA, social share icons and fixed support badge | 2026-11-20 | 7f78ccb | — |
-| 4 | Rebuild /faq page in keys.html template with real FAQ data | 2026-11-20 | d451e5b | — |
-
-## Deferred Items
-
-Items acknowledged and deferred at milestone close, most recent first:
-
-| Category | Item | Status | Deferred At | Milestone |
-|----------|------|--------|-------------|-----------|
-| *(none)* | | | | |
-
-## Session Continuity
-
-Last session: 2026-11-17 — milestone v1.2 complete (Phases 12-16 all complete)
-Milestone v1.2 complete — no remaining phases.
-
-## Operator Next Steps
-
-Milestone v1.2 complete — all phases 12-16 committed and pushed.
+## Next Actions
+1. Run `/gsd-plan-phase 18` to create detailed PLAN.md for Foundation & Auth
+2. Begin Flutter project setup and backend auth routes

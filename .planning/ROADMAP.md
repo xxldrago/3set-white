@@ -1,115 +1,263 @@
-# Roadmap: 3set-white — сервис продажи VPN
+# Roadmap: 3set-white — v2.0 Мобильный клиент
 
 ## Milestones
 
-- ✅ **v1.0 MVP** — Phases 1-6 (shipped 2026-10-06) — [archive](milestones/v1.0-ROADMAP.md)
-- ✅ **v1.1 Расширенная аналитика** — Phases 7-11 (shipped 2026-10-31) — [archive](milestones/v1.1-ROADMAP.md)
-- ✅ **v1.2 Стабилизация и качество** — Phase 12 (completed)
+| Version | Name | Status | Phases |
+|---------|------|--------|--------|
+| v1.0 | MVP (Bot + Cabinet + Payments) | Shipped | 1-6 |
+| v1.1 | Расширенная аналитика | Shipped | 7-11 |
+| v1.2 | Стабилизация и качество | Completed | 12-17 |
+| **v2.0** | **Мобильный клиент** | **Planning** | **18-23** |
 
-## Overview
+---
 
-Milestone v1.2 завершена: фазы 12-16 — фундамент корректности аналитики (сравнение периодов, degraded-флаги), алерты, промо/реферал и fraud-сигналы, save-list/upsell, CSV-экспорт и словарь метрик.
+## Phase Overview (v2.0)
 
-## Phases
+| Phase | Title | Focus | Est. Days | Depends On |
+|-------|-------|-------|-----------|------------|
+| **18** | **Foundation & Auth** | Flutter project, Riverpod, secure_storage, email/Telegram auth, JWT, biometric | 5 | — |
+| **19** | **Server Pools & Auto-Ping** | `/api/mobile/servers`, pool UI, libbox urltest, Drift cache, quick-path, connectivity | 7 | 18 |
+| **20** | **VPN Core & Connect FSM** | libbox FFI, VpnService/NE, connection FSM, kill switch, foreground service | 10 | 19 |
+| **21** | **Subscription & Purchase** | `/api/mobile/subscription`, `/payments/*`, Platega webview, polling, key issuance, confetti | 7 | 18, 20 |
+| **22** | **Devices, Settings & Polish** | Device management, referral, push notifications (expiry), UI polish, settings | 5 | 21 |
+| **23** | **Hardening & Release** | Error handling (ARTEMIDA codes), captive portal, IPv6 leak test, CI/CD, Play/TestFlight | 7 | 22 |
 
-**Phase Numbering:**
+**Total: ~41 days (6 weeks)**
 
-- Integer phases (12, 13, 14): Planned milestone work
-- Decimal phases (12.1, 12.2): Urgent insertions (marked with INSERTED)
-
-Decimal phases appear between their surrounding integers in numeric order.
-
-Numbering continues from v1.1 (last phase = 11).
-
-- ✅ **Phase 12: Period Comparison & Data-Quality Foundation** - WoW/MoM-дельта и % для каждой метрики, флаги degraded-ответов ARTEMIDA, исключение их из агрегатов (completed)
+---
 
 ## Phase Details
 
-### Phase 12: Period Comparison & Data-Quality Foundation
+### Phase 18: Foundation & Auth (5 days)
 
-**Goal**: As an admin, I want every analytics metric to show its WoW/MoM delta and to know when a metric is computed from degraded ARTEMIDA responses, so that I can trust the numbers and spot regressions before they become alerts.
-**Mode:** mvp
-**Depends on**: Nothing (first phase of milestone v1.2; переиспользует `lib/analytics/*` и `/api/cron/analytics` из v1.1)
-**Requirements**: ALR-01, EXT-05 (+ capture-only основания для PRM-01/PRM-04; доставка самих требований — в Phase 14)
-**Success Criteria** (what must be TRUE):
+**Goal**: Working Flutter app with auth (email + Telegram) and secure session persistence.
 
-  1. Каждая метрика на `/admin/analytics` показывает дельту к предыдущей неделе и предыдущему месяцу (абсолют и %), с корректным поведением при нулевой базе
-  2. Сравнение периодов считается на MSK-границах и совпадает с ручной сверкой двух соседних периодов
-  3. Неполный текущий день не сравнивается с полным периодом: сравнение помечается `partial`, а при несопоставимом покрытии результат — `incomparable`, а не число
-  4. Ответы ARTEMIDA, помеченные как degraded (таймаут/ошибка/частичные данные), фиксируются флагом и не попадают в агрегаты — это видно в UI
-  5. Degraded-прогон rollup не может перезаписать здоровые значения `daily_metrics` (write-guard монотонности/качества)
-  6. Метрика, затронутая degraded-данными, помечена в админке, и её значение можно объяснить (сколько записей исключено)
-  7. Существующие значения v1.1 не меняются на «здоровых» данных (регрессионная сверка)
-  8. Захват, который нельзя восстановить задним числом, запущен уже здесь: клики по промокодам (generic + партнёрские) и `User.signupIpHash` (sha256, без сырого IP, литерал `"direct"` исключён)
-  9. `lib/analytics/metric-registry.ts` содержит каждую метрику (id, label, формула, источник, направление, ограничения) — единый источник для дашбордов и будущего словаря
+#### Tasks
 
-**Plans**: TBD
-**UI hint**: yes
+| Task | Description | Acceptance |
+|------|-------------|------------|
+| 18.1 | `flutter create` — project structure, Riverpod, `flutter_secure_storage`, `dio`, `connectivity_plus`, `uni_links`, `logger` | `flutter analyze` clean |
+| 18.2 | **Backend: `/api/mobile/auth/*`** — login, register, telegram (nonce exchange), JWT issuance (15m/30d) | Postman: 200 + JWT |
+| 18.3 | **Auth Screen** — email/password (min 8), register, validation, loading, error toasts | UI matches prototype |
+| 18.4 | **Telegram Deep-Link** — `uni_links` handles `t.me/set3vpn_bot?start={nonce}` → polling → JWT | Deep link → app → success |
+| 18.5 | **Secure Storage + Biometric** — JWT in `flutter_secure_storage`, `biometricAuth: true` on resume | App kill → reopen → auto-login |
+| 18.6 | **Session Restore** — on launch, validate JWT via `/api/mobile/subscription` | Valid → main; invalid → auth |
+| 18.7 | **Logout** — clear storage, disconnect VPN, navigate to auth | Clean logout |
+| 18.8 | **Riverpod Providers** — `authProvider`, `subscriptionProvider`, `currentTabProvider` | State management ready |
 
-## Progress
+#### Deliverables
+- Flutter app runs on Android/iOS simulators
+- Email/password + Telegram auth working
+- JWT persisted securely, biometric unlock
+- Backend auth routes deployed
 
-**Execution Order:**
-Phases 12-16 of milestone v1.2.
+---
 
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 12. Period Comparison & Data-Quality Foundation | 5/5 | Completed | 2026-11-10 |
-| 13. Alerts: падение оплат, рост failed, всплеск тикетов, runway баланса ниже порога, доставка админам через outbox/Telegram | 1/1 | Complete    | 2026-11-17 |
-| 14. Promo/referral quality & fraud: воронка click→register→pay по кодам/партнёрам, ROI скидки, Partner ROI с выплатами, fraud-сигналы | 1/1 | Complete    | 2026-11-17 |
-| 15. Save-list истекающих ключей с push T-7/T-3/T-1 и upsell-radar по тяжёлым пользователям на низком тарифе | 1/1 | Complete    | 2026-11-17 |
-| 16. CSV-экспорт отчётов и metric dictionary (страница с определениями формул) | 1/1 | Complete    | 2026-11-17 |
-| 17. 17 Admin template redesign: полный переверсточа /admin под стилистику шаблона, замена текущих элементов | 5/5 | Done | - |
+### Phase 19: Server Pools & Auto-Ping (7 days)
 
-### Phase 13: Alerts: падение оплат, рост failed, всплеск тикетов, runway баланса ниже порога, доставка админам через outbox/Telegram
+**Goal**: Two server tabs with live ping, quick-path selection, network-aware cache invalidation.
 
-**Goal:** Админ получает алерты по падению оплат, росту failed, всплеску тикетов и runway баланса ниже порога через outbox/Telegram.
-**Requirements**: ALR-02, ALR-03, ALR-04
-**Depends on:** Phase 12
-**Plans:** 1/1 plans complete
+#### Tasks
 
-Plans:
+| Task | Description | Acceptance |
+|------|-------------|------------|
+| 19.1 | **Backend: `/api/mobile/servers`** — transform ARTEMIDA `/pricing` → two pools with `load`, `proto`, `sni?` | JSON matches spec |
+| 19.2 | **Server List UI** — two tabs (Simple/Whitelist), protocol badges, load bars, SNI display | Matches prototype |
+| 19.3 | **libbox FFI Setup** — compile sing-box for Android (arm64-v8a, armeabi-v7a) + iOS (arm64), `ffigen` bindings | `libbox.urltest()` callable |
+| 19.4 | **Urltest Implementation** — HTTP HEAD to server endpoint, measure RTT, return `{online, rtt}` | 100ms local, 2000ms timeout |
+| 19.5 | **Ping Cache (Drift)** — table `ping_cache(server_id, tab, rtt, online, ts)`, TTL 60s | Query returns fresh/stale |
+| 19.6 | **Quick Path (Last-Good)** — on connect, ping ≤3 last-good first (800ms timeout) | Falls back to full ping |
+| 19.7 | **Full Ping** — parallel ping all in tab (2s timeout), update UI with RTT/offline | All cards show ping |
+| 19.8 | **Best Server Selection** — sort by RTT asc, load asc; auto card shows best | Auto selects fastest |
+| 19.9 | **Connectivity Invalidation** — `connectivity_plus` stream → clear Drift cache on network change | WiFi↔LTE → fresh ping |
+| 19.10 | **Manual Refresh** — refresh button → full ping → toast | Spinner + toast |
+| 19.11 | **Riverpod: `serverPoolProvider`, `pingCacheProvider`, `bestServerProvider`** | Reactive UI updates |
 
-- [ ] TBD (run /gsd-plan-phase 13 to break down)
+#### Deliverables
+- Two tabs with live server data
+- Ping works (quick-path + full), cache TTL respected
+- Network change invalidates cache
+- libbox FFI integrated
 
-### Phase 14: Promo/referral quality & fraud: воронка click→register→pay по кодам/партнёрам, ROI скидки, Partner ROI с выплатами, fraud-сигналы
+---
 
-**Goal:** Аналитика промокодов/рефералов: воронка, ROI, fraud-сигналы.
-**Requirements**: PRM-01, PRM-02, PRM-03, PRM-04
-**Depends on:** Phase 13
-**Plans:** 1/1 plans complete
+### Phase 20: VPN Core & Connect FSM (10 days)
 
-Plans:
+**Goal**: Working VPN tunnel with proper FSM, kill switch, platform compliance.
 
-- [ ] TBD (run /gsd-plan-phase 14 to break down)
+#### Tasks
 
-### Phase 15: Save-list истекающих ключей с push T-7/T-3/T-1 и upsell-radar по тяжёлым пользователям на низком тарифе
+| Task | Description | Acceptance |
+|------|-------------|------------|
+| 20.1 | **libbox Config Generation** — parse subscription link → sing-box config JSON for selected server | Config valid per sing-box schema |
+| 20.2 | **Connection FSM (Riverpod)** — `idle`→`pinging`→`connecting`→`connected`→`disconnecting`→`idle` + `error` | State transitions logged |
+| 20.3 | **Cancel Connecting** — button during `connecting` → `disconnecting` → `idle` | Immediate cancel |
+| 20.4 | **Android: VpnService** — `VpnService.prepare()`, `establish()`, foreground service with notification | Notification persistent |
+| 20.5 | **Android: Foreground Service** — `flutter_background_service`, notification "VPN активен · 3set" with disconnect | Tap notification → disconnect |
+| 20.6 | **iOS: NetworkExtension** — `NEPacketTunnelProvider`, `setTunnelNetworkSettings`, entitlements | Tunnel starts on iOS |
+| 20.7 | **iOS: Kill Switch** — `NEOnDemandRuleConnect` for all interfaces | Non-VPN traffic blocked |
+| 20.8 | **Android: Kill Switch** — `VpnService` routes all traffic, `allowBypass=false` | Traffic blocked on disconnect |
+| 20.9 | **Connected Panel UI** — server info, IP, ping, timer, ↓/↑ MB (libbox counters, 1s update) | Live stats match prototype |
+| 20.10 | **Auto-Reconnect** — network change during `connected` → full FSM reconnect | Seamless, toast shown |
+| 20.11 | **Core Restart Backoff** — libbox crash → restart ×3 (1s, 2s, 4s) → error toast | Max 3 retries |
+| 20.12 | **Error Mapping** — libbox errors → user toasts (auth, unreachable, config, permission) | No raw errors |
+| 20.13 | **Permission Flows** — VPN permission request, handle deny/revoke gracefully | Toast + retry button |
 
-**Goal:** Save-list истекающих ключей с push-напоминаниями и upsell-radar.
-**Requirements**: EXT-01, EXT-02
-**Depends on:** Phase 14
-**Plans:** 1/1 plans complete
+#### Deliverables
+- VPN connects on Android + iOS
+- FSM handles all states + cancel
+- Kill switch works both platforms
+- Connected panel shows live stats
+- Foreground service / NE compliant
 
-Plans:
+---
 
-- [ ] TBD (run /gsd-plan-phase 15 to break down)
+### Phase 21: Subscription & Purchase (7 days)
 
-### Phase 16: CSV-экспорт отчётов и metric dictionary (страница с определениями формул)
+**Goal**: Full purchase flow — subscription status, shop, Platega payment, key issuance.
 
-**Goal:** CSV-экспорт отчётов и словарь метрик.
-**Requirements**: EXT-06, EXT-07
-**Depends on:** Phase 15
-**Plans:** 1/1 plans complete
+#### Tasks
 
-Plans:
+| Task | Description | Acceptance |
+|------|-------------|------------|
+| 21.1 | **Backend: `/api/mobile/subscription`** — aggregates ARTEMIDA `/keys` + `/wallet` → status, expiry, deviceLimit, link, devices | JSON matches spec |
+| 21.2 | **Backend: `/api/mobile/payments/create`** — Platega create, idempotency key, returns `payment_url` + `payment_id` | Platega test: 200 + URL |
+| 21.3 | **Backend: `/api/mobile/payments/status/{id}`** — polling endpoint, checks Platega status | Returns `PENDING/CONFIRMED/CANCELED` |
+| 21.4 | **Backend: Platega Webhook** — `CONFIRMED` → ARTEMIDA `keys.issue`/`keys.renew` → update subscription | Idempotent on `transaction_id` |
+| 21.5 | **Backend: `/api/mobile/keys/issue`, `/keys/renew`** — call ARTEMIDA, return subscription link | Returns valid link |
+| 21.6 | **Shop Screen UI** — 5 terms (115/400/1000/1900/3800), device stepper (2-10), promo, payment chips | Matches prototype exactly |
+| 21.7 | **Price Calculation** — `base × devices/2 × (1-discount)`, per-day-per-device, live update | All values correct |
+| 21.8 | **Promo Codes** — `LIME15` (−15%), `3SET5` (−5%), invalid shake+error | Applied to summary |
+| 21.9 | **Payment WebView** — open `payment_url`, poll `/payments/status` (3s, 5min max), show "Ожидаем оплату…" | Success → confetti |
+| 21.10 | **Confetti Animation** — on `CONFIRMED`, overlay with key details, "Подписка продлена до {date}" | Animation + toast |
+| 21.11 | **Subscription Gating** — no key → connect blocked → shop redirect | Toast "Нужен активный ключ" |
+| 21.12 | **Trial Block** — trial keys: hide renew/upgrade, show "Триал не продлевается" | Backend + UI aligned |
+| 21.13 | **Subscription Ring (Shop)** — SVG ring `days/30`, color by threshold | Visual matches prototype |
 
-- [ ] TBD (run /gsd-plan-phase 16 to break down)
+#### Deliverables
+- Shop screen fully functional
+- Platega payment flow works (test mode)
+- Key issued on payment success
+- Subscription status everywhere
+- Confetti celebration
 
-### Phase 17: 17 Admin template redesign: полный переверсточа /admin под стилистику шаблона, замена текущих элементов
+---
 
-**Goal:** [To be planned]
-**Requirements**: TBD
-**Depends on:** Phase 16
-**Plans:** 0 plans
+### Phase 22: Devices, Settings & Polish (5 days)
 
-Plans:
-- [ ] TBD (run /gsd-plan-phase 17 to break down)
+**Goal**: Device management, settings, push notifications, UI polish.
+
+#### Tasks
+
+| Task | Description | Acceptance |
+|------|-------------|------------|
+| 22.1 | **Backend: `/api/mobile/devices`** — GET list, DELETE remove | CRUD works |
+| 22.2 | **Profile Sheet** — avatar, name, email, method, subscription status, device count, link copy | Matches prototype |
+| 22.3 | **Device List** — name, last seen, remove with undo toast (5s) | Undo restores |
+| 22.4 | **Add Current Device** — button → POST → appears in list | Count increments |
+| 22.5 | **Settings Toggles** — Kill Switch, Auto-Connect (persist in Drift) | Toggles work |
+| 22.6 | **Referral Link** — copy `https://dash.3set.online/?ref=3SET-{code}` | Toast on copy |
+| 22.7 | **Reset Demo** — clear secure storage + Drift → reload | Fresh state |
+| 22.8 | **Network Chip** — WiFi/LTE toggle in toolbar, invalidates ping cache | Toast on toggle |
+| 22.9 | **Push: Local Notifications** — `flutter_local_notifications` at T-7d, T-3d, T-1d before expiry | Shows if app closed |
+| 22.10 | **Push: FCM Token** — register token with backend on login | Backend receives token |
+| 22.11 | **UI Polish** — toasts with actions, confetti, loading states, empty states, haptics | Feels native |
+| 22.12 | **Accessibility** — labels, contrast, dynamic type | Passes a11y audit |
+
+#### Deliverables
+- Profile sheet complete
+- Device management with undo
+- Settings persist
+- Push notifications for expiry
+- UI feels polished
+
+---
+
+### Phase 23: Hardening & Release (7 days)
+
+**Goal**: Production-ready apps on Play Store (Internal) + TestFlight.
+
+#### Tasks
+
+| Task | Description | Acceptance |
+|------|-------------|------------|
+| 23.1 | **ARTEMIDA Error Handling** — map 401/402/409/429/502/503 + Retry-After to UI/retry | No unhandled errors |
+| 23.2 | **Captive Portal Detection** — HTTP 302 to non-HTTPS → disconnect VPN + toast "Авторизуйтесь в Wi-Fi" | Works on captive WiFi |
+| 23.3 | **IPv6/DNS Leak Test** — configure libbox DNS `1.1.1.1` IPv4 only, verify on `dnsleaktest.com` | No leaks |
+| 23.4 | **Battery Optimization** — request unrestricted (Android), background modes (iOS) | <2%/hour idle |
+| 23.5 | **Privacy Policy** — publish at `https://3set.online/privacy`, link in Play Console + app | Legal compliant |
+| 23.6 | **GPL-3.0 Compliance** — source offer in app, dynamic linking verified, license file included | Legal sign-off |
+| 23.7 | **CI/CD: Android** — GitHub Actions: `flutter build appbundle` → upload to Play Console (Internal) | AAB on Play Console |
+| 23.8 | **CI/CD: iOS** — GitHub Actions (macOS): `flutter build ipa` → TestFlight via `fastlane` | Build on TestFlight |
+| 23.9 | **Crash Reporting** — Sentry/Crashlytics initialized, custom events (connect_success, payment_complete) | Events in dashboard |
+| 23.10 | **Internal Testing** — 5 testers on Android + iOS, feedback collection | No P0 bugs |
+| 23.11 | **App Store Metadata** — screenshots, descriptions, privacy manifest (iOS), data safety (Android) | Ready for review |
+| 23.12 | **Version Bump** — `pubspec.yaml` + `package.json` sync, tag `mobile/v2.0.0` | Tags pushed |
+
+#### Deliverables
+- AAB on Play Console Internal Testing
+- IPA on TestFlight
+- All P0/P1 bugs fixed
+- Privacy/GPL compliant
+- Crash reporting active
+
+---
+
+## Cross-Phase Dependencies
+
+```
+Phase 18 (Auth) ──┐
+                  ├── Phase 19 (Pools/Ping) ── Phase 20 (VPN Core)
+Phase 21 (Shop) ──┘           │                    │
+                  │           │                    │
+                  └───────────┴────────────────────┘
+                              │
+                        Phase 22 (Devices/Polish)
+                              │
+                        Phase 23 (Release)
+```
+
+- **Phase 18** is prerequisite for all (auth + session)
+- **Phase 19** needs Phase 18 (authenticated API calls)
+- **Phase 20** needs Phase 19 (server selection + ping)
+- **Phase 21** can start after Phase 18 (auth) + Phase 20 (connected state for gating)
+- **Phase 22** needs Phase 21 (subscription for device limit)
+- **Phase 23** needs all prior phases complete
+
+---
+
+## Risk Register
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|------------|--------|------------|
+| Apple NetworkExtension rejection | High | Blocks iOS release | Early entitlement, test account, video demo |
+| GPL-3.0 compliance issue | Medium | Legal/Store rejection | Legal review Phase 20, dynamic linking |
+| libbox FFI build failures | Medium | Delays Phase 19-20 | Prebuilt binaries, CI matrix |
+| Platega test credentials delayed | Medium | Blocks Phase 21 | Request early, mock in CI |
+| Battery/performance issues | Medium | Poor reviews | Profile early, optimize Phase 23 |
+| VPN permission UX friction | High | User drop-off | Clear rationale, in-app guide |
+
+---
+
+## Success Criteria (Milestone v2.0)
+
+| Metric | Target |
+|--------|--------|
+| **Android**: Connect success rate | >95% |
+| **iOS**: Connect success rate | >95% |
+| **Crash-free sessions** | >99.5% |
+| **App launch (cold)** | <2s |
+| **Connect time (cached)** | <3s |
+| **Battery drain (connected, idle)** | <2%/hour |
+| **Play Store Internal** | 0 crashes, 5 testers |
+| **TestFlight** | 0 crashes, 5 testers |
+| **Privacy/GPL audit** | Pass |
+
+---
+
+## Next Actions
+
+1. **Immediate**: Apply for Apple NetworkExtension entitlement
+2. **Immediate**: Request Platega test credentials
+3. **Immediate**: Legal review GPL-3.0 dynamic linking approach
+4. **Phase 18 Kickoff**: `/gsd-plan-phase 18` — detailed task breakdown

@@ -4,16 +4,16 @@ milestone: v2.0
 milestone_name: Мобильный клиент
 current_phase: 18
 status: executing
-stopped_at: Completed 18-01a-PLAN.md — Flutter project scaffold with Riverpod, freezed models, JWT utils, GoRouter, Material 3 theme
-last_updated: "2026-11-25T09:23:16.661Z"
+stopped_at: Completed 18-01b-PLAN.md — Secure storage layer and HTTP client with token refresh
+last_updated: "2026-11-25T09:41:50.456Z"
 last_activity: 2026-11-25
 last_activity_desc: Completed Plan 18-01a — Flutter project scaffold with Riverpod, freezed models, JWT utils, GoRouter, Material 3 theme
-state_head: 0f887986ab2854c986005747c58b37d0f2042916
+state_head: 33afcc3d8c8db89746e66d8bedec4c8edbd4df3e
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 7
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -61,15 +61,20 @@ None (flat mode)
 
 - [Phase 18]: Flutter project scaffold created with Riverpod 3.4+, flutter_secure_storage 11.2+, dio 5.9+, app_links 6.4+, freezed + json_serializable, go_router 15+, Material 3 theme
 - [Phase 18]: All 20 JwtUtils unit tests pass; flutter analyze clean (0 errors); flutter build ios --debug --no-codesign succeeds; build_runner generates freezed/json_serializable code without conflicts
+- [Phase 18]: Used flutter_secure_storage v11 API with storageNamespace instead of deprecated encryptedSharedPreferences/keyAlias
+- [Phase 18]: AuthInterceptor uses single-flight refresh pattern with Completer-based request queue
+- [Phase 18]: Biometric reads for access token only; refresh token reads without biometric for background refresh
+- [Phase 18]: TokenPair.fromJson used directly in refresh flow; userId extracted from TokenPair
 
 ## Performance Metrics
 
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 18 P01a | 7200 | 1 tasks | 15 files |
+| Phase 18 P01b | 25 | 1 tasks | 6 files |
 
 ## Session
 
-**Last session:** 2026-11-25T09:23:16.651Z
-**Stopped at:** Completed 18-01a-PLAN.md — Flutter project scaffold with Riverpod, freezed models, JWT utils, GoRouter, Material 3 theme
+**Last session:** 2026-11-25T09:41:50.445Z
+**Stopped at:** Completed 18-01b-PLAN.md — Secure storage layer and HTTP client with token refresh
 **Resume file:** None

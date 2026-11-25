@@ -3,7 +3,7 @@ phase: 17
 plan: 1-6
 name: Admin template redesign — полный переверсточа /admin под стилистику шаблона
 requirements:
-  - REQ-A1: Экраны Overview, Analytics, Users, Tickets, Broadcasting, Segments, Pricing, Promos, Referrals, Wallet, Roles, Alerts — стилистика шаблона (семейство, цвета, радиусы, штампы) и навигация между ними.
+  - REQ-A1: Экраны Overview, Analytics, Users, Wallet, Promos, Referrals, Roles — стилистика шаблона и навигация между ними. (Tickets, Alerts — follow-up, см. открытый вопрос #1; Broadcasting/Segments/Pricing — минимальная стилистика, таблицы изписок-сервисов, если есть.)
   - REQ-A2: Данные — только из реальных BFF-эндпоинтов (`/api/admin/referrals/stats`, `/api/admin/wallet`, `/api/admin/promos`, `/api/admin/users/search`), нет hardcoded/гадалок, нет дублирования UI-кода.
   - REQ-A3: Гвардия: прямой fetch `/admin` без сессии/роли из `admin_users` (тестово для клиента: 404, сотрудник: страница) остаётся, как и прежде.
   - REQ-A4: `tsc --noEmit` зелёный, `next build` зелёный.
@@ -95,3 +95,6 @@ requirements:
 
 - E2E-замеры tsc/билда — быстрые на локальной машине, включены в must_haves.
 - Риск деплоя на текущий сервер — фиксация в истории, выбрать по результатам.
+
+- [x] `git push origin main` — план и доки в main.
+- Локально закоммичено; push делается пользователем (SSH-доступ).

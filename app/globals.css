@@ -1086,8 +1086,8 @@ body::after {
 .support-page .btn-quiet:hover{color:var(--fg);border-color:var(--line-2);background:rgba(255,255,255,.04)}
 .support-page .btn.sm{height:38px;padding:0 14px;font-size:12.5px;border-radius:11px}
 .support-page .btn.block{width:100%}
-.support-page .avatar{width:42px;height:42px;flex:none;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line-2);
-  background:radial-gradient(circle at 30% 25%,#22301f,#141d18);font-weight:800;font-size:13px;cursor:pointer;position:relative;
+.support-page .avatar{width:42px;height:42px;flex:none;border-radius:50%;display:grid;place-items:center;overflow:hidden;line-height:1;border:1px solid var(--line-2);
+  background:radial-gradient(circle at 30% 25%,#22301f,#141d18);font-weight:800;font-size:12px;cursor:pointer;position:relative;
   transition:transform .3s var(--ease),border-color .3s,box-shadow .3s}
 .support-page .avatar:hover{transform:translateY(-2px) scale(1.04);border-color:rgba(183,255,69,.5);box-shadow:0 0 0 4px rgba(183,255,69,.1)}
 .support-page .burger{display:none;width:42px;height:42px;border-radius:12px;border:1px solid var(--line-2);background:rgba(255,255,255,.03);cursor:pointer;align-items:center;justify-content:center}

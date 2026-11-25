@@ -661,11 +661,9 @@ export default function SubscriptionDashboard({
               {navLinks.map((item) => (
                 <Link key={item.href} href={item.href} className="nl" onClick={() => setMenuOpen(false)}>
                   {item.label}
+                  {item.href === '/support' && unread > 0 ? ` (${unread > 99 ? '99+' : unread})` : ''}
                 </Link>
               ))}
-              <Link href="/support" className="nl" onClick={() => setMenuOpen(false)}>
-                Поддержка{unread > 0 ? ` (${unread > 99 ? '99+' : unread})` : ''}
-              </Link>
               {isStaff && (
                 <Link href="/admin" className="nl" onClick={() => setMenuOpen(false)}>Админ-панель</Link>
               )}

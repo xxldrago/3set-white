@@ -5,16 +5,16 @@ milestone_name: Мобильный клиент
 current_phase: 20
 current_phase_name: VPN Core & Connect FSM
 status: executing
-stopped_at: Completed 20-04-PLAN.md
-last_updated: "2026-11-27T09:51:42.586Z"
+stopped_at: Completed 20-05-PLAN.md
+last_updated: "2026-11-27T10:08:32.620Z"
 last_activity: 2026-11-27
 last_activity_desc: Phase 20 execution started
-state_head: ab05dd4adecc38d9fe3a66d35ac1d27eebeac7e7
+state_head: 3e004e728208358be450c8f4e0ac7ed49580406b
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 22
-  completed_plans: 19
+  completed_plans: 20
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 ## Current Position
 
 Phase: 20 (VPN Core & Connect FSM) — EXECUTING
-Plan: 5 of 7
+Plan: 6 of 7
 Status: Ready to execute
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-27 — Phase 20 execution started
@@ -115,6 +115,10 @@ None (flat mode)
 - [Phase 20-03]: D-09 confirmed by the user at the blocking gate as always-on: kill switch permanently enabled, no toggle, no bypass — Locked costly decision; REQ-CONN-06 no leaks, no stale UI state, simpler FSM
 - [Phase 20]: Phase 20-04 D-07 gate confirmed at blocking checkpoint: user explicitly selected compile-only — prepare NEPacketTunnelProvider + NEOnDemandRuleConnect + entitlements/embedded target as source-only; no tunnel build, sign or UAT until Apple approves packet-tunnel-provider entitlement; iOS fd KVC stays [ASSUMED], no private-API workaround or fake connected state. — Locked costly decision D-07 (CONTEXT.md); iOS compile-only, Android remains the verifiable tunnel path; Apple entitlement approval is an external blocker recorded in user_setup and STATE blockers.
 - [Phase 20]: 20-04: iOS kill switch is source-level always-on via NEOnDemandRuleConnect for all interfaces, no toggle and no excluded routes; fd KVC stays [ASSUMED] risk T-20-13 with no private-API workaround or fake connected state; existing packet-tunnel-provider entitlement retained unchanged.
+- [Phase 20]: 20-05: ConnectionState carries only phase/serverId/connectedAt/rtt/ip/down/up/errorCode; config and fd never enter FSM state — D-05/D-19 privacy boundary
+- [Phase 20]: 20-05: cancel/revoke/disconnect await native bridge.stop() before idle with a generation token guarding stale callbacks — D-11/D-14 no orphan tunnel
+- [Phase 20]: 20-05: config fetched opaquely from backend /config via shared Dio; connect calls phase-19 selection then prepare then bridge.start — D-01/D-03/D-10 client never assembles config
+- [Phase 20]: 20-05: ten stable error codes map to exact locked RU toasts; logs carry only {code,state,durationMs} — D-12/D-19 no raw provider text reaches UI or logs
 
 ## Performance Metrics
 
@@ -139,9 +143,10 @@ None (flat mode)
 | Phase 20 P02 | 10 min | 3 tasks | 7 files |
 | Phase 20 P03 | 8 min | 3 tasks | 6 files |
 | Phase 20 P04 | 8 min | 3 tasks | 4 files |
+| Phase 20 P05 | 13 min | 2 tasks | 10 files |
 
 ## Session
 
-**Last session:** 2026-11-27T09:51:42.503Z
-**Stopped at:** Completed 20-04-PLAN.md
+**Last session:** 2026-11-27T10:08:32.534Z
+**Stopped at:** Completed 20-05-PLAN.md
 **Resume file:** None

@@ -167,7 +167,7 @@ Plans:
 
 **Wave 3** *(blocked on Waves 1–2)*
 
-- [ ] 20-05-PLAN.md — Connection FSM: freezed state + Riverpod notifier + `/config` repository + generation-token cancel + safe RU error toasts (REQ-CONN-01/02/03/10)
+- [x] 20-05-PLAN.md — Connection FSM: freezed state + Riverpod notifier + `/config` repository + generation-token cancel + safe RU error toasts (REQ-CONN-01/02/03/10)
 
 **Wave 4** *(blocked on Wave 3)*
 

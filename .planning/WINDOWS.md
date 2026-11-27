@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 29
+open_count: 31
 waived_count: 0
 fixed_count: 0
-total_count: 29
-last_updated: 2026-11-27T09:50:47.941Z
+total_count: 31
+last_updated: 2026-11-27T10:05:51.554Z
 ---
 
 # Broken Windows Ledger
@@ -44,6 +44,8 @@ last_updated: 2026-11-27T09:50:47.941Z
 | 27 | 20 | unrun-verify | mobile/android/app/src/main/kotlin/com/u3set/mobile/VpnService.kt |  | Android native build + on-device tunnel/notification/revoke/kill-switch UAT not run here: no JDK17/Android SDK/NDK; CI artifacts required | open |  | 2026-11-27T09:26:33.524Z |  |
 | 28 | 20 | unrun-verify |  |  | 20-04 iOS tunnel build/sign/OnDemand device UAT not run — compile-only per D-07; blocked on Apple packet-tunnel-provider entitlement approval and private-KVC fd risk | open |  | 2026-11-27T09:50:47.866Z |  |
 | 29 | 20 | deviation |  |  | 20-04 bare flutter analyze exits 1 on 1622 pre-existing lint infos/warnings (0 errors); verification used --no-fatal-infos --no-fatal-warnings (exit 0). Pre-existing lint debt out of scope. | open |  | 2026-11-27T09:50:47.941Z |  |
+| 30 | 20 | unrun-verify | mobile/lib/core/vpn/connection_notifier.dart |  | 20-05 real on-device cancel/revoke stop-before-idle UAT not run — external Android JDK/SDK blocker; proven by fake-bridge completer tests only | open |  | 2026-11-27T10:05:51.478Z |  |
+| 31 | 20 | deviation |  |  | 20-05 bare flutter analyze exits 1 on 1623 pre-existing lint infos/warnings (0 errors); verification used --no-fatal-infos --no-fatal-warnings (exit 0). Pre-existing lint debt out of scope. | open |  | 2026-11-27T10:05:51.554Z |  |
 
 ````json
 [
@@ -393,6 +395,30 @@ last_updated: 2026-11-27T09:50:47.941Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-27T09:50:47.941Z",
+    "resolved_at": null
+  },
+  {
+    "id": 30,
+    "kind": "unrun-verify",
+    "phase": "20",
+    "file": "mobile/lib/core/vpn/connection_notifier.dart",
+    "line": null,
+    "description": "20-05 real on-device cancel/revoke stop-before-idle UAT not run — external Android JDK/SDK blocker; proven by fake-bridge completer tests only",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T10:05:51.478Z",
+    "resolved_at": null
+  },
+  {
+    "id": 31,
+    "kind": "deviation",
+    "phase": "20",
+    "file": "",
+    "line": null,
+    "description": "20-05 bare flutter analyze exits 1 on 1623 pre-existing lint infos/warnings (0 errors); verification used --no-fatal-infos --no-fatal-warnings (exit 0). Pre-existing lint debt out of scope.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T10:05:51.554Z",
     "resolved_at": null
   }
 ]

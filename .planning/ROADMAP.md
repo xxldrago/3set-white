@@ -80,7 +80,7 @@
 - Network change invalidates cache (clear ping_cache+last_good; keep selection+current_tab)
 - libbox FFI integrated (own C-shared sing-box v1.14.4 shim + `ffigen`; Android blocked here; silent fallback; GPL recorded)
 
-**Plans:** 7 plans
+**Plans:** 8 plans
 
 Plans:
 **Wave 1**

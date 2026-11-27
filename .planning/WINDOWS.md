@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 20
+open_count: 21
 waived_count: 0
 fixed_count: 0
-total_count: 20
-last_updated: 2026-11-27T05:12:11.662Z
+total_count: 21
+last_updated: 2026-11-27T05:23:34.584Z
 ---
 
 # Broken Windows Ledger
@@ -35,6 +35,7 @@ last_updated: 2026-11-27T05:12:11.662Z
 | 18 | 19 | stub | mobile/lib/features/servers/server_pool_screen.dart |  | Shop/profile/logic actions are intentional stubs pending phase 21 (shop route added in 19-08) | open |  | 2026-11-27T05:12:11.520Z |  |
 | 19 | 19 | stub | mobile/lib/features/servers/widgets/connect_panel.dart |  | IP/timer/traffic show dashes with phase-20 note; VPN core/FSM is phase 20 | open |  | 2026-11-27T05:12:11.595Z |  |
 | 20 | 19 | deviation | mobile/lib/features/servers/server_pool_screen.dart |  | Rule 1: fixed nested-flex overlap that collapsed pool list; reordered offline banner; guarded refresh against phantom selection | open |  | 2026-11-27T05:12:11.662Z |  |
+| 21 | 19-server-pools-auto-ping-7-days | stub | mobile/lib/features/shop/shop_screen.dart |  | Shop stub Купить shows phase-21 SnackBar only; no purchase (D-15/D-19), real shop ships in phase 21 | open |  | 2026-11-27T05:23:34.584Z |  |
 
 ````json
 [
@@ -276,6 +277,18 @@ last_updated: 2026-11-27T05:12:11.662Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-27T05:12:11.662Z",
+    "resolved_at": null
+  },
+  {
+    "id": 21,
+    "kind": "stub",
+    "phase": "19-server-pools-auto-ping-7-days",
+    "file": "mobile/lib/features/shop/shop_screen.dart",
+    "line": null,
+    "description": "Shop stub Купить shows phase-21 SnackBar only; no purchase (D-15/D-19), real shop ships in phase 21",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T05:23:34.584Z",
     "resolved_at": null
   }
 ]

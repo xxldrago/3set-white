@@ -4,17 +4,17 @@ milestone: v2.0
 milestone_name: Мобильный клиент
 current_phase: 19
 current_phase_name: Server Pools & Auto-Ping
-status: executing
-stopped_at: Completed 19-07-PLAN.md
-last_updated: "2026-11-27T05:12:04.404Z"
+status: verifying
+stopped_at: Completed 19-08-PLAN.md
+last_updated: "2026-11-27T05:24:16.234Z"
 last_activity: 2026-11-27
 last_activity_desc: Phase 19 execution started
-state_head: 5ec868244774c5120c025c6ec994c7a0ad02ec0e
+state_head: f691c236c9a44e4dc66ff414b9bf8c7c804e8ea7
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 15
-  completed_plans: 14
+  completed_plans: 15
   percent: 0
 ---
 
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 
 Phase: 19 (Server Pools & Auto-Ping) — EXECUTING
 Plan: 8 of 8
-Status: Ready to execute
+Status: Phase complete — ready for verification
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-27 — Phase 19 execution started
 
@@ -102,6 +102,7 @@ None (flat mode)
 - [Phase 19]: 19-07: single scrollable main column with pinned connect panel; fixes nested-flex overlap that collapsed the pool list and made tabs untappable
 - [Phase 19]: 19-07: offline/retry banner outranks the no-key banner; refresh outcomes (no serverId) never announce a phantom server selection
 - [Phase 19]: 19-07: segmented tabs use Semantics(selected/button/label) for aria-selected; IP/timer/traffic are dashes with a phase-20 note (no fake data)
+- [Phase 19-server-pools-auto-ping-7-days]: D-15 gate confirmed locked: full prototype layout — remove bottom NavigationBar, home / renders ServerPoolScreen, add /shop stub, preserve auth routes/redirect/refreshListenable and deep-link/biometric listeners — User explicitly selected locked at the 19-08 decision checkpoint; matches the locked prototype layout decisions D-15/D-19 in 19-CONTEXT.md
 
 ## Performance Metrics
 
@@ -121,9 +122,10 @@ None (flat mode)
 | Phase 19-server-pools-auto-ping-7-days P05 | 8 min | 3 tasks | 17 files |
 | Phase 19-server-pools-auto-ping-7-days P06 | 11 min | 3 tasks | 8 files |
 | Phase 19 P07 | 28 min | 3 tasks | 9 files |
+| Phase 19-server-pools-auto-ping-7-days P08 | 8 min | 3 tasks | 5 files |
 
 ## Session
 
-**Last session:** 2026-11-27T05:11:42.849Z
-**Stopped at:** Completed 19-07-PLAN.md
+**Last session:** 2026-11-27T05:24:16.179Z
+**Stopped at:** Completed 19-08-PLAN.md
 **Resume file:** None

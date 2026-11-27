@@ -246,6 +246,24 @@ void main() {
     expect(pools.notice, contains("Офлайн"));
   });
 
+  test("online pools are cached metadata-only — no outbound secrets at rest",
+      () async {
+    respondWith(_payload());
+
+    await container.read(serverPoolProvider.future);
+
+    final cached = await dao.getServerList("simple");
+    expect(cached, isNotNull);
+    expect(cached, contains("fast"));
+    expect(cached, isNot(contains("outbound")));
+    expect(cached, isNot(contains("uuid")));
+    final decoded = (jsonDecode(cached!) as List<dynamic>)
+        .map((item) => Server.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList();
+    expect(decoded.single.outbound, isEmpty);
+    expect(decoded.single.host, "127.0.0.1");
+  });
+
   test("provider failure without a cache is a retryable network error",
       () async {
     failWithNetworkError();

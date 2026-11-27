@@ -35,15 +35,22 @@ final pingRepositoryProvider = Provider<PingRepository>((ref) {
   );
 });
 
+/// Cached cards are metadata-only: outbound maps carry protocol secrets and
+/// raw share links must never reach local SQLite (D-05, D-10). Offline cards
+/// are display-only and are never pinged with these credentials.
+List<Map<String, dynamic>> _metadataOnly(List<Server> servers) => servers
+    .map(
+      (server) => Map<String, dynamic>.from(server.toJson())
+        ..remove("outbound"),
+    )
+    .toList(growable: false);
+
 Future<void> _cachePools(PingCacheDao dao, ServerPools pools) async {
   try {
-    await dao.cacheServerList(
-      "simple",
-      jsonEncode(pools.simple.map((server) => server.toJson()).toList()),
-    );
+    await dao.cacheServerList("simple", jsonEncode(_metadataOnly(pools.simple)));
     await dao.cacheServerList(
       "whitelist",
-      jsonEncode(pools.whitelist.map((server) => server.toJson()).toList()),
+      jsonEncode(_metadataOnly(pools.whitelist)),
     );
   } on Object catch (_) {
     return;
@@ -68,7 +75,8 @@ Future<ServerPools> _offlinePools(PingCacheDao dao) async {
       return decoded
           .map(
             (item) => Server.fromJson(
-              Map<String, dynamic>.from(item as Map),
+              Map<String, dynamic>.from(item as Map)
+                ..putIfAbsent("outbound", () => <String, dynamic>{}),
             ),
           )
           .toList(growable: false);

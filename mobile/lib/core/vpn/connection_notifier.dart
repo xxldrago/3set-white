@@ -1,10 +1,20 @@
 import "dart:async";
 import "dart:convert";
 
+import "package:connectivity_plus/connectivity_plus.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
+import "../../app/constants.dart" show ConnectivityConfig;
+import "../../core/connectivity/connectivity_service.dart"
+    show connectivityServiceProvider;
+import "../../features/home/providers.dart" show currentTabProvider;
 import "../../features/servers/providers.dart"
-    show ConnectOutcome, connectControllerProvider;
+    show
+        ConnectOutcome,
+        connectControllerProvider,
+        pingCacheProvider,
+        pingDaoProvider,
+        selectionProvider;
 import "../../features/servers/server.dart" show PoolTab;
 import "../../utils/logger.dart";
 import "config_repository.dart";
@@ -37,6 +47,24 @@ final NotifierProvider<ConnectionNotifier, ConnectionState>
   ConnectionNotifier.new,
 );
 
+/// App-level listener wiring real OS connectivity changes into the FSM (D-15).
+///
+/// `App.build` watches this so the subscription lives as long as the app, the
+/// same pattern used by `networkPingInvalidationProvider`. Keeping the stream
+/// subscription here (rather than in [ConnectionNotifier.build]) lets pure
+/// unit tests exercise the FSM without a Flutter platform binding.
+final Provider<bool> connectionReconnectListenerProvider =
+    Provider<bool>((ref) {
+  final service = ref.read(connectivityServiceProvider);
+  final subscription = service.connectivityStream.distinct().listen(
+        (results) => ref
+            .read(connectionNotifierProvider.notifier)
+            .onConnectivityChanged(results),
+      );
+  ref.onDispose(subscription.cancel);
+  return true;
+});
+
 /// Guarded connection FSM: pinging → connecting → connected, with `error`.
 class ConnectionNotifier extends Notifier<ConnectionState> {
   /// Incremented on every new attempt/cancel; stale completions are ignored.
@@ -45,13 +73,22 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
   /// Native `revoked`/`disconnect` events are fed into the same guarded FSM.
   StreamSubscription<VpnBridgeEvent>? _eventsSubscription;
 
+  /// Coalesces genuine network changes with the locked 500 ms debounce (D-15).
+  Timer? _reconnectDebounce;
+
+  /// Previous result set, used to ignore `ConnectivityResult.vpn` self-changes.
+  List<ConnectivityResult>? _lastConnectivity;
+
   @override
   ConnectionState build() {
     _generation = 0;
     _eventsSubscription?.cancel();
     _eventsSubscription =
         ref.read(vpnBridgeProvider).events.listen(_onBridgeEvent);
-    ref.onDispose(() => _eventsSubscription?.cancel());
+    ref.onDispose(() {
+      _eventsSubscription?.cancel();
+      _reconnectDebounce?.cancel();
+    });
     return const ConnectionState();
   }
 
@@ -160,9 +197,21 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
       return;
     }
 
+    await _startTunnel(serverId, generation, reason: "server_selected");
+  }
+
+  /// Runs the one shared `connecting` path: refetch `/config`, OS consent and
+  /// the native start. Guarded by the same [generation] used by [connect] and
+  /// [reconnect], so a stale completion can never announce a second tunnel.
+  Future<void> _startTunnel(
+    String serverId,
+    int generation, {
+    required String reason,
+    String completionReason = "tunnel_up",
+  }) async {
     _transition(
       ConnPhase.connecting,
-      reason: "server_selected",
+      reason: reason,
       serverId: serverId,
     );
 
@@ -200,10 +249,129 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
 
     _transition(
       ConnPhase.connected,
-      reason: "tunnel_up",
+      reason: completionReason,
       serverId: serverId,
       connectedAt: DateTime.now(),
     );
+  }
+
+  /// D-15/REQ-PING-05: a genuine network change while connected invalidates
+  /// the phase-19 ping cache, reselects by RTT and re-runs the SAME FSM with
+  /// one fixed toast. VPN-only self-changes never reach this method.
+  Future<void> reconnect() async {
+    if (state.phase != ConnPhase.connected) return;
+    final generation = ++_generation;
+    final tab = ref.read(currentTabProvider);
+
+    _transition(ConnPhase.pinging, reason: "network_changed");
+    // Selection and current_tab are deliberately preserved by the DAO (D-11).
+    await ref.read(pingDaoProvider).clearPingCacheAndLastGood();
+    ref.invalidate(pingCacheProvider(tab));
+    if (generation != _generation) return;
+
+    final ConnectOutcome outcome;
+    try {
+      outcome = await ref.read(connectControllerProvider.notifier).connect(
+            tab,
+            auto: true,
+          );
+    } on Object {
+      if (generation == _generation) {
+        _fail("unreachable", reason: "reconnect_selection_error");
+      }
+      return;
+    }
+    if (generation != _generation) return;
+
+    if (!outcome.ok) {
+      _fail(
+        outcome.blocked ? "no_active_key" : "unreachable",
+        reason: "reconnect_selection_failed",
+      );
+      return;
+    }
+    final serverId = outcome.serverId;
+    if (serverId == null || serverId.isEmpty) {
+      _fail("config_invalid", reason: "reconnect_missing_server_id");
+      return;
+    }
+
+    // The server MAY change; persist it before any native restart so the next
+    // connect uses the reselected server (Pitfall 5).
+    await ref.read(selectionProvider(tab).notifier).select(serverId);
+    if (generation != _generation) return;
+
+    // Exactly one toast per network change, not per FSM transition.
+    ref
+        .read(connectionToastProvider)
+        (errorToastFor(ErrorCode.networkChanged));
+
+    _transition(
+      ConnPhase.disconnecting,
+      reason: "network_change_restart",
+      serverId: serverId,
+    );
+    if (!await _awaitStop(generation)) return;
+    if (generation != _generation) return;
+
+    // Refetch /config for the possibly-new serverId: D-03's per-request key
+    // gate turns a key that expired mid-tunnel into `no_active_key` → error.
+    await _startTunnel(
+      serverId,
+      generation,
+      reason: "network_change_connecting",
+      completionReason: "network_change_tunnel_up",
+    );
+  }
+
+  /// Real connectivity event from [connectionReconnectListenerProvider]. The
+  /// first event seeds the baseline; a set-equal event is not a change; a
+  /// VPN-only delta is the tunnel reporting itself; every other delta is
+  /// debounced and reconnects only while `connected`.
+  void onConnectivityChanged(List<ConnectivityResult> results) {
+    final previous = _lastConnectivity;
+    _lastConnectivity = results;
+    if (previous == null) return;
+    if (_sameResults(previous, results)) return;
+    if (_vpnOnly(previous, results)) return;
+    if (state.phase != ConnPhase.connected) return;
+
+    _reconnectDebounce?.cancel();
+    _reconnectDebounce = Timer(ConnectivityConfig.debounceDuration, () {
+      _reconnectDebounce = null;
+      unawaited(reconnect());
+    });
+  }
+
+  /// Order-independent comparison of two full result sets.
+  static bool _sameResults(
+    List<ConnectivityResult> left,
+    List<ConnectivityResult> right,
+  ) {
+    final a = left.toSet();
+    final b = right.toSet();
+    return a.length == b.length && a.every(b.contains);
+  }
+
+  /// True when dropping `vpn` (and the no-interface sentinel `none`) makes the
+  /// two sets equal — i.e. the only change is the VPN interface itself.
+  static bool _vpnOnly(
+    List<ConnectivityResult> previous,
+    List<ConnectivityResult> current,
+  ) {
+    Set<ConnectivityResult> realInterfaces(
+      List<ConnectivityResult> results,
+    ) =>
+        results
+            .where(
+              (result) =>
+                  result != ConnectivityResult.vpn &&
+                  result != ConnectivityResult.none,
+            )
+            .toSet();
+    final a = realInterfaces(previous);
+    final b = realInterfaces(current);
+    return a.length == b.length && a.every(b.contains);
   }
 
   /// Maps a bridge code to the stable vocabulary (no raw platform text).

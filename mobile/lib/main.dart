@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/router.dart';
 import 'app/theme.dart';
+import "core/vpn/connection_notifier.dart"
+    show connectionReconnectListenerProvider;
 import 'features/auth/providers.dart';
 import 'features/servers/providers.dart' show networkPingInvalidationProvider;
 
@@ -26,6 +28,10 @@ class App extends ConsumerWidget {
     // re-pings the current tab. Without this watch the provider is lazy and
     // the feature never runs in production.
     ref.watch(networkPingInvalidationProvider);
+    // D-15/REQ-CONN-08: keep the real connectivity → FSM reconnect listener
+    // alive for the whole app lifetime (debounce + VPN-only filter live in the
+    // notifier). No bottom navigation is reintroduced.
+    ref.watch(connectionReconnectListenerProvider);
 
     final router = ref.watch(routerProvider);
 

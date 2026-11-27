@@ -93,12 +93,15 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
     return const ConnectionState();
   }
 
-  /// Cancels a `connecting` attempt without ever leaving an orphan tunnel.
+  /// Cancels an in-flight attempt (`pinging` or `connecting`) without ever
+  /// leaving an orphan tunnel.
   ///
-  /// D-14: `connecting → disconnecting`, then `await bridge.stop()` completes
-  /// BEFORE `idle`; the generation bump makes the in-flight connect stale.
+  /// D-13/D-14: both phases show «Подключение…» and are therefore cancellable;
+  /// `→ disconnecting`, then `await bridge.stop()` completes BEFORE `idle`.
+  /// The generation bump makes a late selection/connect stale.
   Future<void> cancel() async {
-    if (state.phase != ConnPhase.connecting) return;
+    if (state.phase != ConnPhase.connecting &&
+        state.phase != ConnPhase.pinging) return;
     ref.read(restartBackoffProvider).cancel();
     final generation = ++_generation;
     _transition(ConnPhase.disconnecting, reason: "cancel_requested");

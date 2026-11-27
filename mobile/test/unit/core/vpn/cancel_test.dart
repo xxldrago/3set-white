@@ -28,6 +28,22 @@ class FakeSelection extends ConnectController {
       const ConnectOutcome(ok: true, serverId: "srv-1");
 }
 
+/// Selection that parks the FSM in `pinging` until the test releases [gate].
+class PendingSelection extends ConnectController {
+  final Completer<void> started = Completer<void>();
+  final Completer<ConnectOutcome> gate = Completer<ConnectOutcome>();
+
+  @override
+  Future<ConnectOutcome> connect(
+    PoolTab tab, {
+    required bool auto,
+    String? manualServerId,
+  }) {
+    if (!started.isCompleted) started.complete();
+    return gate.future;
+  }
+}
+
 /// Config fetch that parks `connecting` until the test releases [gate].
 class PendingConfig extends ConfigRepository {
   PendingConfig() : super(Dio());
@@ -170,6 +186,53 @@ void main() {
     expect(container.read(connectionNotifierProvider).phase, ConnPhase.idle);
     expect(bridge.stopCalls, 0);
     expect(toasts, isEmpty);
+  });
+
+  test("cancel during pinging reaches idle with the locked toast", () async {
+    final logs = <Map<String, Object?>>[];
+    final toasts = <ErrorToast>[];
+    final selection = PendingSelection();
+    final bridge = GatedBridge();
+    final container = ProviderContainer(
+      overrides: [
+        connectControllerProvider.overrideWith(() => selection),
+        configRepositoryProvider.overrideWithValue(PendingConfig()),
+        vpnBridgeProvider.overrideWithValue(bridge),
+        connectionTransitionLogProvider.overrideWithValue(logs.add),
+        connectionToastProvider.overrideWithValue(toasts.add),
+        connectionErrorLogProvider.overrideWithValue((_) {}),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final notifier = container.read(connectionNotifierProvider.notifier);
+    final connecting = notifier.connect(PoolTab.simple, auto: true);
+    await selection.started.future;
+    expect(
+      container.read(connectionNotifierProvider).phase,
+      ConnPhase.pinging,
+    );
+
+    final cancelling = notifier.cancel();
+    // A late selection success must never announce a tunnel after cancel.
+    selection.gate.complete(
+      const ConnectOutcome(ok: true, serverId: "srv-1"),
+    );
+    await connecting;
+    bridge.stopGate.complete();
+    await cancelling;
+
+    final state = container.read(connectionNotifierProvider);
+    expect(state.phase, ConnPhase.idle);
+    expect(state.serverId, isNull);
+    expect(toasts.length, 1);
+    expect(toasts.single.message, "Подключение отменено");
+    expect(
+      logs.map((event) => event["to"]),
+      containsAll(<String>["pinging", "disconnecting", "idle"]),
+    );
+    expect(logs.any((event) => event["to"] == "connecting"), isFalse);
+    expect(bridge.stopCalls, 1);
   });
 
   test("revoke maps error → disconnecting → idle and stops the core", () async {

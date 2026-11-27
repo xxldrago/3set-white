@@ -84,6 +84,8 @@ class LibboxPingCore {
       await _performInit();
       completer.complete();
     } on Object catch (error, stack) {
+      // Never report availability after a failed setup (WR-07).
+      _bindings = null;
       _initFuture = null;
       completer.completeError(error, stack);
     }
@@ -92,7 +94,6 @@ class LibboxPingCore {
 
   Future<void> _performInit() async {
     final bindings = LibboxBindings(_openLibrary());
-    _bindings = bindings;
 
     final base = Directory.systemTemp.path;
     final basePath = "$base/libbox".toNativeUtf8();
@@ -105,10 +106,13 @@ class LibboxPingCore {
           workingPath.cast<ffi.Char>(),
           tempPath.cast<ffi.Char>(),
         ),
+        bindings,
       );
       if (error.isNotEmpty) {
         throw const LibboxUnavailableException("libbox setup failed");
       }
+      // Publish bindings only after setup succeeded (WR-07).
+      _bindings = bindings;
     } finally {
       calloc
         ..free(basePath)
@@ -134,34 +138,37 @@ class LibboxPingCore {
   /// Validates and starts the no-TUN sing-box service with [configJson].
   ///
   /// The configuration is never logged, returned or exposed on error.
-  Future<void> start(String configJson) async {
-    final bindings = _bindings;
-    if (bindings == null) {
-      throw const LibboxUnavailableException("call init() first");
-    }
-    final configPtr = configJson.toNativeUtf8();
-    try {
-      final checkError = _takeString(
-        bindings.libbox_check_config(configPtr.cast<ffi.Char>()),
-      );
-      if (checkError.isNotEmpty) {
-        throw const LibboxConfigException(
-          "sing-box rejected the ping configuration",
-        );
-      }
-      final startError = _takeString(
-        bindings.libbox_start(configPtr.cast<ffi.Char>()),
-      );
-      if (startError.isNotEmpty) {
-        throw const LibboxConfigException(
-          "sing-box service failed to start",
-        );
-      }
-      _started = true;
-    } finally {
-      calloc.free(configPtr);
-    }
-  }
+  Future<void> start(String configJson) => _serialized<void>(() async {
+        // Start shares the shim's single command client with urltest/stop.
+        final bindings = _bindings;
+        if (bindings == null) {
+          throw const LibboxUnavailableException("call init() first");
+        }
+        final configPtr = configJson.toNativeUtf8();
+        try {
+          final checkError = _takeString(
+            bindings.libbox_check_config(configPtr.cast<ffi.Char>()),
+            bindings,
+          );
+          if (checkError.isNotEmpty) {
+            throw const LibboxConfigException(
+              "sing-box rejected the ping configuration",
+            );
+          }
+          final startError = _takeString(
+            bindings.libbox_start(configPtr.cast<ffi.Char>()),
+            bindings,
+          );
+          if (startError.isNotEmpty) {
+            throw const LibboxConfigException(
+              "sing-box service failed to start",
+            );
+          }
+          _started = true;
+        } finally {
+          calloc.free(configPtr);
+        }
+      });
 
   /// Stops the sing-box service and closes the command client.
   Future<void> stop() async {
@@ -200,6 +207,7 @@ class LibboxPingCore {
         }
         final raw = _takeString(
           bindings.urltest_take(tagPtr.cast<ffi.Char>()),
+          bindings,
         );
         if (raw.isEmpty) {
           return const LibboxUrltestResult(online: false, rttMs: 0);
@@ -240,12 +248,14 @@ class LibboxPingCore {
     });
   }
 
-  String _takeString(ffi.Pointer<ffi.Char> pointer) {
+  String _takeString(ffi.Pointer<ffi.Char> pointer, [LibboxBindings? bindings]) {
     if (pointer == ffi.nullptr) {
       return "";
     }
     final value = pointer.cast<Utf8>().toDartString();
-    _bindings!.libbox_free_string(pointer);
+    // Use the bindings that produced the string: during init `_bindings` is
+    // intentionally still null until setup succeeds (WR-07).
+    (bindings ?? _bindings)!.libbox_free_string(pointer);
     return value;
   }
 }

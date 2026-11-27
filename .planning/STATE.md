@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Мобильный клиент
 current_phase: 18
-status: executing
-stopped_at: Completed 18-03-PLAN.md — Flutter auth UI layer with login, register, Telegram wait screens
-last_updated: "2026-11-25T11:07:53.385Z"
-last_activity: 2026-11-25
-last_activity_desc: Completed Plan 18-03 — Flutter auth UI layer
+status: verifying
+stopped_at: Phase 18 verification complete (human_needed) — UAT pending
+last_updated: "2026-11-27T10:40:00.000Z"
+last_activity: 2026-11-27
+last_activity_desc: "Phase 18 verification: 103 tests pass, 0 analyzer errors, iOS build OK; 8 auth-flow gaps fixed"
 state_head: b711c3c4d8f2341943b70a8fb339486241df0a98
 progress:
   total_phases: 6
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-25)
 
 **Core value:** Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
-**Current focus:** v2.0 Мобильный клиент (Phase 18 — Plan 18-02 complete)
+**Current focus:** v2.0 Мобильный клиент — Phase 18 verification (UAT pending)
 
 ## Current Position
 
 Phase: 18
 Plan: 18-03 (complete)
-Status: Executing — Flutter auth UI layer complete
-Last activity: 2026-11-25 — Plan 18-03 complete
+Status: Verifying — automated verification passed, manual UAT pending
+Last activity: 2026-11-27 — Phase 18 verification + auth-flow fixes
 
 ## Per-Milestone Progress
 
@@ -51,10 +51,12 @@ None (flat mode)
 - Apple NetworkExtension entitlement (apply ASAP)
 - Platega test credentials (requested)
 - GPL-3.0 legal review (schedule)
+- Phase 18 UAT: real Telegram bot round trip, signed App Links/Universal Links (assetlinks fingerprint + AASA Team ID), biometric hardware, live backend curl suite
 
 ## Next Actions
 
-1. Begin Phase 19 — Server Pools & Auto-Ping
+1. Run the manual checks in `.planning/phases/18-foundation-auth-5-days/18-UAT.md`, then close Phase 18
+2. Begin Phase 19 — Server Pools & Auto-Ping
 
 ## Decisions
 
@@ -69,6 +71,10 @@ None (flat mode)
 - [Phase 18-02]: All 6 mobile auth API routes implemented (login, register, refresh, telegram nonce, telegram poll, subscription); JWT access 15m / refresh 30d with rotation; Telegram nonce/poll flow with 10min TTL; credentialsChangedAt watermark for token revocation; assetlinks.json & apple-app-site-association served from /.well-known/; Prisma schema includes TelegramLinkToken; curl test suite validates all endpoints
 - [Phase 18-01e]: Android App Links with autoVerify for dash.3set.online/3set.online; iOS Universal Links with associated domains; Android VPN/foreground permissions declared; integration test covers cold start deep link → polling → authenticated → biometric resume → logout vertical slice; DeepLinkHandler.extractNonce unit tests for Telegram and custom scheme formats; flutter analyze clean (0 errors); iOS build succeeds
 - [Phase 18-03]: Flutter auth UI layer complete with LoginScreen, RegisterScreen, TelegramWaitScreen; AuthForm widget with validation; ErrorToast service; Riverpod providers for auth, home, subscription; GoRouter with auth-based redirects; home screen with bottom navigation and logout; widget tests for auth screens; flutter analyze clean (0 errors); all 83 unit tests pass; iOS build succeeds
+- [Phase 18 verification]: 36/36 must-haves implemented; 103 tests pass; 0 analyzer errors; iOS build OK; on-device smoke 2/2. Status `human_needed` until UAT.
+- [Phase 18 verification]: Fixed Telegram auth end to end — poll 200 body is `{tokenPair}`, token pair is persisted before `restoreSession()`, bot opens via `url_launcher`; DeepLinkHandler + biometric resume gate instantiated at app root; GoRouter refreshes redirects on auth changes.
+- [Phase 18 verification]: Biometric lock is a resume gate (`local_auth`) rather than a storage ACL read, so Face ID is not requested on every HTTP request; the interceptor reads tokens non-biometrically.
+- [Phase 18 verification]: Session restore persists `userId` from the validated subscription user (backend token pair carries no `userId`), keeping the fast path alive.
 
 ## Performance Metrics
 
@@ -84,6 +90,6 @@ None (flat mode)
 
 ## Session
 
-**Last session:** 2026-11-25T21:30:00.000Z
-**Stopped at:** Completed 18-03-PLAN.md — Flutter auth UI layer with login, register, Telegram wait screens
-**Resume file:** None
+**Last session:** 2026-11-27T10:40:00.000Z
+**Stopped at:** Phase 18 verification complete (human_needed) — manual UAT pending
+**Resume file:** `.planning/phases/18-foundation-auth-5-days/18-UAT.md`

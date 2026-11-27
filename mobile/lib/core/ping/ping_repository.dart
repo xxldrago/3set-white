@@ -85,9 +85,12 @@ abstract class PingCacheWriter {
 }
 
 /// Fresh-row lookup boundary; `PingCacheDao` implements it in 19-04.
+///
+/// Async because a real Drift DAO reads SQLite through a [Future]; a
+/// synchronous seam cannot be implemented by a database-backed cache.
 abstract class PingCacheLookup {
   /// Returns the newest row for [serverId]/[tab] when it is still fresh.
-  PingCacheEntry? fresh(
+  Future<PingCacheEntry?> fresh(
     String serverId,
     String tab, {
     required int nowMs,
@@ -217,7 +220,7 @@ class PingRepository {
     Duration timeout = pingQuickTimeout,
   }) async {
     final generation = _generation;
-    final cached = cacheLookup?.fresh(
+    final cached = await cacheLookup?.fresh(
       target.id,
       target.tab,
       nowMs: _nowMs(),

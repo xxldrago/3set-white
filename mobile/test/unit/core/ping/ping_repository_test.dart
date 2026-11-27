@@ -25,12 +25,12 @@ class FakeCache implements PingCacheWriter, PingCacheLookup {
   }
 
   @override
-  PingCacheEntry? fresh(
+  Future<PingCacheEntry?> fresh(
     String serverId,
     String tab, {
     required int nowMs,
     Duration ttl = pingCacheTtl,
-  }) {
+  }) async {
     final row = _rows["$serverId:$tab"];
     if (row == null) {
       return null;
@@ -199,8 +199,8 @@ void main() {
       await second.pingServer(target("tcp"));
 
       expect(cache.writes, 2);
-      expect(cache.fresh("lib", "simple", nowMs: 10)!.approx, isFalse);
-      expect(cache.fresh("tcp", "simple", nowMs: 10)!.approx, isTrue);
+      expect((await cache.fresh("lib", "simple", nowMs: 10))!.approx, isFalse);
+      expect((await cache.fresh("tcp", "simple", nowMs: 10))!.approx, isTrue);
     });
   });
 

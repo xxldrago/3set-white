@@ -87,6 +87,9 @@ class FakeBridge implements VpnBridge {
   @override
   Stream<VpnBridgeEvent> get events => _events.stream;
 
+  /// Drives the real native → Dart event path; no direct FSM method call.
+  void emit(String code) => _events.add(VpnBridgeEvent(code));
+
   @override
   Future<void> prepare() async {
     calls.add("prepare");
@@ -260,5 +263,68 @@ void main() {
     expect(bridge.calls.where((call) => call == "start").length, 1);
     expect(backoff.attempts, 3);
     expect(logs.length, greaterThan(0));
+  });
+
+  test(
+      "native core-stop event drives backoff; retry reconnects and resets",
+      () async {
+    final factory = RecordingBackoffFactory();
+    final backoff = RestartBackoff(timerFactory: factory.create);
+    final config = FakeConfig();
+    final bridge = FakeBridge();
+    final toasts = <ErrorToast>[];
+    final logs = <Map<String, Object?>>[];
+    final container = ProviderContainer(
+      overrides: [
+        connectControllerProvider.overrideWith(FakeSelection.new),
+        configRepositoryProvider.overrideWithValue(config),
+        vpnBridgeProvider.overrideWithValue(bridge),
+        connectionToastProvider.overrideWithValue(toasts.add),
+        connectionErrorLogProvider.overrideWithValue((_) {}),
+        connectionTransitionLogProvider.overrideWithValue(logs.add),
+        restartBackoffProvider.overrideWithValue(backoff),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final notifier = container.read(connectionNotifierProvider.notifier);
+    await notifier.connect(PoolTab.simple, auto: true);
+    expect(
+      container.read(connectionNotifierProvider).phase,
+      ConnPhase.connected,
+    );
+    final startsBefore = bridge.calls.where((call) => call == "start").length;
+    toasts.clear();
+
+    // The ONLY production input is a real native event — not a direct FSM call.
+    bridge.emit("core_stopped");
+    await pumpUntil(
+      () =>
+          container.read(connectionNotifierProvider).phase == ConnPhase.idle &&
+          backoff.isScheduled,
+    );
+    expect(factory.timers.single.duration, const Duration(seconds: 1));
+    // The core is stopped exactly once before the FSM is allowed back to idle:
+    // no orphan tunnel survives the crash (D-14).
+    expect(bridge.calls.where((call) => call == "stop").length, 1);
+    expect(logs.any((event) => event["reason"] == "core_stopped"), isTrue);
+    expect(toasts, isEmpty);
+
+    // 1 s later the bounded retry re-runs the SAME connecting path.
+    factory.timers.first.fire();
+    await pumpUntil(
+      () =>
+          container.read(connectionNotifierProvider).phase ==
+          ConnPhase.connected,
+    );
+    expect(
+      bridge.calls.where((call) => call == "start").length,
+      startsBefore + 1,
+    );
+    expect(logs.any((event) => event["reason"] == "core_restart"), isTrue);
+    // A healthy session resets the failure counter; no error toast was needed.
+    expect(backoff.attempts, 0);
+    expect(backoff.isScheduled, isFalse);
+    expect(toasts, isEmpty);
   });
 }

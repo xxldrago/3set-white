@@ -30,7 +30,8 @@ class VpnBridgeEvent {
   /// Creates an event with a stable [code].
   const VpnBridgeEvent(this.code);
 
-  /// `revoked` (OS consent removed) or `disconnect` (notification action).
+  /// `revoked` (OS consent removed), `disconnect` (notification action) or
+  /// `core_stopped` (native tunnel died without a user-initiated stop).
   final String code;
 }
 
@@ -126,7 +127,7 @@ abstract interface class VpnBridge {
   /// Protects one native outbound socket from the tunnel's own routes.
   Future<bool> protect(int fd);
 
-  /// Native → FSM events: `revoked` and `disconnect`.
+  /// Native → FSM events: `revoked`, `disconnect` and `core_stopped`.
   Stream<VpnBridgeEvent> get events;
 
   /// Releases the channel handler and the event stream.
@@ -161,6 +162,10 @@ class MethodChannelVpnBridge implements VpnBridge {
         _events.add(const VpnBridgeEvent("revoked"));
       case "onDisconnect":
         _events.add(const VpnBridgeEvent("disconnect"));
+      case "onCoreStopped":
+        // Real native service-death/status-loss signal (D-18). It is the ONLY
+        // producer of the `core_stopped` FSM input; never simulated in Dart.
+        _events.add(const VpnBridgeEvent("core_stopped"));
     }
     return null;
   }

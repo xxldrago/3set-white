@@ -168,6 +168,20 @@ void main() {
     }
   });
 
+  test("native core-stop event reaches the FSM with a stable code", () async {
+    final codes = <String>[];
+    final subscription = bridge.events.listen(
+      (VpnBridgeEvent event) => codes.add(event.code),
+    );
+    try {
+      await channel.emit("onCoreStopped");
+      await Future<void>.delayed(Duration.zero);
+      expect(codes, <String>["core_stopped"]);
+    } finally {
+      await subscription.cancel();
+    }
+  });
+
   test("stop awaits shim stop before the platform teardown", () async {
     final order = <String>[];
     core.order = order;

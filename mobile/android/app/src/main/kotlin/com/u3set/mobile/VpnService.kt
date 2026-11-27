@@ -24,6 +24,10 @@ class ThreeSetVpnService : VpnService() {
 
     private var tunnel: ParcelFileDescriptor? = null
 
+    /** Set for user/cancel/revoke teardown so only an unexpected death emits core_stopped. */
+    @Volatile
+    private var expectedStop = false
+
     override fun onCreate() {
         super.onCreate()
         active = this
@@ -34,6 +38,8 @@ class ThreeSetVpnService : VpnService() {
         when (intent?.action) {
             ACTION_CONNECT -> connectTunnel()
             ACTION_DISCONNECT -> {
+                // A deliberate teardown must never look like a native crash.
+                expectedStop = true
                 closeTunnel()
                 stopForegroundCompat()
                 stopSelf()
@@ -75,6 +81,9 @@ class ThreeSetVpnService : VpnService() {
             return
         }
         tunnel = established
+        // A fresh tunnel: any later teardown that is not marked expected is a
+        // real native stop and must drive the FSM's bounded restart (D-18).
+        expectedStop = false
         VpnMethodChannel.deliverStartedFd(established.fd)
 
         // The ongoing notification lives in its own started foreground
@@ -93,6 +102,7 @@ class ThreeSetVpnService : VpnService() {
         super.onRevoke()
         // D-11: close the descriptor and stop before Dart may reach idle, and
         // notify the FSM so it can drive error -> disconnecting -> idle.
+        expectedStop = true
         closeTunnel()
         stopForegroundCompat()
         VpnMethodChannel.emitRevoked()
@@ -100,6 +110,13 @@ class ThreeSetVpnService : VpnService() {
     }
 
     override fun onDestroy() {
+        val hadTunnel = tunnel != null
+        // A live tunnel disappearing without a cancel/disconnect/revoke is the
+        // real `core_stopped` producer consumed by RestartBackoff (REQ-CONN-09).
+        if (hadTunnel && !expectedStop) {
+            VpnMethodChannel.emitCoreStopped()
+        }
+        expectedStop = false
         closeTunnel()
         if (active === this) {
             active = null
@@ -141,6 +158,9 @@ class ThreeSetVpnService : VpnService() {
 
         /** Requests teardown through the service lifecycle, never in-place. */
         fun requestStop(context: Context) {
+            // Mark expected BEFORE the lifecycle callback so a user stop can
+            // never be mistaken for a native crash and trigger backoff.
+            active?.expectedStop = true
             context.startService(
                 Intent(context, ThreeSetVpnService::class.java)
                     .setAction(ACTION_DISCONNECT),
@@ -156,7 +176,8 @@ class ThreeSetVpnService : VpnService() {
  * The single Flutter ↔ Kotlin bridge on `com.u3set.mobile/vpn`.
  *
  * Dart calls `prepare`, `start`, `protect` and `stop`; Kotlin emits
- * `onRevoked` and `onDisconnect` events back to the FSM. Only stable result
+ * `onRevoked`, `onDisconnect` and `onCoreStopped` events back to the FSM.
+ * Only stable result
  * codes cross the channel: no fd, config, token or raw platform text is ever
  * placed in an error message or log.
  */
@@ -268,6 +289,14 @@ object VpnMethodChannel {
     /** Notifies Dart that the notification's disconnect action was tapped. */
     fun emitDisconnect() {
         channel?.invokeMethod("onDisconnect", null)
+    }
+
+    /**
+     * Notifies Dart that the native tunnel died without a user stop (D-18).
+     * This is the real producer of the FSM's bounded 1/2/4 s restart input.
+     */
+    fun emitCoreStopped() {
+        channel?.invokeMethod("onCoreStopped", null)
     }
 
 }

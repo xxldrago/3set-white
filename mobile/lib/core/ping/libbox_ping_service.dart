@@ -73,8 +73,9 @@ class LibboxPingService {
       await _client.init();
       await _client.start(configJson);
       final sample = await _client.urltest(tag, timeout: timeout);
-      if (!sample.online || sample.rttMs <= 0) {
+      if (!sample.online) {
         // No history or failed-then-cleared history both read back as 0,0.
+        // An online sample with rttMs == 0 is a real 0 ms observation.
         return null;
       }
       return PingResult(

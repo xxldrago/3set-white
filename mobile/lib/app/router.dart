@@ -142,9 +142,9 @@ class _HomeScreen extends ConsumerWidget {
         ),
       ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: ref.watch(currentTabProvider),
+        selectedIndex: ref.watch(bottomNavIndexProvider),
         onDestinationSelected: (index) {
-          ref.read(currentTabProvider.notifier).state = index;
+          ref.read(bottomNavIndexProvider.notifier).state = index;
         },
         destinations: const [
           NavigationDestination(
@@ -250,7 +250,7 @@ class _HomeContent extends ConsumerWidget {
                     FilledButton(
                       onPressed: () {
                         // Navigate to subscription screen
-                        ref.read(currentTabProvider.notifier).state = 2;
+                        ref.read(bottomNavIndexProvider.notifier).state = 2;
                       },
                       child: const Text('Оформить подписку'),
                     ),
@@ -278,7 +278,7 @@ class _HomeContent extends ConsumerWidget {
               subtitle: const Text('Управление ключами и устройствами'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
-                ref.read(currentTabProvider.notifier).state = 1;
+                ref.read(bottomNavIndexProvider.notifier).state = 1;
               },
             ),
           ),
@@ -292,7 +292,7 @@ class _HomeContent extends ConsumerWidget {
               subtitle: const Text('Просмотр и продление тарифа'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
-                ref.read(currentTabProvider.notifier).state = 2;
+                ref.read(bottomNavIndexProvider.notifier).state = 2;
               },
             ),
           ),

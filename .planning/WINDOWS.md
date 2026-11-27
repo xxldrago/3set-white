@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 31
+open_count: 32
 waived_count: 0
 fixed_count: 0
-total_count: 31
-last_updated: 2026-11-27T10:05:51.554Z
+total_count: 32
+last_updated: 2026-11-27T10:55:53.724Z
 ---
 
 # Broken Windows Ledger
@@ -46,6 +46,7 @@ last_updated: 2026-11-27T10:05:51.554Z
 | 29 | 20 | deviation |  |  | 20-04 bare flutter analyze exits 1 on 1622 pre-existing lint infos/warnings (0 errors); verification used --no-fatal-infos --no-fatal-warnings (exit 0). Pre-existing lint debt out of scope. | open |  | 2026-11-27T09:50:47.941Z |  |
 | 30 | 20 | unrun-verify | mobile/lib/core/vpn/connection_notifier.dart |  | 20-05 real on-device cancel/revoke stop-before-idle UAT not run — external Android JDK/SDK blocker; proven by fake-bridge completer tests only | open |  | 2026-11-27T10:05:51.478Z |  |
 | 31 | 20 | deviation |  |  | 20-05 bare flutter analyze exits 1 on 1623 pre-existing lint infos/warnings (0 errors); verification used --no-fatal-infos --no-fatal-warnings (exit 0). Pre-existing lint debt out of scope. | open |  | 2026-11-27T10:05:51.554Z |  |
+| 32 | 20 | lint-warning | mobile/lib/main.dart |  | Pre-existing bare flutter analyze exits 1 on ~1624 info/warning lints in unrelated files; 20-06 verification used --no-fatal-infos --no-fatal-warnings with no findings in changed files. | open |  | 2026-11-27T10:55:53.724Z |  |
 
 ````json
 [
@@ -419,6 +420,18 @@ last_updated: 2026-11-27T10:05:51.554Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-27T10:05:51.554Z",
+    "resolved_at": null
+  },
+  {
+    "id": 32,
+    "kind": "lint-warning",
+    "phase": "20",
+    "file": "mobile/lib/main.dart",
+    "line": null,
+    "description": "Pre-existing bare flutter analyze exits 1 on ~1624 info/warning lints in unrelated files; 20-06 verification used --no-fatal-infos --no-fatal-warnings with no findings in changed files.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T10:55:53.724Z",
     "resolved_at": null
   }
 ]

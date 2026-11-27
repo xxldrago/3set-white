@@ -5,16 +5,16 @@ milestone_name: Мобильный клиент
 current_phase: 20
 current_phase_name: VPN Core & Connect FSM
 status: executing
-stopped_at: Completed 20-05-PLAN.md
-last_updated: "2026-11-27T10:08:32.620Z"
+stopped_at: Completed 20-06-PLAN.md
+last_updated: "2026-11-27T10:56:08.102Z"
 last_activity: 2026-11-27
 last_activity_desc: Phase 20 execution started
-state_head: 3e004e728208358be450c8f4e0ac7ed49580406b
+state_head: 7d0d70b868dc3533bcfd045da3a845d2c052c6a6
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 22
-  completed_plans: 20
+  completed_plans: 21
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 ## Current Position
 
 Phase: 20 (VPN Core & Connect FSM) — EXECUTING
-Plan: 6 of 7
+Plan: 7 of 7
 Status: Ready to execute
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-27 — Phase 20 execution started
@@ -119,6 +119,7 @@ None (flat mode)
 - [Phase 20]: 20-05: cancel/revoke/disconnect await native bridge.stop() before idle with a generation token guarding stale callbacks — D-11/D-14 no orphan tunnel
 - [Phase 20]: 20-05: config fetched opaquely from backend /config via shared Dio; connect calls phase-19 selection then prepare then bridge.start — D-01/D-03/D-10 client never assembles config
 - [Phase 20]: 20-05: ten stable error codes map to exact locked RU toasts; logs carry only {code,state,durationMs} — D-12/D-19 no raw provider text reaches UI or logs
+- [Phase 20]: D-15 confirmed reselect-reconnect: network change while connected clears ping cache + last-good, reselects best by RTT and performs full FSM reconnect with one RU toast — Human confirmed the blocking decision gate; best RTT on the new network while keeping the single FSM, VPN-only filter and generation token.
 
 ## Performance Metrics
 
@@ -144,9 +145,10 @@ None (flat mode)
 | Phase 20 P03 | 8 min | 3 tasks | 6 files |
 | Phase 20 P04 | 8 min | 3 tasks | 4 files |
 | Phase 20 P05 | 13 min | 2 tasks | 10 files |
+| Phase 20 P06 | 17min | 3 tasks | 5 files |
 
 ## Session
 
-**Last session:** 2026-11-27T10:08:32.534Z
-**Stopped at:** Completed 20-05-PLAN.md
+**Last session:** 2026-11-27T10:56:08.018Z
+**Stopped at:** Completed 20-06-PLAN.md
 **Resume file:** None

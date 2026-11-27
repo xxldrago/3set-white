@@ -211,4 +211,164 @@ void main() {
       expect(await dao.getServerList("whitelist"), '[{"id":"w1"}]');
     });
   });
+
+  group("TTL, idempotency and concurrency", () {
+    PingRepository repositoryFor(
+      PingCacheDao dao,
+      LibboxPingClient client,
+      int Function() nowMs,
+    ) =>
+        PingRepository(
+          libbox: LibboxPingService(client: client, nowMs: nowMs),
+          socket: SocketPingService(
+            connector: (
+              host,
+              port, {
+              timeout = const Duration(seconds: 1),
+            }) async =>
+                throw const SocketException("unused"),
+            nowMs: nowMs,
+          ),
+          cacheWriter: dao,
+          cacheLookup: dao,
+          nowMs: nowMs,
+        );
+
+    PingTarget targetFor(String id) => PingTarget(
+          id: id,
+          host: "127.0.0.1",
+          port: "443",
+          protocol: "vless",
+          outbound: const <String, dynamic>{"type": "vless"},
+          tab: "simple",
+        );
+
+    LibboxPingClient liveClient(void Function() onUrltest) {
+      final client = MockLibboxPingClient();
+      when(client.init).thenAnswer((_) async {});
+      when(() => client.start(any())).thenAnswer((_) async {});
+      when(
+        () => client.urltest(any(), timeout: any(named: "timeout")),
+      ).thenAnswer((_) async {
+        onUrltest();
+        return const LibboxUrltestResult(online: true, rttMs: 11);
+      });
+      return client;
+    }
+
+    test("re-pings only after TTL expiry, manual refresh or network change",
+        () async {
+      final dao = openDao();
+      var urltestCalls = 0;
+      final client = liveClient(() => urltestCalls++);
+      var now = 1000;
+      final repository = repositoryFor(dao, client, () => now);
+      final target = targetFor("s1");
+
+      await repository.pingServer(target);
+      await repository.pingServer(target);
+      expect(urltestCalls, 1); // second read came from the fresh cache
+
+      now = 61001; // one ms past the inclusive 60 s boundary
+      expect(await dao.fresh("s1", "simple", nowMs: now), isNull);
+      await repository.pingServer(target);
+      expect(urltestCalls, 2);
+
+      await dao.clearPingCache(); // manual refresh
+      await repository.pingServer(target);
+      expect(urltestCalls, 3);
+
+      await dao.clearPingCacheAndLastGood(); // connectivity change
+      await repository.pingServer(target);
+      expect(urltestCalls, 4);
+    });
+
+    test("empty cache is stale and an offline row keeps a null RTT", () async {
+      final dao = openDao();
+      expect(await dao.fresh("s1", "simple", nowMs: 1000), isNull);
+
+      await dao.write(
+        PingCacheEntry(
+          serverId: "s1",
+          tab: "simple",
+          rttMs: null,
+          online: false,
+          approx: true,
+          tsMs: 1000,
+        ),
+      );
+      final row = await dao.fresh("s1", "simple", nowMs: 1000);
+      expect(row?.online, isFalse);
+      expect(row?.rttMs, isNull);
+      expect(row?.approx, isTrue);
+    });
+
+    test("concurrent upserts leave no duplicates and no lost rows", () async {
+      final dao = openDao();
+      await Future.wait<void>([
+        for (var i = 1; i <= 12; i++)
+          dao.write(
+            PingCacheEntry(
+              serverId: "s$i",
+              tab: "simple",
+              rttMs: i,
+              online: true,
+              approx: false,
+              tsMs: 1000 + i,
+            ),
+          ),
+      ]);
+
+      var rows = await dao.watchFresh("simple", nowMs: () => 2000).first;
+      expect(rows, hasLength(12));
+
+      await Future.wait<void>([
+        for (var i = 1; i <= 12; i++)
+          dao.write(
+            PingCacheEntry(
+              serverId: "dup",
+              tab: "simple",
+              rttMs: i,
+              online: true,
+              approx: false,
+              tsMs: 2000 + i,
+            ),
+          ),
+      ]);
+      rows = await dao.watchFresh("simple", nowMs: () => 3000).first;
+      expect(rows, hasLength(13));
+      expect(rows.where((row) => row.serverId == "dup"), hasLength(1));
+    });
+
+    test("clear then write keeps the newest sample only", () async {
+      final dao = openDao();
+      await dao.write(sample("s1", "simple", tsMs: 1000));
+      await dao.clearPingCache();
+      expect(await dao.fresh("s1", "simple", nowMs: 1000), isNull);
+
+      await dao.write(sample("s1", "simple", tsMs: 2000));
+      final row = await dao.fresh("s1", "simple", nowMs: 2000);
+      expect(row?.tsMs, 2000);
+      expect(row?.rttMs, 42);
+    });
+
+    test("watchFresh reacts to writes and filters rows past the TTL",
+        () async {
+      final dao = openDao();
+      final emissions = <List<PingCacheData>>[];
+      final subscription =
+          dao.watchFresh("simple", nowMs: () => 2000).listen(emissions.add);
+      addTearDown(subscription.cancel);
+      await dao.write(sample("s1", "simple", tsMs: 1000));
+      for (var i = 0; i < 20 && emissions.isEmpty; i++) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      expect(emissions, isNotEmpty);
+      expect(emissions.last, hasLength(1));
+
+      final stale =
+          await dao.watchFresh("simple", nowMs: () => 70000).first;
+      expect(stale, isEmpty);
+    });
+  });
 }

@@ -172,7 +172,7 @@ Plans:
 **Wave 4** *(blocked on Wave 3)*
 
 - [x] 20-06-PLAN.md — Auto-reconnect (D-15 gate) + REQ-PING-05: VPN-only-change filter, invalidation, RTT reselection, one toast, 1/2/4s backoff (REQ-CONN-08/09, REQ-PING-05)
-- [ ] 20-07-PLAN.md — Connected Panel: live flag/proto/IP/ping/timer/↓↑MB from FSM + libbox counters at 1 Hz; «—» IP fallback; FSM-aware button (REQ-CONN-07)
+- [x] 20-07-PLAN.md — Connected Panel: live flag/proto/IP/ping/timer/↓↑MB from FSM + libbox counters at 1 Hz; «—» IP fallback; FSM-aware button (REQ-CONN-07)
 
 **Cross-cutting constraints:**
 

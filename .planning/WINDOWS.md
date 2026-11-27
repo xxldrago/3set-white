@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 32
+open_count: 34
 waived_count: 0
-fixed_count: 0
-total_count: 32
-last_updated: 2026-11-27T10:55:53.724Z
+fixed_count: 1
+total_count: 35
+last_updated: 2026-11-27T11:12:46.608Z
 ---
 
 # Broken Windows Ledger
@@ -33,7 +33,7 @@ last_updated: 2026-11-27T10:55:53.724Z
 | 16 | 19 | deviation | mobile/lib/features/servers/providers.dart |  | REQ-POOL-04 load bar deferred (D-04); RTT-only ranking, no load field parsed or emitted | open |  | 2026-11-27T04:40:05.199Z |  |
 | 17 | 19 | deviation | mobile/lib/features/home/providers.dart |  | bottomNavIndexProvider legacy shim kept until 19-07 removes bottom navigation | open |  | 2026-11-27T04:40:05.268Z |  |
 | 18 | 19 | stub | mobile/lib/features/servers/server_pool_screen.dart |  | Shop/profile/logic actions are intentional stubs pending phase 21 (shop route added in 19-08) | open |  | 2026-11-27T05:12:11.520Z |  |
-| 19 | 19 | stub | mobile/lib/features/servers/widgets/connect_panel.dart |  | IP/timer/traffic show dashes with phase-20 note; VPN core/FSM is phase 20 | open |  | 2026-11-27T05:12:11.595Z |  |
+| 19 | 19 | stub | mobile/lib/features/servers/widgets/connect_panel.dart |  | IP/timer/traffic show dashes with phase-20 note; VPN core/FSM is phase 20 | fixed |  | 2026-11-27T05:12:11.595Z | 2026-11-27T11:12:38.097Z |
 | 20 | 19 | deviation | mobile/lib/features/servers/server_pool_screen.dart |  | Rule 1: fixed nested-flex overlap that collapsed pool list; reordered offline banner; guarded refresh against phantom selection | open |  | 2026-11-27T05:12:11.662Z |  |
 | 21 | 19-server-pools-auto-ping-7-days | stub | mobile/lib/features/shop/shop_screen.dart |  | Shop stub Купить shows phase-21 SnackBar only; no purchase (D-15/D-19), real shop ships in phase 21 | open |  | 2026-11-27T05:23:34.584Z |  |
 | 22 | 20 | unrun-verify | app/api/mobile/config/route.ts |  | Live ARTEMIDA links[] shape re-verification on a paid key remains [ASSUMED] inherited from phase 19; manual-only, not exercised in 20-01 | open |  | 2026-11-27T07:23:47.502Z |  |
@@ -47,6 +47,9 @@ last_updated: 2026-11-27T10:55:53.724Z
 | 30 | 20 | unrun-verify | mobile/lib/core/vpn/connection_notifier.dart |  | 20-05 real on-device cancel/revoke stop-before-idle UAT not run — external Android JDK/SDK blocker; proven by fake-bridge completer tests only | open |  | 2026-11-27T10:05:51.478Z |  |
 | 31 | 20 | deviation |  |  | 20-05 bare flutter analyze exits 1 on 1623 pre-existing lint infos/warnings (0 errors); verification used --no-fatal-infos --no-fatal-warnings (exit 0). Pre-existing lint debt out of scope. | open |  | 2026-11-27T10:05:51.554Z |  |
 | 32 | 20 | lint-warning | mobile/lib/main.dart |  | Pre-existing bare flutter analyze exits 1 on ~1624 info/warning lints in unrelated files; 20-06 verification used --no-fatal-infos --no-fatal-warnings with no findings in changed files. | open |  | 2026-11-27T10:55:53.724Z |  |
+| 33 | 20 | unrun-verify | mobile/lib/core/vpn/connected_stats.dart |  | 20-07 real IP-through-tunnel (api.ipify.org) and live libbox traffic counters on an Android device not run — external JDK/SDK/NDK blocker; proven with injectable-seam tests only | open |  | 2026-11-27T11:12:37.904Z |  |
+| 34 | 20 | deviation | mobile/test/widget/features/servers/server_pool_screen_test.dart |  | 20-07 Rule 3: pre-existing screen test updated with FakeConnectionNotifier because the plan removed the asserted phase-20 stub copy; file was not in files_modified | open |  | 2026-11-27T11:12:37.969Z |  |
+| 35 | 20 | lint-warning |  |  | 20-07 bare flutter analyze exits 1 on ~1632 pre-existing info/warning lints (0 errors); used --no-fatal-infos --no-fatal-warnings with exit 0, no unrelated files touched | open |  | 2026-11-27T11:12:46.608Z |  |
 
 ````json
 [
@@ -273,10 +276,10 @@ last_updated: 2026-11-27T10:55:53.724Z
     "file": "mobile/lib/features/servers/widgets/connect_panel.dart",
     "line": null,
     "description": "IP/timer/traffic show dashes with phase-20 note; VPN core/FSM is phase 20",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-11-27T05:12:11.595Z",
-    "resolved_at": null
+    "resolved_at": "2026-11-27T11:12:38.097Z"
   },
   {
     "id": 20,
@@ -432,6 +435,42 @@ last_updated: 2026-11-27T10:55:53.724Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-27T10:55:53.724Z",
+    "resolved_at": null
+  },
+  {
+    "id": 33,
+    "kind": "unrun-verify",
+    "phase": "20",
+    "file": "mobile/lib/core/vpn/connected_stats.dart",
+    "line": null,
+    "description": "20-07 real IP-through-tunnel (api.ipify.org) and live libbox traffic counters on an Android device not run — external JDK/SDK/NDK blocker; proven with injectable-seam tests only",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T11:12:37.904Z",
+    "resolved_at": null
+  },
+  {
+    "id": 34,
+    "kind": "deviation",
+    "phase": "20",
+    "file": "mobile/test/widget/features/servers/server_pool_screen_test.dart",
+    "line": null,
+    "description": "20-07 Rule 3: pre-existing screen test updated with FakeConnectionNotifier because the plan removed the asserted phase-20 stub copy; file was not in files_modified",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T11:12:37.969Z",
+    "resolved_at": null
+  },
+  {
+    "id": 35,
+    "kind": "lint-warning",
+    "phase": "20",
+    "file": "",
+    "line": null,
+    "description": "20-07 bare flutter analyze exits 1 on ~1632 pre-existing info/warning lints (0 errors); used --no-fatal-infos --no-fatal-warnings with exit 0, no unrelated files touched",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T11:12:46.608Z",
     "resolved_at": null
   }
 ]

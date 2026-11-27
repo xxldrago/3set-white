@@ -93,7 +93,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 19-03-PLAN.md — Drift `ping_cache` TTL60 + `last_good`<=5 + `selection` + `current_tab` + `server_list_cache`; network clear; no Prisma change
+- [x] 19-03-PLAN.md — Drift `ping_cache` TTL60 + `last_good`<=5 + `selection` + `current_tab` + `server_list_cache`; network clear; no Prisma change
 
 **Wave 4** *(blocked on Wave 3 completion)*
 

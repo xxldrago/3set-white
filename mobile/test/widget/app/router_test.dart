@@ -1,3 +1,5 @@
+import "dart:io";
+
 import "package:dio/dio.dart";
 import "package:drift/native.dart";
 import "package:flutter/material.dart";
@@ -18,6 +20,7 @@ import "package:mobile/core/ping/ping_repository.dart";
 import "package:mobile/core/ping/socket_ping_service.dart";
 import "package:mobile/features/auth/providers.dart" show currentUserProvider;
 import "package:mobile/features/auth/screens/login_screen.dart";
+import "package:mobile/features/auth/screens/register_screen.dart";
 import "package:mobile/features/servers/providers.dart"
     show pingRepositoryProvider;
 import "package:mobile/features/servers/server_pool_screen.dart"
@@ -68,7 +71,7 @@ AuthState authenticatedState() => AuthState.authenticated(
         expiresIn: 900,
         userId: 1,
       ),
-      user: User(id: 1, telegramId: null, email: "test@example.com"),
+      user: User(id: 1, email: "test@example.com"),
     );
 
 void main() {
@@ -83,7 +86,7 @@ void main() {
       ),
     );
     registerFallbackValue(
-      User(id: 1, telegramId: null, email: "fallback@example.com"),
+      User(id: 1, email: "fallback@example.com"),
     );
   });
 
@@ -147,7 +150,7 @@ void main() {
         currentUserProvider.overrideWith((_) => null),
       ],
     );
-    routerSubscription = container.listen(routerProvider, (_, __) {});
+    routerSubscription = container.listen(routerProvider, (_, _) {});
     router = container.read(routerProvider);
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -163,13 +166,14 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets("authenticated home renders the pool screen without a bottom nav", (
+  testWidgets("home renders the pool screen without a bottom nav", (
     WidgetTester tester,
   ) async {
     await pumpRouter(tester, state: authenticatedState());
 
     expect(find.byType(ServerPoolScreen), findsOneWidget);
     expect(find.byType(NavigationBar), findsNothing);
+    expect(find.byType(LoginScreen), findsNothing);
   });
 
   testWidgets("unauthenticated protected navigation redirects to auth", (
@@ -195,5 +199,57 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(ShopScreen), findsOneWidget);
     expect(find.text("Магазин"), findsOneWidget);
+    expect(find.byIcon(Icons.shopping_bag_outlined), findsOneWidget);
+  });
+
+  testWidgets("unauthenticated auth routes are preserved", (
+    WidgetTester tester,
+  ) async {
+    await pumpRouter(
+      tester,
+      state: const AuthState.unauthenticated(),
+    );
+    expect(find.byType(LoginScreen), findsOneWidget);
+
+    router.go("/register");
+    await tester.pumpAndSettle();
+    expect(find.byType(RegisterScreen), findsOneWidget);
+  });
+
+  testWidgets("authenticated auth routes redirect to the pool screen", (
+    WidgetTester tester,
+  ) async {
+    await pumpRouter(tester, state: authenticatedState());
+
+    router.go("/register");
+    await tester.pumpAndSettle();
+    expect(find.byType(ServerPoolScreen), findsOneWidget);
+    expect(find.byType(RegisterScreen), findsNothing);
+  });
+
+  test("router source keeps auth wiring and drops the bottom nav", () {
+    final routerSource = File("lib/app/router.dart").readAsStringSync();
+    final mainSource = File("lib/main.dart").readAsStringSync();
+    final loginSource =
+        File("lib/features/auth/screens/login_screen.dart").readAsStringSync();
+
+    expect(routerSource, contains("refreshListenable: authRefresh"));
+    expect(routerSource, contains("redirect: (context, state)"));
+    expect(routerSource, contains("isAuthRoute"));
+    expect(routerSource, contains("authNotifierProvider"));
+    expect(routerSource, contains("authStateProvider"));
+    expect(routerSource, contains("path: '/auth'"));
+    expect(routerSource, contains("path: '/register'"));
+    expect(routerSource, contains("path: '/telegram-wait'"));
+    expect(routerSource, contains("path: '/shop'"));
+    expect(routerSource, contains("const ServerPoolScreen()"));
+    expect(routerSource, isNot(contains("NavigationBar")));
+    expect(routerSource, isNot(contains("_HomeContent")));
+    expect(routerSource, isNot(contains("_HomeScreen")));
+    expect(routerSource, isNot(contains("bottomNavIndexProvider")));
+    expect(routerSource, isNot(contains("currentTabProvider")));
+    expect(mainSource, contains("deepLinkHandlerProvider"));
+    expect(mainSource, contains("resumeBiometricGateProvider"));
+    expect(loginSource, contains("context.go('/')"));
   });
 }

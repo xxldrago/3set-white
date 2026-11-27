@@ -3,10 +3,9 @@ import "dart:convert";
 import "libbox_core.dart";
 import "ping_result.dart";
 
-/// Probe URL sing-box uses when `URLTest` is given an empty link (D-06).
-///
-/// The Dart side never passes a URL: the shim calls `URLTest(outboundTag)`,
-/// which resolves to this fixed `generate_204` target internally.
+/// Probe URL of the real `urltest` outbound group generated for every ping
+/// (D-06). The shim redirects `URLTest(memberTag)` to that group, so the probe
+/// actually uses this fixed target instead of a sing-box default.
 const String generate204Url = "https://www.gstatic.com/generate_204";
 
 /// Minimal libbox surface used by the ping service; injectable in tests.
@@ -117,6 +116,17 @@ class LibboxPingService {
       "outbounds": <Map<String, dynamic>>[
         <String, dynamic>{"type": "direct", "tag": "direct"},
         if (!isEndpoint) node,
+        // D-06: probe the node through a real urltest group whose `url` is the
+        // fixed generate_204 target. The shim maps the member tag back to this
+        // group and reads the mirrored async sample under the member tag.
+        if (!isEndpoint)
+          <String, dynamic>{
+            "type": "urltest",
+            "tag": "ut-$tag",
+            "outbounds": <String>[tag],
+            "url": generate204Url,
+            "interval": "1m",
+          },
       ],
       "route": <String, dynamic>{"final": "direct"},
     };

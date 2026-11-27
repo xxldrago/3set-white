@@ -111,17 +111,28 @@ type urltestRecord struct {
 // urltestHandler captures WriteGroups results and wakes in-flight urltest
 // callers when a tag's group item is refreshed.
 type urltestHandler struct {
-	mu      sync.Mutex
-	records map[string]urltestRecord
-	waiters map[string]map[chan struct{}]struct{}
-	seq     uint64
+	mu       sync.Mutex
+	records  map[string]urltestRecord
+	waiters  map[string]map[chan struct{}]struct{}
+	groupFor map[string]string // urltest group member tag -> group tag
+	seq      uint64
 }
 
 func newURLTestHandler() *urltestHandler {
 	return &urltestHandler{
-		records: make(map[string]urltestRecord),
-		waiters: make(map[string]map[chan struct{}]struct{}),
+		records:  make(map[string]urltestRecord),
+		waiters:  make(map[string]map[chan struct{}]struct{}),
+		groupFor: make(map[string]string),
 	}
+}
+
+// setGroups records which outbound tags belong to a urltest group. The Dart
+// side configures the group's fixed generate_204 probe URL (D-06); triggering
+// URLTest on a member tag is redirected to its group so that URL is used.
+func (h *urltestHandler) setGroups(groups map[string]string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.groupFor = groups
 }
 
 func (h *urltestHandler) signal(tag string) {
@@ -146,12 +157,19 @@ func (h *urltestHandler) WriteGroups(iterator libbox.OutboundGroupIterator) {
 				break
 			}
 			h.seq++
-			h.records[item.Tag] = urltestRecord{
+			record := urltestRecord{
 				delayMs: item.URLTestDelay,
 				timeS:   item.URLTestTime,
 				seq:     h.seq,
 			}
+			h.records[item.Tag] = record
 			h.signal(item.Tag)
+			if group, ok := h.groupFor[item.Tag]; ok {
+				// Mirror the member sample under the group tag so a caller that
+				// triggered URLTest on the group can read it back as well.
+				h.records[group] = record
+				h.signal(group)
+			}
 		}
 	}
 }
@@ -191,6 +209,31 @@ func cErrorMessage(generic string) *C.char {
 	return C.CString(generic)
 }
 
+// urltestGroups maps each urltest group member tag to the group tag. The group
+// carries the fixed generate_204 probe URL from the Dart-generated config.
+func urltestGroups(configJSON string) map[string]string {
+	groups := make(map[string]string)
+	var parsed struct {
+		Outbounds []struct {
+			Type      string   `json:"type"`
+			Tag       string   `json:"tag"`
+			Outbounds []string `json:"outbounds"`
+		} `json:"outbounds"`
+	}
+	if err := json.Unmarshal([]byte(configJSON), &parsed); err != nil {
+		return groups
+	}
+	for _, out := range parsed.Outbounds {
+		if out.Type != "urltest" || out.Tag == "" {
+			continue
+		}
+		for _, member := range out.Outbounds {
+			groups[member] = out.Tag
+		}
+	}
+	return groups
+}
+
 //export libbox_setup
 func libbox_setup(basePath *C.char, workingPath *C.char, tempPath *C.char) *C.char {
 	err := libbox.Setup(&libbox.SetupOptions{
@@ -219,11 +262,15 @@ func libbox_start(configJSON *C.char) *C.char {
 	if err := libbox.CheckConfig(config); err != nil {
 		return cErrorMessage("invalid configuration")
 	}
+	groups := urltestGroups(config)
 
 	serviceMu.Lock()
 	defer serviceMu.Unlock()
 
 	if commandServer != nil {
+		if activeHandler != nil {
+			activeHandler.setGroups(groups)
+		}
 		if err := commandServer.StartOrReloadService(config, &libbox.OverrideOptions{}); err != nil {
 			return cErrorMessage("failed to start sing-box service")
 		}
@@ -243,6 +290,7 @@ func libbox_start(configJSON *C.char) *C.char {
 	}
 
 	handler := newURLTestHandler()
+	handler.setGroups(groups)
 	options := &libbox.CommandClientOptions{}
 	options.AddCommand(libbox.CommandGroup)
 	client := libbox.NewCommandClient(handler, options)
@@ -293,6 +341,14 @@ func urltest(tag *C.char, timeoutMs C.int) C.int {
 	// mistaken for the result of this trigger.
 	ch := make(chan struct{}, 1)
 	handler.mu.Lock()
+	// When the caller passes a urltest group member, trigger the group instead:
+	// only the group carries the fixed generate_204 probe URL (D-06). The
+	// waiter stays on the member tag, which WriteGroups signals directly.
+	triggerTag := outboundTag
+	if group, ok := handler.groupFor[outboundTag]; ok {
+		triggerTag = group
+		delete(handler.records, group)
+	}
 	delete(handler.records, outboundTag)
 	if handler.waiters[outboundTag] == nil {
 		handler.waiters[outboundTag] = make(map[chan struct{}]struct{})
@@ -309,7 +365,7 @@ func urltest(tag *C.char, timeoutMs C.int) C.int {
 	}()
 
 	errCh := make(chan error, 1)
-	go func() { errCh <- client.URLTest(outboundTag) }()
+	go func() { errCh <- client.URLTest(triggerTag) }()
 
 	select {
 	case err := <-errCh:

@@ -103,7 +103,10 @@ void main() {
     expect(config["dns"]["servers"].first["type"], "local");
     final nodes = config["outbounds"] as List<dynamic>;
     expect(nodes.first["tag"], "direct");
-    expect(nodes.last["tag"], "srv-abc");
+    expect(nodes[1]["tag"], "srv-abc");
+    expect(nodes.last["type"], "urltest");
+    expect(nodes.last["outbounds"], <Object>["srv-abc"]);
+    expect(nodes.last["url"], generate204Url);
     expect(config["endpoints"], isEmpty);
     expect(configs.single, isNot(contains("vless://")));
     expect(generate204Url, "https://www.gstatic.com/generate_204");

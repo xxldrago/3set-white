@@ -6,10 +6,10 @@ current_phase: 21
 current_phase_name: Subscription & Purchase
 status: executing
 stopped_at: Phase 21 context gathered
-last_updated: "2026-11-27T12:36:09.027Z"
-last_activity: 2026-11-27
-last_activity_desc: Phase 20 execution started
-state_head: a5be99344fe0953a3bc113e2a10c403d91aeabc3
+last_updated: "2026-11-27T21:10:39.807Z"
+last_activity: 2026-11-28
+last_activity_desc: Phase 21 execution started
+state_head: f56f466c3b2bb4b394462ce4b8bae1dedd03f145
 progress:
   total_phases: 6
   completed_phases: 0
@@ -25,15 +25,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-25)
 
 **Core value:** Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
-**Current focus:** Phase 20 — VPN Core & Connect FSM
+**Current focus:** Phase 21 — Subscription & Purchase
 
 ## Current Position
 
-Phase: 21 (Subscription & Purchase) — READY TO EXECUTE
-Plan: 7 of 7
-Status: Ready to execute
+Phase: 21 (Subscription & Purchase) — EXECUTING
+Plan: 1 of 6
+Status: Executing Phase 21
 **Progress:** [░░░░░░░░░░] 0%
-Last activity: 2026-11-27 — Phase 20 execution started
+Last activity: 2026-11-28 — Phase 21 execution started
 
 ## Per-Milestone Progress
 
@@ -122,6 +122,7 @@ None (flat mode)
 - [Phase 20]: D-15 confirmed reselect-reconnect: network change while connected clears ping cache + last-good, reselects best by RTT and performs full FSM reconnect with one RU toast — Human confirmed the blocking decision gate; best RTT on the new network while keeping the single FSM, VPN-only filter and generation token.
 - [Phase 20]: 20-07: Connected Panel reads the single FSM; session identity is connectedAt so disconnect/reconnect cancel the 1 Hz timer and invalidate the cached IP
 - [Phase 20]: 20-07: real api.ipify.org GET through the tunnel (2 s timeout) with InternetAddress validation and «—» fallback; libbox traffic counters formatted losslessly at two decimals; no fake IP/traffic
+- [Phase 21-01]: D-01/D-04/D-05/D-16/D-10 gate confirmed "proceed-locked" at blocking checkpoint — user explicitly confirmed all five locked costly decisions before any code; D-10 includes changing already-shipped phase-19/20 /servers + /config gates via one shared server-side 24h grace predicate (boundary tests expiresAt ± 24h ± 1ms); single money pipeline (createOrder → shared Platega webhook → outbox/worker sole issuer, REQ-BE-05 superseded), server-quoted amount, in-app WebView behind separate blocking-human package gate, real Shop Screen with no bottom nav. No code written by this gate.
 
 ## Performance Metrics
 

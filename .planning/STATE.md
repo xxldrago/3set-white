@@ -4,17 +4,17 @@ milestone: v2.0
 milestone_name: Мобильный клиент
 current_phase: 18
 status: verifying
-stopped_at: Phase 18 verification complete (human_needed) — UAT pending
-last_updated: "2026-11-27T10:40:00.000Z"
+stopped_at: Phase 19 context gathered
+last_updated: "2026-11-27T01:07:10.864Z"
 last_activity: 2026-11-27
 last_activity_desc: "Phase 18 verification: 103 tests pass, 0 analyzer errors, iOS build OK; 8 auth-flow gaps fixed"
-state_head: b711c3c4d8f2341943b70a8fb339486241df0a98
+state_head: a3bd736cd40721f862b84a2c64fe4f15bdbf3070
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 7
   completed_plans: 7
-  percent: 100
+  percent: 0
 ---
 
 # Project State
@@ -90,6 +90,6 @@ None (flat mode)
 
 ## Session
 
-**Last session:** 2026-11-27T10:40:00.000Z
-**Stopped at:** Phase 18 verification complete (human_needed) — manual UAT pending
-**Resume file:** `.planning/phases/18-foundation-auth-5-days/18-UAT.md`
+**Last session:** 2026-11-27T01:07:10.825Z
+**Stopped at:** Phase 19 context gathered
+**Resume file:** .planning/phases/19-server-pools-auto-ping-7-days/19-CONTEXT.md

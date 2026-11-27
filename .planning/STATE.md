@@ -5,16 +5,16 @@ milestone_name: Мобильный клиент
 current_phase: 19
 current_phase_name: Server Pools & Auto-Ping
 status: executing
-stopped_at: Completed 19-03-PLAN.md
-last_updated: "2026-11-27T03:59:20.794Z"
+stopped_at: Completed 19-04-PLAN.md
+last_updated: "2026-11-27T04:12:58.445Z"
 last_activity: 2026-11-27
 last_activity_desc: Phase 19 execution started
-state_head: 2f197f5522e965be8edcfe765a1ae09340de6dd5
+state_head: 39d5f3ff72e4a1d70205ca5679256dfdb04a9064
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 15
-  completed_plans: 10
+  completed_plans: 11
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 ## Current Position
 
 Phase: 19 (Server Pools & Auto-Ping) — EXECUTING
-Plan: 4 of 8
+Plan: 5 of 8
 Status: Ready to execute
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-27 — Phase 19 execution started
@@ -88,6 +88,10 @@ None (flat mode)
 - [Phase 19-server-pools-auto-ping-7-days]: 19-03: D-06 gate confirmed locked — ping primary = libbox.urltest HTTP-through-outbound via real URLTest(srv-<id>) + async WriteGroups URLTestDelay, NOT ICMP/NOT libbox_urltest/NOT sync RTT
 - [Phase 19-server-pools-auto-ping-7-days]: 19-03: silent approx TCP fallback owned by PingRepository; LibboxPingService null on unavailable/0,0; no UI indication, no secrets logged
 - [Phase 19-server-pools-auto-ping-7-days]: 19-03: 0,0 => offline fallback; online 0ms sample kept; no load field; rankBest is separate stable RTT-only ranking (REQ-PING-06 deferred)
+- [Phase 19]: 19-04: Drift ping_cache PK(server_id,tab) with inclusive 60s TTL; re-ping only after expiry, manual refresh or network change
+- [Phase 19]: 19-04: network-change clearPingCacheAndLastGood clears ping_cache + last_good but keeps per-tab selection and current_tab (D-11)
+- [Phase 19]: 19-04: last_good PK(tab,server_id) dedupe most-recent-first capped at 5; current_tab singleton defaults to simple
+- [Phase 19]: 19-04: PingCacheLookup.fresh made async so a Drift DAO can implement the cache seam; 19-03 fake cache and tests updated
 
 ## Performance Metrics
 
@@ -103,9 +107,10 @@ None (flat mode)
 | Phase 19-server-pools-auto-ping-7-days P01 | 6min | 3 tasks | 6 files |
 | Phase 19-server-pools-auto-ping-7-days P02 | 11min | 1 tasks | 11 files |
 | Phase 19-server-pools-auto-ping-7-days P03 | 9 min | 3 tasks | 10 files |
+| Phase 19 P04 | 10 min | 3 tasks | 10 files |
 
 ## Session
 
-**Last session:** 2026-11-27T03:59:20.754Z
-**Stopped at:** Completed 19-03-PLAN.md
+**Last session:** 2026-11-27T04:12:58.386Z
+**Stopped at:** Completed 19-04-PLAN.md
 **Resume file:** None

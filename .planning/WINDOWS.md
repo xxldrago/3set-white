@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 14
+open_count: 15
 waived_count: 0
 fixed_count: 0
-total_count: 14
-last_updated: 2026-11-27T03:44:45.644Z
+total_count: 15
+last_updated: 2026-11-27T04:11:52.727Z
 ---
 
 # Broken Windows Ledger
@@ -29,6 +29,7 @@ last_updated: 2026-11-27T03:44:45.644Z
 | 12 | 05 | stub | app/admin/page.tsx |  | Overview metric cards render the intentional em-dash baseline; plan 05-07 fills DB/ARTEMIDA stats | open |  | 2026-10-03T22:14:55.389Z |  |
 | 13 | 05 | stub | app/admin/page.tsx |  | Group try/catch degradation scaffolding wraps no data read yet; plan 05-07 wires the reads | open |  | 2026-10-03T22:14:55.456Z |  |
 | 14 | 19 | unrun-verify | mobile/native/libbox_shim/build.sh |  | Native .so/.xcframework build and on-device URLTest not runnable in this env (Android JDK/SDK absent; iOS CI-built); silent Socket.connect fallback ships in 19-03 | open |  | 2026-11-27T03:44:45.644Z |  |
+| 15 | 19 | deviation | mobile/lib/core/ping/ping_repository.dart |  | PingCacheLookup.fresh made async so the Drift PingCacheDao can implement the fresh-cache seam (SQLite reads are Future-based); 19-03 fake cache updated | open |  | 2026-11-27T04:11:52.727Z |  |
 
 ````json
 [
@@ -198,6 +199,18 @@ last_updated: 2026-11-27T03:44:45.644Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-27T03:44:45.644Z",
+    "resolved_at": null
+  },
+  {
+    "id": 15,
+    "kind": "deviation",
+    "phase": "19",
+    "file": "mobile/lib/core/ping/ping_repository.dart",
+    "line": null,
+    "description": "PingCacheLookup.fresh made async so the Drift PingCacheDao can implement the fresh-cache seam (SQLite reads are Future-based); 19-03 fake cache updated",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T04:11:52.727Z",
     "resolved_at": null
   }
 ]

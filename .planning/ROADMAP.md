@@ -97,7 +97,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 19-04-PLAN.md — Dark prototype theme app-wide (`AppTheme.dark` verbatim; `ThemeMode.dark`; M3; fonts); re-theme auth; no `load`; min-8
+- [x] 19-04-PLAN.md — Dark prototype theme app-wide (`AppTheme.dark` verbatim; `ThemeMode.dark`; M3; fonts); re-theme auth; no `load`; min-8
 
 **Wave 5** *(blocked on Wave 4 completion)*
 

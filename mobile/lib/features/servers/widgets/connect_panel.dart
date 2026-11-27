@@ -86,9 +86,7 @@ class ConnectPanel extends StatelessWidget {
             Text(
               outcomeNotice!,
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: AppTheme.teal,
-              ),
+              style: theme.textTheme.bodySmall?.copyWith(color: AppTheme.teal),
             ),
           ] else
             const SizedBox(height: 8),
@@ -96,114 +94,98 @@ class ConnectPanel extends StatelessWidget {
             "Автопинг перед подключением · быстрый путь по "
             "последним живым серверам",
             textAlign: TextAlign.center,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: AppTheme.dim,
-            ),
+            style: theme.textTheme.labelSmall?.copyWith(color: AppTheme.dim),
           ),
         ],
       ),
     );
   }
 
-  Widget _panel(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.line2),
-      ),
-      child: Column(
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: _cell(
-                  "Сервер",
-                  selected == null
-                      ? "Автовыбор"
-                      : (selected!.city.isEmpty
+  Widget _panel(ThemeData theme) => Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: AppTheme.surface,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: AppTheme.line2),
+    ),
+    child: Column(
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: _cell(
+                "Сервер",
+                selected == null
+                    ? "Автовыбор"
+                    : (selected!.city.isEmpty
                           ? selected!.name
                           : selected!.city),
-                  theme,
-                ),
+                theme,
               ),
-              Expanded(
-                child: _cell(
-                  "Протокол",
-                  selected?.proto ?? "—",
-                  theme,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: _cell("IP", "—", theme),
-              ),
-              Expanded(
-                child: _cell(
-                  "Пинг",
-                  sample != null && sample!.online && sample!.rtt != null
-                      ? "${sample!.rtt} мс"
-                      : "—",
-                  theme,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Text(
-                "—:—:—",
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontFamily: AppTheme.fontMono,
-                  color: AppTheme.dim,
-                ),
-              ),
-              Text(
-                "↓ —   ↑ —",
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: AppTheme.dim,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            "Туннель, IP и трафик — фаза 20",
-            textAlign: TextAlign.center,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: AppTheme.dim,
-              fontSize: 9,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _cell(String label, String value, ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          label,
-          style: theme.textTheme.labelSmall?.copyWith(color: AppTheme.dim),
+            Expanded(child: _cell("Протокол", selected?.proto ?? "—", theme)),
+          ],
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 10),
+        Row(
+          children: <Widget>[
+            Expanded(child: _cell("IP", "—", theme)),
+            Expanded(
+              child: _cell(
+                "Пинг",
+                sample != null && sample!.online && sample!.rtt != null
+                    ? "${sample!.rtt} мс"
+                    : "—",
+                theme,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Text(
+              "—:—:—",
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontFamily: AppTheme.fontMono,
+                color: AppTheme.dim,
+              ),
+            ),
+            Text(
+              "↓ —   ↑ —",
+              style: theme.textTheme.labelSmall?.copyWith(color: AppTheme.dim),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
         Text(
-          value,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontFamily: AppTheme.fontMono,
+          "Туннель, IP и трафик — фаза 20",
+          textAlign: TextAlign.center,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: AppTheme.dim,
+            fontSize: 9,
           ),
-          overflow: TextOverflow.ellipsis,
         ),
       ],
-    );
-  }
+    ),
+  );
+
+  Widget _cell(String label, String value, ThemeData theme) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: <Widget>[
+      Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(color: AppTheme.dim),
+      ),
+      const SizedBox(height: 2),
+      Text(
+        value,
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontFamily: AppTheme.fontMono,
+        ),
+        overflow: TextOverflow.ellipsis,
+      ),
+    ],
+  );
 }

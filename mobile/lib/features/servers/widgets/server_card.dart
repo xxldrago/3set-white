@@ -47,34 +47,33 @@ class PingBadge extends StatelessWidget {
   }
 
   Color _color(PingClass classification) => switch (classification) {
-        PingClass.good => AppTheme.pingGood,
-        PingClass.mid => AppTheme.pingMid,
-        PingClass.warn => AppTheme.pingWarn,
-        PingClass.bad => AppTheme.pingBad,
-        PingClass.offline => AppTheme.pingOffline,
-      };
+    PingClass.good => AppTheme.pingGood,
+    PingClass.mid => AppTheme.pingMid,
+    PingClass.warn => AppTheme.pingWarn,
+    PingClass.bad => AppTheme.pingBad,
+    PingClass.offline => AppTheme.pingOffline,
+  };
 
-  Widget _value(String text, Color color, ThemeData theme) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
-      children: <Widget>[
-        Text(
-          text,
-          style: (compact
-                  ? theme.textTheme.titleMedium
-                  : theme.textTheme.headlineSmall)
-              ?.copyWith(color: color, fontFamily: AppTheme.fontMono),
-        ),
-        const SizedBox(width: 2),
-        Text(
-          "мс",
-          style: theme.textTheme.labelSmall?.copyWith(color: AppTheme.muted),
-        ),
-      ],
-    );
-  }
+  Widget _value(String text, Color color, ThemeData theme) => Row(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.baseline,
+    textBaseline: TextBaseline.alphabetic,
+    children: <Widget>[
+      Text(
+        text,
+        style:
+            (compact
+                    ? theme.textTheme.titleMedium
+                    : theme.textTheme.headlineSmall)
+                ?.copyWith(color: color, fontFamily: AppTheme.fontMono),
+      ),
+      const SizedBox(width: 2),
+      Text(
+        "мс",
+        style: theme.textTheme.labelSmall?.copyWith(color: AppTheme.muted),
+      ),
+    ],
+  );
 }
 
 /// One metadata-only server row from the prototype (`.srv`).
@@ -141,72 +140,68 @@ class ServerCard extends StatelessWidget {
     );
   }
 
-  Widget _details(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Row(
-          children: <Widget>[
-            Flexible(
-              child: Text(
-                server.city.isEmpty ? server.name : server.city,
-                style: theme.textTheme.titleLarge,
-                overflow: TextOverflow.ellipsis,
+  Widget _details(ThemeData theme) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: <Widget>[
+      Row(
+        children: <Widget>[
+          Flexible(
+            child: Text(
+              server.city.isEmpty ? server.name : server.city,
+              style: theme.textTheme.titleLarge,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (server.cc.isNotEmpty) ...<Widget>[
+            const SizedBox(width: 6),
+            Text(
+              server.cc,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontFamily: AppTheme.fontMono,
               ),
             ),
-            if (server.cc.isNotEmpty) ...<Widget>[
-              const SizedBox(width: 6),
-              Text(
-                server.cc,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontFamily: AppTheme.fontMono,
-                ),
-              ),
-            ],
-            if (lastGood) ...<Widget>[
-              const SizedBox(width: 6),
-              _chip("последний", AppTheme.teal, theme),
-            ],
           ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          "${server.host}:${server.port}",
-          style: theme.textTheme.labelSmall?.copyWith(
-            fontFamily: AppTheme.fontMono,
-            color: AppTheme.dim,
-          ),
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: 6),
-        Wrap(
-          spacing: 6,
-          runSpacing: 4,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: <Widget>[
-            _chip(server.proto, AppTheme.lime, theme),
-            if (server.tab == PoolTab.whitelist &&
-                server.sni != null &&
-                server.sni!.isNotEmpty)
-              _chip("SNI: ${server.sni}", AppTheme.blue, theme),
+          if (lastGood) ...<Widget>[
+            const SizedBox(width: 6),
+            _chip("последний", AppTheme.teal, theme),
           ],
+        ],
+      ),
+      const SizedBox(height: 4),
+      Text(
+        "${server.host}:${server.port}",
+        style: theme.textTheme.labelSmall?.copyWith(
+          fontFamily: AppTheme.fontMono,
+          color: AppTheme.dim,
         ),
-      ],
-    );
-  }
+        overflow: TextOverflow.ellipsis,
+      ),
+      const SizedBox(height: 6),
+      Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: <Widget>[
+          _chip(server.proto, AppTheme.lime, theme),
+          if (server.tab == PoolTab.whitelist &&
+              server.sni != null &&
+              server.sni!.isNotEmpty)
+            _chip("SNI: ${server.sni}", AppTheme.blue, theme),
+        ],
+      ),
+    ],
+  );
 
-  Widget _chip(String label, Color color, ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Text(
-        label,
-        style: theme.textTheme.labelSmall?.copyWith(color: color),
-      ),
-    );
-  }
+  Widget _chip(String label, Color color, ThemeData theme) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: color.withValues(alpha: 0.4)),
+    ),
+    child: Text(
+      label,
+      style: theme.textTheme.labelSmall?.copyWith(color: color),
+    ),
+  );
 }

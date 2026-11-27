@@ -61,21 +61,14 @@ class AutoSelectCard extends StatelessWidget {
                   color: AppTheme.lime.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
-                  Icons.bolt,
-                  color: AppTheme.lime,
-                  size: 20,
-                ),
+                child: const Icon(Icons.bolt, color: AppTheme.lime, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(
-                      "Автовыбор",
-                      style: theme.textTheme.titleLarge,
-                    ),
+                    Text("Автовыбор", style: theme.textTheme.titleLarge),
                     const SizedBox(height: 3),
                     Text(
                       best == null

@@ -50,10 +50,9 @@ String _networkLabel(List<ConnectivityResult> results) {
 }
 
 /// Most recent successful server of each tab, driving the «последний» chip.
-final lastGoodProvider =
-    FutureProvider.family<List<LastGoodData>, PoolTab>((ref, tab) async {
-  return ref.read(pingDaoProvider).lastGoodFor(tab.wireName);
-});
+final lastGoodProvider = FutureProvider.family<List<LastGoodData>, PoolTab>(
+  (ref, tab) async => ref.read(pingDaoProvider).lastGoodFor(tab.wireName),
+);
 
 /// Full prototype main screen (D-15/D-17/D-18/D-19/D-20/D-21).
 ///
@@ -142,17 +141,9 @@ class ServerPoolScreen extends ConsumerWidget {
             ),
             Expanded(
               child: poolsAsync.when(
-                data: (data) => _list(
-                  context,
-                  ref,
-                  tab,
-                  data,
-                  lastGood,
-                  effectiveId,
-                  best,
-                ),
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                data: (data) =>
+                    _list(context, ref, tab, data, lastGood, effectiveId, best),
+                loading: () => const Center(child: CircularProgressIndicator()),
                 error: (_, _) => _retry(context, ref),
               ),
             ),
@@ -200,7 +191,8 @@ class ServerPoolScreen extends ConsumerWidget {
       for (final row in rows) row.serverId: row,
     };
     final lastGoodId = lastGood.isEmpty ? null : lastGood.first.serverId;
-    final allOffline = servers.isNotEmpty &&
+    final allOffline =
+        servers.isNotEmpty &&
         rows.isNotEmpty &&
         rows.where((row) => row.online).isEmpty;
 
@@ -266,23 +258,21 @@ class ServerPoolScreen extends ConsumerWidget {
     );
   }
 
-  Widget _retry(BuildContext context, WidgetRef ref) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          const Icon(Icons.error_outline, size: 48, color: AppTheme.red),
-          const SizedBox(height: 12),
-          const Text("Нет соединения. Повторите"),
-          const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: () => ref.invalidate(serverPoolProvider),
-            child: const Text("Повторить"),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _retry(BuildContext context, WidgetRef ref) => Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        const Icon(Icons.error_outline, size: 48, color: AppTheme.red),
+        const SizedBox(height: 12),
+        const Text("Нет соединения. Повторите"),
+        const SizedBox(height: 12),
+        OutlinedButton(
+          onPressed: () => ref.invalidate(serverPoolProvider),
+          child: const Text("Повторить"),
+        ),
+      ],
+    ),
+  );
 
   Future<void> _select(WidgetRef ref, PoolTab tab, String id) async {
     await ref.read(selectionProvider(tab).notifier).select(id);
@@ -299,8 +289,9 @@ class ServerPoolScreen extends ConsumerWidget {
   ) async {
     ref.read(poolBusyProvider.notifier).state = true;
     try {
-      final result =
-          await ref.read(connectControllerProvider.notifier).refresh(tab);
+      final result = await ref
+          .read(connectControllerProvider.notifier)
+          .refresh(tab);
       if (!context.mounted) {
         return;
       }
@@ -323,11 +314,9 @@ class ServerPoolScreen extends ConsumerWidget {
     try {
       final savedId = ref.read(selectionProvider(tab));
       final auto = savedId == null || savedId == "auto";
-      await ref.read(connectControllerProvider.notifier).connect(
-            tab,
-            auto: auto,
-            manualServerId: auto ? null : savedId,
-          );
+      await ref
+          .read(connectControllerProvider.notifier)
+          .connect(tab, auto: auto, manualServerId: auto ? null : savedId);
     } finally {
       ref.read(poolBusyProvider.notifier).state = false;
     }
@@ -367,17 +356,23 @@ class ServerPoolScreen extends ConsumerWidget {
 class _LogicSheet extends StatelessWidget {
   const _LogicSheet();
 
-  static const String _step1 = "Два пула серверов — обычные серверы и "
+  static const String _step1 =
+      "Два пула серверов — обычные серверы и "
       "VLESS+Reality с SNI разрешённых доменов.";
-  static const String _step2 = "Автопинг через ядро — не ICMP, а urltest: "
+  static const String _step2 =
+      "Автопинг через ядро — не ICMP, а urltest: "
       "HTTP-запрос через каждый outbound.";
-  static const String _step3 = "Быстрый путь — до 3 успешных серверов, "
+  static const String _step3 =
+      "Быстрый путь — до 3 успешных серверов, "
       "таймаут 800 мс.";
-  static const String _step4 = "Полный пинг и ранкинг — параллельная проверка "
+  static const String _step4 =
+      "Полный пинг и ранкинг — параллельная проверка "
       "всех серверов за 2 с, кеш 60 секунд.";
-  static const String _step5 = "Смена сети — Wi-Fi ↔ LTE инвалидирует кеш "
+  static const String _step5 =
+      "Смена сети — Wi-Fi ↔ LTE инвалидирует кеш "
       "и запускает ре-пинг.";
-  static const String _step6 = "Ключ = подписка — конфиги приходят только "
+  static const String _step6 =
+      "Ключ = подписка — конфиги приходят только "
       "при активном ключе.";
   static const List<String> _steps = <String>[
     _step1,
@@ -442,9 +437,7 @@ class _ProfileSheet extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             "Устройства и подписка — фаза 21",
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: AppTheme.muted,
-            ),
+            style: theme.textTheme.bodyMedium?.copyWith(color: AppTheme.muted),
           ),
         ],
       ),

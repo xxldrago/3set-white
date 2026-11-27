@@ -72,163 +72,147 @@ class MainHeader extends StatelessWidget {
               _statusPill(theme),
               _pill(
                 label: _keyLabel(keyMeta),
-                color: keyMeta?.active == true
-                    ? AppTheme.lime
-                    : AppTheme.muted,
+                color: keyMeta?.active == true ? AppTheme.lime : AppTheme.muted,
                 theme: theme,
               ),
-              _pill(
-                label: _ruDate(now),
+              _pill(label: _ruDate(now), color: AppTheme.muted, theme: theme),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _brand(ThemeData theme) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: <Widget>[
+      Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          gradient: const LinearGradient(
+            colors: <Color>[AppTheme.gradStart, AppTheme.gradEnd],
+          ),
+        ),
+        child: const Icon(Icons.bolt, color: AppTheme.bg, size: 20),
+      ),
+      const SizedBox(width: 8),
+      RichText(
+        text: TextSpan(
+          children: <TextSpan>[
+            TextSpan(
+              text: "3",
+              style: TextStyle(
+                fontFamily: AppTheme.fontDisplay,
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            TextSpan(
+              text: "set",
+              style: TextStyle(
+                fontFamily: AppTheme.fontDisplay,
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.lime,
+              ),
+            ),
+            TextSpan(
+              text: ".online",
+              style: TextStyle(
+                fontFamily: AppTheme.fontBody,
+                fontSize: 12,
                 color: AppTheme.muted,
-                theme: theme,
               ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
-    );
-  }
+    ],
+  );
 
-  Widget _brand(ThemeData theme) {
-    return Row(
+  Widget _actions(ThemeData theme) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: <Widget>[
+      IconButton(
+        tooltip: "Как это работает",
+        icon: const Icon(Icons.help_outline),
+        onPressed: onLogic,
+      ),
+      IconButton(
+        tooltip: "Купить ключ",
+        icon: const Icon(Icons.shopping_bag_outlined),
+        onPressed: onShop,
+      ),
+      IconButton(
+        tooltip: "Обновить пинг",
+        icon: refreshing
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.refresh),
+        onPressed: refreshing ? null : onRefresh,
+      ),
+      const SizedBox(width: 2),
+      Semantics(
+        label: "Профиль",
+        child: GestureDetector(
+          onTap: onProfile,
+          child: CircleAvatar(
+            radius: 17,
+            backgroundColor: AppTheme.surface3,
+            child: Text(
+              "А",
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: AppTheme.lime2,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
+
+  Widget _statusPill(ThemeData theme) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    decoration: BoxDecoration(
+      color: AppTheme.surface2,
+      borderRadius: BorderRadius.circular(999),
+      border: Border.all(color: AppTheme.line),
+    ),
+    child: Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            gradient: const LinearGradient(
-              colors: <Color>[AppTheme.gradStart, AppTheme.gradEnd],
-            ),
-          ),
-          child: const Icon(Icons.bolt, color: AppTheme.bg, size: 20),
-        ),
-        const SizedBox(width: 8),
-        RichText(
-          text: TextSpan(
-            children: <TextSpan>[
-              TextSpan(
-                text: "3",
-                style: TextStyle(
-                  fontFamily: AppTheme.fontDisplay,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-              TextSpan(
-                text: "set",
-                style: TextStyle(
-                  fontFamily: AppTheme.fontDisplay,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.lime,
-                ),
-              ),
-              TextSpan(
-                text: ".online",
-                style: TextStyle(
-                  fontFamily: AppTheme.fontBody,
-                  fontSize: 12,
-                  color: AppTheme.muted,
-                ),
-              ),
-            ],
-          ),
+        const Icon(Icons.circle, color: AppTheme.lime, size: 8),
+        const SizedBox(width: 6),
+        Text(
+          "VPN выключен",
+          style: theme.textTheme.labelMedium?.copyWith(color: AppTheme.text),
         ),
       ],
-    );
-  }
-
-  Widget _actions(ThemeData theme) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        IconButton(
-          tooltip: "Как это работает",
-          icon: const Icon(Icons.help_outline),
-          onPressed: onLogic,
-        ),
-        IconButton(
-          tooltip: "Купить ключ",
-          icon: const Icon(Icons.shopping_bag_outlined),
-          onPressed: onShop,
-        ),
-        IconButton(
-          tooltip: "Обновить пинг",
-          icon: refreshing
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.refresh),
-          onPressed: refreshing ? null : onRefresh,
-        ),
-        const SizedBox(width: 2),
-        Semantics(
-          label: "Профиль",
-          child: GestureDetector(
-            onTap: onProfile,
-            child: CircleAvatar(
-              radius: 17,
-              backgroundColor: AppTheme.surface3,
-              child: Text(
-                "А",
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: AppTheme.lime2,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _statusPill(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppTheme.surface2,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppTheme.line),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          const Icon(Icons.circle, color: AppTheme.lime, size: 8),
-          const SizedBox(width: 6),
-          Text(
-            "VPN выключен",
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: AppTheme.text,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+    ),
+  );
 
   Widget _pill({
     required String label,
     required Color color,
     required ThemeData theme,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppTheme.surface2,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppTheme.line),
-      ),
-      child: Text(
-        label,
-        style: theme.textTheme.labelMedium?.copyWith(color: color),
-      ),
-    );
-  }
+  }) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    decoration: BoxDecoration(
+      color: AppTheme.surface2,
+      borderRadius: BorderRadius.circular(999),
+      border: Border.all(color: AppTheme.line),
+    ),
+    child: Text(
+      label,
+      style: theme.textTheme.labelMedium?.copyWith(color: color),
+    ),
+  );
 
   String _greeting(DateTime now) {
     final hour = now.hour;

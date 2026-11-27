@@ -31,9 +31,11 @@ class PoolToolbar extends StatelessWidget {
 
   /// Locked prototype copy for each pool mode.
   static const Map<PoolTab, String> descriptions = <PoolTab, String>{
-    PoolTab.simple: "Полный туннель · весь трафик через сервер · "
+    PoolTab.simple:
+        "Полный туннель · весь трафик через сервер · "
         "WireGuard / Hysteria2 / SS",
-    PoolTab.whitelist: "Reality с SNI разрешённых доменов · "
+    PoolTab.whitelist:
+        "Reality с SNI разрешённых доменов · "
         "работает при белых списках оператора",
   };
 
@@ -47,9 +49,7 @@ class PoolToolbar extends StatelessWidget {
           Expanded(
             child: Text(
               descriptions[tab] ?? "",
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: AppTheme.muted,
-              ),
+              style: theme.textTheme.bodySmall?.copyWith(color: AppTheme.muted),
             ),
           ),
           const SizedBox(width: 8),
@@ -90,9 +90,7 @@ class PoolToolbar extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             networkLabel,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: AppTheme.text,
-            ),
+            style: theme.textTheme.labelSmall?.copyWith(color: AppTheme.text),
           ),
         ],
       ),

@@ -29,31 +29,30 @@ class PoolTabBar extends StatelessWidget {
   };
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18),
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppTheme.line),
-        ),
-        child: Row(
-          children: <Widget>[
-            for (final tab in PoolTab.values)
-              Expanded(child: _segment(context, tab)),
-          ],
-        ),
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 18),
+    child: Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.line),
       ),
-    );
-  }
+      child: Row(
+        children: <Widget>[
+          for (final tab in PoolTab.values)
+            Expanded(child: _segment(context, tab)),
+        ],
+      ),
+    ),
+  );
 
   Widget _segment(BuildContext context, PoolTab tab) {
     final isSelected = tab == selected;
     final theme = Theme.of(context);
     final label = labels[tab] ?? tab.wireName;
     return Semantics(
+      button: true,
       selected: isSelected,
       label: label,
       child: GestureDetector(

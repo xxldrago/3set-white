@@ -41,12 +41,22 @@ result: [pending]
 expected: Decide whether the pool screen's «Купить» buttons navigate to the existing tested `/shop` stub route, or formally accept the current toast stub as the phase-19 placeholder.
 result: [pending]
 
+### 6. Post-fix WR-02 — group-triggered URLTest
+
+expected: On a real native build, inspect the generated sing-box config during a ping; the `urltest` group carries `url: https://www.gstatic.com/generate_204`, `URLTest` is triggered on the group tag (`ut-srv-<id>`), and the async sample is mirrored back under `srv-<id>`.
+result: [pending]
+
+### 7. Post-fix WR-06 — read-time TTL expiry
+
+expected: After a successful ping, leave the app open past the 60 s TTL without any ping write (e.g. background and resume, or any unrelated UI rebuild); server card, connect panel and auto-select card must treat rows as stale and re-ping.
+result: [pending]
+
 ## Summary
 
-total: 5
+total: 7
 passed: 0
 issues: 0
-pending: 5
+pending: 7
 skipped: 0
 blocked: 0
 

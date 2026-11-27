@@ -467,5 +467,93 @@ void main() {
         ["fast", "slow"],
       );
     });
+
+    test("equal RTT keeps input order (no load tie-break)", () {
+      final outcomes = [
+        PingOutcome(
+          target: target("first"),
+          result: const PingResult(
+            online: true,
+            rttMs: 50,
+            approx: false,
+            tsMs: 1,
+          ),
+        ),
+        PingOutcome(
+          target: target("second"),
+          result: const PingResult(
+            online: true,
+            rttMs: 50,
+            approx: true,
+            tsMs: 2,
+          ),
+        ),
+      ];
+
+      final ranked = rankBest(outcomes);
+
+      expect(
+        ranked.map((outcome) => outcome.target.id).toList(),
+        ["first", "second"],
+      );
+      expect(
+        outcomes.first.result.toJson().containsKey("load"),
+        isFalse,
+      );
+    });
+  });
+
+  group("full ping ordering and all-offline", () {
+    test("all offline yields no fabricated online server", () async {
+      final repository = repositoryWith(
+        unavailableLibbox(),
+        connector: refusedConnector,
+      );
+      final targets = [target("a"), target("b"), target("c")];
+
+      final outcomes = await repository.fullPing(targets);
+
+      expect(outcomes, hasLength(3));
+      expect(outcomes.where((outcome) => outcome.result.online), isEmpty);
+      expect(rankBest(outcomes), isEmpty);
+      expect(
+        outcomes.map((outcome) => outcome.target.id).toSet(),
+        {"a", "b", "c"},
+      );
+    });
+
+    test("fullPing keeps input order; ranking is a separate step", () async {
+      final client = MockLibboxPingClient();
+      final rtts = <String, int>{"slow": 200, "fast": 10};
+      when(client.init).thenAnswer((_) async {});
+      when(() => client.start(any())).thenAnswer((_) async {});
+      when(
+        () => client.urltest(any(), timeout: any(named: "timeout")),
+      ).thenAnswer((invocation) async {
+        final tag = invocation.positionalArguments.first as String;
+        final id = tag.replaceFirst("srv-", "");
+        return LibboxUrltestResult(
+          online: true,
+          rttMs: rtts[id] ?? 0,
+        );
+      });
+      final repository = repositoryWith(
+        LibboxPingService(client: client, nowMs: () => 1),
+      );
+
+      final outcomes = await repository.fullPing([
+        target("slow"),
+        target("fast"),
+      ]);
+
+      expect(
+        outcomes.map((outcome) => outcome.target.id).toList(),
+        ["slow", "fast"],
+      );
+      expect(
+        rankBest(outcomes).map((outcome) => outcome.target.id).toList(),
+        ["fast", "slow"],
+      );
+    });
   });
 }

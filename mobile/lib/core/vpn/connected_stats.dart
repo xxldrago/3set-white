@@ -37,7 +37,7 @@ class TunnelHttpResponse {
 /// real network call and no `sleep` is needed.
 typedef TunnelHttpGet = Future<TunnelHttpResponse> Function(
   Uri uri, {
-  Duration timeout,
+  required Duration timeout,
 });
 
 /// Production GET over `dart:io` `HttpClient`.
@@ -46,7 +46,7 @@ typedef TunnelHttpGet = Future<TunnelHttpResponse> Function(
 /// or raw error text is ever logged, returned on failure or fabricated.
 Future<TunnelHttpResponse> dartIoGet(
   Uri uri, {
-  Duration timeout = tunnelIpTimeout,
+  required Duration timeout,
 }) async {
   final client = HttpClient();
   try {
@@ -258,7 +258,14 @@ class ConnectedStatsNotifier extends Notifier<ConnectedStats> {
   }
 
   Future<void> _refreshIp(DateTime session) async {
-    final ip = await ref.read(tunnelIpFetcherProvider)();
+    String ip;
+    try {
+      ip = await ref.read(tunnelIpFetcherProvider)();
+    } on Object {
+      // The real fetcher already fails closed; an injected/third-party
+      // failure must also never surface raw HTTP text in state or logs.
+      ip = "";
+    }
     if (_session != session) return; // stale session: never show a stale IP
     _ip = ip;
     state = _snapshot(session);

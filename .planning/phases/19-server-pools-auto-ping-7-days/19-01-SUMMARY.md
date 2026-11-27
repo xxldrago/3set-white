@@ -135,7 +135,9 @@ Each task was committed atomically:
 3. **Task 3: Exhaustive parser + pool classifier tests** — `7bf6913` (test)
 4. **Task 4: Route + source tests (gating/caching/provider errors/no-secret)** — `91db6a9` (test)
 
-**Plan metadata:** pending final docs commit.
+**Plan metadata:** `efe49af` (docs: complete plan; includes deferred-items ledger, STATE.md position/decisions and ROADMAP.md progress).
+
+_Note: the shared-ID gate (`requirements.ready-ids`) reported 0/4 requirements ready because sibling plans in phase 19 declare the same REQ-POOL IDs and have no SUMMARY yet; the checkboxes will flip when the last declaring plan finishes._
 
 ## Files Created/Modified
 

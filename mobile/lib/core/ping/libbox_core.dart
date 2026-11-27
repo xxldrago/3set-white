@@ -4,6 +4,7 @@ import "dart:ffi" as ffi;
 import "dart:io";
 
 import "package:ffi/ffi.dart";
+
 import "generated/libbox_bindings.dart";
 
 /// Thrown when the native libbox shim cannot be loaded or used.
@@ -36,16 +37,78 @@ class LibboxConfigException implements Exception {
 /// Result of one libbox URLTest against a real outbound.
 class LibboxUrltestResult {
   /// Creates a URLTest result.
-  const LibboxUrltestResult({
-    required this.online,
-    required this.rttMs,
-  });
+  const LibboxUrltestResult({required this.online, required this.rttMs});
 
   /// Whether the outbound answered the `generate_204` probe.
   final bool online;
 
   /// Round-trip time in milliseconds; zero when offline or without history.
   final int rttMs;
+}
+
+/// Live traffic totals reported by libbox for the current tunnel session.
+///
+/// Values come from libbox `StatusMessage` (`DownlinkTotal` / `UplinkTotal` /
+/// `TrafficAvailable`) through `libbox_traffic()`. No value is simulated.
+class TrafficSnapshot {
+  /// Creates a snapshot from live libbox counters.
+  const TrafficSnapshot({
+    required this.down,
+    required this.up,
+    required this.available,
+  });
+
+  /// Zero snapshot used when libbox has no live counters.
+  const TrafficSnapshot.zero() : down = 0, up = 0, available = false;
+
+  /// Total downloaded bytes for the session.
+  final int down;
+
+  /// Total uploaded bytes for the session.
+  final int up;
+
+  /// Whether libbox reported live counters for this session.
+  final bool available;
+
+  @override
+  String toString() =>
+      "TrafficSnapshot(down: $down, up: $up, available: $available)";
+}
+
+/// Decodes the raw `libbox_traffic()` JSON into a safe [TrafficSnapshot].
+///
+/// `available:false`, malformed payloads and non-int counters yield zeros so
+/// no fabricated bytes ever reach the Connected Panel (plan 07).
+TrafficSnapshot decodeTrafficSnapshot(String raw) {
+  if (raw.isEmpty) {
+    return const TrafficSnapshot.zero();
+  }
+  final Object? decoded;
+  try {
+    decoded = jsonDecode(raw);
+  } on Object {
+    return const TrafficSnapshot.zero();
+  }
+  if (decoded is! Map<String, dynamic> || decoded["available"] != true) {
+    return const TrafficSnapshot.zero();
+  }
+  final down = decoded["down"];
+  final up = decoded["up"];
+  return TrafficSnapshot(
+    down: down is int ? down : 0,
+    up: up is int ? up : 0,
+    available: true,
+  );
+}
+
+/// Minimal native seam for [LibboxPingCore.traffic], injectable in unit tests.
+/// Production never sets it; the real binding reads `libbox_traffic()`.
+abstract class LibboxTrafficBridge {
+  /// Creates a native-seam bridge.
+  const LibboxTrafficBridge();
+
+  /// Returns the raw JSON string the native shim would return.
+  String readTrafficJson();
 }
 
 /// Singleton wrapper around the C ABI of our own sing-box libbox shim.
@@ -63,6 +126,10 @@ class LibboxPingCore {
   Future<void>? _initFuture;
   bool _started = false;
   Future<void> _tail = Future<void>.value();
+
+  /// Test-only traffic bridge: injects raw JSON without loading the shared
+  /// library. Always `null` in production paths.
+  LibboxTrafficBridge? trafficBridgeForTesting;
 
   /// Whether [init] completed successfully.
   bool get isAvailable => _bindings != null;
@@ -139,36 +206,70 @@ class LibboxPingCore {
   ///
   /// The configuration is never logged, returned or exposed on error.
   Future<void> start(String configJson) => _serialized<void>(() async {
-        // Start shares the shim's single command client with urltest/stop.
-        final bindings = _bindings;
-        if (bindings == null) {
-          throw const LibboxUnavailableException("call init() first");
-        }
-        final configPtr = configJson.toNativeUtf8();
-        try {
-          final checkError = _takeString(
-            bindings.libbox_check_config(configPtr.cast<ffi.Char>()),
-            bindings,
+    // Start shares the shim's single command client with urltest/stop.
+    final bindings = _bindings;
+    if (bindings == null) {
+      throw const LibboxUnavailableException("call init() first");
+    }
+    final configPtr = configJson.toNativeUtf8();
+    try {
+      final checkError = _takeString(
+        bindings.libbox_check_config(configPtr.cast<ffi.Char>()),
+        bindings,
+      );
+      if (checkError.isNotEmpty) {
+        throw const LibboxConfigException(
+          "sing-box rejected the ping configuration",
+        );
+      }
+      final startError = _takeString(
+        bindings.libbox_start(configPtr.cast<ffi.Char>()),
+        bindings,
+      );
+      if (startError.isNotEmpty) {
+        throw const LibboxConfigException("sing-box service failed to start");
+      }
+      _started = true;
+    } finally {
+      calloc.free(configPtr);
+    }
+  });
+
+  /// Validates and starts the TUN sing-box service with the native-owned [fd].
+  ///
+  /// The fd is never stored in Dart state or logged; libbox dups it internally.
+  /// Only a real OS TUN fd from the platform tunnel flow may be passed here —
+  /// a non-TUN fd aborts the process natively and cannot be caught in Dart.
+  Future<void> startWithTun(int fd, String configJson) => _serialized<void>(
+    () async {
+      final bindings = _bindings;
+      if (bindings == null) {
+        throw const LibboxUnavailableException("call init() first");
+      }
+      final configPtr = configJson.toNativeUtf8();
+      try {
+        final checkError = _takeString(
+          bindings.libbox_check_config(configPtr.cast<ffi.Char>()),
+          bindings,
+        );
+        if (checkError.isNotEmpty) {
+          throw const LibboxConfigException(
+            "sing-box rejected the tunnel configuration",
           );
-          if (checkError.isNotEmpty) {
-            throw const LibboxConfigException(
-              "sing-box rejected the ping configuration",
-            );
-          }
-          final startError = _takeString(
-            bindings.libbox_start(configPtr.cast<ffi.Char>()),
-            bindings,
-          );
-          if (startError.isNotEmpty) {
-            throw const LibboxConfigException(
-              "sing-box service failed to start",
-            );
-          }
-          _started = true;
-        } finally {
-          calloc.free(configPtr);
         }
-      });
+        final startError = _takeString(
+          bindings.libbox_start_with_tun(fd, configPtr.cast<ffi.Char>()),
+          bindings,
+        );
+        if (startError.isNotEmpty) {
+          throw const LibboxConfigException("sing-box tunnel failed to start");
+        }
+        _started = true;
+      } finally {
+        calloc.free(configPtr);
+      }
+    },
+  );
 
   /// Stops the sing-box service and closes the command client.
   Future<void> stop() async {
@@ -228,11 +329,31 @@ class LibboxPingCore {
     });
   }
 
+  /// Reads live traffic counters from libbox, serialized with native calls.
+  ///
+  /// A missing/unavailable counter yields zeros rather than fabricated bytes.
+  Future<TrafficSnapshot> traffic() {
+    final bindings = _bindings;
+    final bridge = trafficBridgeForTesting;
+    if (bindings == null && bridge == null) {
+      return Future<TrafficSnapshot>.error(
+        const LibboxUnavailableException("call init() first"),
+      );
+    }
+    return _serialized<TrafficSnapshot>(() async {
+      final raw = bridge != null
+          ? bridge.readTrafficJson()
+          : _takeString(bindings!.libbox_traffic(), bindings);
+      return decodeTrafficSnapshot(raw);
+    });
+  }
+
   /// Stops the service and releases native references.
   Future<void> dispose() async {
     await stop();
     _bindings = null;
     _initFuture = null;
+    trafficBridgeForTesting = null;
   }
 
   Future<T> _serialized<T>(Future<T> Function() body) {
@@ -248,7 +369,10 @@ class LibboxPingCore {
     });
   }
 
-  String _takeString(ffi.Pointer<ffi.Char> pointer, [LibboxBindings? bindings]) {
+  String _takeString(
+    ffi.Pointer<ffi.Char> pointer, [
+    LibboxBindings? bindings,
+  ]) {
     if (pointer == ffi.nullptr) {
       return "";
     }

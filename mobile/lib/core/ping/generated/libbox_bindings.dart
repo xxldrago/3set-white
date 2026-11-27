@@ -86,6 +86,22 @@ class LibboxBindings {
   late final _libbox_start = _libbox_startPtr
       .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
 
+  ffi.Pointer<ffi.Char> libbox_start_with_tun(
+    int fd,
+    ffi.Pointer<ffi.Char> cfg,
+  ) {
+    return _libbox_start_with_tun(fd, cfg);
+  }
+
+  late final _libbox_start_with_tunPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Pointer<ffi.Char> Function(ffi.Int32, ffi.Pointer<ffi.Char>)
+        >
+      >('libbox_start_with_tun');
+  late final _libbox_start_with_tun = _libbox_start_with_tunPtr
+      .asFunction<ffi.Pointer<ffi.Char> Function(int, ffi.Pointer<ffi.Char>)>();
+
   void libbox_stop() {
     return _libbox_stop();
   }
@@ -94,6 +110,17 @@ class LibboxBindings {
     'libbox_stop',
   );
   late final _libbox_stop = _libbox_stopPtr.asFunction<void Function()>();
+
+  ffi.Pointer<ffi.Char> libbox_traffic() {
+    return _libbox_traffic();
+  }
+
+  late final _libbox_trafficPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function()>>(
+        'libbox_traffic',
+      );
+  late final _libbox_traffic = _libbox_trafficPtr
+      .asFunction<ffi.Pointer<ffi.Char> Function()>();
 
   int urltest(ffi.Pointer<ffi.Char> tag, int timeoutMs) {
     return _urltest(tag, timeoutMs);

@@ -21,8 +21,9 @@ extern const char *_GoStringPtr(_GoString_ s);
 /* Start of preamble from import "C" comments.  */
 
 
-#line 15 "main.go"
+#line 17 "main.go"
 
+#include <stdint.h>
 #include <stdlib.h>
 
 #line 1 "cgo-generated-wrapper"
@@ -91,6 +92,8 @@ extern char* libbox_setup(char* basePath, char* workingPath, char* tempPath);
 extern char* libbox_check_config(char* configJSON);
 extern char* libbox_start(char* configJSON);
 extern void libbox_stop(void);
+extern char* libbox_start_with_tun(int32_t fd, char* cfg);
+extern char* libbox_traffic(void);
 extern int urltest(char* tag, int timeoutMs);
 extern char* urltest_take(char* tag);
 extern void libbox_free_string(char* value);

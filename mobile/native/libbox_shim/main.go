@@ -1,6 +1,8 @@
 // Package main builds a minimal C-shared shim around sing-box libbox v1.14.4.
-// It exposes only the primitives the mobile ping path needs: setup, config
-// validation, service start/stop, URLTest trigger and async result retrieval.
+// One shim, two config modes: the no-TUN ping path (libbox_start + urltest /
+// urltest_take with generate_204) and the TUN tunnel path
+// (libbox_start_with_tun with a platform-owned fd + libbox_traffic counters).
+// Both share setup, config validation, stop and generic error discipline.
 //
 // This is deliberately NOT gomobile: gomobile emits a JNI .aar / ObjC
 // .xcframework, which dart:ffi cannot bind. Here we export a flat C ABI and
@@ -13,6 +15,7 @@
 package main
 
 /*
+#include <stdint.h>
 #include <stdlib.h>
 */
 import "C"
@@ -85,6 +88,19 @@ func (noopPlatform) CreateBridge(*libbox.BridgeOptions) (libbox.BridgeSession, e
 	return nil, errUnsupported
 }
 
+// tunPlatform is the TUN-mode PlatformInterface. The fd is owned by the native
+// platform (Android VpnService / iOS tunnel flow); libbox queries the interface
+// name from it and dups it internally, so the original fd is never closed here.
+// All other platform callbacks stay inert, inherited from noopPlatform.
+type tunPlatform struct {
+	noopPlatform
+	fd int32
+}
+
+func (p *tunPlatform) OpenTun(libbox.TunOptions) (int32, error) {
+	return p.fd, nil
+}
+
 // noopServerHandler satisfies libbox.CommandServerHandler without exposing
 // any system-proxy or crash surface to the ping-only shim.
 type noopServerHandler struct{}
@@ -116,6 +132,12 @@ type urltestHandler struct {
 	waiters  map[string]map[chan struct{}]struct{}
 	groupFor map[string]string // urltest group member tag -> group tag
 	seq      uint64
+
+	// Traffic counters captured from WriteStatus (CommandStatus=1). Stored
+	// under the same mutex as the group records; never fabricated or logged.
+	trafficAvailable bool
+	downTotal        int64
+	upTotal          int64
 }
 
 func newURLTestHandler() *urltestHandler {
@@ -179,7 +201,16 @@ func (h *urltestHandler) Disconnected(string)                          {}
 func (h *urltestHandler) SetDefaultLogLevel(int32)                      {}
 func (h *urltestHandler) ClearLogs()                                    {}
 func (h *urltestHandler) WriteLogs(libbox.LogIterator)                  {}
-func (h *urltestHandler) WriteStatus(*libbox.StatusMessage)             {}
+func (h *urltestHandler) WriteStatus(status *libbox.StatusMessage) {
+	if status == nil {
+		return
+	}
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.trafficAvailable = status.TrafficAvailable
+	h.downTotal = status.DownlinkTotal
+	h.upTotal = status.UplinkTotal
+}
 func (h *urltestHandler) WriteOutbounds(libbox.OutboundGroupItemIterator) {}
 func (h *urltestHandler) InitializeClashMode(libbox.StringIterator, string) {}
 func (h *urltestHandler) UpdateClashMode(string)                       {}
@@ -197,6 +228,15 @@ var (
 type urltestResult struct {
 	Online bool `json:"online"`
 	RttMs  int  `json:"rttMs"`
+}
+
+// trafficResult is the JSON contract read by libbox_traffic on the Dart side.
+// int64 counters are encoded losslessly; "available" reports whether libbox
+// supplied live counters for this session. No value is fabricated here.
+type trafficResult struct {
+	Down      int64 `json:"down"`
+	Up        int64 `json:"up"`
+	Available bool  `json:"available"`
 }
 
 func cEmptyString() *C.char {
@@ -293,6 +333,7 @@ func libbox_start(configJSON *C.char) *C.char {
 	handler.setGroups(groups)
 	options := &libbox.CommandClientOptions{}
 	options.AddCommand(libbox.CommandGroup)
+	options.AddCommand(libbox.CommandStatus)
 	client := libbox.NewCommandClient(handler, options)
 	if err := client.Connect(); err != nil {
 		server.Close()
@@ -305,10 +346,8 @@ func libbox_start(configJSON *C.char) *C.char {
 	return cEmptyString()
 }
 
-//export libbox_stop
-func libbox_stop() {
-	serviceMu.Lock()
-	defer serviceMu.Unlock()
+// stopServiceLocked tears down the process-global service. Caller holds serviceMu.
+func stopServiceLocked() {
 	if commandClient != nil {
 		_ = commandClient.Disconnect()
 		commandClient = nil
@@ -318,6 +357,78 @@ func libbox_stop() {
 		commandServer = nil
 	}
 	activeHandler = nil
+}
+
+//export libbox_stop
+func libbox_stop() {
+	serviceMu.Lock()
+	defer serviceMu.Unlock()
+	stopServiceLocked()
+}
+
+//export libbox_start_with_tun
+func libbox_start_with_tun(fd C.int32_t, cfg *C.char) *C.char {
+	config := C.GoString(cfg)
+	if err := libbox.CheckConfig(config); err != nil {
+		return cErrorMessage("invalid configuration")
+	}
+	groups := urltestGroups(config)
+
+	serviceMu.Lock()
+	defer serviceMu.Unlock()
+
+	// A no-TUN ping service cannot accept a TUN config: its platform has no fd
+	// to hand to libbox. Stop it first so the fd-carrying platform is the one
+	// libbox actually uses for this session.
+	stopServiceLocked()
+
+	server, err := libbox.NewCommandServer(noopServerHandler{}, &tunPlatform{fd: int32(fd)})
+	if err != nil {
+		return cErrorMessage("failed to create command server")
+	}
+	if err := server.Start(); err != nil {
+		return cErrorMessage("failed to start command server")
+	}
+	if err := server.StartOrReloadService(config, &libbox.OverrideOptions{}); err != nil {
+		server.Close()
+		return cErrorMessage("failed to start sing-box service")
+	}
+
+	handler := newURLTestHandler()
+	handler.setGroups(groups)
+	options := &libbox.CommandClientOptions{}
+	options.AddCommand(libbox.CommandGroup)
+	options.AddCommand(libbox.CommandStatus)
+	client := libbox.NewCommandClient(handler, options)
+	if err := client.Connect(); err != nil {
+		server.Close()
+		return cErrorMessage("failed to connect command client")
+	}
+
+	commandServer = server
+	commandClient = client
+	activeHandler = handler
+	return cEmptyString()
+}
+
+//export libbox_traffic
+func libbox_traffic() *C.char {
+	serviceMu.Lock()
+	handler := activeHandler
+	serviceMu.Unlock()
+	result := trafficResult{}
+	if handler != nil {
+		handler.mu.Lock()
+		result.Down = handler.downTotal
+		result.Up = handler.upTotal
+		result.Available = handler.trafficAvailable
+		handler.mu.Unlock()
+	}
+	encoded, err := json.Marshal(result)
+	if err != nil {
+		return cEmptyString()
+	}
+	return C.CString(string(encoded))
 }
 
 //export urltest

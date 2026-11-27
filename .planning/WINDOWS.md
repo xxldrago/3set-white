@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 15
+open_count: 17
 waived_count: 0
 fixed_count: 0
-total_count: 15
-last_updated: 2026-11-27T04:11:52.727Z
+total_count: 17
+last_updated: 2026-11-27T04:40:05.268Z
 ---
 
 # Broken Windows Ledger
@@ -30,6 +30,8 @@ last_updated: 2026-11-27T04:11:52.727Z
 | 13 | 05 | stub | app/admin/page.tsx |  | Group try/catch degradation scaffolding wraps no data read yet; plan 05-07 wires the reads | open |  | 2026-10-03T22:14:55.456Z |  |
 | 14 | 19 | unrun-verify | mobile/native/libbox_shim/build.sh |  | Native .so/.xcframework build and on-device URLTest not runnable in this env (Android JDK/SDK absent; iOS CI-built); silent Socket.connect fallback ships in 19-03 | open |  | 2026-11-27T03:44:45.644Z |  |
 | 15 | 19 | deviation | mobile/lib/core/ping/ping_repository.dart |  | PingCacheLookup.fresh made async so the Drift PingCacheDao can implement the fresh-cache seam (SQLite reads are Future-based); 19-03 fake cache updated | open |  | 2026-11-27T04:11:52.727Z |  |
+| 16 | 19 | deviation | mobile/lib/features/servers/providers.dart |  | REQ-POOL-04 load bar deferred (D-04); RTT-only ranking, no load field parsed or emitted | open |  | 2026-11-27T04:40:05.199Z |  |
+| 17 | 19 | deviation | mobile/lib/features/home/providers.dart |  | bottomNavIndexProvider legacy shim kept until 19-07 removes bottom navigation | open |  | 2026-11-27T04:40:05.268Z |  |
 
 ````json
 [
@@ -211,6 +213,30 @@ last_updated: 2026-11-27T04:11:52.727Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-27T04:11:52.727Z",
+    "resolved_at": null
+  },
+  {
+    "id": 16,
+    "kind": "deviation",
+    "phase": "19",
+    "file": "mobile/lib/features/servers/providers.dart",
+    "line": null,
+    "description": "REQ-POOL-04 load bar deferred (D-04); RTT-only ranking, no load field parsed or emitted",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T04:40:05.199Z",
+    "resolved_at": null
+  },
+  {
+    "id": 17,
+    "kind": "deviation",
+    "phase": "19",
+    "file": "mobile/lib/features/home/providers.dart",
+    "line": null,
+    "description": "bottomNavIndexProvider legacy shim kept until 19-07 removes bottom navigation",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T04:40:05.268Z",
     "resolved_at": null
   }
 ]

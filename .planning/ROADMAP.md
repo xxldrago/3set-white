@@ -105,7 +105,7 @@ Plans:
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
-- [ ] 19-06-PLAN.md — `ServerPoolScreen` full prototype + widgets; no bottom nav; `pingClass`; `последний`; SNI; proto; no `load`; no simulation; Russian
+- [x] 19-06-PLAN.md — `ServerPoolScreen` full prototype + widgets; no bottom nav; `pingClass`; `последний`; SNI; proto; no `load`; no simulation; Russian
 
 **Wave 7** *(blocked on Wave 6 completion)*
 

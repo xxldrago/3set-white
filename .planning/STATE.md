@@ -5,16 +5,16 @@ milestone_name: Мобильный клиент
 current_phase: 19
 current_phase_name: Server Pools & Auto-Ping
 status: executing
-stopped_at: Completed 19-05-PLAN.md
-last_updated: "2026-11-27T04:25:40.405Z"
+stopped_at: Completed 19-06-PLAN.md
+last_updated: "2026-11-27T04:40:05.759Z"
 last_activity: 2026-11-27
 last_activity_desc: Phase 19 execution started
-state_head: f0ad7497af1a41fef2d32a54345c73a0aaa32d71
+state_head: 1ff3d8a34b7fcca1e7c39db792cc3de2b7f0eb54
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 15
-  completed_plans: 12
+  completed_plans: 13
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 ## Current Position
 
 Phase: 19 (Server Pools & Auto-Ping) — EXECUTING
-Plan: 6 of 8
+Plan: 7 of 8
 Status: Ready to execute
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-27 — Phase 19 execution started
@@ -95,6 +95,9 @@ None (flat mode)
 - [Phase 19]: 19-05: D-16 gate confirmed locked - AppTheme.dark app-wide with ThemeMode.dark, M3 kept, AppTheme.light unused; no light toggle, no load, min password 8
 - [Phase 19]: 19-05: bundled official OFL variable TTFs (Manrope/Unbounded/JetBrains Mono) instead of google_fonts - offline-safe, no new dependency
 - [Phase 19]: 19-05: pingOffline=dim distinct from pingBad=red; pingColor thresholds 60/110/180, no load colors and no simulation
+- [Phase 19]: 19-06: connect(mode) is server selection only (D-18) - quick 800ms last-good then 2000ms full ping, no tunnel/core.start/FSM
+- [Phase 19]: 19-06: REQ-POOL-04 load bar remains deferred (D-04); best-server ranking is RTT-only with stable input order
+- [Phase 19]: 19-06: currentTabProvider now persists PoolTab; bottomNavIndexProvider keeps phase-18 router compiling until 19-07
 
 ## Performance Metrics
 
@@ -112,9 +115,10 @@ None (flat mode)
 | Phase 19-server-pools-auto-ping-7-days P03 | 9 min | 3 tasks | 10 files |
 | Phase 19 P04 | 10 min | 3 tasks | 10 files |
 | Phase 19-server-pools-auto-ping-7-days P05 | 8 min | 3 tasks | 17 files |
+| Phase 19-server-pools-auto-ping-7-days P06 | 11 min | 3 tasks | 8 files |
 
 ## Session
 
-**Last session:** 2026-11-27T04:25:40.365Z
-**Stopped at:** Completed 19-05-PLAN.md
+**Last session:** 2026-11-27T04:40:05.717Z
+**Stopped at:** Completed 19-06-PLAN.md
 **Resume file:** None

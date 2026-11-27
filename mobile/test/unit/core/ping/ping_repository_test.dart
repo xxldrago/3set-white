@@ -40,13 +40,13 @@ class FakeCache implements PingCacheWriter, PingCacheLookup {
 }
 
 Future<Socket> okConnector(
-  InternetAddress host,
+  String host,
   int port, {
   Duration timeout = const Duration(milliseconds: 800),
 }) async => MockSocket();
 
 Future<Socket> refusedConnector(
-  InternetAddress host,
+  String host,
   int port, {
   Duration timeout = const Duration(milliseconds: 800),
 }) async => throw const SocketException("refused");
@@ -141,7 +141,7 @@ void main() {
       final service = LibboxPingService(client: client, nowMs: () => 1000);
       var connectorCalls = 0;
       Future<Socket> counted(
-        InternetAddress host,
+        String host,
         int port, {
         Duration timeout = const Duration(milliseconds: 800),
       }) async {
@@ -294,7 +294,7 @@ void main() {
       var active = 0;
       var maxActive = 0;
       Future<Socket> gated(
-        InternetAddress host,
+        String host,
         int port, {
         Duration timeout = const Duration(milliseconds: 800),
       }) async {
@@ -400,7 +400,7 @@ void main() {
     test("cancellation leaves no orphan results or callbacks", () async {
       final release = Completer<void>();
       Future<Socket> gated(
-        InternetAddress host,
+        String host,
         int port, {
         Duration timeout = const Duration(milliseconds: 800),
       }) async {

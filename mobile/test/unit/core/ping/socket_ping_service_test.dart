@@ -10,11 +10,11 @@ class MockSocket extends Mock implements Socket {}
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  final captured = <InternetAddress>[];
+  final captured = <String>[];
   final capturedTimeouts = <Duration>[];
 
   Future<Socket> okConnector(
-    InternetAddress host,
+    String host,
     int port, {
     Duration timeout = const Duration(milliseconds: 800),
   }) async {
@@ -36,13 +36,13 @@ void main() {
     expect(result.online, isTrue);
     expect(result.approx, isTrue);
     expect(result.tsMs, 7);
-    expect(captured.single.address, "::1");
+    expect(captured.single, "::1");
   });
 
   test("measures a real connect and destroys the socket", () async {
     final socket = MockSocket();
     Future<Socket> delayedConnector(
-      InternetAddress host,
+      String host,
       int port, {
       Duration timeout = const Duration(milliseconds: 800),
     }) async {
@@ -72,12 +72,22 @@ void main() {
     expect(capturedTimeouts.single, budget);
   });
 
-  test("null/empty host and bad ports are offline without a socket", () async {
+  test("hostname-based servers are passed to the resolver, not rejected",
+      () async {
+    final service = SocketPingService(connector: okConnector, nowMs: () => 0);
+
+    final result = await service.ping("simple.example.com", "443");
+
+    expect(result.online, isTrue);
+    expect(result.approx, isTrue);
+    expect(captured.single, "simple.example.com");
+  });
+
+  test("empty host and bad ports are offline without a socket", () async {
     final service = SocketPingService(connector: okConnector, nowMs: () => 0);
 
     for (final sample in [
       ("", "443"),
-      ("not-an-ip", "443"),
       ("127.0.0.1", "not-a-port"),
       ("127.0.0.1", "0"),
       ("127.0.0.1", "70000"),
@@ -91,12 +101,12 @@ void main() {
 
   test("SocketException and TimeoutException map to offline", () async {
     Future<Socket> refused(
-      InternetAddress host,
+      String host,
       int port, {
       Duration timeout = const Duration(milliseconds: 800),
     }) async => throw const SocketException("refused");
     Future<Socket> timedOut(
-      InternetAddress host,
+      String host,
       int port, {
       Duration timeout = const Duration(milliseconds: 800),
     }) async => throw TimeoutException("no answer", timeout);

@@ -4,8 +4,12 @@ import "dart:io";
 import "ping_result.dart";
 
 /// TCP connector injectable in tests; production uses [Socket.connect].
+///
+/// The host is passed as a string (IP literal *or* hostname) so the platform
+/// resolver does DNS for us — `InternetAddress.tryParse` only accepts IP
+/// literals and would mark every hostname-based server offline (D-07).
 typedef SocketConnector = Future<Socket> Function(
-  InternetAddress host,
+  String host,
   int port, {
   Duration timeout,
 });
@@ -27,7 +31,7 @@ class SocketPingService {
   final PingClock _nowMs;
 
   static Future<Socket> _defaultConnector(
-    InternetAddress host,
+    String host,
     int port, {
     Duration timeout = const Duration(milliseconds: 800),
   }) => Socket.connect(host, port, timeout: timeout);
@@ -39,9 +43,9 @@ class SocketPingService {
     Duration timeout = const Duration(milliseconds: 800),
   }) async {
     final tsMs = _nowMs();
-    final address = _parseHost(host);
+    final resolvedHost = _parseHost(host);
     final portNumber = int.tryParse(port.trim());
-    if (address == null ||
+    if (resolvedHost.isEmpty ||
         portNumber == null ||
         portNumber < 1 ||
         portNumber > 65535) {
@@ -50,8 +54,10 @@ class SocketPingService {
 
     final watch = Stopwatch()..start();
     try {
+      // `Socket.connect(String, ...)` resolves hostnames via DNS; a failed
+      // lookup surfaces as SocketException and stays silently offline.
       final socket = await _connector(
-        address,
+        resolvedHost,
         portNumber,
         timeout: timeout,
       );
@@ -70,12 +76,13 @@ class SocketPingService {
     }
   }
 
-  /// Strips IPv6 brackets and parses a literal address.
-  static InternetAddress? _parseHost(String raw) {
+  /// Strips IPv6 brackets; leaves IP literals and hostnames for the platform
+  /// resolver inside `Socket.connect` (D-07).
+  static String _parseHost(String raw) {
     var host = raw.trim();
     if (host.startsWith("[") && host.endsWith("]")) {
       host = host.substring(1, host.length - 1);
     }
-    return InternetAddress.tryParse(host);
+    return host;
   }
 }

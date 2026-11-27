@@ -2,17 +2,18 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Мобильный клиент
-current_phase: 18
+current_phase: 19
+current_phase_name: Server Pools & Auto-Ping
 status: uat_failed
 stopped_at: Phase 18 UAT — Telegram deep-link handshake is unimplemented (P0)
-last_updated: "2026-11-27T14:10:00.000Z"
+last_updated: "2026-11-27T03:17:34.909Z"
 last_activity: 2026-11-27
 last_activity_desc: "Phase 18 UAT: 2 pass, 2 partial, 1 fail, 2 blocked — bot has no nonce_ handler so Telegram login can never complete"
-state_head: a3bd736cd40721f862b84a2c64fe4f15bdbf3070
+state_head: 2550f70928632cd69081dbf80db49274ffd741cc
 progress:
   total_phases: 6
   completed_phases: 0
-  total_plans: 7
+  total_plans: 15
   completed_plans: 7
   percent: 0
 ---
@@ -28,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 
 ## Current Position
 
-Phase: 18
+Phase: 19 (Server Pools & Auto-Ping) — READY TO EXECUTE
 Plan: 18-03 (complete)
 Status: UAT failed — Telegram deep-link handshake unimplemented; other items hardware/credential-gated
 Last activity: 2026-11-27 — Phase 18 UAT (2 pass, 2 partial, 1 fail, 2 blocked)

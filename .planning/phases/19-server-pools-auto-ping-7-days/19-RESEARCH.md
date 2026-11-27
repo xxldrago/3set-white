@@ -854,18 +854,17 @@ Palette (verbatim prototype `:root`): `--bg #0e1512`, `--bg2 #0b110e`, `--surfac
 
 ---
 
-## Open Questions
-
-1. **Real ARTEMIDA `links[]` shape on a live paid key.** What we know: contract `links[]` strings; `vless://placeholder`; `protocols.vless`. Unclear: real per-protocol URIs/params; `hy2`; WG emission; remark conventions; `count`. Recommendation: **re-run `GET /keys/{id}/subscription-links` on a real active key in CI/staging; snapshot; add fixtures; `[ASSUMED]` checkpoint.** 
-2. **`wg://` vs `wireguard://`.** D-01 `wg://`; community `wireguard://`. Recommendation: accept both + `.conf`. 
-3. **Card `outbound` minimal params (D-05).** What we know: client gets minimal outbound for ping; raw not for cards; no logging. Unclear: exact field split. Recommendation: metadata-only card fields + separate `outbound`; **confirm secret boundary.** 
-4. **`no_active_key` status 403 vs 402.** Recommendation 403 (D-21 allows either). 
-5. **`getKeyWithLinks`.** Named in CONTEXT; **not present**. Recommendation `getSubscriptionForUserId`. 
-6. **libbox exact `generate_204` + tag.** Recommendation default `https://www.gstatic.com/generate_204`, tag `srv-<id>`. 
-7. **Own shim vs gomobile+channels vs community pkg.** Recommendation own C-shared + `ffigen`. 
-8. **`load`.** Deferred. 
-9. **Last-good storage.** Drift vs secure storage. Recommendation Drift `last_good`. 
-10. **Fonts.** `google_fonts` vs bundled. Recommendation bundled for offline; `google_fonts` simplest. 
+## Open Questions (RESOLVED)
+1. **Real ARTEMIDA `links[]` shape on a live paid key.** What we know: contract `links[]` strings; `vless://placeholder`; `protocols.vless`. Unclear: real per-protocol URIs/params; `hy2`; WG emission; remark conventions; `count`. Recommendation: **re-run `GET /keys/{id}/subscription-links` on a real active key in CI/staging; snapshot; add fixtures; `[ASSUMED]` checkpoint.** **RESOLVED: [ASSUMED] real `links[]` per-protocol URIs/params/remarks/`count`; `vless://placeholder` not a real server; tolerant parser + scheme allowlist + skip-unparseable; `[ASSUMED]` checkpoint → re-verify on live paid key in staging + snapshot fixtures; NOT `/pricing`.**
+2. **`wg://` vs `wireguard://`.** D-01 `wg://`; community `wireguard://`. Recommendation: accept both + `.conf`. **RESOLVED: accept both `wg://` + `wireguard://` (+`.conf` fallback); tolerant; sing-box-1.14 WireGuard emitted as `endpoint`.**
+3. **Card `outbound` minimal params (D-05).** What we know: client gets minimal outbound for ping; raw not for cards; no logging. Unclear: exact field split. Recommendation: metadata-only card fields + separate `outbound`; **confirm secret boundary.** **RESOLVED: metadata-only card fields (`id,name,city,cc,flag,proto,sni?,tab,host,port`); separate minimal `outbound` used ONLY for ping, never returned to UI-for-cards, never logged; `outbound` secret boundary = `uuid/password/pbk/sid/WG key` inside `outbound`, not raw link; CONTEXT D-05.**
+4. **`no_active_key` status 403 vs 402.** Recommendation 403 (D-21 allows either). **RESOLVED: `no_active_key` → 403 (not 402); D-21; empty `simple/whitelist`; `key:null`.**
+5. **`getKeyWithLinks`.** Named in CONTEXT; **not present**. Recommendation `getSubscriptionForUserId`. **RESOLVED: `getKeyWithLinks` does NOT exist; use `getSubscriptionForUserId`.**
+6. **libbox exact `generate_204` + tag.** Recommendation default `https://www.gstatic.com/generate_204`, tag `srv-<id>`. **RESOLVED: `https://www.gstatic.com/generate_204`; outbound tag `srv-<id>`.**
+7. **Own shim vs gomobile+channels vs community pkg.** Recommendation own C-shared + `ffigen`. **RESOLVED: own minimal C-shared Go shim + `ffigen`; NOT gomobile+channels; NOT `sing-ffi`; NOT community pkg; NOT `libbox_urltest`.**
+8. **`load`.** Deferred. **RESOLVED: `load` DEFERRED (REQ-POOL-04 not implemented; no `load`; no simulation; RTT-only).**
+9. **Last-good storage.** Drift vs secure storage. Recommendation Drift `last_good`. **RESOLVED: Drift `last_good` table; not `flutter_secure_storage`.**
+10. **Fonts.** `google_fonts` vs bundled. Recommendation bundled for offline; `google_fonts` simplest. **RESOLVED: bundled fonts (offline) preferred; `google_fonts` acceptable; `human_verify_mode=end-of-phase`.**
 
 ---
 
@@ -1045,9 +1044,4 @@ Palette (verbatim prototype `:root`): `--bg #0e1512`, `--bg2 #0b110e`, `--surfac
 ---
 
 *Sources cited inline; in-repo claims `[VERIFIED: path:lines]` + verbatim; external `[CITED: url]`; unverified `[ASSUMED]`. Known blockers (GPL-3.0, NetworkExtension, no JDK/Android SDK here, no live ARTEMIDA key) recorded, not re-solved.*
-
-
-
-
-
 

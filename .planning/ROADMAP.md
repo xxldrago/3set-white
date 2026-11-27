@@ -83,13 +83,38 @@
 **Plans:** 7 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 19-01-PLAN.md — Backend `/api/mobile/servers` + `lib/server-pool.ts` parser + `lib/servers-source.ts`; JWT + active key + `no_active_key` 403 + D-22; no `/pricing`, no `load`, no secrets
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 19-02-PLAN.md — libbox ping: own C-shared sing-box v1.14.4 shim + `ffigen`; `URLTest(tag)`+`WriteGroups`; `generate_204`; silent `Socket.connect` `approx`; `PingRepository`; D-06/D-07/D-08/D-09; NOT `libbox_urltest`
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 19-03-PLAN.md — Drift `ping_cache` TTL60 + `last_good`<=5 + `selection` + `current_tab` + `server_list_cache`; network clear; no Prisma change
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 19-04-PLAN.md — Dark prototype theme app-wide (`AppTheme.dark` verbatim; `ThemeMode.dark`; M3; fonts); re-theme auth; no `load`; min-8
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
 - [ ] 19-05-PLAN.md — `Server` + `serverPoolProvider`/`pingCacheProvider`/`bestServerProvider`/`currentTabProvider`; `connect(mode)` selection-only; invalidation; refresh; `load` deferred
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
 - [ ] 19-06-PLAN.md — `ServerPoolScreen` full prototype + widgets; no bottom nav; `pingClass`; `последний`; SNI; proto; no `load`; no simulation; Russian
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
 - [ ] 19-07-PLAN.md — Router: `ServerPoolScreen`; remove `NavigationBar`; `/shop` stub; auth preserved
+
+**Cross-cutting constraints:**
+
+- No simulation; no `Math.random`; no fake IP; no `sleep`; no `load`; no fake connection.
+- No simulation; no `load`.
 
 ---
 

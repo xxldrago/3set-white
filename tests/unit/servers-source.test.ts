@@ -1,5 +1,5 @@
 // Cache-first subscription-links source (D-22): no per-request ARTEMIDA,
-// in-memory TTL keyed by keyId, provider-error→cached/empty, status→code
+// in-memory TTL keyed by userId:keyId, provider-error→cached/empty, status→code
 // mapping, Retry-After passthrough, getSubscriptionForUserId (NOT
 // getKeyWithLinks, NOT /pricing). No network is touched.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -110,6 +110,19 @@ describe('provider error degradation (D-22)', () => {
     expect(JSON.stringify(result)).not.toContain('secret text');
   });
 
+  it('namespaces cached links by owner, not by keyId alone', async () => {
+    const traffic = { usedBytes: null, limitBytes: null };
+    getter.fn
+      .mockResolvedValueOnce({ subscriptionUrl: null, links: links('owner'), traffic })
+      .mockResolvedValueOnce({ subscriptionUrl: null, links: links('other'), traffic });
+
+    await getSubscriptionLinksCacheFirst(USER, 'shared-key');
+    const other = await getSubscriptionLinksCacheFirst(USER + 1, 'shared-key');
+
+    expect(other.links).toEqual(links('other'));
+    expect(getter.fn).toHaveBeenCalledTimes(2);
+  });
+
   it('never caches a failed fetch over a good entry', async () => {
     getter.fn
       .mockResolvedValueOnce({ subscriptionUrl: null, links: links('good'), traffic: { usedBytes: null, limitBytes: null } })
@@ -117,6 +130,6 @@ describe('provider error degradation (D-22)', () => {
     await getSubscriptionLinksCacheFirst(USER, 'key-a');
     vi.advanceTimersByTime(61_000);
     await getSubscriptionLinksCacheFirst(USER, 'key-a');
-    expect(linksCache.get('key-a')!.links).toEqual(links('good'));
+    expect(linksCache.get(`${USER}:key-a`)!.links).toEqual(links('good'));
   });
 });

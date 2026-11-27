@@ -18,7 +18,8 @@ export interface CacheEntry {
   storedAt: number;
 }
 
-/** In-memory cache. Keyed by keyId; ownership is enforced by the caller. */
+/** In-memory cache. Keyed by `${userId}:${keyId}` so entries are never shared
+ * across owners even if a future caller passes an unvalidated keyId. */
 export const linksCache = new Map<string, CacheEntry>();
 
 export interface ServersSourceResult {
@@ -59,7 +60,10 @@ export async function getSubscriptionLinksCacheFirst(
     return { links: [], stale: false, error: "not_found" };
   }
 
-  const cached = linksCache.get(keyId);
+  // Namespace by owner so the cache itself enforces scope, not just the
+  // caller's ownership-joined lookup (IN-02).
+  const cacheKey = `${userId}:${keyId}`;
+  const cached = linksCache.get(cacheKey);
   if (cached && Date.now() - cached.storedAt < LINKS_TTL_MS) {
     return { links: cached.links, stale: false, error: null };
   }
@@ -67,7 +71,7 @@ export async function getSubscriptionLinksCacheFirst(
   try {
     const subscription = await getSubscriptionForUserId(userId, keyId);
     const links = Array.isArray(subscription?.links) ? subscription!.links : [];
-    linksCache.set(keyId, { links, storedAt: Date.now() });
+    linksCache.set(cacheKey, { links, storedAt: Date.now() });
     return { links, stale: false, error: null };
   } catch (err) {
     // A provider failure must never corrupt a previously good cache entry.

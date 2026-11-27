@@ -565,7 +565,11 @@ export function parseShareLink(raw: string): Server | null {
 
     const remarkInfo = parseRemark(parsed.remark);
     const tab = classifyPool(parsed.remark, split.scheme, parsed.security);
-    const id = stableHash(`${split.scheme}|${parsed.server.host}|${parsed.server.port}|${parsed.secret}`);
+    // Identity is the whole canonical outbound, not just secret + host:port:
+    // panel links often reuse one UUID on one endpoint while differing in
+    // security / sni / pbk / sid / flow / transport. Those are distinct
+    // servers and must not be silently dropped as duplicates (WR-05).
+    const id = stableHash(`${split.scheme}|${JSON.stringify(parsed.server.outbound)}`);
     parsed.server.outbound.tag = `srv-${id}`;
 
     const server: Server = {
@@ -590,7 +594,7 @@ export function parseShareLink(raw: string): Server | null {
 
 /**
  * Parse all links into exactly two pools (XOR). Unparseable links are skipped;
- * byte-identical duplicates collapse to one stable id. Input order is stable.
+ * config-identical duplicates collapse to one stable id. Input order is stable.
  */
 export function parsePools(links: unknown): ServerPools {
   const pools: ServerPools = { simple: [], whitelist: [] };

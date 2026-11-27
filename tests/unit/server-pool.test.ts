@@ -278,6 +278,14 @@ describe('parsePools (XOR, dedupe, order, secrecy)', () => {
     expect(simpleLink).not.toContain(first!.id);
   });
 
+  it('keeps distinct configs that share a UUID and host:port', () => {
+    const first = 'vless://uuid-shared@example.com:443?security=tls&sni=a.example.com#WL a';
+    const second = 'vless://uuid-shared@example.com:443?security=tls&sni=b.example.com#WL b';
+    const pools = parsePools([first, second]);
+    expect(pools.whitelist).toHaveLength(2);
+    expect(pools.whitelist[0].id).not.toBe(pools.whitelist[1].id);
+  });
+
   it('uses the vmess ps remark for pool classification', () => {
     const json = { ps: 'vmess whitelist node', add: 'vmess2.example.com', port: '443', id: 'uuid-2' };
     const server = parseShareLink(`vmess://${b64(JSON.stringify(json))}`);

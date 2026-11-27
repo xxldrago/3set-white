@@ -89,27 +89,31 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [x] 19-02-PLAN.md — libbox ping: own C-shared sing-box v1.14.4 shim + `ffigen`; `URLTest(tag)`+`WriteGroups`; `generate_204`; silent `Socket.connect` `approx`; `PingRepository`; D-06/D-07/D-08/D-09; NOT `libbox_urltest`
+- [x] 19-02-PLAN.md — libbox FFI: own C-shared sing-box v1.14.4 shim + `ffigen`; `URLTest(tag)` + async `WriteGroups.URLTestDelay`; `generate_204`; NOT `libbox_urltest`; NOT gomobile/sing-ffi/community pkg; no TUN; D-08 `own-shim` confirmed
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [x] 19-03-PLAN.md — Drift `ping_cache` TTL60 + `last_good`<=5 + `selection` + `current_tab` + `server_list_cache`; network clear; no Prisma change
+- [x] 19-03-PLAN.md — Ping service + repository: `PingResult`/`pingClass`, `LibboxPingService`, silent `Socket.connect` `approx` fallback, `PingRepository`/`PingTarget`/`PingCacheWriter`; quick-path ≤3/800ms → full 2000ms; D-06 `locked` confirmed
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [x] 19-04-PLAN.md — Dark prototype theme app-wide (`AppTheme.dark` verbatim; `ThemeMode.dark`; M3; fonts); re-theme auth; no `load`; min-8
+- [x] 19-04-PLAN.md — Drift `ping_cache(server_id,tab,rtt,online,ts)` TTL60 + `last_good`<=5 + `selection` + `current_tab` + `server_list_cache`; network clear; no Prisma change
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [x] 19-05-PLAN.md — `Server` + `serverPoolProvider`/`pingCacheProvider`/`bestServerProvider`/`currentTabProvider`; `connect(mode)` selection-only; invalidation; refresh; `load` deferred
+- [x] 19-05-PLAN.md — Dark prototype theme app-wide (`AppTheme.dark` verbatim; `ThemeMode.dark`; M3; fonts); re-theme auth; no `load`; min-8; D-16 `locked` confirmed
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
-- [x] 19-06-PLAN.md — `ServerPoolScreen` full prototype + widgets; no bottom nav; `pingClass`; `последний`; SNI; proto; no `load`; no simulation; Russian
+- [x] 19-06-PLAN.md — `Server` + `serverPoolProvider`/`pingCacheProvider`/`bestServerProvider`/`currentTabProvider`; `connect(mode)` selection-only; invalidation; refresh; `load` deferred
 
 **Wave 7** *(blocked on Wave 6 completion)*
 
-- [x] 19-07-PLAN.md — Router: `ServerPoolScreen`; remove `NavigationBar`; `/shop` stub; auth preserved
+- [x] 19-07-PLAN.md — `ServerPoolScreen` full prototype + 7 widgets; no bottom nav; `pingClass`; `последний`; SNI; proto; no `load`; no simulation; Russian
+
+**Wave 8** *(blocked on Wave 7 completion)*
+
+- [x] 19-08-PLAN.md — Router: `ServerPoolScreen`; remove `NavigationBar`; `/shop` stub; auth/redirect/deep-link/biometrics preserved; D-15 `locked` confirmed
 
 **Cross-cutting constraints:**
 

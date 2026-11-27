@@ -18,7 +18,6 @@ import "package:mobile/core/ping/libbox_ping_service.dart";
 import "package:mobile/core/ping/ping_repository.dart";
 import "package:mobile/core/ping/socket_ping_service.dart";
 import "package:mobile/features/servers/providers.dart";
-import "package:mobile/features/servers/server.dart";
 
 class MockDioClient extends Mock implements DioClient {}
 

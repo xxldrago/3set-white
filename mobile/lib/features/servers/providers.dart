@@ -107,6 +107,10 @@ final serverPoolProvider = FutureProvider.autoDispose<ServerPools>((ref) async {
       );
     }
     final pools = ServerPools.fromJson(Map<String, dynamic>.from(raw));
+    if ((response.statusCode == 403 || response.statusCode == 402) &&
+        pools.error == null) {
+      return const ServerPools(error: "no_active_key", notice: "Нет ключа");
+    }
     if (pools.hasActiveKey) {
       await _cachePools(dao, pools);
     }
@@ -441,17 +445,17 @@ class ConnectController extends Notifier<ConnectOutcome?> {
         .serversFor(tab)
         .map((server) => server.pingTarget)
         .toList(growable: false);
+    final remembers = <Future<void>>[];
     await repository.fullPing(
       targets,
       timeout: pingFullTimeout,
       onResult: (outcome) {
         if (outcome.result.online) {
-          unawaited(
-            _rememberGood(dao, tab, outcome.target.id),
-          );
+          remembers.add(_rememberGood(dao, tab, outcome.target.id));
         }
       },
     );
+    await Future.wait(remembers);
     ref.invalidate(pingCacheProvider(tab));
     final outcome = ConnectOutcome(ok: true, notice: "Пинг обновлён");
     state = outcome;

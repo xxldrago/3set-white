@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/app/theme.dart';
 import 'package:mobile/core/auth/auth_state.dart';
 import 'package:mobile/features/auth/providers.dart';
 import 'package:mobile/features/auth/widgets/auth_form.dart';
@@ -75,11 +76,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Logo/Icon
-                  Icon(
-                    Icons.person_add_outlined,
-                    size: 80,
-                    color: theme.colorScheme.primary,
+                  // Logo/Icon — dark prototype surface with teal accent.
+                  Container(
+                    width: 88,
+                    height: 88,
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface2,
+                      borderRadius: BorderRadius.circular(AppTheme.radius),
+                      border: Border.all(color: AppTheme.line),
+                    ),
+                    child: const Icon(
+                      Icons.person_add_outlined,
+                      size: 44,
+                      color: AppTheme.teal,
+                    ),
                   ),
                   const SizedBox(height: 24),
 
@@ -103,14 +113,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   const SizedBox(height: 32),
 
-                  // Auth form
-                  AuthForm(
-                    isLogin: false,
-                    isLoading: _isLoading,
-                    submitLabel: 'Зарегистрироваться',
-                    toggleLabel: 'Войти',
-                    onSubmit: _handleRegister,
-                    onToggleAuthMode: _navigateToLogin,
+                  // Auth form on a prototype card.
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(AppTheme.radius),
+                      border: Border.all(color: AppTheme.line),
+                    ),
+                    child: AuthForm(
+                      isLogin: false,
+                      isLoading: _isLoading,
+                      submitLabel: 'Зарегистрироваться',
+                      toggleLabel: 'Войти',
+                      onSubmit: _handleRegister,
+                      onToggleAuthMode: _navigateToLogin,
+                    ),
                   ),
 
                   const SizedBox(height: 24),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/app/theme.dart';
 
 /// Reusable authentication form with email and password fields.
 /// Supports both login and registration variants.
@@ -128,9 +129,19 @@ class _AuthFormState extends State<AuthForm> {
             decoration: InputDecoration(
               labelText: 'Email',
               hintText: 'user@example.com',
-              prefixIcon: const Icon(Icons.email_outlined),
+              prefixIcon: const Icon(
+                Icons.email_outlined,
+                color: AppTheme.muted,
+              ),
               errorText: _emailError,
-              border: const OutlineInputBorder(),
+              filled: true,
+              fillColor: AppTheme.bg2,
+              border: const OutlineInputBorder(
+                borderSide: BorderSide(color: AppTheme.line),
+              ),
+              focusedBorder: const OutlineInputBorder(
+                borderSide: BorderSide(color: AppTheme.lime3, width: 2),
+              ),
             ),
             validator: (value) {
               _validateEmail(value);
@@ -149,7 +160,7 @@ class _AuthFormState extends State<AuthForm> {
             decoration: InputDecoration(
               labelText: 'Пароль',
               hintText: 'Минимум 8 символов',
-              prefixIcon: const Icon(Icons.lock_outline),
+              prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.muted),
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscurePassword ? Icons.visibility_off : Icons.visibility,
@@ -159,7 +170,14 @@ class _AuthFormState extends State<AuthForm> {
                 },
               ),
               errorText: _passwordError,
-              border: const OutlineInputBorder(),
+              filled: true,
+              fillColor: AppTheme.bg2,
+              border: const OutlineInputBorder(
+                borderSide: BorderSide(color: AppTheme.line),
+              ),
+              focusedBorder: const OutlineInputBorder(
+                borderSide: BorderSide(color: AppTheme.lime3, width: 2),
+              ),
             ),
             validator: (value) {
               _validatePassword(value);
@@ -182,17 +200,30 @@ class _AuthFormState extends State<AuthForm> {
               enabled: !widget.isLoading,
               decoration: InputDecoration(
                 labelText: 'Подтвердите пароль',
-                prefixIcon: const Icon(Icons.lock_outline),
+                prefixIcon: const Icon(
+                  Icons.lock_outline,
+                  color: AppTheme.muted,
+                ),
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                    _obscureConfirmPassword
+                        ? Icons.visibility_off
+                        : Icons.visibility,
                   ),
                   onPressed: () {
-                    setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
+                    setState(() =>
+                        _obscureConfirmPassword = !_obscureConfirmPassword);
                   },
                 ),
                 errorText: _confirmPasswordError,
-                border: const OutlineInputBorder(),
+                filled: true,
+                fillColor: AppTheme.bg2,
+                border: const OutlineInputBorder(
+                  borderSide: BorderSide(color: AppTheme.line),
+                ),
+                focusedBorder: const OutlineInputBorder(
+                  borderSide: BorderSide(color: AppTheme.lime3, width: 2),
+                ),
               ),
               validator: (value) {
                 _validateConfirmPassword(value);
@@ -220,9 +251,19 @@ class _AuthFormState extends State<AuthForm> {
           FilledButton(
             onPressed: widget.isLoading ? null : _handleSubmit,
             style: FilledButton.styleFrom(
+              backgroundColor: AppTheme.lime2,
+              foregroundColor: AppTheme.bg,
+              disabledBackgroundColor: AppTheme.surface3,
+              disabledForegroundColor: AppTheme.dim,
+              elevation: 0,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              textStyle: const TextStyle(
+                color: AppTheme.bg,
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
               ),
             ),
             child: widget.isLoading
@@ -273,9 +314,11 @@ class _AuthFormState extends State<AuthForm> {
                 icon: const Icon(Icons.telegram, size: 20),
                 label: const Text('Войти через Telegram'),
                 style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.text,
+                  side: const BorderSide(color: AppTheme.line2),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
               ),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
+import 'package:mobile/app/theme.dart';
 import 'package:mobile/features/auth/screens/register_screen.dart';
 import 'package:mobile/features/auth/screens/login_screen.dart';
 import 'package:mobile/core/api/dio_client.dart';
@@ -11,7 +12,6 @@ import 'package:mobile/core/storage/token_store.dart';
 import 'package:mobile/core/auth/auth_notifier.dart';
 import 'package:mobile/models/auth_models.dart';
 import 'package:dio/dio.dart';
-import 'package:logger/logger.dart';
 
 class MockDioClient extends Mock implements DioClient {}
 class MockTokenStore extends Mock implements TokenStore {}
@@ -69,6 +69,9 @@ void main() {
       return UncontrolledProviderScope(
         container: container,
         child: MaterialApp.router(
+          theme: AppTheme.dark,
+          darkTheme: AppTheme.dark,
+          themeMode: ThemeMode.dark,
           routerConfig: GoRouter(
             initialLocation: '/register',
             routes: [
@@ -104,6 +107,38 @@ void main() {
       expect(find.byType(TextFormField), findsNWidgets(3)); // email + password + confirm
       expect(find.text('Зарегистрироваться'), findsOneWidget); // Submit button
       expect(find.text('Войти'), findsOneWidget); // Toggle link
+    });
+
+    testWidgets('uses the dark prototype theme', (WidgetTester tester) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      final ThemeData theme = Theme.of(
+        tester.element(find.byType(RegisterScreen)),
+      );
+      expect(theme.brightness, Brightness.dark);
+      expect(theme.colorScheme.primary, AppTheme.lime);
+      expect(theme.scaffoldBackgroundColor, AppTheme.bg);
+    });
+
+    testWidgets('rejects a 6-character password (min is 8)', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byType(TextFormField).first,
+        'test@example.com',
+      );
+      await tester.enterText(find.byType(TextFormField).at(1), '123456');
+      await tester.tap(find.text('Зарегистрироваться'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Пароль должен быть минимум 8 символов'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('shows validation errors for empty fields', (WidgetTester tester) async {

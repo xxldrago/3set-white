@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/app/theme.dart';
 import 'package:mobile/core/auth/auth_state.dart';
 import 'package:mobile/core/deep_link/deep_link_handler.dart';
 import 'package:mobile/features/auth/providers.dart';
@@ -152,13 +153,13 @@ class _TelegramWaitScreenState extends ConsumerState<TelegramWaitScreen>
                         width: 120,
                         height: 120,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0088CC).withValues(alpha: 0.1),
+                          color: AppTheme.blue.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
                           Icons.telegram,
                           size: 64,
-                          color: Color(0xFF0088CC),
+                          color: AppTheme.blue,
                         ),
                       ),
                     );
@@ -192,6 +193,13 @@ class _TelegramWaitScreenState extends ConsumerState<TelegramWaitScreen>
                   onPressed: _openTelegram,
                   icon: const Icon(Icons.open_in_new),
                   label: const Text('Открыть Telegram'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppTheme.lime2,
+                    foregroundColor: AppTheme.bg,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 24),
 
@@ -202,9 +210,9 @@ class _TelegramWaitScreenState extends ConsumerState<TelegramWaitScreen>
                       value: progress,
                       minHeight: 8,
                       borderRadius: BorderRadius.circular(4),
-                      backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        theme.colorScheme.primary,
+                      backgroundColor: AppTheme.surface3,
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        AppTheme.lime,
                       ),
                     ),
                     const SizedBox(height: 8),

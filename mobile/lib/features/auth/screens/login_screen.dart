@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/app/theme.dart';
 import 'package:mobile/core/auth/auth_state.dart';
 import 'package:mobile/features/auth/providers.dart';
 import 'package:mobile/features/auth/widgets/auth_form.dart';
@@ -113,11 +114,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Logo/Icon
-                  Icon(
-                    Icons.vpn_key,
-                    size: 80,
-                    color: theme.colorScheme.primary,
+                  // Logo/Icon — dark prototype surface with lime accent.
+                  Container(
+                    width: 88,
+                    height: 88,
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface2,
+                      borderRadius: BorderRadius.circular(AppTheme.radius),
+                      border: Border.all(color: AppTheme.line),
+                    ),
+                    child: const Icon(
+                      Icons.vpn_key,
+                      size: 44,
+                      color: AppTheme.lime,
+                    ),
                   ),
                   const SizedBox(height: 24),
 
@@ -141,15 +151,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 32),
 
-                  // Auth form
-                  AuthForm(
-                    isLogin: true,
-                    isLoading: _isLoading,
-                    submitLabel: 'Войти',
-                    toggleLabel: 'Зарегистрироваться',
-                    onSubmit: _handleLogin,
-                    onToggleAuthMode: _navigateToRegister,
-                    onTelegramLogin: _handleTelegramAuth,
+                  // Auth form on a prototype card.
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(AppTheme.radius),
+                      border: Border.all(color: AppTheme.line),
+                    ),
+                    child: AuthForm(
+                      isLogin: true,
+                      isLoading: _isLoading,
+                      submitLabel: 'Войти',
+                      toggleLabel: 'Зарегистрироваться',
+                      onSubmit: _handleLogin,
+                      onToggleAuthMode: _navigateToRegister,
+                      onTelegramLogin: _handleTelegramAuth,
+                    ),
                   ),
 
                   const SizedBox(height: 24),

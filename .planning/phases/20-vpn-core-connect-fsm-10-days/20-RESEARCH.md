@@ -775,14 +775,13 @@ Timer.periodic(const Duration(seconds: 1), (_) async {
 
 ---
 
-## Open Questions
-
-1. **Exact `libbox_start_with_tun` signature** — What we know: D-05 locks the name and fd+config inputs; smoke build proves `int32_t fd, char* cfg` works. Unclear: whether fd ownership needs `dup` on the Kotlin side too (libbox dups internally, so likely not), and whether a separate `reset()` C call is needed after abort. Recommendation: keep fd native-owned; add reset only if CI shows stale state.
-2. **iOS packet-flow → libbox fd** — What we know: `packetFlow` has no public fd; upstream uses private KVC. Unclear: entitlement approval outcome; App Store policy. Recommendation: compile-only Swift + recorded risk; do not solve in phase 20 (D-07).
-3. **VPN self-triggered connectivity events** — What we know: `connectivity_plus` 7.3.2 includes `vpn`. Unclear: exact emission on Android during establish. Recommendation: ignore VPN-only changes in the reconnect listener; verify in CI UAT.
-4. **Toast copy for non-locked errors** — What we know: locked strings from CONTEXT §specifics. Unclear: exact wording for `config_invalid`/`unreachable`. Recommendation: discretion, keep short Russian, no raw errors.
-5. **Config response contract** — What we know: D-01 says ready JSON. Unclear: whether to return metadata (`flag/city/proto`) alongside config. Recommendation: include minimal metadata (panel needs it) and keep the config object opaque.
-6. **GPL/Play compliance** — recorded external blocker; no decision in phase 20.
+## Open Questions (RESOLVED)
+1. **Exact `libbox_start_with_tun` signature** — What we know: D-05 locks the name and fd+config inputs; smoke build proves `int32_t fd, char* cfg` works. Unclear: whether fd ownership needs `dup` on the Kotlin side too (libbox dups internally, so likely not), and whether a separate `reset()` C call is needed after abort. Recommendation: keep fd native-owned; add reset only if CI shows stale state. **RESOLVED: keep fd native-owned; `int32_t fd, char* config` C ABI; libbox dups internally, no Kotlin-side dup; add reset only after CI evidence of stale state; post-entitlement/UAT check.**
+2. **iOS packet-flow → libbox fd** — What we know: `packetFlow` has no public fd; upstream uses private KVC. Unclear: entitlement approval outcome; App Store policy. Recommendation: compile-only Swift + recorded risk; do not solve in phase 20 (D-07). **RESOLVED: compile-only Swift `NEPacketTunnelProvider` + entitlements per D-07; packet-flow private KVC risk recorded, not solved in phase 20; no iOS tunnel verification until Apple approval.**
+3. **VPN self-triggered connectivity events** — What we know: `connectivity_plus` 7.3.2 includes `vpn`. Unclear: exact emission on Android during establish. Recommendation: ignore VPN-only changes in the reconnect listener; verify in CI UAT. **RESOLVED: reconnect listener ignores VPN-only connectivity changes (`ConnectivityResult.vpn`) to avoid self-triggered loops; verify in CI UAT.**
+4. **Toast copy for non-locked errors** — What we know: locked strings from CONTEXT §specifics. Unclear: exact wording for `config_invalid`/`unreachable`. Recommendation: discretion, keep short Russian, no raw errors. **RESOLVED: agent discretion — short Russian action toasts for `config_invalid`/`unreachable`, no raw libbox/config text; locked strings from CONTEXT take precedence.**
+5. **Config response contract** — What we know: D-01 says ready JSON. Unclear: whether to return metadata (`flag/city/proto`) alongside config. Recommendation: include minimal metadata (panel needs it) and keep the config object opaque. **RESOLVED: `/config` returns the ready config JSON plus minimal metadata (`flag/city/proto`) for the panel; config object opaque; no secrets in logs.**
+6. **GPL/Play compliance** — recorded external blocker; no decision in phase 20. **RESOLVED: GPL-3.0/Play/App Store compliance remains an external recorded blocker; no phase-20 decision; do not implement compliance work.**
 
 ---
 

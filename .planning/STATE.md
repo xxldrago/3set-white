@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Мобильный клиент
-current_phase: 19
-current_phase_name: Server Pools & Auto-Ping
-status: verifying
+current_phase: 20
+current_phase_name: VPN Core & Connect FSM
+status: executing
 stopped_at: Phase 20 context gathered
-last_updated: "2026-11-27T06:32:26.881Z"
+last_updated: "2026-11-27T07:15:03.440Z"
 last_activity: 2026-11-27
 last_activity_desc: Phase 19 execution started
-state_head: aca590f93378cc1fcc048cb3adedb45227daaece
+state_head: 80eb3bb823b8aeb9589ba5d422100734451114d8
 progress:
   total_phases: 6
   completed_phases: 0
-  total_plans: 15
+  total_plans: 22
   completed_plans: 15
   percent: 0
 ---
@@ -29,9 +29,9 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 
 ## Current Position
 
-Phase: 19 (Server Pools & Auto-Ping) — EXECUTING
+Phase: 20 (VPN Core & Connect FSM) — READY TO EXECUTE
 Plan: 8 of 8
-Status: Phase complete — ready for verification
+Status: Ready to execute
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-27 — Phase 19 execution started
 

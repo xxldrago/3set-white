@@ -46,14 +46,18 @@ ErrorCode errorCodeFrom(String code) => ErrorCode.values.firstWhere(
 
 /// A fixed RU toast with an optional «Повторить» action flag.
 class ErrorToast {
-  /// Creates a toast from [message] and its [retry] flag.
-  const ErrorToast(this.message, {this.retry = false});
+  /// Creates a toast from [message], its [retry] flag and optional real [action].
+  const ErrorToast(this.message, {this.retry = false, this.action});
 
   /// Exact locked Russian copy from 20-CONTEXT §specifics.
   final String message;
 
   /// Whether the UI must offer a «Повторить» action (permission denials).
   final bool retry;
+
+  /// The real retry callback supplied by the FSM (IN-01). Null only for toasts
+  /// whose panel button already offers recovery.
+  final VoidCallback? action;
 }
 
 /// Stable code → exact locked RU toast (D-12/D-19).
@@ -117,7 +121,12 @@ void _showConnectionToast(ErrorToast toast) {
       action: toast.retry
           ? SnackBarAction(
               label: "Повторить",
-              onPressed: messenger.hideCurrentSnackBar,
+              // IN-01: the button must actually retry the failed action, not
+              // just dismiss itself. The FSM supplies the real callback.
+              onPressed: () {
+                messenger.hideCurrentSnackBar();
+                toast.action?.call();
+              },
             )
           : null,
     ),

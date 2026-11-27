@@ -90,9 +90,14 @@ class FakeBridge implements VpnBridge {
   /// Drives the real native → Dart event path; no direct FSM method call.
   void emit(String code) => _events.add(VpnBridgeEvent(code));
 
+  /// Optional consent failure injected by a test (IN-01).
+  VpnBridgeException? prepareError;
+
   @override
   Future<void> prepare() async {
     calls.add("prepare");
+    final error = prepareError;
+    if (error != null) throw error;
   }
 
   /// Optional non-bridge failure injected by a test (WR-01).
@@ -372,6 +377,51 @@ void main() {
     expect(
       logs.map((event) => event["reason"]),
       contains("bridge_start_failed"),
+    );
+  });
+
+  test("the retry toast action actually retries the failed connect (IN-01)",
+      () async {
+    final backoff = RestartBackoff();
+    final config = FakeConfig();
+    final bridge = FakeBridge()
+      ..prepareError = const VpnBridgeException("permission_denied");
+    final toasts = <ErrorToast>[];
+    final container = ProviderContainer(
+      overrides: [
+        connectControllerProvider.overrideWith(FakeSelection.new),
+        configRepositoryProvider.overrideWithValue(config),
+        vpnBridgeProvider.overrideWithValue(bridge),
+        connectionToastProvider.overrideWithValue(toasts.add),
+        connectionErrorLogProvider.overrideWithValue((_) {}),
+        connectionTransitionLogProvider.overrideWithValue((_) {}),
+        restartBackoffProvider.overrideWithValue(backoff),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final notifier = container.read(connectionNotifierProvider.notifier);
+    await notifier.connect(PoolTab.simple, auto: true);
+    expect(
+      container.read(connectionNotifierProvider).phase,
+      ConnPhase.error,
+    );
+    expect(toasts.length, 1);
+    expect(toasts.single.retry, isTrue);
+    expect(toasts.single.action, isNotNull);
+    final preparesBefore = bridge.calls.where((call) => call == "prepare").length;
+
+    // Consent is granted now; tapping «Повторить» must reconnect, not dismiss.
+    bridge.prepareError = null;
+    toasts.single.action!();
+    await pumpUntil(
+      () =>
+          container.read(connectionNotifierProvider).phase ==
+          ConnPhase.connected,
+    );
+    expect(
+      bridge.calls.where((call) => call == "prepare").length,
+      preparesBefore + 1,
     );
   });
 }

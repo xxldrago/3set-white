@@ -71,6 +71,11 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
   /// Incremented on every new attempt/cancel; stale completions are ignored.
   int _generation = 0;
 
+  /// Last attempted selection, preserved so the snack bar's «Повторить»
+  /// action retries the SAME failed attempt instead of just hiding (IN-01).
+  PoolTab? _lastTab;
+  String? _lastServerId;
+
   /// Native `revoked`/`disconnect` events are fed into the same guarded FSM.
   StreamSubscription<VpnBridgeEvent>? _eventsSubscription;
 
@@ -175,6 +180,8 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
     String? manualServerId,
   }) async {
     final generation = ++_generation;
+    _lastTab = tab;
+    _lastServerId = manualServerId;
     _transition(ConnPhase.pinging, reason: "connect_requested");
 
     final ConnectOutcome outcome;
@@ -227,6 +234,8 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
       reason: reason,
       serverId: serverId,
     );
+    // A reselect on reconnect may have changed the server; keep the latest.
+    _lastServerId = serverId;
 
     final Map<String, dynamic> config;
     try {
@@ -525,7 +534,26 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
     ref.read(connectionErrorLogProvider)(
       connectionErrorFields(errorCode, state.phase.name),
     );
-    ref.read(connectionToastProvider)(errorToastFor(errorCode));
+    final toast = errorToastFor(errorCode);
+    ref.read(connectionToastProvider)(
+      toast.retry
+          ? ErrorToast(
+              toast.message,
+              retry: true,
+              // IN-01: the snack-bar action re-runs the failed connect.
+              action: () => unawaited(retryLastAction()),
+            )
+          : toast,
+    );
+  }
+
+  /// Re-runs the last failed attempt with its original tab/server (IN-01).
+  /// No new selection round is started when a concrete server was chosen.
+  Future<void> retryLastAction() async {
+    final tab = _lastTab;
+    if (tab == null) return;
+    final serverId = _lastServerId;
+    await connect(tab, auto: serverId == null, manualServerId: serverId);
   }
 
   /// The only place state is written. Logs exactly `{from,to,reason}`.

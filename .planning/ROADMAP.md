@@ -109,7 +109,7 @@ Plans:
 
 **Wave 7** *(blocked on Wave 6 completion)*
 
-- [ ] 19-07-PLAN.md — Router: `ServerPoolScreen`; remove `NavigationBar`; `/shop` stub; auth preserved
+- [x] 19-07-PLAN.md — Router: `ServerPoolScreen`; remove `NavigationBar`; `/shop` stub; auth preserved
 
 **Cross-cutting constraints:**
 

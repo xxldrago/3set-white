@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 17
+open_count: 20
 waived_count: 0
 fixed_count: 0
-total_count: 17
-last_updated: 2026-11-27T04:40:05.268Z
+total_count: 20
+last_updated: 2026-11-27T05:12:11.662Z
 ---
 
 # Broken Windows Ledger
@@ -32,6 +32,9 @@ last_updated: 2026-11-27T04:40:05.268Z
 | 15 | 19 | deviation | mobile/lib/core/ping/ping_repository.dart |  | PingCacheLookup.fresh made async so the Drift PingCacheDao can implement the fresh-cache seam (SQLite reads are Future-based); 19-03 fake cache updated | open |  | 2026-11-27T04:11:52.727Z |  |
 | 16 | 19 | deviation | mobile/lib/features/servers/providers.dart |  | REQ-POOL-04 load bar deferred (D-04); RTT-only ranking, no load field parsed or emitted | open |  | 2026-11-27T04:40:05.199Z |  |
 | 17 | 19 | deviation | mobile/lib/features/home/providers.dart |  | bottomNavIndexProvider legacy shim kept until 19-07 removes bottom navigation | open |  | 2026-11-27T04:40:05.268Z |  |
+| 18 | 19 | stub | mobile/lib/features/servers/server_pool_screen.dart |  | Shop/profile/logic actions are intentional stubs pending phase 21 (shop route added in 19-08) | open |  | 2026-11-27T05:12:11.520Z |  |
+| 19 | 19 | stub | mobile/lib/features/servers/widgets/connect_panel.dart |  | IP/timer/traffic show dashes with phase-20 note; VPN core/FSM is phase 20 | open |  | 2026-11-27T05:12:11.595Z |  |
+| 20 | 19 | deviation | mobile/lib/features/servers/server_pool_screen.dart |  | Rule 1: fixed nested-flex overlap that collapsed pool list; reordered offline banner; guarded refresh against phantom selection | open |  | 2026-11-27T05:12:11.662Z |  |
 
 ````json
 [
@@ -237,6 +240,42 @@ last_updated: 2026-11-27T04:40:05.268Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-27T04:40:05.268Z",
+    "resolved_at": null
+  },
+  {
+    "id": 18,
+    "kind": "stub",
+    "phase": "19",
+    "file": "mobile/lib/features/servers/server_pool_screen.dart",
+    "line": null,
+    "description": "Shop/profile/logic actions are intentional stubs pending phase 21 (shop route added in 19-08)",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T05:12:11.520Z",
+    "resolved_at": null
+  },
+  {
+    "id": 19,
+    "kind": "stub",
+    "phase": "19",
+    "file": "mobile/lib/features/servers/widgets/connect_panel.dart",
+    "line": null,
+    "description": "IP/timer/traffic show dashes with phase-20 note; VPN core/FSM is phase 20",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T05:12:11.595Z",
+    "resolved_at": null
+  },
+  {
+    "id": 20,
+    "kind": "deviation",
+    "phase": "19",
+    "file": "mobile/lib/features/servers/server_pool_screen.dart",
+    "line": null,
+    "description": "Rule 1: fixed nested-flex overlap that collapsed pool list; reordered offline banner; guarded refresh against phantom selection",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T05:12:11.662Z",
     "resolved_at": null
   }
 ]

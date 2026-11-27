@@ -36,3 +36,10 @@ tests/unit/mobile-servers-route.test.ts tests/unit/servers-source.test.ts` → 4
 - **Android native `.so` build** — requires OpenJDK 17 + Android SDK/NDK (absent here). `mobile/native/libbox_shim/build.sh android` is provided for CI; the app ships the silent `Socket.connect` fallback (implemented in 19-03) when the artifact is absent.
 - **iOS `.xcframework` packaging / on-device URLTest** — Xcode build script is provided, but no device UAT in this env. Native artifact is a gitignored CI output.
 - **GPL-3.0 legal review** — recorded blocker (dynamic linking + source offer), Phase 23; not resolved here.
+
+## Plan 19-07 — out-of-scope pre-existing issues (NOT caused by 19-07)
+
+| Check | Result | Why out of scope |
+|-------|--------|------------------|
+| `cd mobile && flutter analyze` | exit 1 with 1630 pre-existing `info` lints (baseline before this plan: 1622). 0 errors and 0 warnings. The 8 additional infos are the unavoidable framework-wide `package:flutter/material.dart` deprecation notice on each new file (the entire repo uses `material.dart`). All other new-file lints were cleaned to zero. | Lint baseline predates 19-07; per scope-boundary rule not fixed here. Focused verification: `flutter analyze <new files>` has 0 errors/0 warnings; `flutter test test/widget/features/servers/` → 11/11 passed. |
+| Router swap / `/shop` route / bottom-nav removal in `app/router.dart` | intentionally NOT touched in 19-07 (owned by 19-08) | `ServerPoolScreen` itself has no `NavigationBar`; the legacy router still compiles until 19-08. |

@@ -132,4 +132,83 @@ void main() {
           .called(1);
     });
   });
+
+  group("last-good, selection and current tab", () {
+    test("pushLastGood dedupes, caps at five and stays per-tab", () async {
+      final dao = openDao();
+      for (var i = 1; i <= 7; i++) {
+        await dao.pushLastGood("simple", "s$i", tsMs: i * 100);
+      }
+      // Re-pushing an existing id moves it to the front without a duplicate.
+      await dao.pushLastGood("simple", "s3", tsMs: 1000);
+
+      final rows = await dao.lastGoodFor("simple");
+      expect(rows, hasLength(5));
+      expect(
+        rows.map((row) => row.serverId).toList(),
+        ["s3", "s7", "s6", "s5", "s4"],
+      );
+      expect(rows.where((row) => row.serverId == "s3"), hasLength(1));
+
+      await dao.pushLastGood("whitelist", "w1", tsMs: 50);
+      expect(
+        (await dao.lastGoodFor("whitelist")).map((row) => row.serverId),
+        ["w1"],
+      );
+      expect(await dao.lastGoodFor("simple"), hasLength(5));
+    });
+
+    test("clearLastGood removes only last-good rows", () async {
+      final dao = openDao();
+      await dao.write(sample("s1", "simple", tsMs: 1000));
+      await dao.pushLastGood("simple", "s1", tsMs: 1000);
+      await dao.setSelection("simple", "s1");
+
+      await dao.clearLastGood();
+
+      expect(await dao.lastGoodFor("simple"), isEmpty);
+      expect(await dao.fresh("s1", "simple", nowMs: 1000), isNotNull);
+      expect(await dao.getSelection("simple"), "s1");
+    });
+
+    test("selection persists per tab and survives network change", () async {
+      final dao = openDao();
+      expect(await dao.getSelection("simple"), isNull);
+      await dao.setSelection("simple", "s1");
+      await dao.setSelection("whitelist", "w2");
+      await dao.setSelection("simple", "s9");
+
+      expect(await dao.getSelection("simple"), "s9");
+      expect(await dao.getSelection("whitelist"), "w2");
+
+      await dao.clearPingCacheAndLastGood();
+
+      expect(await dao.getSelection("simple"), "s9");
+      expect(await dao.getSelection("whitelist"), "w2");
+    });
+
+    test("current tab defaults to simple and is kept on network change",
+        () async {
+      final dao = openDao();
+      expect(await dao.getCurrentTab(), "simple");
+      await dao.setCurrentTab("whitelist");
+      expect(await dao.getCurrentTab(), "whitelist");
+
+      await dao.clearPingCacheAndLastGood();
+
+      expect(await dao.getCurrentTab(), "whitelist");
+    });
+
+    test("server list cache stores metadata JSON per tab for offline use",
+        () async {
+      final dao = openDao();
+      expect(await dao.getServerList("simple"), isNull);
+      await dao.cacheServerList("simple", '[{"id":"s1"}]');
+      await dao.cacheServerList("whitelist", '[{"id":"w1"}]');
+      await dao.cacheServerList("simple", '[{"id":"s9"}]');
+
+      expect(await dao.getServerList("simple"), '[{"id":"s9"}]');
+      expect(await dao.getServerList("whitelist"), '[{"id":"w1"}]');
+    });
+  });
 }

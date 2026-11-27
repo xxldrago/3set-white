@@ -13,6 +13,9 @@ class Endpoints {
 
   // Future endpoints (Phase 19+)
   static const String servers = '/api/mobile/servers';
+  /// Backend-built full TUN config (D-01): client sends only `serverId` and
+  /// never assembles a config or talks to ARTEMIDA directly.
+  static const String config = '/api/mobile/config';
   static const String keys = '/api/mobile/keys';
   static const String payments = '/api/mobile/payments';
   static const String devices = '/api/mobile/devices';

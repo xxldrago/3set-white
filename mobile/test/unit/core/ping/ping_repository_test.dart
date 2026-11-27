@@ -104,7 +104,9 @@ void main() {
       when(() => client.start(any())).thenAnswer((invocation) async {
         final config = invocation.positionalArguments.first as String;
         expect(config, contains("srv-s1"));
-        expect(config, isNot(contains("generate_204")));
+        // WR-02: the probe target is now configured on a real urltest group.
+        expect(config, contains('"type":"urltest"'));
+        expect(config, contains(generate204Url));
       });
       when(
         () => client.urltest("srv-s1", timeout: any(named: "timeout")),

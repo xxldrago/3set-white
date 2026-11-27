@@ -48,3 +48,15 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/fonts/
+  fonts:
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope-Variable.ttf
+    - family: Unbounded
+      fonts:
+        - asset: assets/fonts/Unbounded-Variable.ttf
+    - family: JetBrains Mono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono-Variable.ttf

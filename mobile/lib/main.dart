@@ -26,9 +26,9 @@ class App extends ConsumerWidget {
     return MaterialApp.router(
       title: '3set VPN',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
+      theme: AppTheme.dark,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.dark,
       routerConfig: router,
       builder: (context, child) {
         // MediaQuery override for text scaling (accessibility)

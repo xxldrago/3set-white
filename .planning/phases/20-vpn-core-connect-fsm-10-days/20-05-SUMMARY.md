@@ -164,7 +164,7 @@ Each task was committed atomically:
 2. **Task 2: Cancel ordering + error-to-toast mapping** — `62e4aba` (feat)
 3. **Boundary test coverage (Task 1 artifact follow-up)** — `3e004e7` (test)
 
-**Plan metadata:** pending (summary + state commit in final close-out)
+**Plan metadata:** `01f493c` (docs: summary + STATE/ROADMAP/WINDOWS close-out)
 
 ## Files Created/Modified
 

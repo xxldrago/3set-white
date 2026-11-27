@@ -5,16 +5,16 @@ milestone_name: Мобильный клиент
 current_phase: 20
 current_phase_name: VPN Core & Connect FSM
 status: executing
-stopped_at: Completed 20-01-PLAN.md
-last_updated: "2026-11-27T07:24:52.312Z"
+stopped_at: Completed 20-02-PLAN.md
+last_updated: "2026-11-27T09:09:11.151Z"
 last_activity: 2026-11-27
 last_activity_desc: Phase 20 execution started
-state_head: 5f93ec24e6b7b4eefcb0461f0e8851440c36de8e
+state_head: 7b101dff65abcdcc35ca999adf0e7964b2c0bd95
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 22
-  completed_plans: 16
+  completed_plans: 17
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 ## Current Position
 
 Phase: 20 (VPN Core & Connect FSM) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 Status: Ready to execute
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-27 — Phase 20 execution started
@@ -106,6 +106,11 @@ None (flat mode)
 - [Phase 20-01]: D-01 backend-full-config confirmed at blocking gate: GET /api/mobile/config builds the complete TUN config from serverId; client sends only serverId and never assembles config — User selected the locked option explicitly; secrets stay server-side and one contract serves the FSM, native tunnel and reconnect
 - [Phase 20-01]: D-08 WireGuard stays a sing-box 1.14 endpoint, never an outbound; chosen outbound copied verbatim into endpoints (WG) or outbounds (others) — Must-have and CheckConfig smoke shape require WG as endpoint; all other protocols stay outbounds
 - [Phase 20-01]: Per-request JWT + active-key gate on /config; unknown or malformed serverId returns 200 {ok:false,error:server_not_found}; provider errors degrade to 200 stable codes + Retry-After — D-03 requires expiry to drop the tunnel on reconnect; uniform domain-error envelope avoids 5xx and client transport exceptions
+- [Phase 20]: D-05 confirmed at blocking gate as own-c-shared: TUN fd enters libbox through our own C-shared Go shim, regenerated via build.sh header + ffigen; no gomobile/sing-ffi/community package/libbox_urltest — Locked costly decision; smoke-proven ABI and one shim two modes
+- [Phase 20]: 20-02: one shim, two config modes - no-TUN generate_204 ping path stays functional alongside the TUN path — D-08 additive TUN extension, no regression to phase-19 ping
+- [Phase 20]: 20-02: fd stays platform-owned and libbox dups it internally; no reset export before CI evidence; no dummy-fd test — Non-TUN fd aborts with SIGABRT, cannot be caught in Dart
+- [Phase 20]: 20-02: traffic {down,up,available} from libbox StatusMessage via WriteStatus + CommandStatus; no fabricated bytes — REQ-CONN-07 live counters, distinct from ping RTT fields
+- [Phase 20]: 20-02: stop any existing no-TUN service before libbox_start_with_tun so the fd-carrying platform is used — Reload into the inert ping platform cannot supply a TUN fd (Rule 2)
 
 ## Performance Metrics
 
@@ -127,9 +132,10 @@ None (flat mode)
 | Phase 19 P07 | 28 min | 3 tasks | 9 files |
 | Phase 19-server-pools-auto-ping-7-days P08 | 8 min | 3 tasks | 5 files |
 | Phase 20 P01 | 4 min | 3 tasks | 5 files |
+| Phase 20 P02 | 10 min | 3 tasks | 7 files |
 
 ## Session
 
-**Last session:** 2026-11-27T07:24:52.224Z
-**Stopped at:** Completed 20-01-PLAN.md
+**Last session:** 2026-11-27T09:08:59.771Z
+**Stopped at:** Completed 20-02-PLAN.md
 **Resume file:** None

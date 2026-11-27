@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 23
+open_count: 26
 waived_count: 0
 fixed_count: 0
-total_count: 23
-last_updated: 2026-11-27T07:23:47.569Z
+total_count: 26
+last_updated: 2026-11-27T09:08:03.217Z
 ---
 
 # Broken Windows Ledger
@@ -38,6 +38,9 @@ last_updated: 2026-11-27T07:23:47.569Z
 | 21 | 19-server-pools-auto-ping-7-days | stub | mobile/lib/features/shop/shop_screen.dart |  | Shop stub Купить shows phase-21 SnackBar only; no purchase (D-15/D-19), real shop ships in phase 21 | open |  | 2026-11-27T05:23:34.584Z |  |
 | 22 | 20 | unrun-verify | app/api/mobile/config/route.ts |  | Live ARTEMIDA links[] shape re-verification on a paid key remains [ASSUMED] inherited from phase 19; manual-only, not exercised in 20-01 | open |  | 2026-11-27T07:23:47.502Z |  |
 | 23 | 20 | deviation | lib/bot.ts |  | Global npx tsc --noEmit red on unrelated actively-edited parallel-work files; 20-01 slice proven by scoped tsc + 23 passing tests | open |  | 2026-11-27T07:23:47.569Z |  |
+| 24 | 20 | unrun-verify | mobile/native/libbox_shim/main.go |  | Real OS TUN fd path, per-ABI .so/.dylib artifacts and on-device traffic counters unverified here (no Android JDK/SDK; non-TUN fd aborts with SIGABRT) | open |  | 2026-11-27T09:08:03.055Z |  |
+| 25 | 20 | deviation | mobile/native/libbox_shim/main.go |  | Rule 2: stop existing no-TUN service before libbox_start_with_tun so the fd-carrying platform is used | open |  | 2026-11-27T09:08:03.135Z |  |
+| 26 | 20 | deviation | mobile/native/libbox_shim/main.go |  | Rule 3: added Go-side cString seam checkConfigErrorText because cgo cannot be imported from _test.go | open |  | 2026-11-27T09:08:03.217Z |  |
 
 ````json
 [
@@ -315,6 +318,42 @@ last_updated: 2026-11-27T07:23:47.569Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-27T07:23:47.569Z",
+    "resolved_at": null
+  },
+  {
+    "id": 24,
+    "kind": "unrun-verify",
+    "phase": "20",
+    "file": "mobile/native/libbox_shim/main.go",
+    "line": null,
+    "description": "Real OS TUN fd path, per-ABI .so/.dylib artifacts and on-device traffic counters unverified here (no Android JDK/SDK; non-TUN fd aborts with SIGABRT)",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T09:08:03.055Z",
+    "resolved_at": null
+  },
+  {
+    "id": 25,
+    "kind": "deviation",
+    "phase": "20",
+    "file": "mobile/native/libbox_shim/main.go",
+    "line": null,
+    "description": "Rule 2: stop existing no-TUN service before libbox_start_with_tun so the fd-carrying platform is used",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T09:08:03.135Z",
+    "resolved_at": null
+  },
+  {
+    "id": 26,
+    "kind": "deviation",
+    "phase": "20",
+    "file": "mobile/native/libbox_shim/main.go",
+    "line": null,
+    "description": "Rule 3: added Go-side cString seam checkConfigErrorText because cgo cannot be imported from _test.go",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T09:08:03.217Z",
     "resolved_at": null
   }
 ]

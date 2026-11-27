@@ -6,10 +6,10 @@ current_phase: 20
 current_phase_name: VPN Core & Connect FSM
 status: executing
 stopped_at: Completed 20-03-PLAN.md
-last_updated: "2026-11-27T09:27:28.032Z"
+last_updated: "2026-11-27T09:43:35.198Z"
 last_activity: 2026-11-27
 last_activity_desc: Phase 20 execution started
-state_head: a90cd30db74d84799d2b492ad55483800d1a8c21
+state_head: f8057b9c6978ee983ccd1980953eff71d0b3159f
 progress:
   total_phases: 6
   completed_phases: 0
@@ -113,6 +113,7 @@ None (flat mode)
 - [Phase 20]: 20-02: stop any existing no-TUN service before libbox_start_with_tun so the fd-carrying platform is used — Reload into the inert ping platform cannot supply a TUN fd (Rule 2)
 - [Phase 20-03]: D-06 confirmed by the user at the blocking gate as kotlin-service: Kotlin VpnService + foreground service + method channel; no background-service plugin — Locked costly decision; correct OS lifecycle and fd ownership, rollback returns to no-TUN shim
 - [Phase 20-03]: D-09 confirmed by the user at the blocking gate as always-on: kill switch permanently enabled, no toggle, no bypass — Locked costly decision; REQ-CONN-06 no leaks, no stale UI state, simpler FSM
+- [Phase 20]: Phase 20-04 D-07 gate confirmed at blocking checkpoint: user explicitly selected compile-only — prepare NEPacketTunnelProvider + NEOnDemandRuleConnect + entitlements/embedded target as source-only; no tunnel build, sign or UAT until Apple approves packet-tunnel-provider entitlement; iOS fd KVC stays [ASSUMED], no private-API workaround or fake connected state. — Locked costly decision D-07 (CONTEXT.md); iOS compile-only, Android remains the verifiable tunnel path; Apple entitlement approval is an external blocker recorded in user_setup and STATE blockers.
 
 ## Performance Metrics
 

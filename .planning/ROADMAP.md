@@ -101,7 +101,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 19-05-PLAN.md — `Server` + `serverPoolProvider`/`pingCacheProvider`/`bestServerProvider`/`currentTabProvider`; `connect(mode)` selection-only; invalidation; refresh; `load` deferred
+- [x] 19-05-PLAN.md — `Server` + `serverPoolProvider`/`pingCacheProvider`/`bestServerProvider`/`currentTabProvider`; `connect(mode)` selection-only; invalidation; refresh; `load` deferred
 
 **Wave 6** *(blocked on Wave 5 completion)*
 

@@ -5,16 +5,16 @@ milestone_name: Мобильный клиент
 current_phase: 19
 current_phase_name: Server Pools & Auto-Ping
 status: executing
-stopped_at: Completed 19-04-PLAN.md
-last_updated: "2026-11-27T04:12:58.445Z"
+stopped_at: Completed 19-05-PLAN.md
+last_updated: "2026-11-27T04:25:40.405Z"
 last_activity: 2026-11-27
 last_activity_desc: Phase 19 execution started
-state_head: 39d5f3ff72e4a1d70205ca5679256dfdb04a9064
+state_head: f0ad7497af1a41fef2d32a54345c73a0aaa32d71
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 15
-  completed_plans: 11
+  completed_plans: 12
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 ## Current Position
 
 Phase: 19 (Server Pools & Auto-Ping) — EXECUTING
-Plan: 5 of 8
+Plan: 6 of 8
 Status: Ready to execute
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-27 — Phase 19 execution started
@@ -92,6 +92,9 @@ None (flat mode)
 - [Phase 19]: 19-04: network-change clearPingCacheAndLastGood clears ping_cache + last_good but keeps per-tab selection and current_tab (D-11)
 - [Phase 19]: 19-04: last_good PK(tab,server_id) dedupe most-recent-first capped at 5; current_tab singleton defaults to simple
 - [Phase 19]: 19-04: PingCacheLookup.fresh made async so a Drift DAO can implement the cache seam; 19-03 fake cache and tests updated
+- [Phase 19]: 19-05: D-16 gate confirmed locked - AppTheme.dark app-wide with ThemeMode.dark, M3 kept, AppTheme.light unused; no light toggle, no load, min password 8
+- [Phase 19]: 19-05: bundled official OFL variable TTFs (Manrope/Unbounded/JetBrains Mono) instead of google_fonts - offline-safe, no new dependency
+- [Phase 19]: 19-05: pingOffline=dim distinct from pingBad=red; pingColor thresholds 60/110/180, no load colors and no simulation
 
 ## Performance Metrics
 
@@ -108,9 +111,10 @@ None (flat mode)
 | Phase 19-server-pools-auto-ping-7-days P02 | 11min | 1 tasks | 11 files |
 | Phase 19-server-pools-auto-ping-7-days P03 | 9 min | 3 tasks | 10 files |
 | Phase 19 P04 | 10 min | 3 tasks | 10 files |
+| Phase 19-server-pools-auto-ping-7-days P05 | 8 min | 3 tasks | 17 files |
 
 ## Session
 
-**Last session:** 2026-11-27T04:12:58.386Z
-**Stopped at:** Completed 19-04-PLAN.md
+**Last session:** 2026-11-27T04:25:40.365Z
+**Stopped at:** Completed 19-05-PLAN.md
 **Resume file:** None

@@ -257,11 +257,19 @@ void main() {
     expect(cached, contains("fast"));
     expect(cached, isNot(contains("outbound")));
     expect(cached, isNot(contains("uuid")));
+    // Decode exactly like _offlinePools: cached cards have no outbound, so
+    // the reader supplies an inert one instead of persisting secrets.
     final decoded = (jsonDecode(cached!) as List<dynamic>)
-        .map((item) => Server.fromJson(Map<String, dynamic>.from(item as Map)))
+        .map(
+          (item) => Server.fromJson(
+            Map<String, dynamic>.from(item as Map)
+              ..putIfAbsent("outbound", () => <String, dynamic>{}),
+          ),
+        )
         .toList();
-    expect(decoded.single.outbound, isEmpty);
-    expect(decoded.single.host, "127.0.0.1");
+    expect(decoded, hasLength(2));
+    expect(decoded.every((server) => server.outbound.isEmpty), isTrue);
+    expect(decoded.every((server) => server.host == "127.0.0.1"), isTrue);
   });
 
   test("provider failure without a cache is a retryable network error",

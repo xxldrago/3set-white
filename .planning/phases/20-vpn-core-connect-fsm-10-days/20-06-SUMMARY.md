@@ -162,7 +162,7 @@ Each task was committed atomically:
 2. **Task 2: End-to-end reconnect slice (tracer)** — `87d2a4e` (feat)
 3. **Task 3: Bounded core restart backoff 1/2/4 s with reset** — `7d0d70b` (feat)
 
-**Plan metadata:** pending close-out commit (`docs(20-06): complete ...`)
+**Plan metadata:** `0dc47ca` (docs: complete plan)
 
 ## Files Created/Modified
 

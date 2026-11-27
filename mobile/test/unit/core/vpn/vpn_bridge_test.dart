@@ -72,6 +72,9 @@ class FakeVpnCore implements VpnCore {
   /// Config string handed over by the bridge, if any.
   String? lastConfig;
 
+  /// Optional non-platform failure injected by a test (WR-01).
+  Object? startError;
+
   /// Records stop ordering in the shared [order] list when provided.
   List<String>? order;
 
@@ -80,6 +83,9 @@ class FakeVpnCore implements VpnCore {
     startCalls++;
     lastFd = fd;
     lastConfig = configJson;
+    final error = startError;
+    if (error is Exception) throw error;
+    if (error is Error) throw error;
   }
 
   @override
@@ -226,6 +232,24 @@ void main() {
     );
 
     expect(core.startCalls, 0);
+  });
+
+  test("a non-platform core failure is mapped to a stable code (WR-01)",
+      () async {
+    channel.startResponse = <Object?, Object?>{"fd": fd};
+    core.startError = const LibboxConfigException("config rejected");
+
+    await expectLater(
+      bridge.start(config),
+      throwsA(
+        isA<VpnBridgeException>().having(
+          (VpnBridgeException error) => error.code,
+          "code",
+          "config_invalid",
+        ),
+      ),
+    );
+    expect(describeLogs(), isNot(contains("config rejected")));
   });
 
   test("raw platform text is mapped to a safe stable code", () async {

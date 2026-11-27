@@ -192,6 +192,10 @@ class MethodChannelVpnBridge implements VpnBridge {
       _log("start", <String, Object?>{"result": "tunnel_up"});
     } on PlatformException catch (error) {
       throw VpnBridgeException(_safeCode(error.code));
+    } on Object {
+      // LibboxConfigException / LibboxUnavailableException (and any future
+      // core failure) must never escape raw: the FSM only knows stable codes.
+      throw const VpnBridgeException("config_invalid");
     }
   }
 

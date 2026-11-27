@@ -236,6 +236,15 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
         onFailure,
       );
       return;
+    } on Object {
+      // WR-01: never leave `connecting` on an unexpected config failure.
+      _handleStartFailure(
+        "config_invalid",
+        "config_failed",
+        generation,
+        onFailure,
+      );
+      return;
     }
     if (generation != _generation) return;
 
@@ -251,6 +260,15 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
         onFailure,
       );
       return;
+    } on Object {
+      // WR-01: an unexpected prepare failure must still reach `error` + toast.
+      _handleStartFailure(
+        "config_invalid",
+        "permission_denied",
+        generation,
+        onFailure,
+      );
+      return;
     }
     if (generation != _generation) return;
 
@@ -261,6 +279,16 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
     } on VpnBridgeException catch (error) {
       _handleStartFailure(
         _safeBridgeCode(error.code),
+        "bridge_start_failed",
+        generation,
+        onFailure,
+      );
+      return;
+    } on Object {
+      // WR-01 safety net: a bridge that throws something other than
+      // VpnBridgeException still fails the FSM closed with a stable code.
+      _handleStartFailure(
+        "config_invalid",
         "bridge_start_failed",
         generation,
         onFailure,

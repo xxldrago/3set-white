@@ -95,9 +95,15 @@ class FakeBridge implements VpnBridge {
     calls.add("prepare");
   }
 
+  /// Optional non-bridge failure injected by a test (WR-01).
+  Object? startError;
+
   @override
   Future<void> start(String configJson) async {
     calls.add("start");
+    final error = startError;
+    if (error is Exception) throw error;
+    if (error is Error) throw error;
   }
 
   @override
@@ -326,5 +332,46 @@ void main() {
     expect(backoff.attempts, 0);
     expect(backoff.isScheduled, isFalse);
     expect(toasts, isEmpty);
+  });
+
+  test("an unexpected bridge failure reaches error + toast, never connecting",
+      () async {
+    final backoff = RestartBackoff();
+    final config = FakeConfig();
+    final bridge = FakeBridge()
+      ..startError = StateError("native exploded");
+    final toasts = <ErrorToast>[];
+    final logs = <Map<String, Object?>>[];
+    final container = ProviderContainer(
+      overrides: [
+        connectControllerProvider.overrideWith(FakeSelection.new),
+        configRepositoryProvider.overrideWithValue(config),
+        vpnBridgeProvider.overrideWithValue(bridge),
+        connectionToastProvider.overrideWithValue(toasts.add),
+        connectionErrorLogProvider.overrideWithValue((_) {}),
+        connectionTransitionLogProvider.overrideWithValue(logs.add),
+        restartBackoffProvider.overrideWithValue(backoff),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(connectionNotifierProvider.notifier).connect(
+          PoolTab.simple,
+          auto: true,
+        );
+
+    final state = container.read(connectionNotifierProvider);
+    expect(state.phase, ConnPhase.error);
+    expect(state.errorCode, "config_invalid");
+    expect(
+      toasts.map((toast) => toast.message),
+      <String>["Не удалось подготовить подключение"],
+    );
+    expect(bridge.calls, contains("prepare"));
+    expect(bridge.calls, contains("start"));
+    expect(
+      logs.map((event) => event["reason"]),
+      contains("bridge_start_failed"),
+    );
   });
 }

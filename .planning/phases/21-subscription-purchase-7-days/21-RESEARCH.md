@@ -640,31 +640,30 @@ final dashOffset = 351.86 * (1 - progress);
 | A6 | Platega v2 `/transaction/process` tolerates omitted `metadata.user_email` for Telegram-only accounts as the current code does | Pitfall 6 | Payment creation rejected 400 in UAT; needs credential-backed fix |
 | A7 | REQ-BE-05 is satisfied by the existing worker/outbox and needs no new route | Phase Requirements | A literal reading would add a duplicate issuer — must be confirmed by the planner/user |
 
-## Open Questions
-
-1. **Does 24h grace actually grant connection, or is it display-only?**
+## Open Questions (RESOLVED)
+1. **Does 24h grace actually grant connection, or is it display-only?** **RESOLVED: grace grants actual connection. User explicitly confirmed on 2026-11-27. Implement one shared pure server-side predicate (`statusKind` + `graceUntil`) in a new helper, import into `/subscription` AND phase-19/20 `isActiveKey`; add ±1 ms boundary fixtures at `expiresAt + 24h`. Treat as a blocking decision recorded in CONTEXT D-10; changing already-executed gates is in scope.**
    - What we know: D-10 explicitly says «подключение разрешено в grace»; `StatusKind` has no grace state and `/servers`/`/config` reject `expired` and four raw statuses. [VERIFIED: lib/keys-service.ts:27-65; app/api/mobile/servers/route.ts:16-38]
    - What's unclear: whether ARTEMIDA keeps the key usable after expiry, and whether phases 19/20 gates may be modified.
    - Recommendation: implement one shared server-side predicate (`statusKind` + `graceUntil`) in a new pure helper, use it in `/subscription` AND import it into `isActiveKey`; add ±1ms boundary fixtures at exactly `expiresAt + 24h`. Confirm with the user at a blocking checkpoint before changing the locked gate.
 
-2. **Do payment chips bind to a Platega `paymentMethod`?**
+2. **Do payment chips bind to a Platega `paymentMethod`?** **RESOLVED: payment chips are UI-only in phase 21; Platega numeric codes cannot distinguish МИР/VISA/MC and REQ-SHOP-04 only requires persisted selection. Do not bind chips to `paymentMethod`; no `CreateOrderInput` change.**
    - What we know: REQ-SHOP-04 only requires persistence; Platega codes are 2/3/11/12/13/14 and cannot express МИР vs VISA vs MC. [CITED: docs.platega.com/...29203843e0]
    - What's unclear: product intent of the chips.
    - Recommendation: treat as UI-only this phase; if binding is wanted, extend `CreateOrderInput` with `paymentMethod` and map МИР/VISA/MC → 11, SBP → 2, CRYPTO → 13 in one explicit place.
 
-3. **What exactly is `{id}` in `/payments/status/{id}` — our order id or the provider transaction id?**
+3. **What exactly is `{id}` in `/payments/status/{id}` — our order id or the provider transaction id?** **RESOLVED: poll id is our `order.id` via `loadOrderForUserId` (ownership-safe); never expose `plategaTxId` to client.**
    - What we know: `loadOrderForUserId(userId, orderId)` exists and is the ownership-safe read; `plategaTxId` is deliberately dropped from history rows. [VERIFIED: lib/orders-service.ts:421-429, 447-462]
    - Recommendation: use our `order.id` for polling; never expose `plategaTxId`.
 
-4. **Which Platega merchant for mobile orders?**
+4. **Which Platega merchant for mobile orders?** **RESOLVED: Platega `channel: "web"` → merchant `site` by default; keep header-verification/callback merchant match; revisit only when test credentials arrive (agent discretion).**
    - What we know: `channel: "web"` resolves to `"site"` unless a bot merchant is configured; callback requires the calling merchant to match `order.plategaMerchant`. [VERIFIED: lib/orders-service.ts:214-218; app/api/platega/callback/route.ts:93-105]
    - Recommendation: default `channel: "web"` → `"site"`; keep header-verification compatibility; revisit only when test credentials arrive (agent discretion in D-04).
 
-5. **Where to store the pending order id for resume?**
+5. **Where to store the pending order id for resume?** **RESOLVED: persist only the non-secret `orderId` in `flutter_secure_storage` under a dedicated key; clear on terminal status; never store `paymentUrl`/tokens/secrets.**
    - What we know: `flutter_secure_storage ^11.2.0` is already used for tokens; Drift is used for ping cache. [VERIFIED: mobile/pubspec.yaml:21, 15]
    - Recommendation: store only the order id (a non-secret identifier) in secure storage under a dedicated key; clear it on terminal status. Do not store `paymentUrl` or any token.
 
-6. **API envelope for the new routes: `{ok, ...}` or bare `{...}`?**
+6. **API envelope for the new routes: `{ok, ...}` or bare `{...}`?** **RESOLVED: all new mobile routes use the `/servers`/`/config` envelope `{ok:false,error}` with 200 for provider errors; one Flutter error mapper shape.**
    - What we know: `/servers` and `/config` use `{ok:false,error}` with 200 for provider errors; `/orders` uses bare `{url}` and HTTP error statuses. [VERIFIED: app/api/mobile/servers/route.ts:48-62; app/api/orders/route.ts:112-143]
    - Recommendation: follow the `/servers`/`config` envelope for all new mobile routes so the Flutter error mapper has one shape; this is explicitly agent discretion.
 
@@ -790,3 +789,4 @@ final dashOffset = 351.86 * (1 - progress);
 
 **Research date:** 2026-11-27
 **Valid until:** 2026-12-27 (30 days; re-check `flutter_inappwebview` stable and Platega docs if the beta graduates)
+

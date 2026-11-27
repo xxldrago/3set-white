@@ -189,11 +189,25 @@ Plans:
 **Plans:** 6 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 21-01-PLAN.md — Blocking decision/WebView gates + end-to-end payment tracer (single issuer, no simulation)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 21-02-PLAN.md — Real `/subscription` + shared 24h grace predicate across phase-19/20 gates
 - [ ] 21-03-PLAN.md — Mobile `/pricing` and read-only `/promo/apply` backend routes
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 21-04-PLAN.md — Freezed Dart models and live providers replacing hardcoded prices and mock URL
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 21-05-PLAN.md — Real dark Shop Screen, stepper/promo/chips/summary, ring, status-driven confetti
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
 - [ ] 21-06-PLAN.md — Killed-app payment resume, real `/shop` routing and no-key gating, single-issuer guard
 
 #### Tasks

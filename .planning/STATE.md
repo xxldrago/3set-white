@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Мобильный клиент
-current_phase: 20
-current_phase_name: VPN Core & Connect FSM
-status: verifying
+current_phase: 21
+current_phase_name: Subscription & Purchase
+status: executing
 stopped_at: Phase 21 context gathered
-last_updated: "2026-11-27T12:00:55.902Z"
+last_updated: "2026-11-27T12:36:09.027Z"
 last_activity: 2026-11-27
 last_activity_desc: Phase 20 execution started
-state_head: cb51eec2e393d540e8efc13d21ac1612224f8e63
+state_head: a5be99344fe0953a3bc113e2a10c403d91aeabc3
 progress:
   total_phases: 6
   completed_phases: 0
-  total_plans: 22
+  total_plans: 28
   completed_plans: 22
   percent: 0
 ---
@@ -29,9 +29,9 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 
 ## Current Position
 
-Phase: 20 (VPN Core & Connect FSM) — EXECUTING
+Phase: 21 (Subscription & Purchase) — READY TO EXECUTE
 Plan: 7 of 7
-Status: Phase complete — ready for verification
+Status: Ready to execute
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-27 — Phase 20 execution started
 

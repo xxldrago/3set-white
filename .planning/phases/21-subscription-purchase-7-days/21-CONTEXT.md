@@ -44,7 +44,7 @@
 ### Промо, trial, гейтинг
 - **D-08:** Промокоды LIME15 (−15%) и 3SET5 (−5%) проверяются бэкендом через `/api/mobile/promo/apply` (переиспользование существующей promo-логики). Клиент применяет только полученный процент, не хранит коды как источник правды. — **Reversibility:** reversible — можно перевести проверку в общий заказной конвейер.
 - **D-09:** Trial-ключи: `/subscription` отдаёт `isTrial`; бэкенд дополнительно проверяет `precheckOwnedKeyByUserId`/`isTrialConflict`; UI скрывает продление/апгрейд и показывает «Триал не продлевается». — **Reversibility:** reversible.
-- **D-10:** Grace period 24 ч authoritative на бэкенде: `/subscription` отдаёт `statusKind` + `graceUntil`; подключение разрешено в grace; UI показывает «expires soon»-баннер. Клиент не вычисляет 24 ч сам. — **Reversibility:** reversible.
+- **D-10:** Grace period 24 ч authoritative на бэкенде: `/subscription` отдаёт `statusKind` + `graceUntil`; подключение **разрешено** в grace (пользователь подтвердил 2026-11-27 после research). Реализуется один общий чистый server-side предикат (`statusKind` + `graceUntil`) в новом хелпере; он используется и в `/subscription`, и импортируется в `isActiveKey` фаз 19/20 (`/servers`, `/config`) — изменение уже выполнение гейтов входит в фазу 21; boundary-тесты на `expiresAt ± 24h ± 1ms`. UI показывает «expires soon»-баннер. Клиент не вычисляет 24 ч сам. — **Reversibility:** reversible — можно вернуть гейты к strict expired.
 - **D-11:** Нет активного ключа (или grace) → connect заблокирован, тост «Нужен активный ключ», переход в магазин. Наследует D-21 фазы 19 и D-03 фазы 20 (`/config` требует ключ). — **Reversibility:** reversible.
 
 ### Subscription UI

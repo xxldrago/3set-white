@@ -152,6 +152,34 @@ Plans:
 - Connected panel shows live stats
 - Foreground service / NE compliant
 
+**Plans:** 7 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 20-01-PLAN.md — Backend `GET /api/mobile/config?serverId=...` + pure `buildMobileConfig` (D-01 gate): JWT + per-request active-key gate, full TUN config, no secrets; `COVERAGE.md` (REQ-CONN-03)
+- [ ] 20-02-PLAN.md — Own C-shared shim extension (D-05 gate): `libbox_start_with_tun(fd,config)` + `libbox_traffic()`, regenerated header/bindings, Dart facade; ping path intact (REQ-CONN-04/07)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 20-03-PLAN.md — Android Kotlin `VpnService` + foreground service (D-06 + D-09 gates): `specialUse` manifest, always-on kill switch, method-channel bridge, no orphan tunnel (REQ-CONN-04/06)
+- [ ] 20-04-PLAN.md — iOS `NEPacketTunnelProvider` compile-only (D-07 gate): extension plist, entitlement, embedded target, OnDemand kill switch; no tunnel build until entitlement (REQ-CONN-05/06)
+
+**Wave 3** *(blocked on Waves 1–2)*
+
+- [ ] 20-05-PLAN.md — Connection FSM: freezed state + Riverpod notifier + `/config` repository + generation-token cancel + safe RU error toasts (REQ-CONN-01/02/03/10)
+
+**Wave 4** *(blocked on Wave 3)*
+
+- [ ] 20-06-PLAN.md — Auto-reconnect (D-15 gate) + REQ-PING-05: VPN-only-change filter, invalidation, RTT reselection, one toast, 1/2/4s backoff (REQ-CONN-08/09, REQ-PING-05)
+- [ ] 20-07-PLAN.md — Connected Panel: live flag/proto/IP/ping/timer/↓↑MB from FSM + libbox counters at 1 Hz; «—» IP fallback; FSM-aware button (REQ-CONN-07)
+
+**Cross-cutting constraints:**
+
+- No simulation: no `Math.random`, fake IP, `sleep`, fake connection; no `load` bar; no bottom nav; no `/shop` purchase.
+- No client→ARTEMIDA; no raw links/config/secrets/fd in logs or UI; no `/pricing`, `getKeyWithLinks` or `/servers.outbound` config source; no gomobile/community package, no `libbox_urltest`; no iOS tunnel build before entitlement; no kill switch bypass.
+- No Prisma schema change this phase; `npx prisma validate` only. Android native build/UAT and iOS tunnel are CI/human-judgment gated (external blockers).
+
 ---
 
 ### Phase 21: Subscription & Purchase (7 days)

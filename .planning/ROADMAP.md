@@ -61,24 +61,35 @@
 
 | Task | Description | Acceptance |
 |------|-------------|------------|
-| 19.1 | **Backend: `/api/mobile/servers`** — transform ARTEMIDA `/pricing` → two pools with `load`, `proto`, `sni?` | JSON matches spec |
-| 19.2 | **Server List UI** — two tabs (Simple/Whitelist), protocol badges, load bars, SNI display | Matches prototype |
+| 19.1 | **Backend: `/api/mobile/servers`** — source subscription-links (NOT ARTEMIDA `/pricing`; CONTEXT D-01 supersedes); two pools `simple`/`whitelist`; `id,name,city,cc,flag,proto,sni?,tab,host,port,protocol,outbound`; NO `load`; `no_active_key` 403; `getSubscriptionForUserId` | JSON matches spec |
+| 19.2 | **Server List UI** — two tabs (Simple/Whitelist), protocol badges, SNI display; **load bar DEFERRED** (REQ-POOL-04, CONTEXT D-04; no `load`; no simulation) | Matches prototype |
 | 19.3 | **libbox FFI Setup** — compile sing-box for Android (arm64-v8a, armeabi-v7a) + iOS (arm64), `ffigen` bindings | `libbox.urltest()` callable |
-| 19.4 | **Urltest Implementation** — HTTP HEAD to server endpoint, measure RTT, return `{online, rtt}` | 100ms local, 2000ms timeout |
+| 19.4 | **Urltest Implementation** — `libbox.urltest` HTTP through real outbound `generate_204`; real `URLTest(outboundTag)` + async `WriteGroups.URLTestDelay`; NOT ICMP; NOT `libbox_urltest`; silent `Socket.connect` `approx` fallback; return `{online,rtt}`; NOT `libbox.urltest(url)` sync RTT | 2000ms timeout; quick-path 800ms |
 | 19.5 | **Ping Cache (Drift)** — table `ping_cache(server_id, tab, rtt, online, ts)`, TTL 60s | Query returns fresh/stale |
 | 19.6 | **Quick Path (Last-Good)** — on connect, ping ≤3 last-good first (800ms timeout) | Falls back to full ping |
 | 19.7 | **Full Ping** — parallel ping all in tab (2s timeout), update UI with RTT/offline | All cards show ping |
-| 19.8 | **Best Server Selection** — sort by RTT asc, load asc; auto card shows best | Auto selects fastest |
+| 19.8 | **Best Server Selection** — sort by RTT asc, then `load` asc (RTT-only now; `load` deferred D-04); auto card shows best; connect = selection only (D-18) | Auto selects fastest |
 | 19.9 | **Connectivity Invalidation** — `connectivity_plus` stream → clear Drift cache on network change | WiFi↔LTE → fresh ping |
 | 19.10 | **Manual Refresh** — refresh button → full ping → toast | Spinner + toast |
 | 19.11 | **Riverpod: `serverPoolProvider`, `pingCacheProvider`, `bestServerProvider`** | Reactive UI updates |
 
 #### Deliverables
 
-- Two tabs with live server data
-- Ping works (quick-path + full), cache TTL respected
-- Network change invalidates cache
-- libbox FFI integrated
+- Two tabs with live server data (no `load`; REQ-POOL-04 deferred; no simulation; `no_active_key`; `/api/mobile/servers` subscription-links not `/pricing`)
+- Ping works (quick-path + full; `libbox.urltest` `URLTest`+`WriteGroups`; silent TCP `approx`; NOT `libbox_urltest`), cache TTL 60s respected; connect=selection only (phase 20 tunnel)
+- Network change invalidates cache (clear ping_cache+last_good; keep selection+current_tab)
+- libbox FFI integrated (own C-shared sing-box v1.14.4 shim + `ffigen`; Android blocked here; silent fallback; GPL recorded)
+
+**Plans:** 7 plans
+
+Plans:
+- [ ] 19-01-PLAN.md — Backend `/api/mobile/servers` + `lib/server-pool.ts` parser + `lib/servers-source.ts`; JWT + active key + `no_active_key` 403 + D-22; no `/pricing`, no `load`, no secrets
+- [ ] 19-02-PLAN.md — libbox ping: own C-shared sing-box v1.14.4 shim + `ffigen`; `URLTest(tag)`+`WriteGroups`; `generate_204`; silent `Socket.connect` `approx`; `PingRepository`; D-06/D-07/D-08/D-09; NOT `libbox_urltest`
+- [ ] 19-03-PLAN.md — Drift `ping_cache` TTL60 + `last_good`<=5 + `selection` + `current_tab` + `server_list_cache`; network clear; no Prisma change
+- [ ] 19-04-PLAN.md — Dark prototype theme app-wide (`AppTheme.dark` verbatim; `ThemeMode.dark`; M3; fonts); re-theme auth; no `load`; min-8
+- [ ] 19-05-PLAN.md — `Server` + `serverPoolProvider`/`pingCacheProvider`/`bestServerProvider`/`currentTabProvider`; `connect(mode)` selection-only; invalidation; refresh; `load` deferred
+- [ ] 19-06-PLAN.md — `ServerPoolScreen` full prototype + widgets; no bottom nav; `pingClass`; `последний`; SNI; proto; no `load`; no simulation; Russian
+- [ ] 19-07-PLAN.md — Router: `ServerPoolScreen`; remove `NavigationBar`; `/shop` stub; auth preserved
 
 ---
 

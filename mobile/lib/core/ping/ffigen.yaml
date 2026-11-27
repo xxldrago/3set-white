@@ -1,0 +1,23 @@
+name: LibboxBindings
+description: |
+  dart:ffi bindings for our own minimal C-shared sing-box v1.14.4 libbox shim.
+  Generated from the committed C ABI contract at
+  mobile/native/libbox_shim/libbox_shim.h (emitted by native/.../build.sh).
+output: generated/libbox_bindings.dart
+headers:
+  entry-points:
+    - ../../../native/libbox_shim/libbox_shim.h
+  include-directives:
+    - '**/libbox_shim.h'
+compiler-opts:
+  - -I.
+exclude-all-by-default: true
+functions:
+  include:
+    - libbox_setup
+    - libbox_check_config
+    - libbox_start
+    - libbox_stop
+    - urltest
+    - urltest_take
+    - libbox_free_string

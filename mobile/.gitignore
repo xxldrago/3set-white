@@ -46,3 +46,10 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# libbox C-shared native artifacts (built by native/libbox_shim/build.sh in CI;
+# the committed libbox_shim.h ABI contract and Go sources ARE tracked).
+/android/app/src/main/jniLibs/*/libboxshim.so
+/ios/Frameworks/
+native/libbox_shim/*.dylib
+native/libbox_shim/*.so

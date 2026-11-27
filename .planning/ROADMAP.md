@@ -186,6 +186,16 @@ Plans:
 
 **Goal**: Full purchase flow — subscription status, shop, Platega payment, key issuance.
 
+**Plans:** 6 plans
+
+Plans:
+- [ ] 21-01-PLAN.md — Blocking decision/WebView gates + end-to-end payment tracer (single issuer, no simulation)
+- [ ] 21-02-PLAN.md — Real `/subscription` + shared 24h grace predicate across phase-19/20 gates
+- [ ] 21-03-PLAN.md — Mobile `/pricing` and read-only `/promo/apply` backend routes
+- [ ] 21-04-PLAN.md — Freezed Dart models and live providers replacing hardcoded prices and mock URL
+- [ ] 21-05-PLAN.md — Real dark Shop Screen, stepper/promo/chips/summary, ring, status-driven confetti
+- [ ] 21-06-PLAN.md — Killed-app payment resume, real `/shop` routing and no-key gating, single-issuer guard
+
 #### Tasks
 
 | Task | Description | Acceptance |

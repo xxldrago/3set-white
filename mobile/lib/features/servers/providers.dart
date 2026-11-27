@@ -465,16 +465,17 @@ class ConnectController extends Notifier<ConnectOutcome?> {
 
 /// Real-connectivity invalidation (D-11/REQ-PING-05).
 ///
-/// Skips the one startup emission from `ConnectivityService._updateStatus`,
-/// coalesces changes with a 500 ms debounce, cancels in-flight probes and
-/// clears ping cache + last-good. Selection and current tab are kept.
+/// Listens only to real `connectivity_plus` changes (the service's startup
+/// check never broadcasts), coalesces them with a 500 ms debounce, cancels
+/// in-flight probes and clears ping cache + last-good. Selection and current
+/// tab are kept. `App.build` watches this provider so it stays alive (D-11).
 final networkPingInvalidationProvider = Provider<bool>((ref) {
   final service = ref.read(connectivityServiceProvider);
   final dao = ref.read(pingDaoProvider);
   final repository = ref.read(pingRepositoryProvider);
   Timer? debounce;
 
-  final subscription = service.connectivityStream.skip(1).distinct().listen((
+  final subscription = service.connectivityStream.distinct().listen((
     _,
   ) {
     debounce?.cancel();

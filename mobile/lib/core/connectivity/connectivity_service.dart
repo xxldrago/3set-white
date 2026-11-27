@@ -55,23 +55,26 @@ class ConnectivityService {
   Stream<List<ConnectivityResult>> get connectivityStream => _controller.stream;
 
   void _onConnectivityChanged(List<ConnectivityResult> results) {
+    _setStatus(results);
+    // Only real platform changes are broadcast. The startup check below must
+    // not emit: it normally runs before any listener attaches, so a consumer
+    // using `.skip(1)` would otherwise swallow the first genuine change.
+    _controller.add(results);
+  }
+
+  void _setStatus(List<ConnectivityResult> results) {
     final hasConnection = results.any((r) => r != ConnectivityResult.none);
     _currentStatus = hasConnection
         ? ConnectivityStatus.connected
         : ConnectivityStatus.disconnected;
-    _controller.add(results);
   }
 
-  /// Updates the current connectivity status by checking actively.
+  /// Updates the current status from an active check without publishing a
+  /// synthetic change to [connectivityStream] (D-11).
   Future<void> _updateStatus() async {
     try {
-      final results = await _connectivity.checkConnectivity();
-      final hasConnection = results.any((r) => r != ConnectivityResult.none);
-      _currentStatus = hasConnection
-          ? ConnectivityStatus.connected
-          : ConnectivityStatus.disconnected;
-      _controller.add(results);
-    } catch (e) {
+      _setStatus(await _connectivity.checkConnectivity());
+    } catch (_) {
       _currentStatus = ConnectivityStatus.disconnected;
     }
   }

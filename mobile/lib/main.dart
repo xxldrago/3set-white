@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/router.dart';
 import 'app/theme.dart';
 import 'features/auth/providers.dart';
+import 'features/servers/providers.dart' show networkPingInvalidationProvider;
 
 /// Main entry point for the 3set VPN mobile app.
 /// Sets up ProviderScope, MaterialApp.router with GoRouter and Material 3 theme.
@@ -20,6 +21,11 @@ class App extends ConsumerWidget {
     // resume gate must exist before the first route is shown.
     ref.watch(deepLinkHandlerProvider);
     ref.watch(resumeBiometricGateProvider);
+    // D-11/REQ-PING-05: keep the real connectivity listener alive for the whole
+    // app lifetime so a network change clears ping cache + last-good and
+    // re-pings the current tab. Without this watch the provider is lazy and
+    // the feature never runs in production.
+    ref.watch(networkPingInvalidationProvider);
 
     final router = ref.watch(routerProvider);
 

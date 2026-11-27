@@ -151,7 +151,7 @@ void main() {
   }
 
   test(
-    "network change skips the startup emission and clears ping_cache + "
+    "startup check never emits and a real network change clears ping_cache + "
     "last_good while keeping selection and current_tab",
     () async {
       container = buildContainer(withKey: false);
@@ -159,7 +159,7 @@ void main() {
       container.read(networkPingInvalidationProvider);
       await seedState();
 
-      // The ConnectivityService startup event must be ignored (skip(1)).
+      // The startup check only updates status; it must not invalidate.
       await Future<void>.delayed(const Duration(milliseconds: 50));
       expect(
         (await dao.lastGoodFor("simple")).isEmpty,

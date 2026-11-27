@@ -16,6 +16,8 @@ import "package:mobile/core/ping/libbox_core.dart";
 import "package:mobile/core/ping/libbox_ping_service.dart";
 import "package:mobile/core/ping/ping_repository.dart";
 import "package:mobile/core/ping/socket_ping_service.dart";
+import "package:mobile/core/vpn/connection_notifier.dart";
+import "package:mobile/core/vpn/connection_state.dart" as vpn_state;
 import "package:mobile/features/auth/providers.dart" show currentUserProvider;
 import "package:mobile/features/auth/widgets/error_toast.dart";
 import "package:mobile/features/servers/providers.dart";
@@ -49,6 +51,34 @@ class FakeLibboxClient implements LibboxPingClient {
   }) async {
     final id = tag.replaceFirst("srv-", "");
     return LibboxUrltestResult(online: true, rttMs: rttById[id] ?? 42);
+  }
+}
+
+/// Failsafe FSM stand-in: records button intents without a real tunnel or BFF.
+class FakeConnectionNotifier extends ConnectionNotifier {
+  /// Intents invoked by the panel.
+  final List<String> calls = <String>[];
+
+  @override
+  vpn_state.ConnectionState build() => const vpn_state.ConnectionState();
+
+  @override
+  Future<void> connect(
+    PoolTab tab, {
+    required bool auto,
+    String? manualServerId,
+  }) async {
+    calls.add("connect");
+  }
+
+  @override
+  Future<void> cancel() async {
+    calls.add("cancel");
+  }
+
+  @override
+  Future<void> disconnect() async {
+    calls.add("disconnect");
   }
 }
 
@@ -156,6 +186,7 @@ void main() {
         appDatabaseProvider.overrideWithValue(db),
         dioClientProvider.overrideWithValue(client),
         pingRepositoryProvider.overrideWithValue(repository),
+        connectionNotifierProvider.overrideWith(FakeConnectionNotifier.new),
         networkLabelProvider.overrideWith((_) => Stream<String>.value("Wi-Fi")),
         currentUserProvider.overrideWith((_) => null),
       ],
@@ -364,10 +395,11 @@ void main() {
     expect(find.text("Пинг обновлён"), findsOneWidget);
   });
 
-  testWidgets("connect only selects a server and announces phase 20", (
+  testWidgets("connect button drives the FSM with no phase-20 stub copy", (
     tester,
   ) async {
-    await tester.pumpWidget(buildScreen(makeContainer()));
+    final container = makeContainer();
+    await tester.pumpWidget(buildScreen(container));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text("Казань"));
@@ -375,7 +407,11 @@ void main() {
     await tester.tap(find.text("Подключить"));
     await settleAsync(tester);
 
-    expect(find.textContaining("VPN-ядро — фаза 20"), findsWidgets);
+    final fsm = container.read(connectionNotifierProvider.notifier)
+        as FakeConnectionNotifier;
+    expect(fsm.calls, <String>["connect"]);
+    expect(find.textContaining("VPN-ядро — фаза 20"), findsNothing);
+    expect(find.textContaining("Туннель, IP и трафик — фаза 20"), findsNothing);
     expect(find.text("Подключение отменено"), findsNothing);
     expect(find.text("Отключить"), findsNothing);
   });

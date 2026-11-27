@@ -8,6 +8,10 @@ import "package:flutter_riverpod/legacy.dart" show StateProvider;
 import "../../app/theme.dart";
 import "../../core/connectivity/connectivity_service.dart";
 import "../../core/db/app_database.dart";
+import "../../core/vpn/connected_stats.dart" show connectedStatsProvider;
+import "../../core/vpn/connection_notifier.dart" show connectionNotifierProvider;
+import "../../core/vpn/connection_state.dart" show ConnPhase;
+import "../../core/vpn/error_mapping.dart" show errorCodeFrom, errorToastFor;
 import "../auth/providers.dart" show currentUserProvider;
 import "../auth/widgets/error_toast.dart";
 import "../home/providers.dart" show currentTabProvider;
@@ -72,9 +76,18 @@ class ServerPoolScreen extends ConsumerWidget {
     final lastGood = ref.watch(lastGoodProvider(tab)).value ?? <LastGoodData>[];
     final selectedId = ref.watch(selectionProvider(tab));
     final outcome = ref.watch(connectControllerProvider);
+    final connection = ref.watch(connectionNotifierProvider);
+    final stats = ref.watch(connectedStatsProvider);
     final pools = poolsAsync.value;
     final hasKey = pools?.hasActiveKey ?? false;
     final best = ref.watch(bestServerProvider(tab));
+
+    // FSM errors surface through the stable code → locked RU toast mapping;
+    // no raw provider text and no phase-20 stub copy reaches the panel.
+    final fsmNotice = connection.phase == ConnPhase.error &&
+            connection.errorCode != null
+        ? errorToastFor(errorCodeFrom(connection.errorCode!)).message
+        : null;
 
     ref.listen<ConnectOutcome?>(connectControllerProvider, (previous, next) {
       if (next == null || identical(previous, next)) {
@@ -170,10 +183,9 @@ class ServerPoolScreen extends ConsumerWidget {
                   ? null
                   : _sampleFor(ref, tab, selected.id),
               hasKey: hasKey,
-              busy: busy,
-              outcomeNotice: outcome?.ok == true && outcome?.serverId != null
-                  ? "Сервер выбран · VPN-ядро — фаза 20"
-                  : null,
+              phase: connection.phase,
+              stats: stats,
+              outcomeNotice: fsmNotice,
               onConnect: () => unawaited(_connect(context, ref, tab)),
               onBuy: () => _shopStub(context),
             ),
@@ -334,27 +346,30 @@ class ServerPoolScreen extends ConsumerWidget {
     WidgetRef ref,
     PoolTab tab,
   ) async {
-    ref.read(poolBusyProvider.notifier).state = true;
-    try {
-      final savedId = ref.read(selectionProvider(tab));
-      final auto = savedId == null || savedId == "auto";
-      await ref
-          .read(connectControllerProvider.notifier)
-          .connect(tab, auto: auto, manualServerId: auto ? null : savedId);
-    } finally {
-      ref.read(poolBusyProvider.notifier).state = false;
+    final notifier = ref.read(connectionNotifierProvider.notifier);
+    final phase = ref.read(connectionNotifierProvider).phase;
+    if (phase == ConnPhase.connecting || phase == ConnPhase.pinging) {
+      // «Подключение…» tap cancels the in-flight attempt through the FSM.
+      await notifier.cancel();
+      return;
     }
+    if (phase == ConnPhase.connected) {
+      await notifier.disconnect();
+      return;
+    }
+    final savedId = ref.read(selectionProvider(tab));
+    final auto = savedId == null || savedId == "auto";
+    await notifier.connect(
+      tab,
+      auto: auto,
+      manualServerId: auto ? null : savedId,
+    );
   }
 
   void _announceOutcome(BuildContext context, ConnectOutcome outcome) {
-    if (!context.mounted) {
-      return;
-    }
-    if (outcome.ok) {
-      // A refresh carries no server id; its own caller shows «Пинг обновлён».
-      if (outcome.serverId != null) {
-        showInfoToast(context, "Сервер выбран · VPN-ядро — фаза 20");
-      }
+    if (!context.mounted || outcome.ok) {
+      // A successful selection is owned by the FSM; it announces its own
+      // transitions and toasts. A refresh shows «Пинг обновлён» in _refresh.
       return;
     }
     showErrorToast(context, outcome.notice ?? "Нет доступных серверов");

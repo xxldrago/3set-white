@@ -108,7 +108,7 @@ abstract class LibboxTrafficBridge {
   const LibboxTrafficBridge();
 
   /// Returns the raw JSON string the native shim would return.
-  String readTrafficJson();
+  Future<String> readTrafficJson();
 }
 
 /// Singleton wrapper around the C ABI of our own sing-box libbox shim.
@@ -342,7 +342,7 @@ class LibboxPingCore {
     }
     return _serialized<TrafficSnapshot>(() async {
       final raw = bridge != null
-          ? bridge.readTrafficJson()
+          ? await bridge.readTrafficJson()
           : _takeString(bindings!.libbox_traffic(), bindings);
       return decodeTrafficSnapshot(raw);
     });

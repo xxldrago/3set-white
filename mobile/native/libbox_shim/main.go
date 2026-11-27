@@ -56,11 +56,11 @@ func (noopPlatform) GetInterfaces() (libbox.NetworkInterfaceIterator, error) {
 	return nil, errUnsupported
 }
 func (noopPlatform) UnderNetworkExtension() bool { return false }
-func (noopPlatform) IncludeAllNetworks() bool     { return false }
+func (noopPlatform) IncludeAllNetworks() bool    { return false }
 func (noopPlatform) ReadWIFIState() *libbox.WIFIState {
 	return nil
 }
-func (noopPlatform) ClearDNSCache()                          {}
+func (noopPlatform) ClearDNSCache()                              {}
 func (noopPlatform) SendNotification(*libbox.Notification) error { return nil }
 func (noopPlatform) CancelNotification(string, int32) error      { return nil }
 func (noopPlatform) StartNeighborMonitor(libbox.NeighborUpdateListener) error {
@@ -69,9 +69,9 @@ func (noopPlatform) StartNeighborMonitor(libbox.NeighborUpdateListener) error {
 func (noopPlatform) CloseNeighborMonitor(libbox.NeighborUpdateListener) error {
 	return nil
 }
-func (noopPlatform) RegisterMyInterface(string)       {}
-func (noopPlatform) UsePlatformShell() bool           { return false }
-func (noopPlatform) CheckPlatformShell() error        { return nil }
+func (noopPlatform) RegisterMyInterface(string) {}
+func (noopPlatform) UsePlatformShell() bool     { return false }
+func (noopPlatform) CheckPlatformShell() error  { return nil }
 func (noopPlatform) OpenShellSession(*libbox.PlatformUser, string, libbox.StringIterator, string, int32, int32) (libbox.ShellSession, error) {
 	return nil, errUnsupported
 }
@@ -82,8 +82,8 @@ func (noopPlatform) LookupSFTPServer() (string, error) { return "", errUnsupport
 func (noopPlatform) ReadSystemSSHHostKey() (string, error) {
 	return "", errUnsupported
 }
-func (noopPlatform) TailscaleHostname() string      { return "" }
-func (noopPlatform) UsePlatformBridge() bool        { return false }
+func (noopPlatform) TailscaleHostname() string { return "" }
+func (noopPlatform) UsePlatformBridge() bool   { return false }
 func (noopPlatform) CreateBridge(*libbox.BridgeOptions) (libbox.BridgeSession, error) {
 	return nil, errUnsupported
 }
@@ -196,11 +196,11 @@ func (h *urltestHandler) WriteGroups(iterator libbox.OutboundGroupIterator) {
 	}
 }
 
-func (h *urltestHandler) Connected()                                   {}
-func (h *urltestHandler) Disconnected(string)                          {}
-func (h *urltestHandler) SetDefaultLogLevel(int32)                      {}
-func (h *urltestHandler) ClearLogs()                                    {}
-func (h *urltestHandler) WriteLogs(libbox.LogIterator)                  {}
+func (h *urltestHandler) Connected()                   {}
+func (h *urltestHandler) Disconnected(string)          {}
+func (h *urltestHandler) SetDefaultLogLevel(int32)     {}
+func (h *urltestHandler) ClearLogs()                   {}
+func (h *urltestHandler) WriteLogs(libbox.LogIterator) {}
 func (h *urltestHandler) WriteStatus(status *libbox.StatusMessage) {
 	if status == nil {
 		return
@@ -211,10 +211,10 @@ func (h *urltestHandler) WriteStatus(status *libbox.StatusMessage) {
 	h.downTotal = status.DownlinkTotal
 	h.upTotal = status.UplinkTotal
 }
-func (h *urltestHandler) WriteOutbounds(libbox.OutboundGroupItemIterator) {}
+func (h *urltestHandler) WriteOutbounds(libbox.OutboundGroupItemIterator)   {}
 func (h *urltestHandler) InitializeClashMode(libbox.StringIterator, string) {}
-func (h *urltestHandler) UpdateClashMode(string)                       {}
-func (h *urltestHandler) WriteConnectionEvents(*libbox.ConnectionEvents) {}
+func (h *urltestHandler) UpdateClashMode(string)                            {}
+func (h *urltestHandler) WriteConnectionEvents(*libbox.ConnectionEvents)    {}
 
 // Service state is process-global: one no-TUN sing-box instance per app.
 var (
@@ -247,6 +247,17 @@ func cEmptyString() *C.char {
 // echo configuration fragments, which must never reach logs or the UI.
 func cErrorMessage(generic string) *C.char {
 	return C.CString(generic)
+}
+
+// checkConfigErrorText is the Go-side view of libbox_check_config's returned C
+// string. cgo cannot be imported from _test.go files, so unit tests use this
+// seam to assert that only the fixed generic message crosses the FFI boundary.
+func checkConfigErrorText(config string) string {
+	ptr := C.CString(config)
+	defer C.free(unsafe.Pointer(ptr))
+	result := libbox_check_config(ptr)
+	defer libbox_free_string(result)
+	return C.GoString(result)
 }
 
 // urltestGroups maps each urltest group member tag to the group tag. The group

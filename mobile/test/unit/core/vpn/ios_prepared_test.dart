@@ -59,6 +59,24 @@ void main() {
     }
   });
 
+  test("IPv6 is captured and the always-on installer has a caller (WR-04)", () {
+    for (final token in const [
+      "NEIPv6Settings",
+      "NEIPv6Route",
+      "ipv6Settings",
+      "excludedRoutes = []",
+      "installAlwaysOnRules()",
+    ]) {
+      contains(provider, token, "IPv6/always-on wiring is missing");
+    }
+    // Definition plus real call — not just an orphan declaration.
+    expect(
+      provider.split("installAlwaysOnRules()").length - 1,
+      greaterThanOrEqualTo(2),
+      reason: "installAlwaysOnRules() is defined but never called",
+    );
+  });
+
   test("extension plist declares the packet-tunnel point and class", () {
     contains(plist, "com.apple.networkextension.packet-tunnel",
         "missing packet-tunnel extension point");

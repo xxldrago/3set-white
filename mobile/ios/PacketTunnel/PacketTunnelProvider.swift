@@ -21,13 +21,20 @@ private struct TunnelValues {
   let address: String
   let subnetMask: String
   let includedRoutes: [(destination: String, mask: String)]
+  let addressV6: String
+  let prefixV6: Int
+  let includedRoutesV6: [(destination: String, prefix: Int)]
 
   static let fallback = TunnelValues(
     mtu: 1500,
-    dnsServers: ["172.18.0.2"],
+    dnsServers: ["172.18.0.2", "fdfe:dcba:9876::2"],
     address: "172.18.0.1",
     subnetMask: "255.255.255.252",
-    includedRoutes: [(destination: "0.0.0.0", mask: "0.0.0.0")]
+    includedRoutes: [(destination: "0.0.0.0", mask: "0.0.0.0")],
+    // Mirrors the IPv6 TUN address/route carried by the backend config (D-08).
+    addressV6: "fdfe:dcba:9876::1",
+    prefixV6: 126,
+    includedRoutesV6: [(destination: "::", prefix: 0)]
   )
 
   static func from(_ options: [String: Any]?) -> TunnelValues {
@@ -38,12 +45,18 @@ private struct TunnelValues {
     } ?? fallback.dnsServers
     let address = options["tunnelAddress"] as? String ?? fallback.address
     let mask = options["tunnelSubnetMask"] as? String ?? fallback.subnetMask
+    let addressV6 = options["tunnelAddressV6"] as? String ?? fallback.addressV6
+    let prefixV6 =
+      (options["tunnelPrefixV6"] as? NSNumber)?.intValue ?? fallback.prefixV6
     return TunnelValues(
       mtu: mtu,
       dnsServers: dns,
       address: address,
       subnetMask: mask,
-      includedRoutes: fallback.includedRoutes
+      includedRoutes: fallback.includedRoutes,
+      addressV6: addressV6,
+      prefixV6: prefixV6,
+      includedRoutesV6: fallback.includedRoutesV6
     )
   }
 }
@@ -75,6 +88,27 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     // Kill switch (D-09): no excluded routes — all IP traffic enters the tunnel.
     ipv4.excludedRoutes = []
     settings.ipv4Settings = ipv4
+
+    // WR-04: IPv6 must be captured too. The backend TUN config carries both
+    // families; omitting this silently leaked IPv6 outside the always-on kill
+    // switch. No excluded routes for IPv6 either.
+    let ipv6 = NEIPv6Settings(
+      addresses: [values.addressV6],
+      networkPrefixLengths: [NSNumber(value: values.prefixV6)]
+    )
+    ipv6.includedRoutes = values.includedRoutesV6.map {
+      NEIPv6Route(
+        destinationAddress: $0.destination,
+        networkPrefixLength: NSNumber(value: $0.prefix)
+      )
+    }
+    ipv6.excludedRoutes = []
+    settings.ipv6Settings = ipv6
+
+    // D-09/D-07: the always-on installer is wired from the prepared source but
+    // is compile-only — no entitlement request, build, signing or device
+    // verification happens in phase 20. Generic failure only (D-19).
+    try? PacketTunnelOnDemand.installAlwaysOnRules()
 
     // [ASSUMED] fd handoff risk (recorded, not solved): upstream obtains the fd
     // through private KVC on packetFlow ("socket.fileDescriptor"). There is no

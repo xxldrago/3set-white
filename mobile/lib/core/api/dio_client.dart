@@ -10,7 +10,8 @@ import 'package:mobile/core/storage/token_store.dart';
 /// Includes:
 /// - Base URL and timeouts
 /// - AuthInterceptor for automatic token attachment and refresh
-/// - LoggingInterceptor in debug mode
+/// - LoggingInterceptor in debug mode (headers and bodies off: `/servers`
+///   carries outbound secrets that must never reach logs, D-05)
 class DioClient {
   final Dio dio;
   final TokenStore tokenStore;
@@ -32,11 +33,13 @@ class DioClient {
     // Add interceptors
     dio.interceptors.add(AuthInterceptor(tokenStore: tokenStore, logger: _logger));
 
-    // Debug logging only in debug mode
+    // Debug logging only in debug mode. Bodies stay off: the /servers response
+    // includes protocol outbound secrets (D-05), and the contract is already
+    // covered by structured tests. Never log raw links or credentials.
     assert(() {
       dio.interceptors.add(LogInterceptor(
-        requestBody: true,
-        responseBody: true,
+        requestBody: false,
+        responseBody: false,
         requestHeader: false,
         responseHeader: false,
         logPrint: (obj) => _logger.d(obj.toString()),

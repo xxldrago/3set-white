@@ -20,6 +20,7 @@ import "../../utils/logger.dart";
 import "config_repository.dart";
 import "connection_state.dart";
 import "error_mapping.dart";
+import "restart_backoff.dart";
 import "vpn_bridge.dart";
 
 /// Sink for connection transition events. Each event is EXACTLY
@@ -98,6 +99,7 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
   /// BEFORE `idle`; the generation bump makes the in-flight connect stale.
   Future<void> cancel() async {
     if (state.phase != ConnPhase.connecting) return;
+    ref.read(restartBackoffProvider).cancel();
     final generation = ++_generation;
     _transition(ConnPhase.disconnecting, reason: "cancel_requested");
     if (!await _awaitStop(generation)) return;
@@ -110,6 +112,7 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
   /// always on, so the user is told traffic outside the VPN is blocked (D-12).
   Future<void> disconnect() async {
     if (state.phase != ConnPhase.connected) return;
+    ref.read(restartBackoffProvider).cancel();
     final generation = ++_generation;
     _transition(ConnPhase.disconnecting, reason: "disconnect_requested");
     if (!await _awaitStop(generation)) return;
@@ -139,6 +142,9 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
         _handleRevoked();
       case "disconnect":
         disconnect();
+      case "core_stopped":
+        // A native death/status-probe callback, never a simulated crash.
+        handleCoreStopped();
     }
   }
 
@@ -203,11 +209,15 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
   /// Runs the one shared `connecting` path: refetch `/config`, OS consent and
   /// the native start. Guarded by the same [generation] used by [connect] and
   /// [reconnect], so a stale completion can never announce a second tunnel.
+  ///
+  /// During a core restart, [onFailure] feeds the bounded backoff instead of
+  /// going terminal immediately (auth/permission failures stay terminal).
   Future<void> _startTunnel(
     String serverId,
     int generation, {
     required String reason,
     String completionReason = "tunnel_up",
+    void Function()? onFailure,
   }) async {
     _transition(
       ConnPhase.connecting,
@@ -219,8 +229,12 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
     try {
       config = await ref.read(configRepositoryProvider).fetch(serverId);
     } on ConfigRepositoryException catch (error) {
-      if (generation != _generation) return;
-      _fail(error.code, reason: "config_failed");
+      _handleStartFailure(
+        error.code,
+        "config_failed",
+        generation,
+        onFailure,
+      );
       return;
     }
     if (generation != _generation) return;
@@ -230,8 +244,12 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
       // OS VPN consent (D-10). A denial stays an error with a stable code.
       await bridge.prepare();
     } on VpnBridgeException catch (error) {
-      if (generation != _generation) return;
-      _fail(error.code, reason: "permission_denied");
+      _handleStartFailure(
+        error.code,
+        "permission_denied",
+        generation,
+        onFailure,
+      );
       return;
     }
     if (generation != _generation) return;
@@ -241,8 +259,12 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
       // or rendered. No sleep, no fake connected, no simulated IP (D-20).
       await bridge.start(jsonEncode(config));
     } on VpnBridgeException catch (error) {
-      if (generation != _generation) return;
-      _fail(_safeBridgeCode(error.code), reason: "bridge_start_failed");
+      _handleStartFailure(
+        _safeBridgeCode(error.code),
+        "bridge_start_failed",
+        generation,
+        onFailure,
+      );
       return;
     }
     if (generation != _generation) return;
@@ -253,6 +275,29 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
       serverId: serverId,
       connectedAt: DateTime.now(),
     );
+    // A healthy session clears the restart failure count (D-18).
+    ref.read(restartBackoffProvider).reset();
+  }
+
+  /// Maps a start failure to the next bounded retry, except for terminal auth
+  /// and permission codes which must surface their fixed RU toast at once.
+  void _handleStartFailure(
+    String code,
+    String reason,
+    int generation,
+    void Function()? onFailure,
+  ) {
+    if (generation != _generation) return;
+    const terminal = <String>{
+      "no_active_key",
+      "auth_failed",
+      "permission_denied",
+    };
+    if (onFailure != null && !terminal.contains(code)) {
+      onFailure();
+      return;
+    }
+    _fail(_safeBridgeCode(code), reason: reason);
   }
 
   /// D-15/REQ-PING-05: a genuine network change while connected invalidates
@@ -321,6 +366,54 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
       generation,
       reason: "network_change_connecting",
       completionReason: "network_change_tunnel_up",
+    );
+  }
+
+  /// A native core stop / status-probe signal (D-18). Dart cannot catch a
+  /// native abort, so this callback is the only crash input — no simulated
+  /// crash, timer or `sleep` is ever created here.
+  Future<void> handleCoreStopped() async {
+    if (state.phase != ConnPhase.connected) return;
+    final serverId = state.serverId;
+    if (serverId == null || serverId.isEmpty) return;
+
+    final generation = ++_generation;
+    _transition(ConnPhase.disconnecting, reason: "core_stopped");
+    if (!await _awaitStop(generation)) return;
+    if (generation != _generation) return;
+    // Keep serverId so a retry can restart without a new selection round.
+    _transition(
+      ConnPhase.idle,
+      reason: "core_stopped_cleanup",
+      serverId: serverId,
+    );
+    _scheduleCoreRetry(serverId);
+  }
+
+  /// Schedules the next bounded retry; terminal failure emits the fixed toast.
+  void _scheduleCoreRetry(String serverId) {
+    ref.read(restartBackoffProvider).schedule(
+          onRetry: () => unawaited(_restartCore(serverId)),
+          onExhausted: () =>
+              _fail("core_stopped", reason: "core_stopped_exhausted"),
+        );
+  }
+
+  /// Re-runs the same `connecting` path through the bridge with a fresh
+  /// generation token; a failed retry feeds the next bounded delay.
+  Future<void> _restartCore(String serverId) async {
+    // A failed retry leaves the FSM in `connecting`; it is still retryable.
+    if (state.phase != ConnPhase.idle &&
+        state.phase != ConnPhase.connecting) {
+      return;
+    }
+    final generation = ++_generation;
+    await _startTunnel(
+      serverId,
+      generation,
+      reason: "core_restart",
+      completionReason: "core_restart_tunnel_up",
+      onFailure: () => _scheduleCoreRetry(serverId),
     );
   }
 

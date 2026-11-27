@@ -163,7 +163,7 @@ Plans:
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [x] 20-03-PLAN.md — Android Kotlin `VpnService` + foreground service (D-06 + D-09 gates): `specialUse` manifest, always-on kill switch, method-channel bridge, no orphan tunnel (REQ-CONN-04/06)
-- [ ] 20-04-PLAN.md — iOS `NEPacketTunnelProvider` compile-only (D-07 gate): extension plist, entitlement, embedded target, OnDemand kill switch; no tunnel build until entitlement (REQ-CONN-05/06)
+- [x] 20-04-PLAN.md — iOS `NEPacketTunnelProvider` compile-only (D-07 gate): extension plist, entitlement, embedded target, OnDemand kill switch; no tunnel build until entitlement (REQ-CONN-05/06)
 
 **Wave 3** *(blocked on Waves 1–2)*
 

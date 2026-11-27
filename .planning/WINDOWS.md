@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 27
+open_count: 29
 waived_count: 0
 fixed_count: 0
-total_count: 27
-last_updated: 2026-11-27T09:26:33.524Z
+total_count: 29
+last_updated: 2026-11-27T09:50:47.941Z
 ---
 
 # Broken Windows Ledger
@@ -42,6 +42,8 @@ last_updated: 2026-11-27T09:26:33.524Z
 | 25 | 20 | deviation | mobile/native/libbox_shim/main.go |  | Rule 2: stop existing no-TUN service before libbox_start_with_tun so the fd-carrying platform is used | open |  | 2026-11-27T09:08:03.135Z |  |
 | 26 | 20 | deviation | mobile/native/libbox_shim/main.go |  | Rule 3: added Go-side cString seam checkConfigErrorText because cgo cannot be imported from _test.go | open |  | 2026-11-27T09:08:03.217Z |  |
 | 27 | 20 | unrun-verify | mobile/android/app/src/main/kotlin/com/u3set/mobile/VpnService.kt |  | Android native build + on-device tunnel/notification/revoke/kill-switch UAT not run here: no JDK17/Android SDK/NDK; CI artifacts required | open |  | 2026-11-27T09:26:33.524Z |  |
+| 28 | 20 | unrun-verify |  |  | 20-04 iOS tunnel build/sign/OnDemand device UAT not run — compile-only per D-07; blocked on Apple packet-tunnel-provider entitlement approval and private-KVC fd risk | open |  | 2026-11-27T09:50:47.866Z |  |
+| 29 | 20 | deviation |  |  | 20-04 bare flutter analyze exits 1 on 1622 pre-existing lint infos/warnings (0 errors); verification used --no-fatal-infos --no-fatal-warnings (exit 0). Pre-existing lint debt out of scope. | open |  | 2026-11-27T09:50:47.941Z |  |
 
 ````json
 [
@@ -367,6 +369,30 @@ last_updated: 2026-11-27T09:26:33.524Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-27T09:26:33.524Z",
+    "resolved_at": null
+  },
+  {
+    "id": 28,
+    "kind": "unrun-verify",
+    "phase": "20",
+    "file": "",
+    "line": null,
+    "description": "20-04 iOS tunnel build/sign/OnDemand device UAT not run — compile-only per D-07; blocked on Apple packet-tunnel-provider entitlement approval and private-KVC fd risk",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T09:50:47.866Z",
+    "resolved_at": null
+  },
+  {
+    "id": 29,
+    "kind": "deviation",
+    "phase": "20",
+    "file": "",
+    "line": null,
+    "description": "20-04 bare flutter analyze exits 1 on 1622 pre-existing lint infos/warnings (0 errors); verification used --no-fatal-infos --no-fatal-warnings (exit 0). Pre-existing lint debt out of scope.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T09:50:47.941Z",
     "resolved_at": null
   }
 ]

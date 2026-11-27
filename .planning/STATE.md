@@ -5,16 +5,16 @@ milestone_name: Мобильный клиент
 current_phase: 20
 current_phase_name: VPN Core & Connect FSM
 status: executing
-stopped_at: Completed 20-03-PLAN.md
-last_updated: "2026-11-27T09:43:35.198Z"
+stopped_at: Completed 20-04-PLAN.md
+last_updated: "2026-11-27T09:51:42.586Z"
 last_activity: 2026-11-27
 last_activity_desc: Phase 20 execution started
-state_head: f8057b9c6978ee983ccd1980953eff71d0b3159f
+state_head: ab05dd4adecc38d9fe3a66d35ac1d27eebeac7e7
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 22
-  completed_plans: 18
+  completed_plans: 19
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 ## Current Position
 
 Phase: 20 (VPN Core & Connect FSM) — EXECUTING
-Plan: 4 of 7
+Plan: 5 of 7
 Status: Ready to execute
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-27 — Phase 20 execution started
@@ -114,6 +114,7 @@ None (flat mode)
 - [Phase 20-03]: D-06 confirmed by the user at the blocking gate as kotlin-service: Kotlin VpnService + foreground service + method channel; no background-service plugin — Locked costly decision; correct OS lifecycle and fd ownership, rollback returns to no-TUN shim
 - [Phase 20-03]: D-09 confirmed by the user at the blocking gate as always-on: kill switch permanently enabled, no toggle, no bypass — Locked costly decision; REQ-CONN-06 no leaks, no stale UI state, simpler FSM
 - [Phase 20]: Phase 20-04 D-07 gate confirmed at blocking checkpoint: user explicitly selected compile-only — prepare NEPacketTunnelProvider + NEOnDemandRuleConnect + entitlements/embedded target as source-only; no tunnel build, sign or UAT until Apple approves packet-tunnel-provider entitlement; iOS fd KVC stays [ASSUMED], no private-API workaround or fake connected state. — Locked costly decision D-07 (CONTEXT.md); iOS compile-only, Android remains the verifiable tunnel path; Apple entitlement approval is an external blocker recorded in user_setup and STATE blockers.
+- [Phase 20]: 20-04: iOS kill switch is source-level always-on via NEOnDemandRuleConnect for all interfaces, no toggle and no excluded routes; fd KVC stays [ASSUMED] risk T-20-13 with no private-API workaround or fake connected state; existing packet-tunnel-provider entitlement retained unchanged.
 
 ## Performance Metrics
 
@@ -137,9 +138,10 @@ None (flat mode)
 | Phase 20 P01 | 4 min | 3 tasks | 5 files |
 | Phase 20 P02 | 10 min | 3 tasks | 7 files |
 | Phase 20 P03 | 8 min | 3 tasks | 6 files |
+| Phase 20 P04 | 8 min | 3 tasks | 4 files |
 
 ## Session
 
-**Last session:** 2026-11-27T09:27:27.932Z
-**Stopped at:** Completed 20-03-PLAN.md
+**Last session:** 2026-11-27T09:51:42.503Z
+**Stopped at:** Completed 20-04-PLAN.md
 **Resume file:** None

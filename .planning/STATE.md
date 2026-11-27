@@ -4,17 +4,17 @@ milestone: v2.0
 milestone_name: Мобильный клиент
 current_phase: 19
 current_phase_name: Server Pools & Auto-Ping
-status: uat_failed
-stopped_at: Phase 18 UAT — Telegram deep-link handshake is unimplemented (P0)
-last_updated: "2026-11-27T03:17:34.909Z"
+status: executing
+stopped_at: Completed 19-01-PLAN.md
+last_updated: "2026-11-27T03:28:54.713Z"
 last_activity: 2026-11-27
-last_activity_desc: "Phase 18 UAT: 2 pass, 2 partial, 1 fail, 2 blocked — bot has no nonce_ handler so Telegram login can never complete"
-state_head: 2550f70928632cd69081dbf80db49274ffd741cc
+last_activity_desc: Phase 19 execution started
+state_head: 91db6a92710978af3bc2a7b07e8d121ef613bdb3
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 15
-  completed_plans: 7
+  completed_plans: 8
   percent: 0
 ---
 
@@ -25,14 +25,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-25)
 
 **Core value:** Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
-**Current focus:** v2.0 Мобильный клиент — Phase 18 verification (UAT pending)
+**Current focus:** Phase 19 — Server Pools & Auto-Ping
 
 ## Current Position
 
-Phase: 19 (Server Pools & Auto-Ping) — READY TO EXECUTE
-Plan: 18-03 (complete)
-Status: UAT failed — Telegram deep-link handshake unimplemented; other items hardware/credential-gated
-Last activity: 2026-11-27 — Phase 18 UAT (2 pass, 2 partial, 1 fail, 2 blocked)
+Phase: 19 (Server Pools & Auto-Ping) — EXECUTING
+Plan: 2 of 8
+Status: Ready to execute
+Last activity: 2026-11-27 — Phase 19 execution started
 
 ## Per-Milestone Progress
 
@@ -80,6 +80,8 @@ None (flat mode)
 - [Phase 18 verification]: Fixed Telegram auth end to end — poll 200 body is `{tokenPair}`, token pair is persisted before `restoreSession()`, bot opens via `url_launcher`; DeepLinkHandler + biometric resume gate instantiated at app root; GoRouter refreshes redirects on auth changes.
 - [Phase 18 verification]: Biometric lock is a resume gate (`local_auth`) rather than a storage ACL read, so Face ID is not requested on every HTTP request; the interceptor reads tokens non-biometrically.
 - [Phase 18 verification]: Session restore persists `userId` from the validated subscription user (backend token pair carries no `userId`), keeping the fast path alive.
+- [Phase 19-server-pools-auto-ping-7-days]: D-01 gate confirmed locked: /api/mobile/servers source = getSubscriptionForUserId -> artemida.getSubscriptionLinks (NOT /pricing, NOT getKeyWithLinks); no load; no_active_key 403
+- [Phase 19-server-pools-auto-ping-7-days]: 19-01: active-key gate adds explicit raw-status exclusion (expired/revoked/disabled/trial-expired) alongside deriveStatusKind; secrets confined to machine-only outbound
 
 ## Performance Metrics
 
@@ -92,9 +94,10 @@ None (flat mode)
 | Phase 18 P02 | 400 | 3 tasks | 12 files |
 | Phase 18 P01e | 7200 | 1 tasks | 1 files |
 | Phase 18 P03 | 7200 | 1 tasks | 13 files |
+| Phase 19-server-pools-auto-ping-7-days P01 | 6min | 3 tasks | 6 files |
 
 ## Session
 
-**Last session:** 2026-11-27T01:07:10.825Z
-**Stopped at:** Phase 19 context gathered
-**Resume file:** .planning/phases/19-server-pools-auto-ping-7-days/19-CONTEXT.md
+**Last session:** 2026-11-27T03:28:46.572Z
+**Stopped at:** Completed 19-01-PLAN.md
+**Resume file:** None

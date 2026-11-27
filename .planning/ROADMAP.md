@@ -85,7 +85,7 @@
 Plans:
 **Wave 1**
 
-- [ ] 19-01-PLAN.md — Backend `/api/mobile/servers` + `lib/server-pool.ts` parser + `lib/servers-source.ts`; JWT + active key + `no_active_key` 403 + D-22; no `/pricing`, no `load`, no secrets
+- [x] 19-01-PLAN.md — Backend `/api/mobile/servers` + `lib/server-pool.ts` parser + `lib/servers-source.ts`; JWT + active key + `no_active_key` 403 + D-22; no `/pricing`, no `load`, no secrets
 
 **Wave 2** *(blocked on Wave 1 completion)*
 

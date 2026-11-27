@@ -5,11 +5,11 @@ milestone_name: Мобильный клиент
 current_phase: 20
 current_phase_name: VPN Core & Connect FSM
 status: verifying
-stopped_at: Completed 20-07-PLAN.md
-last_updated: "2026-11-27T11:12:56.735Z"
+stopped_at: Phase 21 context gathered
+last_updated: "2026-11-27T12:00:55.902Z"
 last_activity: 2026-11-27
 last_activity_desc: Phase 20 execution started
-state_head: 8d83fb27454e342bc2187480d15e1d25968ab257
+state_head: cb51eec2e393d540e8efc13d21ac1612224f8e63
 progress:
   total_phases: 6
   completed_phases: 0
@@ -152,6 +152,6 @@ None (flat mode)
 
 ## Session
 
-**Last session:** 2026-11-27T11:12:56.654Z
-**Stopped at:** Completed 20-07-PLAN.md
-**Resume file:** None
+**Last session:** 2026-11-27T12:00:55.771Z
+**Stopped at:** Phase 21 context gathered
+**Resume file:** .planning/phases/21-subscription-purchase-7-days/21-CONTEXT.md

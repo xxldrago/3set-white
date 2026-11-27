@@ -34,10 +34,16 @@ func fullTUNConfig(t *testing.T) string {
 			},
 		},
 		"endpoints": []any{},
+		// CR-01: the chosen server tag is the default route target. `direct`
+		// stays declared only as a fallback, never as the effective outbound.
 		"outbounds": []any{
 			map[string]any{"type": "direct", "tag": "direct"},
+			map[string]any{"type": "direct", "tag": "srv-smoke"},
 		},
-		"route": map[string]any{"final": "direct"},
+		"route": map[string]any{
+			"rules": []any{map[string]any{"outbound": "srv-smoke"}},
+			"final": "srv-smoke",
+		},
 	}
 	encoded, err := json.Marshal(config)
 	if err != nil {
@@ -67,6 +73,9 @@ func TestTUNConfigVectorResearchValues(t *testing.T) {
 			Stack       string   `json:"stack"`
 		} `json:"inbounds"`
 		Route struct {
+			Rules []struct {
+				Outbound string `json:"outbound"`
+			} `json:"rules"`
 			Final string `json:"final"`
 		} `json:"route"`
 	}
@@ -96,8 +105,12 @@ func TestTUNConfigVectorResearchValues(t *testing.T) {
 		parsed.DNS.Servers[0].Type != "local" || parsed.DNS.Servers[0].Tag != "local" {
 		t.Fatalf("unexpected new-format DNS: %+v", parsed.DNS)
 	}
-	if parsed.Route.Final != "direct" {
+	// CR-01: route.final must select the paid server, never the direct fallback.
+	if parsed.Route.Final != "srv-smoke" || parsed.Route.Final == "direct" {
 		t.Fatalf("unexpected route.final: %s", parsed.Route.Final)
+	}
+	if len(parsed.Route.Rules) != 1 || parsed.Route.Rules[0].Outbound != "srv-smoke" {
+		t.Fatalf("unexpected route.rules: %+v", parsed.Route.Rules)
 	}
 }
 

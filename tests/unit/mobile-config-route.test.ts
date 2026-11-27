@@ -35,6 +35,7 @@ const PAST = new Date(Date.now() - 86_400_000).toISOString();
 
 const NL = '🇳🇱';
 const VLESS = `vless://uuid-abc@nl.example.com:443?encryption=none&security=tls&sni=tls.example.com&type=ws&host=cdn.example.com&path=%2Fws#${encodeURIComponent(`${NL} Amsterdam`)}`;
+const REALITY = `vless://uuid-reality@reality.example.com:443?security=reality&sni=reality.example.com&flow=xtls-rprx-vision&pbk=peer-key&sid=abc123#${encodeURIComponent('🇺🇸 Reality')}`;
 const WG = `wg://private-key@wg.example.com:51820?publickey=peer-pub&address=10.0.0.2%2F32,fd00::2%2F128&mtu=1420&allowedips=0.0.0.0%2F0&keepalive=25#${encodeURIComponent('WG WL')}`;
 // Decoy carries a marker secret; it is parsed but never selected, so neither
 // the returned config nor the logs may contain it.
@@ -42,6 +43,8 @@ const DECOY = 'vless://SUPERSECRET@decoy.example.com:443?security=tls&sni=decoy.
 
 const vlessId = parseShareLink(VLESS)!.id;
 const wgId = parseShareLink(WG)!.id;
+/** The selected outbound/endpoint tag must be the route target, never direct. */
+const tagOf = (link: string) => parseShareLink(link)!.outbound.tag!;
 
 function key(overrides: Partial<RenderedKey> = {}): RenderedKey {
   return {
@@ -166,7 +169,12 @@ describe('complete TUN config + minimal metadata (D-01 / D-08)', () => {
     expect(config.endpoints).toEqual([]);
     expect(config.outbounds[0]).toEqual({ type: 'direct', tag: 'direct' });
     expect(config.outbounds[1]).toMatchObject({ type: 'vless', tag: `srv-${vlessId}` });
-    expect(config.route).toEqual({ final: 'direct' });
+    // CR-01: the paid server is the effective default, not a dead outbound.
+    expect(config.route).toEqual({
+      rules: [{ outbound: tagOf(VLESS) }],
+      final: tagOf(VLESS),
+    });
+    expect(config.route.final).not.toBe('direct');
 
     const meta = body.server as Record<string, unknown>;
     expect(Object.keys(meta).sort()).toEqual(['city', 'flag', 'id', 'proto', 'tab']);
@@ -193,11 +201,46 @@ describe('complete TUN config + minimal metadata (D-01 / D-08)', () => {
     const config = (await res.json() as Record<string, unknown>).config as {
       endpoints: Array<Record<string, unknown>>;
       outbounds: Array<Record<string, unknown>>;
+      route: Record<string, unknown>;
     };
     expect(config.endpoints).toHaveLength(1);
     expect(config.endpoints[0]).toMatchObject({ type: 'wireguard', private_key: 'private-key' });
     expect(config.outbounds).toEqual([{ type: 'direct', tag: 'direct' }]);
     expect(JSON.stringify(config.outbounds)).not.toContain('wireguard');
+    // CR-01: a WireGuard endpoint is routed through its own tag as default.
+    expect(config.route).toEqual({
+      rules: [{ outbound: tagOf(WG) }],
+      final: tagOf(WG),
+    });
+    expect(config.route.final).not.toBe('direct');
+  });
+});
+
+describe('route targets the selected server for every endpoint kind (CR-01)', () => {
+  const server = (link: string): Server => parseShareLink(link)!;
+
+  it.each([
+    ['VLESS/TLS', VLESS],
+    ['VLESS/Reality', REALITY],
+    ['WireGuard endpoint', WG],
+  ])('builds a config whose default outbound is the %s server', (_label, link) => {
+    const config = buildMobileConfig(server(link));
+    const tag = tagOf(link);
+    expect(config.route.rules).toEqual([{ outbound: tag }]);
+    expect(config.route.final).toBe(tag);
+    expect(config.route.final).not.toBe('direct');
+    // The chosen tag really exists in the section sing-box reads it from.
+    if (parseShareLink(link)!.outbound.type === 'wireguard') {
+      expect(config.endpoints.map((out) => out.tag)).toContain(tag);
+    } else {
+      expect(config.outbounds.map((out) => out.tag)).toContain(tag);
+    }
+  });
+
+  it('falls back to direct only when no outbound could be selected', () => {
+    const config = buildMobileConfig({});
+    expect(config.route).toEqual({ final: 'direct' });
+    expect(config.route.rules).toBeUndefined();
   });
 });
 

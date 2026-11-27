@@ -36,7 +36,8 @@ export interface MobileConfig {
   }>;
   endpoints: ServerOutbound[];
   outbounds: ServerOutbound[];
-  route: { final: string };
+  /** Route rule + default outbound: the selected server, never silent direct. */
+  route: { rules?: Array<{ outbound: string }>; final: string };
 }
 
 /** Smoke-proven TUN values (20-RESEARCH.md §1/§9, CheckConfig accepted). */
@@ -76,6 +77,15 @@ export function buildMobileConfig(server: unknown): MobileConfig {
   const endpoints: ServerOutbound[] = isWireGuard && outbound ? [outbound] : [];
   const outbounds: ServerOutbound[] = [{ type: "direct", tag: "direct" }];
   if (outbound && !isWireGuard) outbounds.push(outbound);
+  // sing-box 1.14: `route.final` is the DEFAULT outbound. With no rule and
+  // `final: "direct"` every packet would leave the tunnel directly, making the
+  // selected VLESS/Reality outbound (or WireGuard endpoint) dead data. The
+  // chosen tag is therefore both the default and the single route target;
+  // `direct` stays declared only as a fallback for a malformed server.
+  const chosenTag =
+    outbound && typeof outbound.tag === "string" && outbound.tag
+      ? outbound.tag
+      : null;
 
   return {
     log: { level: "error" },
@@ -83,7 +93,9 @@ export function buildMobileConfig(server: unknown): MobileConfig {
     inbounds: [tunInbound()],
     endpoints,
     outbounds,
-    route: { final: "direct" },
+    route: chosenTag
+      ? { rules: [{ outbound: chosenTag }], final: chosenTag }
+      : { final: "direct" },
   };
 }
 

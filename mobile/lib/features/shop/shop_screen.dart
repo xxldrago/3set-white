@@ -22,34 +22,51 @@ class ShopScreen extends ConsumerWidget {
         centerTitle: true,
       ),
       body: Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              const Icon(
-                Icons.shopping_bag_outlined,
-                size: 56,
-                color: AppTheme.teal,
+          child: Card(
+            color: AppTheme.surface2,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  const Icon(
+                    Icons.shopping_bag_outlined,
+                    size: 56,
+                    color: AppTheme.teal,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Купить",
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      color: AppTheme.text,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    "Магазин ключей появится в фазе 21. "
+                    "Это заглушка — покупка не выполняется.",
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppTheme.muted,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Магазин ключей — фаза 21"),
+                        ),
+                      );
+                    },
+                    child: const Text("Купить"),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              Text(
-                "Купить",
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  color: AppTheme.text,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                "Магазин ключей появится в фазе 21. "
-                "Это заглушка — покупка не выполняется.",
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: AppTheme.muted,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
+            ),
           ),
         ),
       ),

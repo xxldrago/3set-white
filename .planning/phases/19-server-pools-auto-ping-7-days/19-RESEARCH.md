@@ -640,12 +640,11 @@ export async function GET(req: NextRequest) {
     if (!claims) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
     // active key (KeyCache; only active/expiring; not trial-expired) — D-21
-    const keys = await listKeysByUserId(claims.userId);
+    const keys = await listKeysByUserId(claims.userId); // RenderedKey[] with statusKind
     const active = keys.find(k =>
       k.keyId &&
-      (deriveStatusKind(k.status, k.expiresAt ? new Date(k.expiresAt) : null) === "active" ||
-       deriveStatusKind(k.status, k.expiresAt ? new Date(k.expiresAt) : null) === "expiring") &&
-      (!k.expiresAt || new Date(k.expiresAt).getTime() > Date.now()));
+      (k.statusKind === "active" || k.statusKind === "expiring") &&   // deriveStatusKind; excludes expired/pending/unknown + trial-expired
+      (!k.expiresAt || new Date(k.expiresAt).getTime() > Date.now())); // expiry-derived, not stored status
     const keyMeta = active
       ? { active: true, keyId: active.keyId, isTrial: active.isTrial,
           remainingDays: daysUntilExpiry(active.expiresAt), expireAt: active.expiresAt }

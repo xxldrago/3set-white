@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Мобильный клиент
 current_phase: 18
-status: verifying
-stopped_at: Phase 19 context gathered
-last_updated: "2026-11-27T01:07:10.864Z"
+status: uat_failed
+stopped_at: Phase 18 UAT — Telegram deep-link handshake is unimplemented (P0)
+last_updated: "2026-11-27T14:10:00.000Z"
 last_activity: 2026-11-27
-last_activity_desc: "Phase 18 verification: 103 tests pass, 0 analyzer errors, iOS build OK; 8 auth-flow gaps fixed"
+last_activity_desc: "Phase 18 UAT: 2 pass, 2 partial, 1 fail, 2 blocked — bot has no nonce_ handler so Telegram login can never complete"
 state_head: a3bd736cd40721f862b84a2c64fe4f15bdbf3070
 progress:
   total_phases: 6
@@ -30,8 +30,8 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 
 Phase: 18
 Plan: 18-03 (complete)
-Status: Verifying — automated verification passed, manual UAT pending
-Last activity: 2026-11-27 — Phase 18 verification + auth-flow fixes
+Status: UAT failed — Telegram deep-link handshake unimplemented; other items hardware/credential-gated
+Last activity: 2026-11-27 — Phase 18 UAT (2 pass, 2 partial, 1 fail, 2 blocked)
 
 ## Per-Milestone Progress
 
@@ -51,12 +51,16 @@ None (flat mode)
 - Apple NetworkExtension entitlement (apply ASAP)
 - Platega test credentials (requested)
 - GPL-3.0 legal review (schedule)
-- Phase 18 UAT: real Telegram bot round trip, signed App Links/Universal Links (assetlinks fingerprint + AASA Team ID), biometric hardware, live backend curl suite
+- **Phase 18 P0 — Telegram deep-link login cannot complete:** the bot `/start` handler parses only `login_` and `link_` payloads, never `nonce_`, so `telegram/poll` stays `202 pending` until TTL expiry. Needs a handshake decision (nonce-only bind vs code-confirmed) before Phase 18 can close.
+- Phase 18 UAT: signed App Links/Universal Links (assetlinks fingerprint + AASA Team ID), biometric hardware
+- Mobile app hardcodes the production base URL (`dio_client.dart:23`, `auth_interceptor.dart:99`) — no non-prod target, so login/restart UAT cannot be exercised without creating production accounts
 
 ## Next Actions
 
-1. Run the manual checks in `.planning/phases/18-foundation-auth-5-days/18-UAT.md`, then close Phase 18
-2. Begin Phase 19 — Server Pools & Auto-Ping
+1. Decide the mobile Telegram handshake (nonce-only bind vs code-confirmed) and implement the bot-side `nonce_` branch — this is the only thing blocking Phase 18 close
+2. Add a `--dart-define=API_BASE_URL` override so UAT 2/3 can run against a local backend
+3. Re-run UAT tests 2, 3 and 4, then close Phase 18
+4. Begin Phase 19 — Server Pools & Auto-Ping
 
 ## Decisions
 

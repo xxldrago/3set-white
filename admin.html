@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3set Admin Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0e1512;
+      --bg-elevated: #131c17;
+      --fg: #eef5ea;
+      --muted: #6b7b70;
+      --accent: #b7ff45;
+      --accent-dim: #8fdc2c;
+      --accent-bg: rgba(183, 255, 69, 0.1);
+      --border: rgba(233, 255, 214, 0.09);
+      --border-strong: rgba(233, 255, 214, 0.15);
+      --card: #131c17;
+      --danger: #ff7a6b;
+      --danger-border: rgba(255, 122, 107, 0.4);
+      --warning: #ffb84d;
+      --online: #b7ff45;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'Manrope Variable', 'Manrope', system-ui, sans-serif;
+      font-size: 14.5px;
+      line-height: 1.5;
+    }
+
+    h1, h2, h3, h4 { font-family: 'Unbounded Variable', 'Unbounded', 'Manrope', sans-serif; letter-spacing: -0.02em; }
+    button, a { font: inherit; color: inherit; }
+    a { text-decoration: none; }
+
+    /* Layout */
+    .admin { display: flex; flex-direction: column; min-height: 100vh; }
+    .topbar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 22px;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 30;
+      background: rgba(11, 17, 14, 0.85);
+      backdrop-filter: blur(12px);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 16px; color: var(--accent); }
+    .brand span { font-size: 10.5px; color: var(--muted); font-weight: 600; margin-left: 4px; }
+    .spacer { flex: 1; }
+    .searchbox { position: relative; display: flex; align-items: center; }
+    .searchbox svg { position: absolute; left: 12px; width: 16px; height: 16px; color: var(--muted); pointer-events: none; }
+    .searchbox input {
+      width: 220px; height: 38px; border-radius: 11px;
+      border: 1px solid rgba(233, 255, 214, 0.12);
+      background: rgba(0, 0, 0, 0.25);
+      padding: 0 34px; font-weight: 700; font-size: 12.5px; color: var(--fg);
+    }
+    .searchbox input::placeholder { color: var(--muted); }
+    .searchbox input:focus { outline: none; border-color: rgba(183, 255, 69, 0.5); box-shadow: 0 0 0 4px rgba(183, 255, 69, 0.08); }
+    .kbd { position: absolute; right: 8px; font-size: 9.5px; padding: 2px 5px; border: 1px solid rgba(233, 255, 214, 0.12); border-radius: 5px; color: var(--muted); background: rgba(255, 255, 255, 0.03); }
+    .live { display: inline-flex; align-items: center; gap: 8px; color: var(--online); font-weight: 700; font-size: 11.5px; white-space: nowrap; }
+    .live i { width: 7px; height: 7px; border-radius: 50%; background: var(--online); animation: pulse 1.8s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .tb-btn { width: 38px; height: 38px; border-radius: 11px; border: 1px solid rgba(233, 255, 214, 0.12); background: rgba(255, 255, 255, 0.02); color: #9daba1; cursor: pointer; display: grid; place-items: center; transition: 0.2s; }
+    .tb-btn:hover { background: rgba(183, 255, 69, 0.08); color: var(--fg); }
+    .tb-btn .bdg { position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px; border-radius: 99px; background: var(--danger); color: #fff; font-size: 9.5px; font-weight: 800; display: grid; place-content: center; }
+
+    .wrap { display: flex; flex: 1; min-height: calc(100vh - 58px); }
+    .side { width: 242px; flex: none; display: flex; flex-direction: column; padding: 16px 10px; border-right: 1px solid rgba(233, 255, 214, 0.08); background: rgba(11, 17, 14, 0.6); backdrop-filter: blur(8px); }
+    .side-top { display: flex; gap: 10px; align-items: center; padding: 6px 8px 14px; border-bottom: 1px solid rgba(233, 255, 214, 0.07); }
+    .gtitle { font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); font-weight: 800; padding: 8px 12px 5px; }
+    .nav { flex: 1; overflow: auto; display: flex; flex-direction: column; gap: 18px; padding: 4px 0; }
+    .nav-i { display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-radius: 11px; font-size: 12.5px; font-weight: 700; color: #9daba1; cursor: pointer; transition: 0.22s; border: none; background: transparent; width: 100%; text-align: left; }
+    .nav-i:hover { color: var(--fg); background: rgba(183, 255, 69, 0.06); }
+    .nav-i.on { color: #101a05; background: linear-gradient(135deg, #d4ff85, #8fdc2c); box-shadow: 0 0 0 0 rgba(183, 255, 69, 0.3); font-weight: 800; }
+    .nav-i .cnt { margin-left: auto; min-width: 17px; height: 17px; padding: 0 5px; border-radius: 99px; background: rgba(183, 255, 69, 0.16); font-size: 10px; display: grid; place-content: center; color: var(--accent); }
+    .nav-i.on .cnt { color: #101a05; background: rgba(0, 0, 0, 0.15); }
+    .side-foot { padding: 10px 10px; border-top: 1px solid rgba(233, 255, 214, 0.07); }
+    .me { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .me .av { width: 34px; height: 34px; border-radius: 11px; background: linear-gradient(135deg, #d4ff85, #8fdc2c); color: #101a05; font-weight: 800; display: grid; place-items: center; font-size: 12px; }
+    .me .t { flex: 1; min-width: 0; }
+    .me b { font-size: 11px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .me span { font-size: 10px; color: var(--muted); }
+    .btn-logout { width: 100%; height: 33px; border: none; border-radius: 9px; background: rgba(255, 255, 255, 0.04); color: #9daba1; cursor: pointer; font-weight: 700; font-size: 11.5px; transition: 0.2s; }
+    .btn-logout:hover { background: var(--accent); color: #101a05; }
+
+    .content { flex: 1; min-width: 0; overflow: hidden; }
+    .content > .sec { display: none; padding: 30px 34px 60px; overflow: auto; height: calc(100vh - 58px); }
+    .content > .sec.on { display: block; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Components */
+    .kpi-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .kpi { padding: 16px 18px; border-radius: 14px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0)), var(--card); border: 1px solid var(--border); }
+    .kpi .l { font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-weight: 800; }
+    .kpi b { font-size: 26px; font-weight: 800; letter-spacing: -0.01em; }
+    .kpi span { font-size: 10px; color: var(--muted); }
+
+    .card { border: 1px solid var(--border); border-radius: 14px; padding: 18px; background: var(--card); margin-bottom: 20px; }
+    .card h3 { font-size: 15px; margin-bottom: 14px; }
+
+    .row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid rgba(233, 255, 214, 0.07); flex-wrap: wrap; }
+    .row:last-child { border-bottom: none; }
+    .row .av2 { width: 30px; height: 30px; flex: none; border-radius: 9px; background: rgba(183, 255, 69, 0.15); color: var(--accent); display: grid; place-items: center; font-weight: 800; font-size: 11.5px; }
+    .row b { font-size: 12.7px; display: block; }
+    .row span { font-size: 11px; color: var(--muted); }
+
+    .tbl { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .tbl th { font-size: 9.8px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted); font-weight: 800; text-align: left; padding: 9px 12px; border-bottom: 1px solid rgba(233, 255, 214, 0.07); }
+    .tbl td { padding: 11px 12px; border-bottom: 1px solid rgba(233, 255, 214, 0.06); font-size: 12.5px; }
+    .tbl td:last-child { text-align: right; }
+    .tbl .empty-row { text-align: center; color: var(--muted); padding: 34px 12px; }
+
+    .btn { display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid rgba(233, 255, 214, 0.12); background: rgba(255, 255, 255, 0.03); font-weight: 700; font-size: 11.5px; cursor: pointer; transition: 0.25s; white-space: nowrap; }
+    .btn:hover { background: rgba(183, 255, 69, 0.07); border-color: var(--accent); }
+    .btn-p { background: linear-gradient(135deg, #d4ff85, #8fdc2c); border-color: transparent; color: #101a05; }
+    .btn-g { background: rgba(255, 255, 255, 0.02); }
+    .btn-r { color: var(--danger); border-color: var(--danger-border); }
+    .btn-r:hover { background: rgba(255, 122, 107, 0.12); }
+    .btn.sm { height: 30px; padding: 0 9px; font-size: 10.5px; }
+
+    .chip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 700; background: #101c14; border: 1px solid rgba(183, 255, 69, 0.2); color: #9daba1; cursor: pointer; }
+    .chip.on { color: #101a05; background: var(--accent); border-color: transparent; }
+
+    .chbars { display: flex; gap: 6px; align-items: flex-end; height: 120px; min-width: 100%; }
+    .chbars .bar2 { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; }
+    .chbars .bar2 b { font-size: 11px; color: var(--muted); text-align: center; }
+    .chbars .bar2 .b { height: 100%; background: var(--accent); border-radius: 5px; transition: height 0.5s ease; display: block; width: 100%; }
+    .chbars .hint { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .chbars .hint b { font-size: 10.5px; color: var(--muted); }
+    .chbars-with-values { display: flex; gap: 6px; align-items: flex-end; height: 120px; min-width: 100%; flex-wrap: wrap; }
+
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip-with-count { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 700; background: #101c14; border: 1px solid rgba(183, 255, 69, 0.2); color: var(--muted); }
+    .chip-with-count.on { color: #101a05; background: var(--accent); border-color: transparent; }
+
+    .muted-adm { color: var(--muted); font-size: 11px; display: block; }
+
+    .table-mobile { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .table-mobile th { font-size: 9.8px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted); font-weight: 800; text-align: left; padding: 9px 12px; border-bottom: 1px solid rgba(233, 255, 214, 0.07); white-space: nowrap; }
+    .table-mobile td { padding: 11px 12px; border-bottom: 1px solid rgba(233, 255, 214, 0.06); font-size: 12.5px; text-align: right; }
+    .table-mobile td:first-child { text-align: left; }
+    .table-mobile td:last-child { text-align: right; }
+    .table-mobile .empty-row { text-align: center; color: var(--muted); padding: 34px 12px; }
+
+    .t { font-size: 12.7px; display: flex; flex-direction: column; gap: 2px; }
+    .t b { font-size: 12.7px; }
+    .t span { font-size: 11px; color: var(--muted); }
+
+    /* Mobile */
+    @media (max-width: 1100px) { .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 900px) {
+      .table-mobile { display: block; overflow-x: auto; }
+      .table-mobile td { text-align: left; }
+      .table-mobile td:last-child { text-align: left; }
+    }
+    @media (max-width: 720px) {
+      .kpi-grid { grid-template-columns: 1fr; }
+      .content > .sec { padding: 18px 12px 45px; }
+      .searchbox input { width: 140px; }
+      .wrap { flex-direction: column; }
+      .side { width: 100%; border-right: none; border-bottom: 1px solid rgba(233, 255, 214, 0.08); position: sticky; top: 58px; z-index: 20; max-height: 50vh; }
+    }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; max-width: 520px; width: 100%; max-height: 80vh; overflow: auto; }
+    .modal h2 { margin-bottom: 16px; font-size: 18px; }
+    .modal .btn-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    .modal .form-group { margin-bottom: 16px; }
+    .modal label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 6px; font-weight: 700; }
+    .modal input, .modal select, .modal textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(233, 255, 214, 0.12); background: rgba(0, 0, 0, 0.25); color: var(--fg); font-size: 13px; font-family: inherit; }
+    .modal input:focus, .modal select:focus, .modal textarea:focus { outline: none; border-color: rgba(183, 255, 69, 0.5); box-shadow: 0 0 0 3px rgba(183, 255, 69, 0.08); }
+    .modal .error { color: var(--danger); font-size: 11px; margin-top: 4px; display: none; }
+    .modal .error.show { display: block; }
+
+    /* Command Palette */
+    .cmd-palette { position: fixed; top: 20%; left: 50%; transform: translateX(-50%); width: 600px; max-width: 90vw; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; z-index: 200; display: none; box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4); }
+    .cmd-palette.open { display: block; }
+    .cmd-palette input { width: 100%; padding: 12px 16px; border-radius: 10px; border: 1px solid rgba(233, 255, 214, 0.15); background: rgba(0, 0, 0, 0.3); color: var(--fg); font-size: 15px; font-family: inherit; }
+    .cmd-palette input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(183, 255, 69, 0.1); }
+    .cmd-results { max-height: 300px; overflow: auto; margin-top: 10px; }
+    .cmd-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; cursor: pointer; transition: 0.15s; }
+    .cmd-item:hover, .cmd-item.selected { background: rgba(183, 255, 69, 0.08); }
+    .cmd-item .icon { width: 20px; height: 20px; color: var(--muted); flex-shrink: 0; }
+    .cmd-item .label { flex: 1; font-weight: 600; }
+    .cmd-item .desc { font-size: 11px; color: var(--muted); }
+    .cmd-item .shortcut { font-size: 10px; color: var(--muted); background: rgba(255, 255, 255, 0.05); padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+
+    /* Toast */
+    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+    .toast { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3); animation: slideIn 0.3s ease; }
+    .toast.success { border-color: rgba(183, 255, 69, 0.4); }
+    .toast.error { border-color: var(--danger-border); }
+    .toast .icon { width: 20px; height: 20px; flex-shrink: 0; }
+    .toast.success .icon { color: var(--accent); }
+    .toast.error .icon { color: var(--danger); }
+    .toast .msg { font-size: 13px; font-weight: 500; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
+
+    /* Avatar helper */
+    .av { width: 30px; height: 30px; border-radius: 9px; background: rgba(183, 255, 69, 0.15); color: var(--accent); display: inline-grid; place-items: center; font-weight: 800; font-size: 11.5px; flex-shrink: 0; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(233, 255, 214, 0.15); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(233, 255, 214, 0.3); }
+  </style>
+</head>
+<body>
+<div class="admin">
+  <!-- Topbar -->
+  <header class="topbar">
+    <a class="brand" href="#" onclick="return false;"><span>3set</span><span>admin</span></a>
+    <div class="spacer"></div>
+    <div class="searchbox">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input type="text" id="searchInput" placeholder="Поиск по имени, email или ID…" aria-label="Поиск пользователей">
+      <span class="kbd">↵</span>
+    </div>
+    <div class="live"><i></i><span id="onlineCount">Сейчас 7 онлайн</span></div>
+    <button class="tb-btn" id="refreshBtn" aria-label="Обновить данные" title="Обновить (R)">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+    </button>
+    <button class="tb-btn" id="exportBtn" aria-label="Экспорт пользователей" title="Экспорт CSV (E)">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+    </button>
+  </header>
+
+  <div class="wrap">
+    <!-- Sidebar -->
+    <aside class="side">
+      <div class="side-top"><span class="gtitle">Навигация</span></div>
+      <nav class="nav" id="sidebarNav">
+        <!-- Populated by JS -->
+      </nav>
+      <div class="side-foot">
+        <div class="me">
+          <span class="av">АД</span>
+          <span class="t"><b>Admin</b><span>3set VPN</span></span>
+        </div>
+        <button class="btn-logout" onclick="logout()">Выйти</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="content" id="content">
+      <!-- Sections populated by JS -->
+    </main>
+  </div>
+</div>
+
+<!-- Command Palette -->
+<div class="cmd-palette" id="cmdPalette" role="dialog" aria-label="Командная палитра">
+  <input type="text" id="cmdInput" placeholder="Введите команду… (⌘K)" autocomplete="off" spellcheck="false">
+  <div class="cmd-results" id="cmdResults"></div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ==================== MOCK DATA ====================
+const MOCK_DATA = {
+  stats: { clicks: 12450, registrations: 3820, purchases: 1156, revenue: 2847500, devices: 4210 },
+  wallet: { balance: 125430, limit: 500, unlimited: false },
+  promos: [
+    { id: '1', code: 'WELCOME20', type: 'percentage', discount: 20, usedCount: 342, maxUses: 500, expiresAt: '2026-12-31T23:59:59Z', ownerUserId: null },
+    { id: '2', code: 'SAVE100', type: 'fixed', discount: 100, usedCount: 128, maxUses: 200, expiresAt: '2026-11-30T23:59:59Z', ownerUserId: 12345 },
+    { id: '3', code: 'BLACKFRIDAY', type: 'percentage', discount: 30, usedCount: 89, maxUses: 100, expiresAt: '2026-11-25T23:59:59Z', ownerUserId: null },
+    { id: '4', code: 'PARTNER50', type: 'percentage', discount: 50, usedCount: 12, maxUses: 50, expiresAt: '2027-01-31T23:59:59Z', ownerUserId: 67890 },
+    { id: '5', code: 'RENEWAL15', type: 'percentage', discount: 15, usedCount: 267, maxUses: null, expiresAt: null, ownerUserId: null },
+  ],
+  topRefs: [
+    { userId: 1001, telegramId: '123456789', displayName: 'Ivan Petrov', email: 'ivan@example.com', referrals: 47, earned: 18500 },
+    { userId: 1002, telegramId: '987654321', displayName: 'Maria Sidorova', email: 'maria@example.com', referrals: 34, earned: 14200 },
+    { userId: 1003, telegramId: '555666777', displayName: 'Alex Volkov', email: null, referrals: 28, earned: 11800 },
+    { userId: 1004, telegramId: '111222333', displayName: 'Dmitry Kozlov', email: 'dmitry@example.com', referrals: 22, earned: 9400 },
+    { userId: 1005, telegramId: '444555666', displayName: 'Anna Smirnova', email: 'anna@example.com', referrals: 19, earned: 8100 },
+  ],
+  roles: [
+    { name: 'administrator', description: 'Полный доступ ко всем функциям', users: 2, maxUsers: 5, features: 'all', priority: 100, isDefault: false, globalScope: true, protectsDomain: true, apply: 'all', hidden: false },
+    { name: 'manager', description: 'Управление пользователями, промокодами, рассылками', users: 5, maxUsers: 20, features: 'users,promos,broadcast,tickets', priority: 50, isDefault: false, globalScope: true, protectsDomain: false, apply: 'admin', hidden: false },
+    { name: 'support', description: 'Обработка тикетов, просмотр пользователей', users: 8, maxUsers: 50, features: 'tickets,users:read', priority: 30, isDefault: false, globalScope: false, protectsDomain: false, apply: 'tickets', hidden: false },
+    { name: 'client', description: 'Базовый доступ к VPN', users: 12450, maxUsers: null, features: 'vpn:use', priority: 1, isDefault: true, globalScope: false, protectsDomain: false, apply: null, hidden: false },
+  ],
+  users: [
+    { userId: 1, telegramId: '111111111', email: 'user1@example.com', displayName: 'Андрей', staffRole: 'client' },
+    { userId: 2, telegramId: '222222222', email: 'user2@example.com', displayName: 'Борис', staffRole: 'client' },
+    { userId: 3, telegramId: '333333333', email: 'user3@example.com', displayName: 'Виктор', staffRole: 'support' },
+    { userId: 4, telegramId: '444444444', email: 'user4@example.com', displayName: 'Георгий', staffRole: 'manager' },
+    { userId: 5, telegramId: '555555555', email: 'user5@example.com', displayName: 'Дмитрий', staffRole: 'client' },
+    { userId: 6, telegramId: '666666666', email: 'user6@example.com', displayName: 'Елена', staffRole: 'client' },
+    { userId: 7, telegramId: '777777777', email: 'user7@example.com', displayName: 'Жанна', staffRole: 'client' },
+    { userId: 8, telegramId: '888888888', email: 'user8@example.com', displayName: 'Игорь', staffRole: 'administrator' },
+  ],
+};
+
+// ==================== UTILITIES ====================
+function money(v) {
+  return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Math.round(v));
+}
+
+function fmtAdm(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function initials(name) {
+  return name ? name[0].toUpperCase() : '—';
+}
+
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      ${type === 'success' ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>'}
+    </svg>
+    <span class="msg">${message}</span>
+  `;
+  container.appendChild(toast);
+  setTimeout(() => { toast.style.animation = 'slideIn 0.3s ease reverse'; setTimeout(() => toast.remove(), 300); }, 3000);
+}
+
+// ==================== STATE ====================
+let currentSection = 'overview';
+let period = 30;
+let searchQuery = '';
+let usersData = MOCK_DATA.users;
+let usersCount = MOCK_DATA.users.length;
+let usersTruncated = false;
+
+// ==================== SECTIONS CONFIG ====================
+const navItems = [
+  ['overview', 'Обзор', null],
+  ['analytics', 'Аналитика', null],
+  ['users', 'Пользователи', usersCount],
+  ['tickets', 'Обращения', null],
+  ['broadcast', 'Рассылки', null],
+  ['segments', 'Сегменты', null],
+  ['pricing', 'Тарифы', null],
+  ['promos', 'Промокоды', MOCK_DATA.promos.length],
+  ['referrals', 'Рефералы', MOCK_DATA.topRefs.length],
+  ['wallet', 'Баланс API', null],
+  ['roles', 'Роли', MOCK_DATA.roles.length],
+  ['alerts', 'Алерты', null],
+];
+
+const sectionRenderers = {
+  overview: () => renderOverview(),
+  analytics: () => renderAnalytics(),
+  users: () => renderUsers(),
+  wallet: () => renderWallet(),
+  promos: () => renderPromos(),
+  referrals: () => renderReferrals(),
+  roles: () => renderRoles(),
+  tickets: () => renderPlaceholder('Обращения', 'Здесь будет список тикетов поддержки'),
+  broadcast: () => renderPlaceholder('Рассылки', 'Инструмент для массовых уведомлений пользователям'),
+  segments: () => renderPlaceholder('Сегменты', 'Сегментация пользователей для таргетированных действий'),
+  pricing: () => renderPlaceholder('Тарифы', 'Управление тарифными планами и ценами'),
+  alerts: () => renderPlaceholder('Алерты', 'Настройка уведомлений о критичных метриках'),
+};
+
+// ==================== RENDERERS ====================
+function renderSidebar() {
+  const nav = document.getElementById('sidebarNav');
+  nav.innerHTML = navItems.map(([id, label, cnt]) => `
+    <button type="button" class="nav-i${currentSection === id ? ' on' : ''}${cnt != null ? ' has-cnt' : ''}" data-sec="${id}" aria-current="${currentSection === id ? 'page' : 'false'}">
+      ${label}
+      ${cnt != null ? `<span class="cnt chip-with-count">${cnt}</span>` : ''}
+    </button>
+  `).join('');
+
+  nav.querySelectorAll('.nav-i').forEach(btn => {
+    btn.addEventListener('click', () => switchSection(btn.dataset.sec));
+  });
+}
+
+function switchSection(id) {
+  currentSection = id;
+  document.querySelectorAll('.nav-i').forEach(btn => {
+    btn.classList.toggle('on', btn.dataset.sec === id);
+    btn.setAttribute('aria-current', btn.dataset.sec === id ? 'page' : 'false');
+  });
+  document.querySelectorAll('.content > .sec').forEach(sec => {
+    sec.classList.toggle('on', sec.id === `sec-${id}`);
+  });
+  if (sectionRenderers[id]) {
+    document.getElementById(`sec-${id}`).innerHTML = sectionRenderers[id]();
+  }
+  updateURL();
+}
+
+function updateURL() {
+  const url = new URL(window.location);
+  url.hash = currentSection;
+  history.replaceState(null, '', url);
+}
+
+function renderContentSections() {
+  const content = document.getElementById('content');
+  content.innerHTML = navItems.map(([id]) => `
+    <section class="sec${currentSection === id ? ' on' : ''}" id="sec-${id}">${sectionRenderers[id] ? sectionRenderers[id]() : ''}</section>
+  `).join('');
+}
+
+function renderOverview() {
+  const { stats, wallet, promos } = MOCK_DATA;
+  const balance = wallet?.unlimited ? '∞' : money(wallet?.balance ?? 0) + ' ₽';
+  const low = typeof wallet?.limit === 'number' && (wallet?.balance ?? 0) < wallet.limit;
+
+  return `
+    <h1>Обзор</h1>
+    <div class="kpi-grid">
+      ${[
+        { label: 'Выручка', v: money(stats.revenue) },
+        { label: 'Регистрации', v: String(stats.registrations) },
+        { label: 'Покупки', v: String(stats.purchases) },
+        { label: 'Клики по реф', v: String(stats.clicks) },
+        { label: 'Баланс API', v: balance },
+        { label: 'Активные ключи', v: '—' },
+      ].map((k, i) => `<div key="${i}" class="kpi"><span class="l">${k.label}</span><b>${k.v}</b></div>`).join('')}
+    </div>
+    <div class="card">
+      <h3>Операционная воронка (клики → оплаты)</h3>
+      <div class="chbars-with-values" aria-hidden="true">
+        ${stats.clicks > 0 ? `<div class="bar2"><b>${stats.clicks} кликов</b><span class="b" style="height: 100%"></span></div>` : ''}
+        ${stats.registrations > 0 ? `<div class="bar2"><b>${stats.registrations} регистраций</b><span class="b" style="height: 80%"></span></div>` : ''}
+        ${stats.purchases > 0 ? `<div class="bar2"><b>${stats.purchases} покупок</b><span class="b" style="height: 30%"></span></div>` : ''}
+        ${stats.revenue > 0 ? `<div class="bar2"><b>${money(stats.revenue)} руб</b><span class="b" style="height: 20%"></span></div>` : ''}
+      </div>
+    </div>
+    <div class="card">
+      <h3>Таблица активных промокодов (топ-5 по использованию)</h3>
+      <table class="tbl table-mobile">
+        <thead><tr><th>Код</th><th>Тип</th><th>Значение</th><th>Использований</th><th>Лимит</th></tr></thead>
+        <tbody>
+          ${promos.slice().sort((a, b) => b.usedCount - a.usedCount).slice(0, 5).map(p => `
+            <tr><td>${p.code}</td><td>${p.type === 'percentage' ? '%' : p.type}</td><td>${p.type === 'percentage' ? p.discount : money(p.discount)}</td><td>${p.usedCount}</td><td>${p.maxUses ?? '∞'}</td></tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="row"><div class="t"><b>Период воронки</b><span class="muted-adm">7/30/90 дней</span></div><div class="chips">${[7, 30, 90].map(p => `<button type="button" class="chip${period === p ? ' on' : ''}" onclick="setPeriod(${p})">${p} дн.</button>`).join('')}</div></div>
+    <div class="row"><div class="t"><b>Период остальных карточек</b><span class="muted-adm">30 дней</span></div></div>
+    <div class="row"><div class="t"><b>Баланс ARTEMIDA API</b><span class="muted-adm">Порог 500 ₽</span></div><span>${money(wallet?.balance ?? 0)} ₽</span></div>
+    <div class="row"><div class="t"><b>Вывод на сервер</b><span class="muted-adm">Активирован через оплату выше порога</span></div><button class="btn btn-r" disabled>Ожидает проверку</button></div>
+  `;
+}
+
+function renderAnalytics() {
+  const { stats } = MOCK_DATA;
+  const n = [stats.clicks, stats.registrations, stats.purchases, stats.revenue];
+  return `
+    <h1>Аналитика</h1>
+    <div class="card">
+      <h3>Воронка рефералов</h3>
+      <div class="chbars chbars-with-values">
+        ${n[0] > 0 ? `<div><b>${stats.clicks} кликов</b><span class="b" style="height: 90%"></span></div>` : ''}
+        ${n[1] > 0 ? `<div><b>${stats.registrations} регистраций</b><span class="b" style="height: 60%"></span></div>` : ''}
+        ${n[2] > 0 ? `<div><b>${stats.purchases} покупок</b><span class="b" style="height: 25%"></span></div>` : ''}
+        ${n[3] > 0 ? `<div><b>${money(stats.revenue)} ₽</b><span class="b" style="height: 15%"></span></div>` : ''}
+      </div>
+    </div>
+    <div class="kpi-grid">
+      ${[['Клики', String(stats.clicks)], ['Регистрации', String(stats.registrations)], ['Покупки', String(stats.purchases)], ['Выручка', money(stats.revenue) + ' ₽'], ['Устройства', String(stats.devices)]].map(([l, v]) => `<div class="kpi"><span class="l">${l}</span><b>${v}</b></div>`).join('')}
+    </div>
+  `;
+}
+
+function renderUsers() {
+  return `
+    <h1>Пользователи</h1>
+    <div class="card">
+      <table class="tbl table-mobile">
+        <thead><tr><th>Пользователь</th><th>Telegram</th><th>Email</th><th>Роль</th></tr></thead>
+        <tbody>
+          ${usersData.length === 0 ? '<tr><td colSpan="4" class="empty-row">Поиск не дал результатов</td></tr>' : ''}
+          ${usersData.map(r => `
+            <tr>
+              <td><span class="av">${initials(r.displayName)}</span><b>${r.displayName ?? r.email ?? '#' + r.userId}</b></td>
+              <td><span>${r.telegramId ?? '—'}</span></td>
+              <td><span>${r.email ?? '—'}</span></td>
+              <td><span class="chip">${r.staffRole ?? 'клиент'}</span></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      ${usersTruncated ? '<p class="muted-adm" style="margin-top: 10px">Показано не все результаты (50 максимум)</p>' : ''}
+      <p class="muted-adm" style="margin-top: 8px; font-size: 11px">Всего пользователей: ${usersCount}</p>
+    </div>
+  `;
+}
+
+function renderWallet() {
+  const { wallet } = MOCK_DATA;
+  const balance = wallet?.balance ?? 0;
+  const low = typeof wallet?.limit === 'number' && balance < wallet.limit;
+  return `
+    <h1>Баланс API ARTEMIDA</h1>
+    <div class="kpi-grid">
+      ${[['Баланс, ₽', money(balance)], ['Порог предупреждения, ₽', String(wallet?.limit ?? 500)], ['Статус', wallet?.unlimited ? 'безлимит' : 'ограничен']].map(([l, v]) => `<div class="kpi"><span class="l">${l}</span><b>${v}</b></div>`).join('')}
+    </div>
+    <div class="row"><div class="t"><b>Предупреждение о трате</b><span class="muted-adm">Если баланс ниже порога — алерт</span></div><span>${low ? 'Активен' : 'Неактивен'}</span></div>
+  `;
+}
+
+function renderPromos() {
+  return `
+    <h1>Промокоды</h1>
+    <div class="card">
+      <table class="tbl table-mobile">
+        <thead><tr><th>Код</th><th>Тип</th><th>Значение</th><th>Использований</th><th>Лимит</th><th>Действует до</th></tr></thead>
+        <tbody>
+          ${MOCK_DATA.promos.length === 0 ? '<tr><td colSpan="6" class="empty-row">Нет промокодов</td></tr>' : ''}
+          ${MOCK_DATA.promos.map(p => `
+            <tr><td>${p.code}</td><td>${p.type === 'percentage' ? '%' : p.type}</td><td>${p.discount}</td><td>${p.usedCount}</td><td>${p.maxUses ?? '∞'}</td><td>${fmtAdm(p.expiresAt)}</td></tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderReferrals() {
+  return `
+    <h1>Топ-рефералы</h1>
+    <div class="card">
+      <h3>Кто больше всего привел платежей</h3>
+      <table class="tbl table-mobile">
+        <thead><tr><th>Пользователь</th><th>Telegram</th><th>Приведёно</th><th>Заработано, ₽</th></tr></thead>
+        <tbody>
+          ${MOCK_DATA.topRefs.length === 0 ? '<tr><td colSpan="4" class="empty-row">Нет данных о заработке рефералов</td></tr>' : ''}
+          ${MOCK_DATA.topRefs.map(r => `
+            <tr><td><span class="av">${initials(r.displayName)}</span><b>${r.displayName ?? r.telegramId ?? '#' + r.userId}</b></td><td><span>${r.telegramId ?? '—'}</span></td><td><b>${r.referrals}</b></td><td><b>${money(r.earned)}</b></td></tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderRoles() {
+  return `
+    <h1>Роли</h1>
+    <div class="card">
+      <h3>Справочник ролей</h3>
+      <table class="tbl table-mobile">
+        <thead><tr><th>Роль</th><th>Пользователи</th><th>Лимит</th><th>Приоритет</th><th>Описание</th></tr></thead>
+        <tbody>
+          ${MOCK_DATA.roles.length === 0 ? '<tr><td colSpan="5" class="empty-row">Роли недоступны</td></tr>' : ''}
+          ${MOCK_DATA.roles.map(r => `
+            <tr><td><span class="chip">${r.name}</span></td><td><b>${r.users}</b></td><td>${r.maxUsers ?? '—'}</td><td>${r.priority ?? '—'}</td><td>${r.description}</td></tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Права и функции по ролям</h3>
+      <table class="tbl table-mobile">
+        <thead><tr><th>Роль</th><th>Функции</th><th>Особенности</th></tr></thead>
+        <tbody>
+          ${MOCK_DATA.roles.map(r => `
+            <tr><td><span class="chip">${r.name}</span></td><td><span>${r.features}</span></td><td><span>${r.globalScope ? 'Глобальная область' : ''}${r.isDefault ? ', по умолчанию' : ''}${r.protectsDomain ? ', защищённый домен' : ''}${r.apply ? `, apply: ${r.apply}` : ''}${r.hidden ? ', скрытая' : ''}</span></td></tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderPlaceholder(title, desc) {
+  return `
+    <h1>${title}</h1>
+    <div class="card">
+      <p style="color: var(--muted); font-size: 14px;">${desc}</p>
+      <p class="muted-adm" style="margin-top: 12px">Раздел в разработке</p>
+    </div>
+  `;
+}
+
+// ==================== SEARCH & EXPORT ====================
+function searchUsers(q) {
+  searchQuery = q.trim().toLowerCase();
+  if (!searchQuery) {
+    usersData = MOCK_DATA.users;
+    usersCount = MOCK_DATA.users.length;
+    usersTruncated = false;
+  } else {
+    const filtered = MOCK_DATA.users.filter(u =>
+      (u.displayName?.toLowerCase().includes(searchQuery)) ||
+      (u.email?.toLowerCase().includes(searchQuery)) ||
+      (u.telegramId?.includes(searchQuery)) ||
+      String(u.userId).includes(searchQuery)
+    );
+    usersData = filtered;
+    usersCount = filtered.length;
+    usersTruncated = false;
+  }
+  if (currentSection === 'users') {
+    document.getElementById('sec-users').innerHTML = renderUsers();
+  }
+  // Update nav count
+  const usersNav = document.querySelector('.nav-i[data-sec="users"] .cnt');
+  if (usersNav) usersNav.textContent = usersCount;
+}
+
+function exportUsers() {
+  try {
+    const rows = usersData.map(r => [r.userId, r.telegramId ?? '', r.email ?? '', r.displayName ?? '', r.staffRole ?? ''].join(';'));
+    const csv = ['id;telegramId;email;displayName;role'].concat(rows).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = '3set-admin-users.csv';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+    showToast('CSV экспортирован');
+  } catch {
+    showToast('Ошибка экспорта', 'error');
+  }
+}
+
+// ==================== COMMAND PALETTE ====================
+const commands = [
+  { id: 'refresh', label: 'Обновить данные', desc: 'Перезагрузить все метрики', shortcut: 'R', icon: '<polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>', action: () => { showToast('Данные обновлены'); } },
+  { id: 'export', label: 'Экспорт пользователей (CSV)', desc: 'Скачать таблицу пользователей', shortcut: 'E', icon: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>', action: exportUsers },
+  { id: 'overview', label: 'Перейти: Обзор', desc: 'Открыть раздел обзора', shortcut: '1', icon: '<rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect>', action: () => switchSection('overview') },
+  { id: 'analytics', label: 'Перейти: Аналитика', desc: 'Открыть аналитику', shortcut: '2', icon: '<line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line>', action: () => switchSection('analytics') },
+  { id: 'users', label: 'Перейти: Пользователи', desc: 'Открыть список пользователей', shortcut: '3', icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>', action: () => switchSection('users') },
+  { id: 'wallet', label: 'Перейти: Баланс API', desc: 'Открыть баланс ARTEMIDA', shortcut: '4', icon: '<line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>', action: () => switchSection('wallet') },
+  { id: 'promos', label: 'Перейти: Промокоды', desc: 'Управление промокодами', shortcut: '5', icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>', action: () => switchSection('promos') },
+  { id: 'referrals', label: 'Перейти: Рефералы', desc: 'Топ рефералов', shortcut: '6', icon: '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line>', action: () => switchSection('referrals') },
+  { id: 'roles', label: 'Перейти: Роли', desc: 'Управление ролями', shortcut: '7', icon: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>', action: () => switchSection('roles') },
+  { id: 'tickets', label: 'Перейти: Обращения', desc: 'Тикеты поддержки', shortcut: '8', icon: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>', action: () => switchSection('tickets') },
+  { id: 'broadcast', label: 'Перейти: Рассылки', desc: 'Массовые уведомления', shortcut: '9', icon: '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>', action: () => switchSection('broadcast') },
+];
+
+let cmdSelectedIndex = 0;
+let filteredCommands = commands;
+
+function openCmdPalette() {
+  const palette = document.getElementById('cmdPalette');
+  const input = document.getElementById('cmdInput');
+  palette.classList.add('open');
+  input.value = '';
+  input.focus();
+  filterCommands('');
+}
+
+function closeCmdPalette() {
+  document.getElementById('cmdPalette').classList.remove('open');
+  cmdSelectedIndex = 0;
+}
+
+function filterCommands(query) {
+  const q = query.toLowerCase().trim();
+  filteredCommands = q ? commands.filter(c =>
+    c.label.toLowerCase().includes(q) ||
+    c.desc.toLowerCase().includes(q) ||
+    c.shortcut.toLowerCase().includes(q)
+  ) : commands;
+  cmdSelectedIndex = 0;
+  renderCmdResults();
+}
+
+function renderCmdResults() {
+  const results = document.getElementById('cmdResults');
+  results.innerHTML = filteredCommands.map((c, i) => `
+    <div class="cmd-item${i === cmdSelectedIndex ? ' selected' : ''}" data-index="${i}" tabindex="-1">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg>
+      <div>
+        <div class="label">${c.label}</div>
+        <div class="desc">${c.desc}</div>
+      </div>
+      <span class="shortcut">${c.shortcut}</span>
+    </div>
+  `).join('');
+
+  results.querySelectorAll('.cmd-item').forEach(item => {
+    item.addEventListener('click', () => executeCommand(parseInt(item.dataset.index)));
+    item.addEventListener('mouseenter', () => {
+      cmdSelectedIndex = parseInt(item.dataset.index);
+      renderCmdResults();
+    });
+  });
+}
+
+function executeCommand(index) {
+  const cmd = filteredCommands[index];
+  if (cmd) {
+    cmd.action();
+    closeCmdPalette();
+  }
+}
+
+function navigateCmd(direction) {
+  cmdSelectedIndex = Math.max(0, Math.min(filteredCommands.length - 1, cmdSelectedIndex + direction));
+  renderCmdResults();
+  const selected = document.querySelector('.cmd-item.selected');
+  if (selected) selected.scrollIntoView({ block: 'nearest' });
+}
+
+// ==================== EVENT LISTENERS ====================
+function init() {
+  renderSidebar();
+  renderContentSections();
+
+  // Search
+  const searchInput = document.getElementById('searchInput');
+  let searchTimeout;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => searchUsers(searchInput.value), 300);
+  });
+  searchInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') searchUsers(searchInput.value);
+  });
+
+  // Refresh & Export buttons
+  document.getElementById('refreshBtn').addEventListener('click', () => {
+    showToast('Данные обновлены');
+    if (sectionRenderers[currentSection]) {
+      document.getElementById(`sec-${currentSection}`).innerHTML = sectionRenderers[currentSection]();
+    }
+  });
+  document.getElementById('exportBtn').addEventListener('click', exportUsers);
+
+  // Period buttons (overview)
+  window.setPeriod = (p) => {
+    period = p;
+    document.querySelectorAll('#sec-overview .chip').forEach(btn => {
+      btn.classList.toggle('on', parseInt(btn.textContent) === p);
+    });
+    showToast(`Период изменён на ${p} дней`);
+  };
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', e => {
+    // ⌘K / Ctrl+K - Command palette
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      openCmdPalette();
+    }
+    // Escape - close palette
+    if (e.key === 'Escape') {
+      closeCmdPalette();
+    }
+    // Palette navigation
+    const palette = document.getElementById('cmdPalette');
+    if (palette.classList.contains('open')) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); navigateCmd(1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); navigateCmd(-1); }
+      else if (e.key === 'Enter') { e.preventDefault(); executeCommand(cmdSelectedIndex); }
+    }
+    // Quick section switching (1-9)
+    if (!e.metaKey && !e.ctrlKey && !e.altKey && e.key >= '1' && e.key <= '9') {
+      const idx = parseInt(e.key) - 1;
+      if (navItems[idx]) switchSection(navItems[idx][0]);
+    }
+    // R - refresh
+    if (!e.metaKey && !e.ctrlKey && e.key.toLowerCase() === 'r' && document.activeElement.tagName !== 'INPUT') {
+      e.preventDefault();
+      document.getElementById('refreshBtn').click();
+    }
+    // E - export
+    if (!e.metaKey && !e.ctrlKey && e.key.toLowerCase() === 'e' && document.activeElement.tagName !== 'INPUT') {
+      e.preventDefault();
+      exportUsers();
+    }
+  });
+
+  // Click outside palette to close
+  document.addEventListener('click', e => {
+    const palette = document.getElementById('cmdPalette');
+    if (palette.classList.contains('open') && !palette.contains(e.target)) {
+      closeCmdPalette();
+    }
+  });
+
+  // Restore section from hash
+  const hash = window.location.hash.slice(1);
+  if (hash && navItems.some(([id]) => id === hash)) {
+    switchSection(hash);
+  }
+}
+
+function logout() {
+  showToast('Функция выхода требует интеграции с auth API', 'error');
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

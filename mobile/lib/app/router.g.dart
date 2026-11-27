@@ -13,7 +13,8 @@ part of 'router.dart';
 /// - /auth: Login screen
 /// - /register: Registration screen
 /// - /telegram-wait: Telegram authentication wait screen
-/// - /: Main app screen (home)
+/// - /: Main app screen (full prototype server pools, D-15)
+/// - /shop: Shop stub (phase 21; no purchase)
 /// Riverpod provider for the GoRouter instance
 
 @ProviderFor(router)
@@ -24,7 +25,8 @@ final routerProvider = RouterProvider._();
 /// - /auth: Login screen
 /// - /register: Registration screen
 /// - /telegram-wait: Telegram authentication wait screen
-/// - /: Main app screen (home)
+/// - /: Main app screen (full prototype server pools, D-15)
+/// - /shop: Shop stub (phase 21; no purchase)
 /// Riverpod provider for the GoRouter instance
 
 final class RouterProvider
@@ -35,7 +37,8 @@ final class RouterProvider
   /// - /auth: Login screen
   /// - /register: Registration screen
   /// - /telegram-wait: Telegram authentication wait screen
-  /// - /: Main app screen (home)
+  /// - /: Main app screen (full prototype server pools, D-15)
+  /// - /shop: Shop stub (phase 21; no purchase)
   /// Riverpod provider for the GoRouter instance
   RouterProvider._()
     : super(

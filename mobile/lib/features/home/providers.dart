@@ -1,7 +1,6 @@
 import "dart:async";
 
 import "package:flutter_riverpod/flutter_riverpod.dart";
-import "package:flutter_riverpod/legacy.dart";
 
 import "package:mobile/core/db/app_database.dart";
 import "package:mobile/core/db/ping_cache_dao.dart";
@@ -48,12 +47,6 @@ class CurrentTabNotifier extends Notifier<PoolTab> {
     }
   }
 }
-
-/// Legacy bottom-navigation index used by the phase-18 router.
-///
-/// 19-07 removes the bottom navigation entirely; until then this keeps the
-/// router compiling without overloading the repurposed [currentTabProvider].
-final bottomNavIndexProvider = StateProvider<int>((ref) => 0);
 
 /// Provider for the home screen data.
 /// Fetches user's subscription, keys, traffic stats from API.

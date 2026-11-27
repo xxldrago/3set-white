@@ -140,6 +140,19 @@ final pingCacheProvider =
   return ref.read(pingDaoProvider).watchFresh(tab.wireName);
 });
 
+/// Filters rows by the 60 s TTL again at read time (D-10).
+///
+/// `watchFresh` only filters when Drift re-emits after a write; without a
+/// re-check an unchanged stream could present an expired sample as fresh
+/// indefinitely. Every consumer (best-server, card sample, list) uses this.
+List<PingCacheData> freshPingRows(
+  List<PingCacheData> rows, {
+  PingClock? clock,
+}) {
+  final cutoff = (clock ?? defaultPingClock)() - pingCacheTtl.inMilliseconds;
+  return rows.where((row) => row.ts >= cutoff).toList(growable: false);
+}
+
 /// Best online server for a tab: online-first, RTT ascending, stable on ties.
 ///
 /// `load` is deliberately absent (D-04/REQ-POOL-04 deferred). A missing key or
@@ -152,7 +165,9 @@ final bestServerProvider = Provider.family<Server?, PoolTab>((ref, tab) {
   final byId = <String, Server>{
     for (final server in pools.serversFor(tab)) server.id: server,
   };
-  final rows = ref.watch(pingCacheProvider(tab)).value ?? <PingCacheData>[];
+  final rows = freshPingRows(
+    ref.watch(pingCacheProvider(tab)).value ?? <PingCacheData>[],
+  );
   final order = <String, int>{
     for (var index = 0; index < rows.length; index++) rows[index].serverId: index,
   };

@@ -184,7 +184,9 @@ class ServerPoolScreen extends ConsumerWidget {
   }
 
   PingCacheData? _sampleFor(WidgetRef ref, PoolTab tab, String id) {
-    final rows = ref.watch(pingCacheProvider(tab)).value ?? <PingCacheData>[];
+    final rows = freshPingRows(
+      ref.watch(pingCacheProvider(tab)).value ?? <PingCacheData>[],
+    );
     for (final row in rows) {
       if (row.serverId == id) {
         return row;
@@ -203,7 +205,9 @@ class ServerPoolScreen extends ConsumerWidget {
     Server? best,
   ) {
     final servers = pools.hasActiveKey ? pools.serversFor(tab) : <Server>[];
-    final rows = ref.watch(pingCacheProvider(tab)).value ?? <PingCacheData>[];
+    final rows = freshPingRows(
+      ref.watch(pingCacheProvider(tab)).value ?? <PingCacheData>[],
+    );
     final byId = <String, PingCacheData>{
       for (final row in rows) row.serverId: row,
     };

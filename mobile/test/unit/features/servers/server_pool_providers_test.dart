@@ -308,6 +308,34 @@ void main() {
     });
   });
 
+  test("TTL is re-checked at read time, not only on Drift emission", () {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final rows = <PingCacheData>[
+      PingCacheData(
+        serverId: "fresh",
+        tab: "simple",
+        rtt: 10,
+        online: true,
+        approx: false,
+        ts: now,
+      ),
+      PingCacheData(
+        serverId: "expired",
+        tab: "simple",
+        rtt: 10,
+        online: true,
+        approx: false,
+        ts: now - 61000,
+      ),
+    ];
+
+    expect(
+      freshPingRows(rows, clock: () => now).map((row) => row.serverId),
+      <Object>["fresh"],
+    );
+    expect(freshPingRows(rows, clock: () => now + 61000), isEmpty);
+  });
+
   test("bestServerProvider ranks by RTT only and keeps offline servers last",
       () async {
     respondWith(_payload());

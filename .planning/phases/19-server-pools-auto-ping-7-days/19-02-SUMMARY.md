@@ -125,7 +125,7 @@ Each task was committed atomically:
 1. **Task 1 (`checkpoint:decision`, gate `blocking`):** D-08 confirmed by the user as `own-shim` — no code commit (decision gate; resumed in this session).
 2. **Task 2 (`tracer`): End-to-end native ping skeleton** — `32e413c` (feat)
 
-**Plan metadata:** pending final docs commit (SUMMARY.md + STATE.md + ROADMAP.md + deferred-items ledger).
+**Plan metadata:** `3c3b49a` (docs: complete plan; SUMMARY.md + STATE.md + ROADMAP.md + deferred-items ledger + windows entry). Its hash was then recorded in a separate hash-only docs commit, following the 19-01 convention.
 
 ## Files Created/Modified
 

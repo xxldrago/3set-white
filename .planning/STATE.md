@@ -5,16 +5,16 @@ milestone_name: Мобильный клиент
 current_phase: 19
 current_phase_name: Server Pools & Auto-Ping
 status: executing
-stopped_at: Completed 19-01-PLAN.md
-last_updated: "2026-11-27T03:28:54.713Z"
+stopped_at: Completed 19-02-PLAN.md
+last_updated: "2026-11-27T03:45:22.642Z"
 last_activity: 2026-11-27
 last_activity_desc: Phase 19 execution started
-state_head: 91db6a92710978af3bc2a7b07e8d121ef613bdb3
+state_head: 32e413cb7c27e6843cd0c0d0dca76bb93ef37e98
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 15
-  completed_plans: 8
+  completed_plans: 9
   percent: 0
 ---
 
@@ -30,8 +30,9 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 ## Current Position
 
 Phase: 19 (Server Pools & Auto-Ping) — EXECUTING
-Plan: 2 of 8
+Plan: 3 of 8
 Status: Ready to execute
+**Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-27 — Phase 19 execution started
 
 ## Per-Milestone Progress
@@ -82,6 +83,8 @@ None (flat mode)
 - [Phase 18 verification]: Session restore persists `userId` from the validated subscription user (backend token pair carries no `userId`), keeping the fast path alive.
 - [Phase 19-server-pools-auto-ping-7-days]: D-01 gate confirmed locked: /api/mobile/servers source = getSubscriptionForUserId -> artemida.getSubscriptionLinks (NOT /pricing, NOT getKeyWithLinks); no load; no_active_key 403
 - [Phase 19-server-pools-auto-ping-7-days]: 19-01: active-key gate adds explicit raw-status exclusion (expired/revoked/disabled/trial-expired) alongside deriveStatusKind; secrets confined to machine-only outbound
+- [Phase 19]: 19-02: D-08 confirmed own-shim — own C-shared Go shim + ffigen on sing-box v1.14.4; NOT gomobile-via-ffigen, NOT sing-ffi, NOT community pkg, NOT URLTest C symbol
+- [Phase 19]: 19-02: URLTest(outboundTag) returns error only; RTT async via WriteGroups URLTestDelay/URLTestTime (CommandGroup=2), 0,0 => offline; no-TUN config + CheckConfig + WG endpoint + NEW DNS; no secrets logged
 
 ## Performance Metrics
 
@@ -95,9 +98,10 @@ None (flat mode)
 | Phase 18 P01e | 7200 | 1 tasks | 1 files |
 | Phase 18 P03 | 7200 | 1 tasks | 13 files |
 | Phase 19-server-pools-auto-ping-7-days P01 | 6min | 3 tasks | 6 files |
+| Phase 19-server-pools-auto-ping-7-days P02 | 11min | 1 tasks | 11 files |
 
 ## Session
 
-**Last session:** 2026-11-27T03:28:46.572Z
-**Stopped at:** Completed 19-01-PLAN.md
+**Last session:** 2026-11-27T03:44:37.107Z
+**Stopped at:** Completed 19-02-PLAN.md
 **Resume file:** None

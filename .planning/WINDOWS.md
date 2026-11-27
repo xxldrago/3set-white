@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 13
+open_count: 14
 waived_count: 0
 fixed_count: 0
-total_count: 13
-last_updated: 2026-10-03T22:14:55.456Z
+total_count: 14
+last_updated: 2026-11-27T03:44:45.644Z
 ---
 
 # Broken Windows Ledger
@@ -28,6 +28,7 @@ last_updated: 2026-10-03T22:14:55.456Z
 | 11 | 04 | deviation | app/page.tsx |  | Rule 2 auto-fix: home unread read wrapped in try/catch defaulting to 0 so support read failure never breaks the home page (04-05 Task 3) | open |  | 2026-10-03T12:25:37.857Z |  |
 | 12 | 05 | stub | app/admin/page.tsx |  | Overview metric cards render the intentional em-dash baseline; plan 05-07 fills DB/ARTEMIDA stats | open |  | 2026-10-03T22:14:55.389Z |  |
 | 13 | 05 | stub | app/admin/page.tsx |  | Group try/catch degradation scaffolding wraps no data read yet; plan 05-07 wires the reads | open |  | 2026-10-03T22:14:55.456Z |  |
+| 14 | 19 | unrun-verify | mobile/native/libbox_shim/build.sh |  | Native .so/.xcframework build and on-device URLTest not runnable in this env (Android JDK/SDK absent; iOS CI-built); silent Socket.connect fallback ships in 19-03 | open |  | 2026-11-27T03:44:45.644Z |  |
 
 ````json
 [
@@ -185,6 +186,18 @@ last_updated: 2026-10-03T22:14:55.456Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-10-03T22:14:55.456Z",
+    "resolved_at": null
+  },
+  {
+    "id": 14,
+    "kind": "unrun-verify",
+    "phase": "19",
+    "file": "mobile/native/libbox_shim/build.sh",
+    "line": null,
+    "description": "Native .so/.xcframework build and on-device URLTest not runnable in this env (Android JDK/SDK absent; iOS CI-built); silent Socket.connect fallback ships in 19-03",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T03:44:45.644Z",
     "resolved_at": null
   }
 ]

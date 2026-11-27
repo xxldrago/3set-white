@@ -89,7 +89,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 19-02-PLAN.md — libbox ping: own C-shared sing-box v1.14.4 shim + `ffigen`; `URLTest(tag)`+`WriteGroups`; `generate_204`; silent `Socket.connect` `approx`; `PingRepository`; D-06/D-07/D-08/D-09; NOT `libbox_urltest`
+- [x] 19-02-PLAN.md — libbox ping: own C-shared sing-box v1.14.4 shim + `ffigen`; `URLTest(tag)`+`WriteGroups`; `generate_204`; silent `Socket.connect` `approx`; `PingRepository`; D-06/D-07/D-08/D-09; NOT `libbox_urltest`
 
 **Wave 3** *(blocked on Wave 2 completion)*
 

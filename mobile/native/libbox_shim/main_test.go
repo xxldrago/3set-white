@@ -121,6 +121,61 @@ func TestCheckConfigAcceptsFullTUNConfig(t *testing.T) {
 	}
 }
 
+// WR-02: the TUN platform must protect every outbound socket through the
+// installed callback instead of letting our own full routes capture the dial.
+func TestTunPlatformProtectsOutboundSockets(t *testing.T) {
+	protected := make([]int32, 0)
+	protectHookForTesting = func(fd int32) bool {
+		protected = append(protected, fd)
+		return fd == 42
+	}
+	defer func() { protectHookForTesting = nil }()
+
+	platform := &tunPlatform{fd: 7}
+	if !platform.UsePlatformAutoDetectInterfaceControl() {
+		t.Fatal("TUN platform must opt into auto-detect interface control")
+	}
+	if err := platform.AutoDetectInterfaceControl(42); err != nil {
+		t.Fatalf("protected socket was rejected: %v", err)
+	}
+	if len(protected) != 1 || protected[0] != 42 {
+		t.Fatalf("protection hook did not receive the fd: %v", protected)
+	}
+	// A refused protection (or an invalid fd) fails the dial: never loop it
+	// back through the tunnel.
+	if err := platform.AutoDetectInterfaceControl(43); err == nil {
+		t.Fatal("expected an error when the platform refused protection")
+	}
+	if err := platform.AutoDetectInterfaceControl(-1); err == nil {
+		t.Fatal("expected an error for an invalid fd")
+	}
+}
+
+// WR-02: sing-box only calls ProtectFunc when route.auto_detect_interface is
+// enabled. The shim turns it on for TUN sessions without touching the backend
+// config contract; the resulting config must still pass CheckConfig.
+func TestWithAutoDetectInterfaceKeepsConfigValid(t *testing.T) {
+	got := withAutoDetectInterface(fullTUNConfig(t))
+	if got == fullTUNConfig(t) {
+		t.Fatal("auto_detect_interface was not injected")
+	}
+	var parsed struct {
+		Route struct {
+			AutoDetectInterface bool   `json:"auto_detect_interface"`
+			Final               string `json:"final"`
+		} `json:"route"`
+	}
+	if err := json.Unmarshal([]byte(got), &parsed); err != nil {
+		t.Fatalf("unmarshal injected config: %v", err)
+	}
+	if !parsed.Route.AutoDetectInterface || parsed.Route.Final != "srv-smoke" {
+		t.Fatalf("unexpected injected route: %+v", parsed.Route)
+	}
+	if err := libbox.CheckConfig(got); err != nil {
+		t.Fatalf("CheckConfig rejected the protection-enabled config: %v", err)
+	}
+}
+
 func TestGenericErrorMessageNeverEchoesConfigFragment(t *testing.T) {
 	const secretFragment = "vless://SUPERSECRET@config-fragment.example"
 	got := checkConfigErrorText(

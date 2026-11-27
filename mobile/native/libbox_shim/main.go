@@ -17,6 +17,19 @@ package main
 /*
 #include <stdint.h>
 #include <stdlib.h>
+
+// Socket-protection handoff used by the TUN platform. The pointer is supplied
+// by Dart (dart:ffi Pointer.fromFunction) and is called by sing-box's dialer
+// control hook for each outbound socket, before it can be captured by our own
+// full IPv4/IPv6 TUN routes (WR-02). The fd is opaque and never logged.
+typedef int32_t (*protect_handler_fn)(int32_t);
+static protect_handler_fn goProtectHandler = NULL;
+static void registerProtectHandler(void *handler) {
+	goProtectHandler = (protect_handler_fn)handler;
+}
+static int32_t invokeProtectHandler(int32_t fd) {
+	return goProtectHandler == NULL ? 0 : goProtectHandler(fd);
+}
 */
 import "C"
 
@@ -31,6 +44,21 @@ import (
 )
 
 var errUnsupported = errors.New("not supported by the ping-only libbox shim")
+
+// errProtectFailed is returned to sing-box when the platform could not protect
+// an outbound socket. Failing the dial is safer than looping through the TUN.
+var errProtectFailed = errors.New("outbound socket protection failed")
+
+// protectHookForTesting is a Go-only seam: _test.go files cannot import cgo.
+// Production always goes through the registered Dart callback below.
+var protectHookForTesting func(int32) bool
+
+func protectSocket(fd int32) bool {
+	if hook := protectHookForTesting; hook != nil {
+		return hook(fd)
+	}
+	return C.invokeProtectHandler(C.int32_t(fd)) == 1
+}
 
 // noopPlatform is an intentionally inert PlatformInterface. Phase 19 only
 // needs outbound URLTest against a no-TUN config, so no platform tunnel,
@@ -99,6 +127,49 @@ type tunPlatform struct {
 
 func (p *tunPlatform) OpenTun(libbox.TunOptions) (int32, error) {
 	return p.fd, nil
+}
+
+// UsePlatformAutoDetectInterfaceControl makes sing-box call the hook below for
+// every outbound dial instead of trying to bind to an interface itself (which
+// is unreliable on Android). Combined with route.auto_detect_interface in the
+// TUN config, this is the real routing-loop guard (WR-02).
+func (p *tunPlatform) UsePlatformAutoDetectInterfaceControl() bool { return true }
+
+func (p *tunPlatform) AutoDetectInterfaceControl(fd int32) error {
+	if fd >= 0 && protectSocket(fd) {
+		return nil
+	}
+	return errProtectFailed
+}
+
+// libbox_register_protect_handler installs the Dart-provided bridge that
+// ultimately calls Android VpnService.protect(fd) / the iOS equivalent. Pass
+// nullptr to clear it. No fd, config or secret is ever logged here.
+//
+//export libbox_register_protect_handler
+func libbox_register_protect_handler(handler unsafe.Pointer) {
+	C.registerProtectHandler(handler)
+}
+
+// withAutoDetectInterface enables sing-box's ProtectFunc path for a TUN
+// session. It is applied inside the shim (not by the backend builder) because
+// it is a platform transport detail, not part of the opaque server config.
+func withAutoDetectInterface(configJSON string) string {
+	var parsed map[string]any
+	if err := json.Unmarshal([]byte(configJSON), &parsed); err != nil {
+		return configJSON
+	}
+	route, ok := parsed["route"].(map[string]any)
+	if !ok {
+		route = map[string]any{}
+		parsed["route"] = route
+	}
+	route["auto_detect_interface"] = true
+	encoded, err := json.Marshal(parsed)
+	if err != nil {
+		return configJSON
+	}
+	return string(encoded)
 }
 
 // noopServerHandler satisfies libbox.CommandServerHandler without exposing
@@ -379,7 +450,9 @@ func libbox_stop() {
 
 //export libbox_start_with_tun
 func libbox_start_with_tun(fd C.int32_t, cfg *C.char) *C.char {
-	config := C.GoString(cfg)
+	// WR-02: enable the platform socket-protection hook for this TUN session.
+	// The backend-built config is left untouched; this is a transport detail.
+	config := withAutoDetectInterface(C.GoString(cfg))
 	if err := libbox.CheckConfig(config); err != nil {
 		return cErrorMessage("invalid configuration")
 	}

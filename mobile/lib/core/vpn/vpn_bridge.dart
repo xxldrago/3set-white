@@ -53,17 +53,32 @@ abstract interface class VpnCore {
   Future<TrafficSnapshot> traffic();
 }
 
+/// Optional capability of a core that can hand native socket-protection
+/// requests back to the platform (WR-02). Kept separate from [VpnCore] so
+/// unit-test fakes need no platform surface.
+abstract interface class VpnProtectCapable {
+  /// Installs [protect] as the native → platform protection callback.
+  void attachProtect(bool Function(int) protect);
+}
+
 /// Adapts the serialized 20-02 singleton to [VpnCore].
-class LibboxVpnCore implements VpnCore {
+class LibboxVpnCore implements VpnCore, VpnProtectCapable {
   /// Creates an adapter over [core], defaulting to the process singleton.
   LibboxVpnCore([LibboxPingCore? core])
       : _core = core ?? LibboxPingCore.instance;
 
   final LibboxPingCore _core;
+  bool Function(int)? _protect;
 
   @override
-  Future<void> startWithTun(int fd, String configJson) =>
-      _core.startWithTun(fd, configJson);
+  void attachProtect(bool Function(int) protect) => _protect = protect;
+
+  @override
+  Future<void> startWithTun(int fd, String configJson) async {
+    final protect = _protect;
+    if (protect != null) _core.installProtectHandler(protect);
+    await _core.startWithTun(fd, configJson);
+  }
 
   @override
   Future<void> stop() => _core.stop();
@@ -145,6 +160,11 @@ class MethodChannelVpnBridge implements VpnBridge {
         _core = core ?? LibboxVpnCore(),
         _log = log ?? _structuredLog {
     _channel.setCallHandler(_onNativeEvent);
+    // WR-02: the production core is the only one that can install the native
+    // protection hook; injectable fakes stay inert unless they opt in.
+    if (_core case final VpnProtectCapable capable) {
+      capable.attachProtect(_protectSocket);
+    }
   }
 
   final VpnChannel _channel;
@@ -219,6 +239,23 @@ class MethodChannelVpnBridge implements VpnBridge {
   Future<bool> protect(int fd) async {
     final result = await _invoke("protect", <String, Object?>{"fd": fd});
     return result == true;
+  }
+
+  /// Native protection hook installed into the core (WR-02). The platform
+  /// reply is asynchronous, so the immediate return acknowledges the handoff
+  /// while the real `protect(fd)` call is dispatched to the live VpnService;
+  /// a failed reply is surfaced only as a safe structured log (no fd logged).
+  bool _protectSocket(int fd) {
+    unawaited(
+      protect(fd).then<void>((bool ok) {
+        if (!ok) {
+          _log("protect", <String, Object?>{"result": "failed"});
+        }
+      }, onError: (Object _) {
+        _log("protect", <String, Object?>{"result": "failed"});
+      }),
+    );
+    return true;
   }
 
   @override

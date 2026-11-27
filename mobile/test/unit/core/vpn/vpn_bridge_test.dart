@@ -61,6 +61,15 @@ class FakeVpnChannel implements VpnChannel {
   }
 }
 
+/// Core fake that opts into the platform socket-protection capability.
+class FakeProtectCore extends FakeVpnCore implements VpnProtectCapable {
+  /// Callback installed by the bridge, if any.
+  bool Function(int)? installed;
+
+  @override
+  void attachProtect(bool Function(int) protect) => installed = protect;
+}
+
 /// Fake libbox core that records the fd handoff and stop ordering.
 class FakeVpnCore implements VpnCore {
   /// Number of `startWithTun` calls observed by this fake.
@@ -232,6 +241,28 @@ void main() {
     );
 
     expect(core.startCalls, 0);
+  });
+
+  test("native protection hook dispatches protect(fd) to the service (WR-02)",
+      () async {
+    final protectChannel = FakeVpnChannel()
+      ..onInvoke = (String method, Object? args) async =>
+          method == "protect" ? true : null;
+    final protectCore = FakeProtectCore();
+    bridge.dispose();
+    bridge = MethodChannelVpnBridge(
+      channel: protectChannel,
+      core: protectCore,
+      log: (String event, Map<String, Object?> fields) {
+        logs.add(<String, Object?>{"event": event, ...fields});
+      },
+    );
+
+    expect(protectCore.installed, isNotNull);
+    expect(protectCore.installed!(fd), isTrue);
+    await Future<void>.delayed(Duration.zero);
+    expect(protectChannel.invoked, contains("protect"));
+    expect(describeLogs(), isNot(contains("$fd")));
   });
 
   test("a non-platform core failure is mapped to a stable code (WR-01)",

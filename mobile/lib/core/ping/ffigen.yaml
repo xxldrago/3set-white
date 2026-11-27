@@ -18,6 +18,7 @@ functions:
     - libbox_check_config
     - libbox_start
     - libbox_start_with_tun
+    - libbox_register_protect_handler
     - libbox_traffic
     - libbox_stop
     - urltest

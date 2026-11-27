@@ -7,6 +7,32 @@ import "package:ffi/ffi.dart";
 
 import "generated/libbox_bindings.dart";
 
+/// Platform socket-protection callback installed by the VPN bridge (WR-02).
+/// It is null outside an active tunnel; the fd is opaque and is never logged.
+bool Function(int)? _platformProtect;
+
+int _protectFromNative(int fd) {
+  final protect = _platformProtect;
+  if (protect == null) return 0;
+  try {
+    return protect(fd) ? 1 : 0;
+  } on Object {
+    return 0;
+  }
+}
+
+/// The C ABI pointer handed to the shim. Failing protection is reported as 0
+/// so sing-box fails the dial instead of routing it through our own tunnel.
+final ffi.Pointer<ffi.NativeFunction<ffi.Int32 Function(ffi.Int32)>>
+    _protectCallbackPointer =
+    ffi.Pointer.fromFunction<ffi.Int32 Function(ffi.Int32)>(
+      _protectFromNative,
+      0,
+    );
+
+/// Test-only view of the installed callback; no FFI and no platform call.
+int invokeProtectCallbackForTesting(int fd) => _protectFromNative(fd);
+
 /// Thrown when the native libbox shim cannot be loaded or used.
 class LibboxUnavailableException implements Exception {
   /// Creates an exception describing why libbox is unavailable.
@@ -137,6 +163,23 @@ class LibboxPingCore {
   /// Whether a no-TUN sing-box service is currently running.
   bool get isStarted => _started;
 
+  /// Installs the native → platform socket-protection callback (WR-02).
+  ///
+  /// The shim calls it from sing-box's dialer control hook so outbound sockets
+  /// reach VpnService.protect() before our full TUN routes can capture them.
+  void installProtectHandler(bool Function(int) protect) {
+    _platformProtect = protect;
+    _registerProtectHandler();
+  }
+
+  void _registerProtectHandler() {
+    final bindings = _bindings;
+    if (bindings == null || _platformProtect == null) return;
+    bindings.libbox_register_protect_handler(
+      _protectCallbackPointer.cast<ffi.Void>(),
+    );
+  }
+
   /// Loads the native library and runs `libbox_setup` once.
   ///
   /// Repeated calls share the same future; a failed init can be retried.
@@ -246,6 +289,9 @@ class LibboxPingCore {
       if (bindings == null) {
         throw const LibboxUnavailableException("call init() first");
       }
+      // Registration may have happened before init(); re-arm it now that the
+      // native library is available so every dial in this session is protected.
+      _registerProtectHandler();
       final configPtr = configJson.toNativeUtf8();
       try {
         final checkError = _takeString(

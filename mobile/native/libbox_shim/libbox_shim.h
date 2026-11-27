@@ -93,6 +93,7 @@ extern char* libbox_check_config(char* configJSON);
 extern char* libbox_start(char* configJSON);
 extern void libbox_stop(void);
 extern char* libbox_start_with_tun(int32_t fd, char* cfg);
+extern void libbox_register_protect_handler(void* handler);
 extern char* libbox_traffic(void);
 extern int urltest(char* tag, int timeoutMs);
 extern char* urltest_take(char* tag);

@@ -102,6 +102,19 @@ class LibboxBindings {
   late final _libbox_start_with_tun = _libbox_start_with_tunPtr
       .asFunction<ffi.Pointer<ffi.Char> Function(int, ffi.Pointer<ffi.Char>)>();
 
+  /// Installs the platform socket-protection callback (WR-02).
+  void libbox_register_protect_handler(ffi.Pointer<ffi.Void> handler) {
+    return _libbox_register_protect_handler(handler);
+  }
+
+  late final _libbox_register_protect_handlerPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
+        'libbox_register_protect_handler',
+      );
+  late final _libbox_register_protect_handler =
+      _libbox_register_protect_handlerPtr
+          .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+
   void libbox_stop() {
     return _libbox_stop();
   }

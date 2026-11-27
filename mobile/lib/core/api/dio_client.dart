@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
+import 'package:mobile/app/constants.dart';
 import 'package:mobile/core/api/auth_interceptor.dart';
 import 'package:mobile/core/storage/secure_storage.dart';
 import 'package:mobile/core/storage/token_store.dart';
@@ -20,7 +21,7 @@ class DioClient {
     Logger? logger,
   }) : _logger = logger ?? Logger(),
        dio = Dio(BaseOptions(
-         baseUrl: 'https://dash.3set.online',
+         baseUrl: apiBaseUrl,
          connectTimeout: const Duration(seconds: 15),
          receiveTimeout: const Duration(seconds: 30),
          headers: {

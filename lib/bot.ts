@@ -29,10 +29,9 @@ import {
 import {
   createOrder,
   keyDeviceLimit,
-  listOrdersForUser,
   precheckOwnedKey,
 } from "./orders-service";
-import { buildHistoryReply, buildPayButton } from "./bot-payments";
+import { buildPayButton } from "./bot-payments";
 import { logger } from "./logger";
 import { prisma } from "./prisma";
 import { buildSupportTicketContent, isSupportIntakeArmed } from "./support-intake";
@@ -44,6 +43,7 @@ import {
 } from "./tickets-service";
 import { bindLoginToken, parseLoginStartPayload } from "./telegram-login";
 import { bindLinkToken, parseLinkStartPayload } from "./telegram-link";
+import { bindMobileNonce, parseNonceStartPayload } from "./telegram-mobile-nonce";
 import { REFERRAL_CODE_RE, getReferralSummary, pinReferrer } from "./referrals";
 import { validatePromo } from "./promo";
 
@@ -147,19 +147,49 @@ bot.start(async (ctx) => {
       outcome: bound.kind === "bound" ? "login-bound" : "login-invalid",
     });
   }
+  // Mobile deep-link login (Phase 18): a `nonce_<32 hex>` payload binds the
+  // app-issued nonce to this Telegram id. The app is already polling
+  // `GET /api/mobile/auth/telegram/poll`, which flips 202 → 200 with a token
+  // pair on the next tick — no code round-trip, because the nonce row is
+  // created with `user_id = null` and can only ever authenticate the Telegram
+  // account that presses Start (see lib/telegram-mobile-nonce.ts).
+  const mobileNonce = parseNonceStartPayload(ctx.startPayload);
+  if (mobileNonce) {
+    const bound = await bindMobileNonce(mobileNonce, telegramId);
+    await ctx.reply(
+      bound.kind === "bound" ? t("bot.mobileLoginDone") : t("bot.loginInvalid"),
+    );
+    logger.info({
+      updateId: ctx.update.update_id,
+      telegramId,
+      outcome: bound.kind === "bound" ? "mobile-login-bound" : "mobile-login-invalid",
+    });
+  }
+  // Payment return from Platega (bot channel): `payment_success_<orderId>` or `payment_failed_<orderId>`
+  const paymentSuccessMatch = ctx.startPayload?.match(/^payment_success_(.+)$/);
+  if (paymentSuccessMatch) {
+    const orderId = paymentSuccessMatch[1];
+    await ctx.reply(t("bot.payProvisioned"));
+    logger.info({ updateId: ctx.update.update_id, telegramId, outcome: "payment-return-success", orderId });
+    // The actual key with subscription link will be pushed via notify-provisioned outbox
+  }
+  const paymentFailedMatch = ctx.startPayload?.match(/^payment_failed_(.+)$/);
+  if (paymentFailedMatch) {
+    const orderId = paymentFailedMatch[1];
+    await ctx.reply(t("bot.payFailed"));
+    logger.info({ updateId: ctx.update.update_id, telegramId, outcome: "payment-return-failed", orderId });
+  }
   await ctx.reply(t("bot.welcome"), {
     reply_markup: {
-      keyboard: [
-        [{ text: t("bot.menuTrial") }, { text: t("bot.menuTariffs") }],
-        [{ text: t("bot.menuKeys") }],
-        [{ text: t("bot.menuPayments") }],
-        [{ text: t("bot.menuReferrals") }],
-        [{ text: t("bot.menuGuides") }, { text: t("bot.menuHelp") }],
-        [{ text: t("bot.menuSupport") }],
-        [{ text: t("bot.menuPrivacy") }],
-        [{ text: t("bot.menuTerms") }],
+      inline_keyboard: [
+        [{ text: t("bot.menuTrial"), callback_data: "menu:trial" }, { text: t("bot.menuTariffs"), callback_data: "menu:tariffs" }],
+        [{ text: t("bot.menuKeys"), callback_data: "menu:keys" }],
+        [{ text: t("bot.menuReferrals"), callback_data: "menu:referrals" }],
+        [{ text: t("bot.menuGuides"), callback_data: "menu:guides" }, { text: t("bot.menuHelp"), callback_data: "menu:help" }],
+        [{ text: t("bot.menuSupport"), callback_data: "menu:support" }],
+        [{ text: t("bot.menuShare"), callback_data: "menu:share" }],
+        [{ text: t("bot.menuPrivacy"), callback_data: "menu:privacy" }, { text: t("bot.menuTerms"), callback_data: "menu:terms" }],
       ],
-      resize_keyboard: true,
     },
   });
 });
@@ -169,7 +199,8 @@ bot.start(async (ctx) => {
 // ---------------------------------------------------------------------------
 
 /** «🎁 Рефералы» — code, link, stats (same summary the cabinet shows). */
-bot.hears(t("bot.menuReferrals"), async (ctx) => {
+bot.action("menu:referrals", async (ctx) => {
+  await ctx.answerCbQuery();
   const from = ctx.from;
   if (!from) return;
   try {
@@ -183,6 +214,7 @@ bot.hears(t("bot.menuReferrals"), async (ctx) => {
     }
     const summary = await getReferralSummary(user.id);
     const link = `${env.APP_BASE_URL}/?ref=${summary.code}`;
+    const settings = await import("./referrals").then((m) => m.getReferralSettings());
     await ctx.reply(
       t("bot.refStats", {
         code: summary.code,
@@ -191,6 +223,10 @@ bot.hears(t("bot.menuReferrals"), async (ctx) => {
         earned: summary.earned,
         balance: summary.balance,
         days: summary.bonusDays,
+        inviterDays: settings.userMode === "days" ? settings.userDays : 0,
+        inviterDaysLabel: settings.userMode === "days" ? "дней" : "",
+        inviteeDays: settings.inviteeDays,
+        inviteeDaysLabel: "дней",
       }),
     );
     logger.info({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "ref-stats" });
@@ -303,7 +339,8 @@ function tariffDevicesKeyboard(days: number) {
 }
 
 // One-tap trial from the bot (identical server-enforced path as the cabinet).
-bot.hears(t("bot.menuTrial"), async (ctx) => {
+bot.action("menu:trial", async (ctx) => {
+  await ctx.answerCbQuery();
   const from = ctx.from;
   if (!from) return;
   try {
@@ -343,7 +380,8 @@ bot.hears(t("bot.menuTrial"), async (ctx) => {
 });
 
 // D-25 tariff keyboard: days → devices → live price from the shared path.
-bot.hears(t("bot.menuTariffs"), async (ctx) => {
+bot.action("menu:tariffs", async (ctx) => {
+  await ctx.answerCbQuery();
   await ctx.reply(t("pricing.title"), { reply_markup: tariffDaysKeyboard() });
 });
 
@@ -491,20 +529,7 @@ bot.action(/^tariff:buy:(\d+):(\d+)$/, async (ctx) => {
   logger.info({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "pay-created" });
 });
 
-// «История платежей» — reads the SAME `listOrdersForUser` the cabinet uses
-// (D-47 parity), replies keyed, capped rows (UI-SPEC §6).
-bot.hears(t("bot.menuPayments"), async (ctx) => {
-  const from = ctx.from;
-  if (!from) return;
-  try {
-    const rows = await listOrdersForUser(BigInt(from.id));
-    await ctx.reply(buildHistoryReply(rows));
-    logger.info({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "pay-history" });
-  } catch {
-    await ctx.reply(t("common.errorLoad"));
-    logger.warn({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "pay-history-failed" });
-  }
-});
+
 
 // Renew/upgrade entry from a non-trial key (D-44): trial keys get only the
 // existing `key.buyCta` deep-link — renew/upgrade are never offered (DOM-absent
@@ -567,7 +592,8 @@ bot.action(/^key:upgrade:(.+)$/, async (ctx) => {
 // (cache-first, D-29). Reply from the local mirror, then refresh from ARTEMIDA
 // in the background; every string resolves through t() (D-16), never raw
 // provider data. The key-detail / subscription-link message is added in 02-05.
-bot.hears(t("bot.menuKeys"), async (ctx) => {
+bot.action("menu:keys", async (ctx) => {
+  await ctx.answerCbQuery();
   const from = ctx.from;
   if (!from) return;
   const telegramId = BigInt(from.id);
@@ -647,6 +673,12 @@ bot.action(/^key:link:(\d+)$/, async (ctx) => {
       });
       return;
     }
+    const subscriptionUrl = subscription.subscriptionUrl;
+    const importUrls = {
+      v2ray: `v2rayng://import?url=${encodeURIComponent(subscriptionUrl)}`,
+      streisand: `streisand://import?url=${encodeURIComponent(subscriptionUrl)}`,
+      hiddify: `hiddify://import?url=${encodeURIComponent(subscriptionUrl)}`,
+    };
     // Non-trial keys also get renew/upgrade entry points on the link message;
     // trial keys keep only the buy deep-link (D-44 — no renew/upgrade at all).
     // A7: renew/upgrade callbacks carry the key id (never a list index) so a
@@ -660,9 +692,20 @@ bot.action(/^key:link:(\d+)$/, async (ctx) => {
             ? [[{ text: t("upgrade.cta"), callback_data: `key:upgrade:${key.id}` }]]
             : []),
         ];
+    // Add import buttons for each app
+    const importRows = [
+      [{ text: t("bot.connectImportV2ray"), url: importUrls.v2ray }],
+      [{ text: t("bot.connectImportStreisand"), url: importUrls.streisand }],
+      [{ text: t("bot.connectImportHiddify"), url: importUrls.hiddify }],
+    ];
     await ctx.reply(
-      `${t("key.linkTitle")}\n${subscription.subscriptionUrl}\n\n${t("key.guidesCta")} — ${t("bot.menuGuides")}`,
-      actionRows.length > 0 ? { reply_markup: { inline_keyboard: actionRows } } : undefined,
+      `${t("bot.connectGuidesCta")}\n${subscriptionUrl}`,
+      {
+        reply_markup: {
+          inline_keyboard: [...importRows, ...actionRows],
+        },
+        link_preview_options: { is_disabled: true },
+      },
     );
     logger.info({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "key-link-sent" });
   } catch {
@@ -674,7 +717,8 @@ bot.action(/^key:link:(\d+)$/, async (ctx) => {
 // Legal pages live on the public site (APP_BASE_URL points at the cabinet).
 // Reply-keyboard buttons cannot carry URLs, so each menu tap answers with the
 // document link.
-bot.hears(t("bot.menuPrivacy"), async (ctx) => {
+bot.action("menu:privacy", async (ctx) => {
+  await ctx.answerCbQuery();
   await ctx.reply(
     t("bot.legalLink", {
       title: t("bot.menuPrivacy"),
@@ -683,7 +727,8 @@ bot.hears(t("bot.menuPrivacy"), async (ctx) => {
   );
 });
 
-bot.hears(t("bot.menuTerms"), async (ctx) => {
+bot.action("menu:terms", async (ctx) => {
+  await ctx.answerCbQuery();
   await ctx.reply(
     t("bot.legalLink", {
       title: t("bot.menuTerms"),
@@ -692,23 +737,145 @@ bot.hears(t("bot.menuTerms"), async (ctx) => {
   );
 });
 
+bot.action("menu:help", async (ctx) => {
+  await ctx.answerCbQuery();
+  await ctx.reply(t("bot.helpText"), { parse_mode: "HTML" });
+});
+
+bot.action("menu:share", async (ctx) => {
+  await ctx.answerCbQuery();
+  const botUrl = `https://t.me/${env.TELEGRAM_BOT_USERNAME}`;
+  await ctx.reply(
+    t("bot.shareText", { botUrl }),
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: t("bot.shareButton"), switch_inline_query: "" }],
+        ],
+      },
+    },
+  );
+});
+
 // TRIAL-03 bot half: the «Инструкции» button resolves the SAME guide sections
 // as app/guides/page.tsx — one copy, referenced by key, never duplicated.
-bot.hears(t("bot.menuGuides"), async (ctx) => {
+bot.action("menu:guides", async (ctx) => {
+  await ctx.answerCbQuery();
   await ctx.reply(
-    [
-      t("guides.title"),
-      "",
-      t("guides.v2rayTitle"),
-      t("guides.v2rayText"),
-      "",
-      t("guides.streisandTitle"),
-      t("guides.streisandText"),
-      "",
-      t("guides.hiddifyTitle"),
-      t("guides.hiddifyText"),
-    ].join("\n"),
+    t("bot.guidesTitle"),
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: t("bot.guidesPlatformAndroid"), callback_data: "guides:platform:android" }],
+          [{ text: t("bot.guidesPlatformIOS"), callback_data: "guides:platform:ios" }],
+          [{ text: t("bot.guidesPlatformDesktop"), callback_data: "guides:platform:desktop" }],
+        ],
+      },
+      parse_mode: "HTML",
+    },
   );
+});
+
+bot.action(/^guides:platform:(android|ios|desktop)$/, async (ctx) => {
+  await ctx.answerCbQuery();
+  const platform = ctx.match?.[1] as "android" | "ios" | "desktop";
+  const platformKeys = {
+    android: "bot.guidesPlatformAndroid" as const,
+    ios: "bot.guidesPlatformIOS" as const,
+    desktop: "bot.guidesPlatformDesktop" as const,
+  };
+  const appOptions = {
+    android: [
+      { key: "bot.guidesAppV2ray" as const, callback: "guides:app:v2ray" },
+      { key: "bot.guidesAppHiddify" as const, callback: "guides:app:hiddify" },
+    ],
+    ios: [
+      { key: "bot.guidesAppStreisand" as const, callback: "guides:app:streisand" },
+      { key: "bot.guidesAppHiddify" as const, callback: "guides:app:hiddify" },
+    ],
+    desktop: [
+      { key: "bot.guidesAppHiddify" as const, callback: "guides:app:hiddify" },
+      { key: "bot.guidesAppV2ray" as const, callback: "guides:app:v2ray" },
+    ],
+  };
+
+  const apps = appOptions[platform];
+  await ctx.reply(
+    `📱 <b>Инструкции для ${t(platformKeys[platform])}</b>\n\nВыберите приложение:`,
+    {
+      reply_markup: {
+        inline_keyboard: [
+          ...apps.map((a) => [{ text: t(a.key), callback_data: a.callback }]),
+          [{ text: t("common.cancel"), callback_data: "menu:guides" }],
+        ],
+      },
+      parse_mode: "HTML",
+    },
+  );
+});
+
+bot.action(/^guides:app:(v2ray|streisand|hiddify)$/, async (ctx) => {
+  await ctx.answerCbQuery();
+  const app = ctx.match?.[1] as "v2ray" | "streisand" | "hiddify";
+  const from = ctx.from;
+  if (!from) return;
+
+  const telegramId = BigInt(from.id);
+  let subscriptionUrl: string | null = null;
+  try {
+    const keys = await listKeys(telegramId);
+    if (keys.length > 0) {
+      const sub = await getSubscriptionForUser(telegramId, keys[0].id);
+      subscriptionUrl = sub?.subscriptionUrl ?? null;
+    }
+  } catch {
+    // ignore
+  }
+
+  const storeUrls = {
+    v2ray: "https://github.com/2dust/v2rayNG/releases",
+    streisand: "https://apps.apple.com/app/streisand/id6450534064",
+    hiddify: "https://github.com/hiddify/hiddify-app/releases",
+  };
+
+  const importUrls = {
+    v2ray: `v2rayng://import?url=${encodeURIComponent(subscriptionUrl ?? "")}`,
+    streisand: `streisand://import?url=${encodeURIComponent(subscriptionUrl ?? "")}`,
+    hiddify: `hiddify://import?url=${encodeURIComponent(subscriptionUrl ?? "")}`,
+  };
+
+  const appKeys = {
+    v2ray: "bot.guidesAppV2ray" as const,
+    streisand: "bot.guidesAppStreisand" as const,
+    hiddify: "bot.guidesAppHiddify" as const,
+  };
+  const importKeys = {
+    v2ray: "bot.connectImportV2ray" as const,
+    streisand: "bot.connectImportStreisand" as const,
+    hiddify: "bot.connectImportHiddify" as const,
+  };
+
+  const lines = [
+    t("bot.guidesStepInstall", { app: t(appKeys[app]), storeUrl: storeUrls[app] }),
+    "",
+    subscriptionUrl ? t("bot.guidesStepImport", { app: t(appKeys[app]) }) : "⚠️ Сначала оформите подписку в разделе «Тарифы» — тогда появится ссылка для импорта.",
+    "",
+    t("bot.guidesStepConnect", { app: t(appKeys[app]), platform: "вашем устройстве" }),
+  ];
+
+  const keyboard: Array<Array<{ text: string; callback_data: string } | { text: string; url: string }>> = [
+    [{ text: t("common.cancel"), callback_data: "menu:guides" }],
+  ];
+
+  if (subscriptionUrl) {
+    keyboard.unshift([{ text: t(importKeys[app]), url: importUrls[app] }]);
+  }
+
+  await ctx.reply(lines.join("\n"), {
+    reply_markup: { inline_keyboard: keyboard },
+    parse_mode: "HTML",
+    link_preview_options: { is_disabled: true },
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -743,7 +910,8 @@ bot.on("text", async (ctx, next) => {
 });
 
 // ---------------------------------------------------------------------------
-bot.hears(t("bot.menuSupport"), async (ctx) => {
+bot.action("menu:support", async (ctx) => {
+  await ctx.answerCbQuery();
   const from = ctx.from;
   if (!from) return;
   try {

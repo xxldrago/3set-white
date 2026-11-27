@@ -56,6 +56,14 @@
 			</array>
 		</dict>
 	</dict>
+	<!-- Allows `--dart-define=API_BASE_URL=http://localhost:PORT` during local
+	     UAT runs. Scoped to local networking only; ATS stays on for the public
+	     internet, so production traffic is unaffected. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

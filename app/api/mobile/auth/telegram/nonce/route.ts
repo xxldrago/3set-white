@@ -4,12 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
+import { NONCE_BYTES, NONCE_PREFIX, NONCE_TTL_MS } from "@/lib/telegram-mobile-nonce";
 
 export const dynamic = "force-dynamic";
-
-const NONCE_PREFIX = "nonce_";
-const NONCE_BYTES = 16; // 32 hex chars
-const NONCE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 export async function POST() {
   const started = Date.now();

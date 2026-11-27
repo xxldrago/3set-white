@@ -1,5 +1,12 @@
-/// API base URL for mobile client
-const String apiBaseUrl = 'https://dash.3set.online';
+/// API base URL for mobile client.
+///
+/// Override for local/staging backends without touching code:
+///   flutter run --dart-define=API_BASE_URL=http://localhost:3200
+/// The default is production, so release builds are unchanged.
+const String apiBaseUrl = String.fromEnvironment(
+  'API_BASE_URL',
+  defaultValue: 'https://dash.3set.online',
+);
 
 /// Storage keys for secure storage
 class StorageKeys {

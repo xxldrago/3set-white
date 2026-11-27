@@ -122,19 +122,27 @@ export interface NotificationPush {
   text: string;
   /** Whether the sender should attach the locally-generated QR PNG. */
   wantsQr: boolean;
+  /** Subscription URL for inline import buttons. */
+  subscriptionUrl?: string | null;
 }
 
 /**
- * Provisioned push (UI-SPEC §7): `bot.payProvisioned` + the sub-link text. The
- * QR is generated server-side by the caller from `subscriptionUrl`. When the
+ * Provisioned push (UI-SPEC §7): `bot.payProvisioned` + the sub-link text + connection instructions.
+ * The QR is generated server-side by the caller from `subscriptionUrl`. When the
  * sub-link is unreadable the copy degrades to the keyed `key.linkUnavailable`
  * and no QR is attached — never an empty/placeholder QR sent as if real.
  */
 export function buildProvisionedPush(subscriptionUrl: string | null): NotificationPush {
   const lines = [t("bot.payProvisioned")];
   if (subscriptionUrl) {
+    lines.push("");
+    lines.push(t("bot.connectGuidesCta"));
     lines.push(subscriptionUrl);
-    return { text: lines.join("\n"), wantsQr: true };
+    return { 
+      text: lines.join("\n"), 
+      wantsQr: true,
+      subscriptionUrl,
+    };
   }
   lines.push(t("key.linkUnavailable"));
   return { text: lines.join("\n"), wantsQr: false };
@@ -203,7 +211,25 @@ export async function dispatchNotification(
         subscriptionUrl = subscription?.subscriptionUrl ?? null;
       }
       const push = buildProvisionedPush(subscriptionUrl);
-      await send.sendMessage(chatId, push.text);
+      
+      // Build inline keyboard with import buttons for each app
+      const extra: Record<string, unknown> = {};
+      if (push.subscriptionUrl) {
+        const importUrls = {
+          v2ray: `v2rayng://import?url=${encodeURIComponent(push.subscriptionUrl)}`,
+          streisand: `streisand://import?url=${encodeURIComponent(push.subscriptionUrl)}`,
+          hiddify: `hiddify://import?url=${encodeURIComponent(push.subscriptionUrl)}`,
+        };
+        extra.reply_markup = {
+          inline_keyboard: [
+            [{ text: t("bot.connectImportV2ray"), url: importUrls.v2ray }],
+            [{ text: t("bot.connectImportStreisand"), url: importUrls.streisand }],
+            [{ text: t("bot.connectImportHiddify"), url: importUrls.hiddify }],
+          ],
+        };
+      }
+      
+      await send.sendMessage(chatId, push.text, extra);
       if (push.wantsQr && subscriptionUrl) {
         const png = await renderSubscriptionQrPng(subscriptionUrl);
         await send.sendPhoto(chatId, { source: png }, { caption: t("key.qrCaption") });

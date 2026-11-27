@@ -262,14 +262,15 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
   try {
     const paymentClient = getPaymentClient(plategaMerchant);
-    // Return targets are PUBLIC pages (no session): Platega sends the payer
-    // here after success/failure, and a bot buyer may never have opened the
-    // cabinet — /payments/[id] would bounce them to /login right after taking
-    // their money. `from=bot` tells the page to offer the bot chat as the next
-    // step; web buyers get the cabinet CTA.
-    const from = plategaMerchant === "bot" ? "?from=bot" : "";
-    const returnUrl = `${env.APP_BASE_URL}/pay/success${from}`;
-    const failedUrl = `${env.APP_BASE_URL}/pay/fail${from}`;
+    // Return targets: for bot channel, redirect back to the bot via deep link.
+    // For web channel, use the cabinet success/fail pages.
+    const botUsername = env.TELEGRAM_BOT_USERNAME;
+    const returnUrl = plategaMerchant === "bot"
+      ? `https://t.me/${botUsername}?start=payment_success_${order.id}`
+      : `${env.APP_BASE_URL}/pay/success`;
+    const failedUrl = plategaMerchant === "bot"
+      ? `https://t.me/${botUsername}?start=payment_failed_${order.id}`
+      : `${env.APP_BASE_URL}/pay/fail`;
     const paymentResult = await paymentClient.createPayment({
       amount: chargeAmount,
       currency,

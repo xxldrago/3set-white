@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
+import 'package:mobile/app/constants.dart' show apiBaseUrl;
 import 'package:mobile/core/api/endpoints.dart';
 import 'package:mobile/core/storage/token_store.dart';
 import 'package:mobile/models/auth_models.dart';
@@ -96,7 +97,7 @@ class AuthInterceptor extends Interceptor {
 
       // Create a fresh Dio instance for the refresh call to avoid interceptor loops
       final refreshDio = Dio(BaseOptions(
-        baseUrl: 'https://dash.3set.online',
+        baseUrl: apiBaseUrl,
         connectTimeout: const Duration(seconds: 15),
         receiveTimeout: const Duration(seconds: 30),
         headers: {

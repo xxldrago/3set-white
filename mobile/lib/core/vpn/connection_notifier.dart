@@ -159,6 +159,9 @@ class ConnectionNotifier extends Notifier<ConnectionState> {
   /// OS consent removed mid-tunnel: `error → disconnecting → idle` with the
   /// permission toast, and a real native stop before idle (D-11).
   Future<void> _handleRevoked() async {
+    // IN-02: consent is gone; a queued 1/2/4 s retry must not fire a pointless
+    // reconnect (and a second permission prompt) after revocation.
+    ref.read(restartBackoffProvider).cancel();
     final generation = ++_generation;
     _transition(
       ConnPhase.error,

@@ -424,4 +424,46 @@ void main() {
       preparesBefore + 1,
     );
   });
+
+  test("revocation cancels a pending restart timer (IN-02)", () async {
+    final factory = RecordingBackoffFactory();
+    final backoff = RestartBackoff(timerFactory: factory.create);
+    final config = FakeConfig();
+    final bridge = FakeBridge();
+    final container = ProviderContainer(
+      overrides: [
+        connectControllerProvider.overrideWith(FakeSelection.new),
+        configRepositoryProvider.overrideWithValue(config),
+        vpnBridgeProvider.overrideWithValue(bridge),
+        connectionToastProvider.overrideWithValue((_) {}),
+        connectionErrorLogProvider.overrideWithValue((_) {}),
+        connectionTransitionLogProvider.overrideWithValue((_) {}),
+        restartBackoffProvider.overrideWithValue(backoff),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final notifier = container.read(connectionNotifierProvider.notifier);
+    await notifier.connect(PoolTab.simple, auto: true);
+    expect(
+      container.read(connectionNotifierProvider).phase,
+      ConnPhase.connected,
+    );
+
+    // A crash retry is queued, then the OS revokes consent before it fires.
+    expect(
+      backoff.schedule(onRetry: () {}, onExhausted: () {}),
+      isTrue,
+    );
+    final pending = factory.timers.single;
+    bridge.emit("revoked");
+    await pumpUntil(
+      () =>
+          container.read(connectionNotifierProvider).phase == ConnPhase.idle,
+    );
+    expect(backoff.isScheduled, isFalse);
+    expect(pending.cancelled, isTrue);
+    pending.fire();
+    expect(backoff.isScheduled, isFalse);
+  });
 }

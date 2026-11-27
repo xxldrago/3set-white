@@ -123,6 +123,7 @@ None (flat mode)
 - [Phase 20]: 20-07: Connected Panel reads the single FSM; session identity is connectedAt so disconnect/reconnect cancel the 1 Hz timer and invalidate the cached IP
 - [Phase 20]: 20-07: real api.ipify.org GET through the tunnel (2 s timeout) with InternetAddress validation and «—» fallback; libbox traffic counters formatted losslessly at two decimals; no fake IP/traffic
 - [Phase 21-01]: D-01/D-04/D-05/D-16/D-10 gate confirmed "proceed-locked" at blocking checkpoint — user explicitly confirmed all five locked costly decisions before any code; D-10 includes changing already-shipped phase-19/20 /servers + /config gates via one shared server-side 24h grace predicate (boundary tests expiresAt ± 24h ± 1ms); single money pipeline (createOrder → shared Platega webhook → outbox/worker sole issuer, REQ-BE-05 superseded), server-quoted amount, in-app WebView behind separate blocking-human package gate, real Shop Screen with no bottom nav. No code written by this gate.
+- [Phase 21-01]: D-05 flutter_inappwebview 6.1.5 package-legitimacy gate approved by human at blocking-human checkpoint — package identity/publisher (github.com/pichillilorenzo/flutter_inappwebview), exact stable pin 6.1.5 (NOT beta 6.2.0-beta.3) and SDK compatibility with Flutter 3.50.1 / Dart 3.14.0 explicitly confirmed; install only that pin; escalate on any resolution/analyze/build failure, no substitute package or beta.
 
 ## Performance Metrics
 

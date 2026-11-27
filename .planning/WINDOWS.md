@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 26
+open_count: 27
 waived_count: 0
 fixed_count: 0
-total_count: 26
-last_updated: 2026-11-27T09:08:03.217Z
+total_count: 27
+last_updated: 2026-11-27T09:26:33.524Z
 ---
 
 # Broken Windows Ledger
@@ -41,6 +41,7 @@ last_updated: 2026-11-27T09:08:03.217Z
 | 24 | 20 | unrun-verify | mobile/native/libbox_shim/main.go |  | Real OS TUN fd path, per-ABI .so/.dylib artifacts and on-device traffic counters unverified here (no Android JDK/SDK; non-TUN fd aborts with SIGABRT) | open |  | 2026-11-27T09:08:03.055Z |  |
 | 25 | 20 | deviation | mobile/native/libbox_shim/main.go |  | Rule 2: stop existing no-TUN service before libbox_start_with_tun so the fd-carrying platform is used | open |  | 2026-11-27T09:08:03.135Z |  |
 | 26 | 20 | deviation | mobile/native/libbox_shim/main.go |  | Rule 3: added Go-side cString seam checkConfigErrorText because cgo cannot be imported from _test.go | open |  | 2026-11-27T09:08:03.217Z |  |
+| 27 | 20 | unrun-verify | mobile/android/app/src/main/kotlin/com/u3set/mobile/VpnService.kt |  | Android native build + on-device tunnel/notification/revoke/kill-switch UAT not run here: no JDK17/Android SDK/NDK; CI artifacts required | open |  | 2026-11-27T09:26:33.524Z |  |
 
 ````json
 [
@@ -354,6 +355,18 @@ last_updated: 2026-11-27T09:08:03.217Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-27T09:08:03.217Z",
+    "resolved_at": null
+  },
+  {
+    "id": 27,
+    "kind": "unrun-verify",
+    "phase": "20",
+    "file": "mobile/android/app/src/main/kotlin/com/u3set/mobile/VpnService.kt",
+    "line": null,
+    "description": "Android native build + on-device tunnel/notification/revoke/kill-switch UAT not run here: no JDK17/Android SDK/NDK; CI artifacts required",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T09:26:33.524Z",
     "resolved_at": null
   }
 ]

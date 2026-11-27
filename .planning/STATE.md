@@ -5,16 +5,16 @@ milestone_name: Мобильный клиент
 current_phase: 20
 current_phase_name: VPN Core & Connect FSM
 status: executing
-stopped_at: Completed 20-02-PLAN.md
-last_updated: "2026-11-27T09:09:11.151Z"
+stopped_at: Completed 20-03-PLAN.md
+last_updated: "2026-11-27T09:27:28.032Z"
 last_activity: 2026-11-27
 last_activity_desc: Phase 20 execution started
-state_head: 7b101dff65abcdcc35ca999adf0e7964b2c0bd95
+state_head: a90cd30db74d84799d2b492ad55483800d1a8c21
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 22
-  completed_plans: 17
+  completed_plans: 18
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 ## Current Position
 
 Phase: 20 (VPN Core & Connect FSM) — EXECUTING
-Plan: 3 of 7
+Plan: 4 of 7
 Status: Ready to execute
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-27 — Phase 20 execution started
@@ -111,6 +111,8 @@ None (flat mode)
 - [Phase 20]: 20-02: fd stays platform-owned and libbox dups it internally; no reset export before CI evidence; no dummy-fd test — Non-TUN fd aborts with SIGABRT, cannot be caught in Dart
 - [Phase 20]: 20-02: traffic {down,up,available} from libbox StatusMessage via WriteStatus + CommandStatus; no fabricated bytes — REQ-CONN-07 live counters, distinct from ping RTT fields
 - [Phase 20]: 20-02: stop any existing no-TUN service before libbox_start_with_tun so the fd-carrying platform is used — Reload into the inert ping platform cannot supply a TUN fd (Rule 2)
+- [Phase 20-03]: D-06 confirmed by the user at the blocking gate as kotlin-service: Kotlin VpnService + foreground service + method channel; no background-service plugin — Locked costly decision; correct OS lifecycle and fd ownership, rollback returns to no-TUN shim
+- [Phase 20-03]: D-09 confirmed by the user at the blocking gate as always-on: kill switch permanently enabled, no toggle, no bypass — Locked costly decision; REQ-CONN-06 no leaks, no stale UI state, simpler FSM
 
 ## Performance Metrics
 
@@ -133,9 +135,10 @@ None (flat mode)
 | Phase 19-server-pools-auto-ping-7-days P08 | 8 min | 3 tasks | 5 files |
 | Phase 20 P01 | 4 min | 3 tasks | 5 files |
 | Phase 20 P02 | 10 min | 3 tasks | 7 files |
+| Phase 20 P03 | 8 min | 3 tasks | 6 files |
 
 ## Session
 
-**Last session:** 2026-11-27T09:08:59.771Z
-**Stopped at:** Completed 20-02-PLAN.md
+**Last session:** 2026-11-27T09:27:27.932Z
+**Stopped at:** Completed 20-03-PLAN.md
 **Resume file:** None

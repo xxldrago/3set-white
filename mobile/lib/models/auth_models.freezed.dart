@@ -295,7 +295,7 @@ as int?,
 /// @nodoc
 mixin _$User {
 
- int get id;@JsonKey(name: 'telegram_id') int? get telegramId; String? get email;
+ int get id;@JsonKey(name: 'telegramId') int? get telegramId; String? get email;
 /// Create a copy of User
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -333,7 +333,7 @@ abstract mixin class $UserCopyWith<$Res>  {
   factory $UserCopyWith(User value, $Res Function(User) _then) = _$UserCopyWithImpl;
 @useResult
 $Res call({
- int id,@JsonKey(name: 'telegram_id') int? telegramId, String? email
+ int id,@JsonKey(name: 'telegramId') int? telegramId, String? email
 });
 
 
@@ -440,7 +440,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id, @JsonKey(name: 'telegram_id')  int? telegramId,  String? email)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id, @JsonKey(name: 'telegramId')  int? telegramId,  String? email)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _User() when $default != null:
 return $default(_that.id,_that.telegramId,_that.email);case _:
@@ -461,7 +461,7 @@ return $default(_that.id,_that.telegramId,_that.email);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id, @JsonKey(name: 'telegram_id')  int? telegramId,  String? email)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id, @JsonKey(name: 'telegramId')  int? telegramId,  String? email)  $default,) {final _that = this;
 switch (_that) {
 case _User():
 return $default(_that.id,_that.telegramId,_that.email);case _:
@@ -481,7 +481,7 @@ return $default(_that.id,_that.telegramId,_that.email);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id, @JsonKey(name: 'telegram_id')  int? telegramId,  String? email)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id, @JsonKey(name: 'telegramId')  int? telegramId,  String? email)?  $default,) {final _that = this;
 switch (_that) {
 case _User() when $default != null:
 return $default(_that.id,_that.telegramId,_that.email);case _:
@@ -496,11 +496,11 @@ return $default(_that.id,_that.telegramId,_that.email);case _:
 @JsonSerializable()
 
 class _User implements User {
-  const _User({required this.id, @JsonKey(name: 'telegram_id') this.telegramId, this.email});
+  const _User({required this.id, @JsonKey(name: 'telegramId') this.telegramId, this.email});
   factory _User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
 
 @override final  int id;
-@override@JsonKey(name: 'telegram_id') final  int? telegramId;
+@override@JsonKey(name: 'telegramId') final  int? telegramId;
 @override final  String? email;
 
 /// Create a copy of User
@@ -538,7 +538,7 @@ abstract mixin class _$UserCopyWith<$Res> implements $UserCopyWith<$Res> {
   factory _$UserCopyWith(_User value, $Res Function(_User) _then) = __$UserCopyWithImpl;
 @override @useResult
 $Res call({
- int id,@JsonKey(name: 'telegram_id') int? telegramId, String? email
+ int id,@JsonKey(name: 'telegramId') int? telegramId, String? email
 });
 
 

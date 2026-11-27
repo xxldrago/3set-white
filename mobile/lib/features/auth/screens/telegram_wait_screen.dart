@@ -4,11 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/core/auth/auth_state.dart';
+import 'package:mobile/core/deep_link/deep_link_handler.dart';
 import 'package:mobile/features/auth/providers.dart';
 import 'package:mobile/features/auth/widgets/error_toast.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Screen shown while waiting for Telegram authentication to complete.
-/// Polls the backend for auth status using the nonce.
+///
+/// Polling itself lives in [DeepLinkHandler] (single source of truth), so the
+/// same code path is used whether the flow starts from the login button or
+/// from an incoming deep link.
 class TelegramWaitScreen extends ConsumerStatefulWidget {
   final String nonce;
 
@@ -22,11 +27,12 @@ class _TelegramWaitScreenState extends ConsumerState<TelegramWaitScreen>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _pulseAnimation;
-  Timer? _pollTimer;
-  int _pollAttempts = 0;
+  late DeepLinkHandler _handler;
+  Timer? _progressTimer;
+  bool _navigated = false;
+
   static const int _maxPollAttempts = 60; // 3 minutes at 3s interval
-  static const Duration _pollInterval = Duration(seconds: 3);
-  bool _isCancelled = false;
+  static const String _botDeepLinkBase = 'https://t.me/set3vpn_bot';
 
   @override
   void initState() {
@@ -40,125 +46,79 @@ class _TelegramWaitScreenState extends ConsumerState<TelegramWaitScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
-    _startPolling();
+    _handler = ref.read(deepLinkHandlerProvider);
+    _handler.startPolling(widget.nonce);
+
+    // Keep the progress UI ticking without owning the polling logic.
+    _progressTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+
+    // Send the user to Telegram so the bot can bind the nonce.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _openTelegram();
+    });
   }
 
   @override
   void dispose() {
+    _progressTimer?.cancel();
+    _handler.stopPolling();
     _animationController.dispose();
-    _pollTimer?.cancel();
     super.dispose();
   }
 
-  void _startPolling() {
-    _pollTimer = Timer.periodic(_pollInterval, (timer) {
-      if (_isCancelled || _pollAttempts >= _maxPollAttempts) {
-        timer.cancel();
-        if (!_isCancelled && mounted) {
-          _handleTimeout();
-        }
-        return;
-      }
-      _pollAttempts++;
-      _pollForAuth();
-    });
-
-    // Also do an immediate poll
-    _pollForAuth();
-  }
-
-  Future<void> _pollForAuth() async {
-    if (_isCancelled || !mounted) return;
-
+  Future<void> _openTelegram() async {
+    final uri = Uri.parse('$_botDeepLinkBase?start=nonce_${widget.nonce}');
     try {
-      final dioClient = ref.read(dioClientProvider);
-      final response = await dioClient.dio.get(
-        '/api/mobile/auth/telegram/poll',
-        queryParameters: {'nonce': widget.nonce},
-      );
-
-      if (!mounted) return;
-
-      if (response.statusCode == 200) {
-        // Success - got token pair
-        _pollTimer?.cancel();
-        _isCancelled = true;
-
-        final authNotifier = ref.read(authNotifierProviderForUI);
-        await authNotifier.restoreSession();
-
-        // Check if session restored successfully
-        final authState = ref.read(authStateProvider);
-        final user = authState.maybeWhen(
-          data: (state) => state.maybeWhen(
-            authenticated: (_, user) => user,
-            orElse: () => null,
-          ),
-          orElse: () => null,
-        );
-
-        if (user != null && mounted) {
-          if (context.mounted) {
-            context.go('/');
-          }
-        } else if (mounted) {
-          showErrorToast(context, 'Авторизация прошла, но не удалось восстановить сессию');
-        }
-      } else if (response.statusCode == 202) {
-        // Still pending - continue polling
-        _updateProgress();
-      } else if (response.statusCode == 410 || response.statusCode == 409) {
-        // Nonce expired or already used
-        _pollTimer?.cancel();
-        _isCancelled = true;
-        if (mounted) {
-          showErrorToast(context, 'Ссылка недействительна или уже использована');
-          context.go('/auth');
-        }
-      } else {
-        // Other error - stop polling
-        _pollTimer?.cancel();
-        _isCancelled = true;
-        if (mounted) {
-          showErrorToast(context, 'Ошибка авторизации через Telegram');
-          context.go('/auth');
-        }
-      }
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (e) {
-      // Network errors - continue polling unless max attempts reached
-      if (_pollAttempts >= _maxPollAttempts && mounted) {
-        _pollTimer?.cancel();
-        _isCancelled = true;
-        showErrorToast(context, 'Ошибка сети. Попробуйте позже');
-        context.go('/auth');
+      if (mounted) {
+        showErrorToast(context, 'Не удалось открыть Telegram. Откройте бота вручную.');
       }
     }
   }
 
-  void _updateProgress() {
-    if (mounted) {
-      setState(() {}); // Trigger rebuild for progress indicator
-    }
+  void _goHome() {
+    if (_navigated || !mounted) return;
+    _navigated = true;
+    context.go('/');
   }
 
-  void _handleTimeout() {
-    if (mounted) {
-      showErrorToast(context, 'Время ожидания истекло');
-      context.go('/auth');
+  void _goAuth(String? errorMessage) {
+    if (_navigated || !mounted) return;
+    _navigated = true;
+    if (errorMessage != null) {
+      showErrorToast(context, errorMessage);
     }
-  }
-
-  void _handleCancel() {
-    setState(() => _isCancelled = true);
-    _pollTimer?.cancel();
     context.go('/auth');
   }
 
-  double get progress => _pollAttempts / _maxPollAttempts;
+  void _handleCancel() {
+    _handler.stopPolling();
+    _goAuth(null);
+  }
+
+  double get progress =>
+      (_handler.pollAttempts / _maxPollAttempts).clamp(0.0, 1.0);
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    // React to auth state changes driven by DeepLinkHandler polling.
+    ref.listen<AsyncValue<AuthState>>(authStateProvider, (previous, next) {
+      next.maybeWhen(
+        data: (state) {
+          state.maybeWhen(
+            authenticated: (_, __) => _goHome(),
+            error: (message) => _goAuth(message),
+            orElse: () {},
+          );
+        },
+        orElse: () {},
+      );
+    });
 
     return PopScope(
       canPop: false,
@@ -225,7 +185,15 @@ class _TelegramWaitScreenState extends ConsumerState<TelegramWaitScreen>
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
+
+                // Re-open Telegram
+                FilledButton.icon(
+                  onPressed: _openTelegram,
+                  icon: const Icon(Icons.open_in_new),
+                  label: const Text('Открыть Telegram'),
+                ),
+                const SizedBox(height: 24),
 
                 // Progress indicator
                 Column(
@@ -241,7 +209,7 @@ class _TelegramWaitScreenState extends ConsumerState<TelegramWaitScreen>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Попытка ${_pollAttempts} из $_maxPollAttempts',
+                      'Попытка ${_handler.pollAttempts} из $_maxPollAttempts',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),

@@ -65,15 +65,17 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
         final user = User.fromJson(response.data['user'] as Map<String, dynamic>);
         final accessToken = await _tokenStore.getAccessTokenNoBiometric();
         final refreshToken = await _tokenStore.getRefreshToken();
-        final userId = await _tokenStore.getUserId();
 
-        if (accessToken != null && refreshToken != null && userId != null) {
+        if (accessToken != null && refreshToken != null) {
           final tokens = TokenPair(
             accessToken: accessToken,
             refreshToken: refreshToken,
             expiresIn: 900, // Will be updated by interceptor on next request
-            userId: userId,
+            userId: user.id,
           );
+          // Backend token pairs do not carry userId; persist it from the
+          // validated subscription payload so the fast path stays valid.
+          await _tokenStore.saveTokenPair(tokens);
           _logger.i('Session restored for user ${user.id}');
           state = AsyncData(AuthState.authenticated(tokens: tokens, user: user));
           return;
@@ -231,6 +233,14 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   void setError(String message) {
     _logger.w('Setting error state: $message');
     state = AsyncData(AuthState.error(message));
+  }
+
+  /// Sets unauthenticated state without touching storage.
+  /// Used by the biometric resume gate after a failed unlock (storage is
+  /// cleared by the gate itself).
+  void setUnauthenticated() {
+    _logger.i('Setting unauthenticated state');
+    state = AsyncData(const AuthState.unauthenticated());
   }
 
   /// Logs out the current user.

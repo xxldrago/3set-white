@@ -1,27 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/auth/auth_notifier.dart';
+import 'package:mobile/core/biometric/biometric_gate.dart' as bio;
 import 'package:mobile/core/storage/token_store.dart';
 
-/// Riverpod provider for BiometricGate.
-/// Registers a [WidgetsBindingObserver] to listen for app lifecycle changes
-/// and triggers biometric authentication on app resume when tokens exist.
-final biometricGateProvider = Provider<BiometricGate>((ref) {
+/// Riverpod provider for the resume biometric gate.
+///
+/// Reads the token store and auth notifier, and registers a
+/// [WidgetsBindingObserver] that locks the session when the app resumes.
+final resumeBiometricGateProvider = Provider<BiometricGate>((ref) {
   final tokenStore = ref.read(tokenStoreProvider);
-  final gate = BiometricGate(tokenStore);
-  // Register the observer when the provider is first read
+  final authNotifier = ref.read(authNotifierProvider.notifier);
+  final gate = BiometricGate(
+    tokenStore,
+    authenticate: () => bio.BiometricGate().authenticateForVpnAccess(),
+    onLockedOut: authNotifier.setUnauthenticated,
+  );
+  // Register the observer when the provider is first read.
   gate.registerObserver();
-  // Clean up on dispose
-  ref.onDispose(() => gate.unregisterObserver());
+  ref.onDispose(gate.unregisterObserver);
   return gate;
 });
 
-/// Listens for app lifecycle events and triggers biometric authentication
-/// when the app resumes and tokens exist in secure storage.
+/// Locks the session with a biometric prompt whenever the app resumes while
+/// tokens are present.
+///
+/// A failed/cancelled prompt clears the stored tokens and notifies
+/// [onLockedOut] so the router can send the user back to the auth screen.
 class BiometricGate extends WidgetsBindingObserver {
-  BiometricGate(this._tokenStore);
+  BiometricGate(
+    this._tokenStore, {
+    required Future<bio.BiometricResult> Function() authenticate,
+    VoidCallback? onLockedOut,
+  })  : _authenticate = authenticate,
+        _onLockedOut = onLockedOut;
 
   final TokenStore _tokenStore;
+  final Future<bio.BiometricResult> Function() _authenticate;
+  final VoidCallback? _onLockedOut;
+
   bool _registered = false;
+  bool _authenticating = false;
 
   /// Registers this observer with the WidgetsBinding.
   void registerObserver() {
@@ -47,28 +66,38 @@ class BiometricGate extends WidgetsBindingObserver {
   }
 
   /// Called when the app resumes from background.
-  /// If tokens exist, triggers biometric authentication by reading access token.
-  /// Exposed for testing.
+  ///
+  /// If tokens exist, prompts for biometrics. A cancelled or failed prompt
+  /// clears the session. Devices without biometric hardware/enrolment are not
+  /// locked out (there is nothing to unlock with).
   @visibleForTesting
   Future<void> onAppResumed() async {
-    final hasTokens = await _tokenStore.hasTokens();
-    if (!hasTokens) {
-      return; // No tokens, nothing to do
-    }
+    if (_authenticating) return;
 
-    // Trigger biometric authentication by reading the access token.
-    // This will show the Face ID / Touch ID / Android biometric prompt.
+    final hasTokens = await _tokenStore.hasTokens();
+    if (!hasTokens) return;
+
+    _authenticating = true;
     try {
-      final token = await _tokenStore.getAccessToken();
-      if (token == null) {
-        // Biometric cancelled or failed - clear tokens
-        await _tokenStore.clearAll();
-        // AuthNotifier will pick up the change on next build
+      final result = await _authenticate();
+
+      switch (result) {
+        case bio.BiometricResult.success:
+        case bio.BiometricResult.notAvailable:
+        case bio.BiometricResult.notEnrolled:
+          return;
+        case bio.BiometricResult.failed:
+        case bio.BiometricResult.cancelled:
+        case bio.BiometricResult.lockedOut:
+          await _tokenStore.clearAll();
+          _onLockedOut?.call();
       }
-    } catch (e) {
-      // Biometric error (e.g., not enrolled, hardware unavailable)
-      // Clear tokens to force re-authentication
+    } catch (_) {
+      // Any unexpected biometric error locks the session.
       await _tokenStore.clearAll();
+      _onLockedOut?.call();
+    } finally {
+      _authenticating = false;
     }
   }
 

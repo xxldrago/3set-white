@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/router.dart';
 import 'app/theme.dart';
+import 'features/auth/providers.dart';
 
 /// Main entry point for the 3set VPN mobile app.
 /// Sets up ProviderScope, MaterialApp.router with GoRouter and Material 3 theme.
@@ -15,6 +16,11 @@ class App extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Instantiate app-level listeners: incoming deep links and the biometric
+    // resume gate must exist before the first route is shown.
+    ref.watch(deepLinkHandlerProvider);
+    ref.watch(resumeBiometricGateProvider);
+
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(

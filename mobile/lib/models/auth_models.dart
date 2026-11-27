@@ -19,7 +19,7 @@ abstract class TokenPair with _$TokenPair {
 abstract class User with _$User {
   const factory User({
     required int id,
-    @JsonKey(name: 'telegram_id') int? telegramId,
+    @JsonKey(name: 'telegramId') int? telegramId,
     String? email,
   }) = _User;
 

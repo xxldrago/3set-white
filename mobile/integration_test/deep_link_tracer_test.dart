@@ -30,56 +30,10 @@ void main() {
       expect(find.text('Добро пожаловать'), findsOneWidget);
     });
 
-    // Test 2: Integration test - deep link flow
-    testWidgets('Deep link cold start → polling → authenticated → biometric resume → logout', (WidgetTester tester) async {
-      app.main();
-      await tester.pumpAndSettle();
-
-      // Verify we're on the login screen initially
-      expect(find.text('Вход'), findsOneWidget);
-
-      // Note: Full deep link simulation requires Platform channels and a real device/emulator.
-      // This test verifies the integration test infrastructure works and the app launches correctly.
-      // Actual deep link simulation with AppLinks would require:
-      // 1. A real device or emulator with the app installed
-      // 2. Sending an intent/URL to the app via adb/xcrun
-      // 3. Verifying the DeepLinkHandler receives the nonce
-      //
-      // For CI/CD, this test serves as a smoke test that the app builds and launches.
-      // Manual verification on device should follow the full flow:
-      // - Cold start with deep link t.me/set3vpn_bot?start=nonce_test123
-      // - DeepLinkHandler receives nonce and starts polling
-      // - Mock backend returns 202 then 200 with tokenPair
-      // - AuthNotifier transitions to authenticated
-      // - TokenStore has saved tokens
-      // - App background → resume → BiometricGate triggers TokenStore.getAccessToken()
-      // - Logout → storage cleared + unauthenticated state
-    });
-
-    // Test 3: Verify DeepLinkHandler can be instantiated and has correct structure
-    testWidgets('DeepLinkHandler has correct structure', (WidgetTester tester) async {
-      // This test verifies the DeepLinkHandler class structure
-      // Unit tests for extractNonce and polling logic are in deep_link_handler_test.dart
-      expect(true, isTrue);
-    });
-
-    // Test 4: Verify AuthNotifier session restore flow exists
-    testWidgets('AuthNotifier has session restore method', (WidgetTester tester) async {
-      // Unit tests for _restoreSession are in auth_notifier_test.dart
-      expect(true, isTrue);
-    });
-
-    // Test 5: Verify TokenStore saves and reads tokens
-    testWidgets('TokenStore has save/read methods', (WidgetTester tester) async {
-      // Unit tests for saveTokenPair, getAccessToken, etc. are in token_store_test.dart
-      expect(true, isTrue);
-    });
-
-    // Test 6: Verify BiometricGate can authenticate
-    testWidgets('BiometricGate has authenticate method', (WidgetTester tester) async {
-      // Unit tests for authenticate are in biometric_gate_test.dart
-      expect(true, isTrue);
-    });
+    // Full deep-link → polling → token persistence → biometric resume → logout
+    // coverage runs as a host-side integration test in
+    // test/integration/deep_link_tracer_test.dart. This file is the on-device
+    // smoke test for app launch and native deep-link configuration.
   });
 
   group('Unit Tests for Deep Link Handler (isolated)', () {

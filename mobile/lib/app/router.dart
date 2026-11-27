@@ -27,9 +27,16 @@ GoRouter router(Ref ref) {
 /// Creates the GoRouter with all app routes.
 /// This is separated for testability.
 GoRouter _createRouter(Ref ref) {
+  // Re-evaluate redirects whenever the auth state changes (login, logout,
+  // biometric lockout). Without this, GoRouter only redirects on navigation.
+  final authRefresh = ValueNotifier<int>(0);
+  ref.listen(authNotifierProvider, (_, __) => authRefresh.value++);
+  ref.onDispose(authRefresh.dispose);
+
   return GoRouter(
     initialLocation: '/auth',
     debugLogDiagnostics: true,
+    refreshListenable: authRefresh,
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
       final isAuthenticated = authState.maybeWhen(

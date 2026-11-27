@@ -34,7 +34,9 @@ class AuthInterceptor extends Interceptor {
         options.path.contains(Endpoints.telegramNonce);
 
     if (!isAuthEndpoint) {
-      final accessToken = await tokenStore.getAccessToken();
+      // Use the non-biometric read: biometrics are enforced once per app
+      // unlock by the resume gate, not on every HTTP request.
+      final accessToken = await tokenStore.getAccessTokenNoBiometric();
       if (accessToken != null && accessToken.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $accessToken';
       }
@@ -114,7 +116,9 @@ class AuthInterceptor extends Interceptor {
 
         // Notify all waiting requests
         for (final completer in _waitingRequests) {
-          completer.complete(tokenPair.accessToken);
+          if (!completer.isCompleted) {
+            completer.complete(tokenPair.accessToken);
+          }
         }
         _waitingRequests.clear();
 
@@ -122,6 +126,15 @@ class AuthInterceptor extends Interceptor {
       } else {
         throw Exception('Refresh failed with status ${response.statusCode}');
       }
+    } catch (e) {
+      // Fail every queued request; otherwise they would hang forever.
+      for (final completer in _waitingRequests) {
+        if (!completer.isCompleted) {
+          completer.completeError(e);
+        }
+      }
+      _waitingRequests.clear();
+      rethrow;
     } finally {
       _isRefreshing = false;
     }

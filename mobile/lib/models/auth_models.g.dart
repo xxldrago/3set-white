@@ -23,13 +23,13 @@ Map<String, dynamic> _$TokenPairToJson(_TokenPair instance) =>
 
 _User _$UserFromJson(Map<String, dynamic> json) => _User(
   id: (json['id'] as num).toInt(),
-  telegramId: (json['telegram_id'] as num?)?.toInt(),
+  telegramId: (json['telegramId'] as num?)?.toInt(),
   email: json['email'] as String?,
 );
 
 Map<String, dynamic> _$UserToJson(_User instance) => <String, dynamic>{
   'id': instance.id,
-  'telegram_id': instance.telegramId,
+  'telegramId': instance.telegramId,
   'email': instance.email,
 };
 

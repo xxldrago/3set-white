@@ -168,10 +168,11 @@ void main() {
         final response200 = MockResponse();
         when(() => response200.statusCode).thenReturn(200);
         when(() => response200.data).thenReturn({
-          'accessToken': 'access_123',
-          'refreshToken': 'refresh_456',
-          'expiresIn': 900,
-          'userId': 42,
+          'tokenPair': {
+            'accessToken': 'access_123',
+            'refreshToken': 'refresh_456',
+            'expiresIn': 900,
+          },
         });
 
         int pollCount = 0;

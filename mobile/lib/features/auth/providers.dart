@@ -18,6 +18,9 @@ export 'package:mobile/core/deep_link/deep_link_handler.dart' show
 export 'package:mobile/core/biometric/biometric_gate.dart' show
     biometricGateProvider;
 
+export 'package:mobile/core/auth/biometric_gate.dart' show
+    resumeBiometricGateProvider;
+
 export 'package:mobile/core/connectivity/connectivity_service.dart' show
     connectivityServiceProvider;
 

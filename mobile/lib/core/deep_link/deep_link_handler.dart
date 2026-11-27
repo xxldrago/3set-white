@@ -104,6 +104,14 @@ class DeepLinkHandler {
     }
   }
 
+  /// Public entry point used by [TelegramWaitScreen] after the user starts
+  /// the Telegram flow from the login screen.
+  void startPolling(String nonce) => _startPolling(nonce);
+
+  /// Test seam for cold-start / runtime deep links.
+  @visibleForTesting
+  void handleDeepLink(Uri uri) => _handleDeepLink(uri);
+
   /// Extracts nonce from supported deep link formats.
   ///
   /// Supported formats:
@@ -131,8 +139,12 @@ class DeepLinkHandler {
 
   /// Starts polling for Telegram authentication result.
   void _startPolling(String nonce) {
-    // Cancel any existing polling
-    cancelPolling();
+    // Cancel any existing polling silently (do not surface an error when
+    // replacing one nonce with another).
+    _pollingTimer?.cancel();
+    _pollingTimer = null;
+    _currentNonce = null;
+    _pollAttempts = 0;
 
     _currentNonce = nonce;
     _pollAttempts = 0;
@@ -161,8 +173,19 @@ class DeepLinkHandler {
       );
 
       if (response.statusCode == 200) {
-        // Success - got token pair
-        final tokenPair = TokenPair.fromJson(response.data as Map<String, dynamic>);
+        // Success - backend returns `{ "tokenPair": { ... } }`.
+        final data = response.data;
+        final Map<String, dynamic> pairJson;
+        if (data is Map<String, dynamic> && data['tokenPair'] is Map) {
+          pairJson = Map<String, dynamic>.from(data['tokenPair'] as Map);
+        } else if (data is Map<String, dynamic>) {
+          // Backwards-compatible flat payload.
+          pairJson = data;
+        } else {
+          throw const FormatException('Unexpected telegram poll payload');
+        }
+
+        final tokenPair = TokenPair.fromJson(pairJson);
         await _tokenStore.saveTokenPair(tokenPair);
         _log.i('Telegram auth successful, restoring session');
         _stopPolling();
@@ -197,12 +220,17 @@ class DeepLinkHandler {
     }
   }
 
-  /// Stops polling and clears state.
-  void _stopPolling({String? error}) {
+  /// Stops polling and clears state without changing the auth state.
+  void stopPolling() {
     _pollingTimer?.cancel();
     _pollingTimer = null;
     _currentNonce = null;
     _pollAttempts = 0;
+  }
+
+  /// Stops polling and clears state.
+  void _stopPolling({String? error}) {
+    stopPolling();
 
     if (error != null) {
       // Set error state via AuthNotifier

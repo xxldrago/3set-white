@@ -157,7 +157,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 20-01-PLAN.md — Backend `GET /api/mobile/config?serverId=...` + pure `buildMobileConfig` (D-01 gate): JWT + per-request active-key gate, full TUN config, no secrets; `COVERAGE.md` (REQ-CONN-03)
+- [x] 20-01-PLAN.md — Backend `GET /api/mobile/config?serverId=...` + pure `buildMobileConfig` (D-01 gate): JWT + per-request active-key gate, full TUN config, no secrets; `COVERAGE.md` (REQ-CONN-03)
 - [ ] 20-02-PLAN.md — Own C-shared shim extension (D-05 gate): `libbox_start_with_tun(fd,config)` + `libbox_traffic()`, regenerated header/bindings, Dart facade; ping path intact (REQ-CONN-04/07)
 
 **Wave 2** *(blocked on Wave 1 completion)*

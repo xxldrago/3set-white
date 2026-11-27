@@ -5,16 +5,16 @@ milestone_name: Мобильный клиент
 current_phase: 20
 current_phase_name: VPN Core & Connect FSM
 status: executing
-stopped_at: Phase 20 context gathered
-last_updated: "2026-11-27T07:15:03.440Z"
+stopped_at: Completed 20-01-PLAN.md
+last_updated: "2026-11-27T07:24:52.312Z"
 last_activity: 2026-11-27
-last_activity_desc: Phase 19 execution started
-state_head: 80eb3bb823b8aeb9589ba5d422100734451114d8
+last_activity_desc: Phase 20 execution started
+state_head: 5f93ec24e6b7b4eefcb0461f0e8851440c36de8e
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 22
-  completed_plans: 15
+  completed_plans: 16
   percent: 0
 ---
 
@@ -25,15 +25,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-25)
 
 **Core value:** Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
-**Current focus:** Phase 19 — Server Pools & Auto-Ping
+**Current focus:** Phase 20 — VPN Core & Connect FSM
 
 ## Current Position
 
-Phase: 20 (VPN Core & Connect FSM) — READY TO EXECUTE
-Plan: 8 of 8
+Phase: 20 (VPN Core & Connect FSM) — EXECUTING
+Plan: 2 of 7
 Status: Ready to execute
 **Progress:** [░░░░░░░░░░] 0%
-Last activity: 2026-11-27 — Phase 19 execution started
+Last activity: 2026-11-27 — Phase 20 execution started
 
 ## Per-Milestone Progress
 
@@ -103,6 +103,9 @@ None (flat mode)
 - [Phase 19]: 19-07: offline/retry banner outranks the no-key banner; refresh outcomes (no serverId) never announce a phantom server selection
 - [Phase 19]: 19-07: segmented tabs use Semantics(selected/button/label) for aria-selected; IP/timer/traffic are dashes with a phase-20 note (no fake data)
 - [Phase 19-server-pools-auto-ping-7-days]: D-15 gate confirmed locked: full prototype layout — remove bottom NavigationBar, home / renders ServerPoolScreen, add /shop stub, preserve auth routes/redirect/refreshListenable and deep-link/biometric listeners — User explicitly selected locked at the 19-08 decision checkpoint; matches the locked prototype layout decisions D-15/D-19 in 19-CONTEXT.md
+- [Phase 20-01]: D-01 backend-full-config confirmed at blocking gate: GET /api/mobile/config builds the complete TUN config from serverId; client sends only serverId and never assembles config — User selected the locked option explicitly; secrets stay server-side and one contract serves the FSM, native tunnel and reconnect
+- [Phase 20-01]: D-08 WireGuard stays a sing-box 1.14 endpoint, never an outbound; chosen outbound copied verbatim into endpoints (WG) or outbounds (others) — Must-have and CheckConfig smoke shape require WG as endpoint; all other protocols stay outbounds
+- [Phase 20-01]: Per-request JWT + active-key gate on /config; unknown or malformed serverId returns 200 {ok:false,error:server_not_found}; provider errors degrade to 200 stable codes + Retry-After — D-03 requires expiry to drop the tunnel on reconnect; uniform domain-error envelope avoids 5xx and client transport exceptions
 
 ## Performance Metrics
 
@@ -123,9 +126,10 @@ None (flat mode)
 | Phase 19-server-pools-auto-ping-7-days P06 | 11 min | 3 tasks | 8 files |
 | Phase 19 P07 | 28 min | 3 tasks | 9 files |
 | Phase 19-server-pools-auto-ping-7-days P08 | 8 min | 3 tasks | 5 files |
+| Phase 20 P01 | 4 min | 3 tasks | 5 files |
 
 ## Session
 
-**Last session:** 2026-11-27T06:32:26.785Z
-**Stopped at:** Phase 20 context gathered
-**Resume file:** .planning/phases/20-vpn-core-connect-fsm-10-days/20-CONTEXT.md
+**Last session:** 2026-11-27T07:24:52.224Z
+**Stopped at:** Completed 20-01-PLAN.md
+**Resume file:** None

@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 21
+open_count: 23
 waived_count: 0
 fixed_count: 0
-total_count: 21
-last_updated: 2026-11-27T05:23:34.584Z
+total_count: 23
+last_updated: 2026-11-27T07:23:47.569Z
 ---
 
 # Broken Windows Ledger
@@ -36,6 +36,8 @@ last_updated: 2026-11-27T05:23:34.584Z
 | 19 | 19 | stub | mobile/lib/features/servers/widgets/connect_panel.dart |  | IP/timer/traffic show dashes with phase-20 note; VPN core/FSM is phase 20 | open |  | 2026-11-27T05:12:11.595Z |  |
 | 20 | 19 | deviation | mobile/lib/features/servers/server_pool_screen.dart |  | Rule 1: fixed nested-flex overlap that collapsed pool list; reordered offline banner; guarded refresh against phantom selection | open |  | 2026-11-27T05:12:11.662Z |  |
 | 21 | 19-server-pools-auto-ping-7-days | stub | mobile/lib/features/shop/shop_screen.dart |  | Shop stub Купить shows phase-21 SnackBar only; no purchase (D-15/D-19), real shop ships in phase 21 | open |  | 2026-11-27T05:23:34.584Z |  |
+| 22 | 20 | unrun-verify | app/api/mobile/config/route.ts |  | Live ARTEMIDA links[] shape re-verification on a paid key remains [ASSUMED] inherited from phase 19; manual-only, not exercised in 20-01 | open |  | 2026-11-27T07:23:47.502Z |  |
+| 23 | 20 | deviation | lib/bot.ts |  | Global npx tsc --noEmit red on unrelated actively-edited parallel-work files; 20-01 slice proven by scoped tsc + 23 passing tests | open |  | 2026-11-27T07:23:47.569Z |  |
 
 ````json
 [
@@ -289,6 +291,30 @@ last_updated: 2026-11-27T05:23:34.584Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-27T05:23:34.584Z",
+    "resolved_at": null
+  },
+  {
+    "id": 22,
+    "kind": "unrun-verify",
+    "phase": "20",
+    "file": "app/api/mobile/config/route.ts",
+    "line": null,
+    "description": "Live ARTEMIDA links[] shape re-verification on a paid key remains [ASSUMED] inherited from phase 19; manual-only, not exercised in 20-01",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T07:23:47.502Z",
+    "resolved_at": null
+  },
+  {
+    "id": 23,
+    "kind": "deviation",
+    "phase": "20",
+    "file": "lib/bot.ts",
+    "line": null,
+    "description": "Global npx tsc --noEmit red on unrelated actively-edited parallel-work files; 20-01 slice proven by scoped tsc + 23 passing tests",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-27T07:23:47.569Z",
     "resolved_at": null
   }
 ]

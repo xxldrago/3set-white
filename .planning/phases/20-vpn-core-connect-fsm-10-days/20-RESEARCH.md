@@ -700,7 +700,7 @@ class ThreeSetVpnService : VpnService() {
   override fun onRevoke() { nativeStop(); stopSelf() } // → FSM error → disconnecting → idle
 }
 ```
-> Quoted values: `[VERIFIED: 20-CONTEXT.md:14,159]` «VPN активен · 3set»; `[CITED: developer.android.com/reference/android/net/VpnService]"` `prepare`, `establish`, `protect`, `onRevoke`, one-VPN-at-a-time, fd-close restores network. `START_NOT_STICKY`/`START_STICKY` are Android framework constants (public API, not in-repo discrete values) `[CITED]`.
+> Quoted values: `[VERIFIED: 20-CONTEXT.md:14,159]` «VPN активен · 3set»; `[CITED: developer.android.com/reference/android/net/VpnService]` `prepare`, `establish`, `protect`, `onRevoke`, one-VPN-at-a-time, fd-close restores network. `START_NOT_STICKY`/`START_STICKY` are Android framework constants (public API, not in-repo discrete values) `[CITED]`.
 
 ### FSM transitions (Dart shape)
 ```dart

@@ -83,7 +83,9 @@ class ServerPoolScreen extends ConsumerWidget {
       _announceOutcome(context, next);
     });
 
-    final effectiveId = outcome?.ok == true ? outcome?.serverId : selectedId;
+    final effectiveId = outcome?.ok == true && outcome?.serverId != null
+        ? outcome?.serverId
+        : selectedId;
     final servers = pools?.serversFor(tab) ?? <Server>[];
     Server? selected;
     for (final server in servers) {
@@ -103,48 +105,63 @@ class ServerPoolScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: <Widget>[
-            MainHeader(
-              keyMeta: pools?.key,
-              refreshing: busy,
-              onRefresh: () => unawaited(_refresh(context, ref, tab)),
-              onShop: () => _shopStub(context),
-              onLogic: () => _logicSheet(context),
-              onProfile: () => _profileSheet(context),
-              greetingName: greetingName,
-            ),
-            if (pools != null && !hasKey)
-              NoKeyBanner(
-                message: pools.key == null
-                    ? "Нет ключа"
-                    : "Ключ неактивен — серверы недоступны",
-                actionLabel: "Купить",
-                onAction: () => _shopStub(context),
-              )
-            else if (pools != null &&
-                pools.error != null &&
-                pools.error != "no_active_key")
-              NoKeyBanner(
-                message: pools.notice ?? "Нет соединения. Повторите",
-                actionLabel: "Повторить",
-                onAction: () => ref.invalidate(serverPoolProvider),
-                isError: true,
-              ),
-            PoolTabBar(
-              selected: tab,
-              onChanged: (next) => unawaited(_switchTab(ref, next)),
-            ),
-            PoolToolbar(
-              tab: tab,
-              networkLabel: network,
-              refreshing: busy,
-              onRefresh: () => unawaited(_refresh(context, ref, tab)),
-            ),
             Expanded(
-              child: poolsAsync.when(
-                data: (data) =>
-                    _list(context, ref, tab, data, lastGood, effectiveId, best),
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (_, _) => _retry(context, ref),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    MainHeader(
+                      keyMeta: pools?.key,
+                      refreshing: busy,
+                      onRefresh: () => unawaited(_refresh(context, ref, tab)),
+                      onShop: () => _shopStub(context),
+                      onLogic: () => _logicSheet(context),
+                      onProfile: () => _profileSheet(context),
+                      greetingName: greetingName,
+                    ),
+                    if (pools != null &&
+                        pools.error != null &&
+                        pools.error != "no_active_key")
+                      NoKeyBanner(
+                        message: pools.notice ?? "Нет соединения. Повторите",
+                        actionLabel: "Повторить",
+                        onAction: () => ref.invalidate(serverPoolProvider),
+                        isError: true,
+                      )
+                    else if (pools != null && !hasKey)
+                      NoKeyBanner(
+                        message: pools.key == null
+                            ? "Нет ключа"
+                            : "Ключ неактивен — серверы недоступны",
+                        actionLabel: "Купить",
+                        onAction: () => _shopStub(context),
+                      ),
+                    PoolTabBar(
+                      selected: tab,
+                      onChanged: (next) => unawaited(_switchTab(ref, next)),
+                    ),
+                    PoolToolbar(
+                      tab: tab,
+                      networkLabel: network,
+                      refreshing: busy,
+                      onRefresh: () => unawaited(_refresh(context, ref, tab)),
+                    ),
+                    poolsAsync.when(
+                      data: (data) => _list(
+                        context,
+                        ref,
+                        tab,
+                        data,
+                        lastGood,
+                        effectiveId,
+                        best,
+                      ),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (_, _) => _retry(context, ref),
+                    ),
+                  ],
+                ),
               ),
             ),
             ConnectPanel(
@@ -154,7 +171,7 @@ class ServerPoolScreen extends ConsumerWidget {
                   : _sampleFor(ref, tab, selected.id),
               hasKey: hasKey,
               busy: busy,
-              outcomeNotice: outcome?.ok == true
+              outcomeNotice: outcome?.ok == true && outcome?.serverId != null
                   ? "Сервер выбран · VPN-ядро — фаза 20"
                   : null,
               onConnect: () => unawaited(_connect(context, ref, tab)),
@@ -200,24 +217,27 @@ class ServerPoolScreen extends ConsumerWidget {
       return _emptyState(context, ref, tab);
     }
 
-    return ListView(
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18),
-      children: <Widget>[
-        AutoSelectCard(
-          best: best,
-          sample: best == null ? null : byId[best.id],
-          selected: selectedId == null || selectedId == "auto",
-          onTap: () => unawaited(_select(ref, tab, "auto")),
-        ),
-        for (final server in servers)
-          ServerCard(
-            server: server,
-            sample: byId[server.id],
-            selected: selectedId == server.id,
-            lastGood: lastGoodId == server.id,
-            onTap: () => unawaited(_select(ref, tab, server.id)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          AutoSelectCard(
+            best: best,
+            sample: best == null ? null : byId[best.id],
+            selected: selectedId == null || selectedId == "auto",
+            onTap: () => unawaited(_select(ref, tab, "auto")),
           ),
-      ],
+          for (final server in servers)
+            ServerCard(
+              server: server,
+              sample: byId[server.id],
+              selected: selectedId == server.id,
+              lastGood: lastGoodId == server.id,
+              onTap: () => unawaited(_select(ref, tab, server.id)),
+            ),
+        ],
+      ),
     );
   }
 
@@ -327,7 +347,10 @@ class ServerPoolScreen extends ConsumerWidget {
       return;
     }
     if (outcome.ok) {
-      showInfoToast(context, "Сервер выбран · VPN-ядро — фаза 20");
+      // A refresh carries no server id; its own caller shows «Пинг обновлён».
+      if (outcome.serverId != null) {
+        showInfoToast(context, "Сервер выбран · VPN-ядро — фаза 20");
+      }
       return;
     }
     showErrorToast(context, outcome.notice ?? "Нет доступных серверов");

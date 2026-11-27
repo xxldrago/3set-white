@@ -104,6 +104,7 @@ void main() {
 
       expect(AppTheme.pingColor(false, 10), AppTheme.pingOffline);
       expect(AppTheme.pingColor(true, null), AppTheme.pingOffline);
+      expect(AppTheme.pingColor(true, -1), AppTheme.pingOffline);
       expect(AppTheme.pingColor(true, 0), AppTheme.pingGood);
       expect(AppTheme.pingColor(true, 60), AppTheme.pingGood);
       expect(AppTheme.pingColor(true, 61), AppTheme.pingMid);

@@ -104,7 +104,8 @@ class AppTheme {
 
   /// Maps a real ping sample to the prototype `pingClass` color.
   static Color pingColor(bool online, int? rttMs) {
-    if (!online || rttMs == null) {
+    // Keep in sync with pingClass(): a negative sample is not a good RTT.
+    if (!online || rttMs == null || rttMs < 0) {
       return pingOffline;
     }
     if (rttMs <= 60) {

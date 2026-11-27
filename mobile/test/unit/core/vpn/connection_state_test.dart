@@ -7,6 +7,7 @@ import "package:mobile/core/ping/libbox_core.dart";
 import "package:mobile/core/vpn/config_repository.dart";
 import "package:mobile/core/vpn/connection_notifier.dart";
 import "package:mobile/core/vpn/connection_state.dart";
+import "package:mobile/core/vpn/error_mapping.dart";
 import "package:mobile/core/vpn/vpn_bridge.dart";
 import "package:mobile/features/servers/providers.dart"
     show ConnectController, ConnectOutcome, connectControllerProvider;
@@ -109,6 +110,8 @@ void main() {
         configRepositoryProvider.overrideWithValue(config),
         vpnBridgeProvider.overrideWithValue(bridge),
         connectionTransitionLogProvider.overrideWithValue(logs.add),
+        connectionToastProvider.overrideWithValue((_) {}),
+        connectionErrorLogProvider.overrideWithValue((_) {}),
       ],
     );
     addTearDown(container.dispose);
@@ -156,6 +159,8 @@ void main() {
         configRepositoryProvider.overrideWithValue(config),
         vpnBridgeProvider.overrideWithValue(bridge),
         connectionTransitionLogProvider.overrideWithValue((_) {}),
+        connectionToastProvider.overrideWithValue((_) {}),
+        connectionErrorLogProvider.overrideWithValue((_) {}),
       ],
     );
     addTearDown(container.dispose);
@@ -195,6 +200,8 @@ void main() {
         configRepositoryProvider.overrideWithValue(config),
         vpnBridgeProvider.overrideWithValue(bridge),
         connectionTransitionLogProvider.overrideWithValue((_) {}),
+        connectionToastProvider.overrideWithValue((_) {}),
+        connectionErrorLogProvider.overrideWithValue((_) {}),
       ],
     );
     addTearDown(container.dispose);

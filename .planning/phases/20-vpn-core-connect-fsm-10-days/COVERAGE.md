@@ -10,7 +10,7 @@
 | capability | decision | reason |
 |---|---|---|
 | `GET /keys` | INTEGRATE | Active-key gate (D-03) on every `/config` request: `listKeysByUserId` + `isActiveKey`; ownership `customerRef`; no key => `no_active_key` 403. |
-| `GET /keys/{id}/subscription-links` | INTEGRATE | Full config source (D-01/D-02): `getSubscriptionForUserId` -> `getSubscriptionLinks(keyId)` -> `parsePools(links)` -> `buildMobileConfig(serverId)`. Cache-first `KeyCache` + `getSubscriptionLinksCacheFirst`; raw links never returned/logged. |
+| `GET /keys/{id}/subscription-links` | INTEGRATE | Full config source (D-01/D-02): `getSubscriptionForUserId` -> `getSubscriptionLinks` -> `parsePools` -> `buildMobileConfig`. Cache-first; raw links never returned/logged. |
 | `GET /keys/{id}/traffic` | INTEGRATE | Already called by existing `getSubscriptionForUserId`; display-only; failure degrades to nulls and never blocks config. Not a `load` source (REQ-POOL-04 deferred). |
 | `GET /keys/{id}` | OPT-OUT | Not needed for phase 20 config; active key resolved from `KeyCache`/`listKeysByUserId`; ownership via `keys_cache`. |
 | `GET /pricing` | OPT-OUT | CONTEXT D-04: `/api/mobile/config` does NOT use ARTEMIDA `/pricing`; config comes from subscription-links. `/pricing` is tariffs, not tunnel config. |
@@ -35,8 +35,8 @@
 | `CommandClient.AddCommand(CommandStatus=1)` + `WriteStatus(StatusMessage)` | INTEGRATE | D-17/REQ-CONN-07: real `TrafficAvailable/UplinkTotal/DownlinkTotal`; no new plugin, no fake bytes. |
 | `CommandClient.URLTest(outboundTag)` + `WriteGroups` | INTEGRATE | Pre-connect ping (FSM `pinging`) retained from phase 19; `generate_204`; no ICMP. |
 | `libbox_start_with_tun(fd, config)` / `libbox_traffic()` | INTEGRATE | New own C exports; regenerate `libbox_shim.h` + `libbox_bindings.dart` via ffigen. |
-| `setTunnelNetworkSettings` / `NEOnDemandRuleConnect` (iOS) | INTEGRATE (compile-only) | D-07: prepare Swift target + OnDemand; do not build/verify tunnel until Apple entitlement. |
-| gomobile `.aar`/`.xcframework`, `sing-ffi`, `flutter_sing_box`, `singbox_ffi`, `flutter_background_service` | OPT-OUT | D-05/D-06: not C-ABI / not ffigen / unverified pub legitimacy / duplicates Kotlin foreground service. |
+| `setTunnelNetworkSettings` / `NEOnDemandRuleConnect` (iOS) | INTEGRATE | D-07: compile-only Swift target + OnDemand; do not build/verify tunnel until Apple entitlement. |
+| gomobile `.aar` / `sing-ffi` / Flutter sing-box packages | OPT-OUT | D-05/D-06: not C-ABI, not ffigen, unverified pub legitimacy; `flutter_background_service` duplicates Kotlin foreground service. |
 | `libbox_urltest` C symbol | OPT-OUT | Does not exist; own shim exports `urltest`/`urltest_take` (phase 19). |
 | ICMP ping | OPT-OUT | HTTP urltest only; Android ICMP needs root. |
 | Kill-switch toggle | OPT-OUT | D-09: kill switch always on; no user toggle. |

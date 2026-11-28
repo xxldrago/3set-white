@@ -10,31 +10,19 @@ import { daysUntilExpiry, listKeysByUserId, type RenderedKey } from "@/lib/keys-
 import { getSubscriptionLinksCacheFirst } from "@/lib/servers-source";
 import { parsePools, type Server } from "@/lib/server-pool";
 import { logger } from "@/lib/logger";
+import { isKeyConnectable } from "@/lib/subscription-view";
 
 export const dynamic = "force-dynamic";
 
-const DISQUALIFIED_STATUSES = new Set(["expired", "revoked", "disabled", "trial-expired"]);
-
 /**
- * D-21: `RenderedKey.id === keyId` (NOT `k.keyId`). `deriveStatusKind` alone is
- * insufficient — it reports "active" for raw `revoked`/`disabled` when
- * expiresAt is in the future — so the raw status is checked explicitly. A
- * trial key stays active until its expireAt; `isTrial` does not disqualify.
+ * D-21 gate, now delegated to the one shared D-10 predicate. The id check and
+ * raw-status exclusions (revoked/disabled/trial-expired/expired) are preserved
+ * there verbatim; the only behaviour change is the 24h grace branch, which
+ * keeps an expired-by-time, non-trial key connectable until `graceUntil`.
+ * `/api/mobile/config` imports this same function — no inline duplicate.
  */
 export function isActiveKey(key: RenderedKey): boolean {
-  const id = typeof key.id === "string" ? key.id.trim() : "";
-  if (!id) return false;
-  if (key.statusKind !== "active" && key.statusKind !== "expiring") return false;
-  if (key.expiresAt) {
-    const expiry = new Date(key.expiresAt).getTime();
-    if (!Number.isNaN(expiry) && expiry <= Date.now()) return false;
-  }
-  const rawStatus = (typeof key.status === "string" ? key.status : "")
-    .trim()
-    .toLowerCase()
-    .replace(/[_\s]+/g, "-");
-  if (DISQUALIFIED_STATUSES.has(rawStatus)) return false;
-  return true;
+  return isKeyConnectable(key);
 }
 
 interface KeyMeta {

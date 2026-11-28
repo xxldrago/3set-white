@@ -9,8 +9,11 @@ import {
 } from '../../lib/subscription-view';
 import type { RenderedKey } from '../../lib/keys-service';
 
+// Pin 24 HOURS independently of the helper — 86_400_000ms is one day, and a
+// stray `24 * DAY_MS` would silently turn the grace into 24 days.
+const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 const E = new Date('2026-01-01T00:00:00.000Z'); // fixed expiry, in the past at test time
-const BOUNDARY = E.getTime() + GRACE_MS; // graceUntil for an expired non-trial key
+const BOUNDARY = E.getTime() + TWENTY_FOUR_HOURS_MS; // graceUntil for an expired key
 
 function expiredKey(overrides: Partial<RenderedKey> = {}): RenderedKey {
   return {
@@ -33,6 +36,10 @@ function expiredKey(overrides: Partial<RenderedKey> = {}): RenderedKey {
 afterEach(() => vi.useRealTimers());
 
 describe('24h grace boundary (D-10 / T-21-12)', () => {
+  it('the grace constant is exactly 24 hours, not 24 days', () => {
+    expect(GRACE_MS).toBe(TWENTY_FOUR_HOURS_MS);
+  });
+
   it('at expiresAt + 24h - 1ms the key is inGrace and connectable', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(BOUNDARY - 1));

@@ -45,7 +45,7 @@ import { artemida } from '../../lib/artemida';
 const FUTURE = new Date(Date.now() + 10 * 86_400_000).toISOString();
 // Outside any 24h grace window — an expired fixture must stay denied.
 const PAST = new Date(Date.now() - 3 * 86_400_000).toISOString();
-const GRACE_MS = 24 * 86_400_000;
+const GRACE_MS = 24 * 60 * 60 * 1000; // 24 hours (not 24 days)
 
 function key(overrides: Partial<RenderedKey> = {}): RenderedKey {
   return {
@@ -105,7 +105,9 @@ describe('active-key gate (D-21 / T-19-02)', () => {
       key({ id: '   ', statusKind: 'active' }),
       key({ id: 'revoked', status: 'REVOKED', statusKind: 'active' }),
       key({ id: 'disabled', status: 'disabled', statusKind: 'active' }),
-      key({ id: 'pending', statusKind: 'pending' }),
+      // The shared predicate derives statusKind from raw status + expiry, so a
+      // genuinely pending key needs raw status pending and no usable expiry.
+      key({ id: 'pending', status: 'pending', expiresAt: null, statusKind: 'pending' }),
     ];
     mocks.listKeys.mockResolvedValue(bad);
     const res = await GET(request());

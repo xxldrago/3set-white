@@ -21,7 +21,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   registerFallbackValue("");
 
-  const url = "https://pay.example.test/checkout/abc";
+  const url = "https://pay.platega.io/?id=abc";
 
   late MockDio dio;
   late MockPendingOrderStore store;
@@ -98,14 +98,31 @@ void main() {
       );
     });
 
-    test("accepts only absolute https URLs", () {
+    test("accepts only absolute https URLs on an allowlisted provider host", () {
       expect(PaymentFlow.isHttpsPaymentUrl(url), isTrue);
       expect(
-        PaymentFlow.isHttpsPaymentUrl("http://pay.example.test/x"),
+        PaymentFlow.isHttpsPaymentUrl("https://checkout.pay.platega.io/x"),
+        isTrue,
+      );
+      expect(
+        PaymentFlow.isHttpsPaymentUrl("http://pay.platega.io/x"),
         isFalse,
       );
-      expect(PaymentFlow.isHttpsPaymentUrl("pay.example.test/x"), isFalse);
+      expect(PaymentFlow.isHttpsPaymentUrl("pay.platega.io/x"), isFalse);
       expect(PaymentFlow.isHttpsPaymentUrl("https://"), isFalse);
+      // T-21-06: an arbitrary https host is NOT a payment destination.
+      expect(
+        PaymentFlow.isHttpsPaymentUrl("https://evil.example/checkout"),
+        isFalse,
+      );
+      expect(
+        PaymentFlow.isHttpsPaymentUrl("https://pay.platega.io.evil.example/x"),
+        isFalse,
+      );
+      expect(
+        PaymentFlow.isHttpsPaymentUrl("https://notpay.platega.io/x"),
+        isFalse,
+      );
     });
   });
 
@@ -133,7 +150,24 @@ void main() {
     );
 
     test("refuses a non-https URL before navigating or persisting", () async {
-      stubCreate(paymentUrl: "http://pay.example.test/x");
+      stubCreate(paymentUrl: "http://pay.platega.io/x");
+
+      await expectLater(
+        flow.start(const PaymentRequest(kind: "new", days: 7, devices: 2)),
+        throwsA(
+          isA<PaymentFlowException>().having(
+            (e) => e.code,
+            "code",
+            "invalid_payment_url",
+          ),
+        ),
+      );
+      verifyNever(() => launcher.openPaymentPage(any()));
+      verifyNever(() => store.save(any()));
+    });
+
+    test("refuses an https URL on an untrusted host (T-21-06)", () async {
+      stubCreate(paymentUrl: "https://evil.example/checkout");
 
       await expectLater(
         flow.start(const PaymentRequest(kind: "new", days: 7, devices: 2)),

@@ -120,8 +120,24 @@ class PaymentWebViewPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Оплата")),
-      // T-21-06: [url] is validated https by PaymentFlow before we get here.
-      body: InAppWebView(initialUrlRequest: URLRequest(url: WebUri(url))),
+      // T-21-06: [url] is allowlisted by PaymentFlow/router before we get
+      // here. The interceptor re-checks EVERY subsequent navigation (server
+      // redirects and in-page links), so the payment-labelled frame can never
+      // be navigated to an untrusted host. JS is disabled as defence in depth.
+      body: InAppWebView(
+        initialUrlRequest: URLRequest(url: WebUri(url)),
+        initialSettings: InAppWebViewSettings(
+          javaScriptEnabled: false,
+          useShouldOverrideUrlLoading: true,
+        ),
+        shouldOverrideUrlLoading: (controller, navigationAction) async {
+          final candidate = navigationAction.request.url?.toString();
+          if (candidate == null || !PaymentFlow.isHttpsPaymentUrl(candidate)) {
+            return NavigationActionPolicy.CANCEL;
+          }
+          return NavigationActionPolicy.ALLOW;
+        },
+      ),
     );
   }
 }
@@ -152,13 +168,39 @@ class PaymentFlow {
   /// trigger it (T-21-34).
   final Future<void> Function()? onProvisioned;
 
-  /// Only a server-returned absolute https URL may be navigated to.
+  /// Configured payment-provider host allowlist (T-21-06). The default is
+  /// Platega's hosted payment page (`03-RESEARCH.md`); a deployment can point
+  /// at its own provider host with
+  /// `--dart-define=PLATEGA_PAYMENT_HOST=pay.example.com`. No new dependency.
+  // ignore: do_not_use_environment — intentional build-time host override.
+  static const String configuredPaymentHost = String.fromEnvironment(
+    "PLATEGA_PAYMENT_HOST",
+    defaultValue: "pay.platega.io",
+  );
+
+  /// Exact hosts (plus their subdomains) that may host the payment page.
+  /// A const List (not a const Set) so a custom define equal to the default
+  /// does not collide at compile time.
+  static const List<String> allowedPaymentHosts = <String>[
+    "pay.platega.io",
+    configuredPaymentHost,
+  ];
+
+  /// Only a server-returned absolute https URL ON AN ALLOWLISTED PROVIDER
+  /// HOST may be navigated to (D-05/T-21-06). An arbitrary https host — even
+  /// one returned by a tampered create response — is rejected.
   static bool isHttpsPaymentUrl(String value) {
     final uri = Uri.tryParse(value);
-    return uri != null &&
-        uri.isAbsolute &&
-        uri.scheme.toLowerCase() == "https" &&
-        uri.host.isNotEmpty;
+    if (uri == null ||
+        !uri.isAbsolute ||
+        uri.scheme.toLowerCase() != "https") {
+      return false;
+    }
+    final host = uri.host.toLowerCase();
+    if (host.isEmpty) return false;
+    return allowedPaymentHosts.any(
+      (allowed) => host == allowed || host.endsWith(".$allowed"),
+    );
   }
 
   Future<PaymentFlowResult> start(PaymentRequest request) async {

@@ -4,17 +4,17 @@ milestone: v2.0
 milestone_name: Мобильный клиент
 current_phase: 22
 current_phase_name: Devices, Settings & Polish
-status: executing
-stopped_at: Completed 22-04-PLAN.md
-last_updated: "2026-11-28T10:43:41.781Z"
+status: verifying
+stopped_at: Completed 22-05-PLAN.md
+last_updated: "2026-11-28T10:57:17.500Z"
 last_activity: 2026-11-28
 last_activity_desc: Phase 22 execution started
-state_head: 51f3e4acfe6b01057e126e3e8fa3aa226453676f
+state_head: e3d6e2031352e7ce3de58b97a25397088a104514
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 33
-  completed_plans: 32
+  completed_plans: 33
   percent: 0
 ---
 
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 
 Phase: 22 (Devices, Settings & Polish) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-28 — Phase 22 execution started
 
@@ -155,6 +155,9 @@ None (flat mode)
 - [Phase 22]: 22-04: D-09 blocking-human package gate approved by user — flutter_local_notifications stable 23.0.4 (dexterx.dev, github.com/MaikuB/flutter_local_notifications, SDK ^3.12.0/Flutter >=3.44.0) and direct timezone ^0.11.x verified before install; no beta or substitute.
 - [Phase 22]: 22-04: REQ-NOTIF-01 ships local T-7/T-3/T-1 reminders from server expiresAt with absolute TZDateTime instants, past skip, stable-id cancel-before-reschedule and navigation-only 'shop' payload; FCM (REQ-NOTIF-02) remains deferred by D-08 with no fake token route.
 - [Phase 22]: 22-04: timezone 0.11.2 moved initializeTimeZones() to package:timezone/data/latest.dart; imported the bundled data library (Rule 1 auto-fix) and verified FLN 23.x named-argument signatures against installed 23.0.4 source.
+- [Phase 22-devices-settings-polish-5-days]: 22-05: removed the 0.8-1.3 text-scale clamp via AppTextScalePolicy so 200% platform text renders at 200% — Accessibility must honor real system text settings; a forced MediaQuery test proves the resolved scale.
+- [Phase 22-devices-settings-polish-5-days]: 22-05: raised AppTheme.dim to 0xFF829486 (5.42:1/5.00:1 on dark cards) and added computed WCAG AA assertions — Contrast rises with luminance on dark surfaces; the old token measured 4.24:1/3.92:1 and failed AA.
+- [Phase 22-devices-settings-polish-5-days]: 22-05: labelled icon-only header actions and excluded confetti/ring painters from semantics while keeping status labels announced — Screen-reader legibility without fake affordances; no token, link or provider text in labels.
 
 ## Performance Metrics
 
@@ -192,9 +195,10 @@ None (flat mode)
 | Phase 22-devices-settings-polish-5-days P02 | 12 min | 2 tasks | 8 files |
 | Phase 22-devices-settings-polish-5-days P03 | 9 min 47s | 2 tasks | 13 files |
 | Phase 22-devices-settings-polish-5-days P22-04 | 13min | 3 tasks | 9 files |
+| Phase 22-devices-settings-polish-5-days P05 | 11 min | 2 tasks | 7 files |
 
 ## Session
 
-**Last session:** 2026-11-28T10:43:33.496Z
-**Stopped at:** Completed 22-04-PLAN.md
+**Last session:** 2026-11-28T10:57:17.332Z
+**Stopped at:** Completed 22-05-PLAN.md
 **Resume file:** None

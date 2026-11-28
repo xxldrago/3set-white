@@ -260,7 +260,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 22-05-PLAN.md — Accessibility: real dynamic type, AA contrast, Semantics, reasoned API coverage opt-outs
+- [x] 22-05-PLAN.md — Accessibility: real dynamic type, AA contrast, Semantics, reasoned API coverage opt-outs
 
 #### Tasks
 

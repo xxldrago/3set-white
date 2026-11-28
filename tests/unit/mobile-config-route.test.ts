@@ -11,6 +11,19 @@ const mocks = vi.hoisted(() => ({
   verify: vi.fn(),
   listKeys: vi.fn(),
   days: vi.fn(() => 7),
+  // The shared grace helper imports this; mirror the real time-based derivation
+  // so the route fixtures exercise the actual predicate (no status is faked).
+  deriveStatusKind: vi.fn((status: string, expiresAt: Date | null) => {
+    if (expiresAt) {
+      const remaining = expiresAt.getTime() - Date.now();
+      if (remaining <= 0) return 'expired';
+      if (remaining <= 3 * 86_400_000) return 'expiring';
+      return 'active';
+    }
+    if (status === 'pending') return 'pending';
+    if (status === 'expired') return 'expired';
+    return 'unknown';
+  }),
   source: vi.fn(),
   info: vi.fn(),
   error: vi.fn(),
@@ -20,6 +33,7 @@ vi.mock('../../lib/mobile-auth', () => ({ verifyAccessToken: mocks.verify }));
 vi.mock('../../lib/keys-service', () => ({
   listKeysByUserId: mocks.listKeys,
   daysUntilExpiry: mocks.days,
+  deriveStatusKind: mocks.deriveStatusKind,
 }));
 vi.mock('../../lib/servers-source', () => ({ getSubscriptionLinksCacheFirst: mocks.source }));
 vi.mock('../../lib/logger', () => ({
@@ -31,7 +45,9 @@ import { buildMobileConfig, serverMeta } from '../../lib/mobile-config';
 import { artemida } from '../../lib/artemida';
 
 const FUTURE = new Date(Date.now() + 10 * 86_400_000).toISOString();
-const PAST = new Date(Date.now() - 86_400_000).toISOString();
+// Outside any 24h grace window — an expired fixture must stay denied.
+const PAST = new Date(Date.now() - 3 * 86_400_000).toISOString();
+const GRACE_MS = 24 * 86_400_000;
 
 const NL = '🇳🇱';
 const VLESS = `vless://uuid-abc@nl.example.com:443?encryption=none&security=tls&sni=tls.example.com&type=ws&host=cdn.example.com&path=%2Fws#${encodeURIComponent(`${NL} Amsterdam`)}`;
@@ -117,6 +133,39 @@ describe('active-key gate on every request (D-03 / T-20-01)', () => {
     expect(res.status).toBe(403);
     expect((await res.json() as Record<string, unknown>).error).toBe('no_active_key');
     expect(mocks.source).not.toHaveBeenCalled();
+  });
+});
+
+describe('shared grace gate (D-10)', () => {
+  it('allows a graced expired key and denies one past the 24h boundary', async () => {
+    const inside = new Date(Date.now() - GRACE_MS + 120_000).toISOString();
+    const outside = new Date(Date.now() - GRACE_MS - 120_000).toISOString();
+
+    mocks.listKeys.mockResolvedValue([
+      key({ id: 'grace', status: 'active', expiresAt: inside, statusKind: 'expired' }),
+    ]);
+    mocks.source.mockResolvedValue(okSource([VLESS]));
+    const allowed = await GET(request(vlessId));
+    expect(allowed.status).toBe(200);
+    expect((await allowed.json() as Record<string, unknown>).ok).toBe(true);
+
+    mocks.listKeys.mockResolvedValue([
+      key({ id: 'past-grace', status: 'active', expiresAt: outside, statusKind: 'expired' }),
+    ]);
+    const denied = await GET(request(vlessId));
+    expect(denied.status).toBe(403);
+    expect((await denied.json() as Record<string, unknown>).error).toBe('no_active_key');
+    expect(mocks.source).toHaveBeenCalledTimes(1);
+  });
+
+  it('a trial key gets no grace even inside the window', async () => {
+    const inside = new Date(Date.now() - GRACE_MS + 120_000).toISOString();
+    mocks.listKeys.mockResolvedValue([
+      key({ id: 'trial', status: 'active', isTrial: true, expiresAt: inside, statusKind: 'expired' }),
+    ]);
+    const res = await GET(request(vlessId));
+    expect(res.status).toBe(403);
+    expect((await res.json() as Record<string, unknown>).error).toBe('no_active_key');
   });
 });
 

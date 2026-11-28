@@ -1,6 +1,8 @@
 // Wave-0 widget tests for the real Shop Screen (21-05). Assertions are on
 // rendered behavior and provider calls only — no source-text matching, no fake
 // timers for payment success and no simulation of the money pipeline.
+import "dart:async";
+
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:flutter_test/flutter_test.dart";
@@ -58,6 +60,7 @@ Widget _shopApp({
   int devices = 2,
   String chip = "МИР",
   String? purchaseStatus,
+  bool processing = false,
   List<String>? copiedLinks,
   Future<PaymentFlowResult> Function(BuildContext, PaymentRequest)? starter,
 }) {
@@ -74,6 +77,7 @@ Widget _shopApp({
       deviceCountProvider.overrideWith((ref) => devices),
       paymentMethodProvider.overrideWith((ref) => chip),
       purchaseStatusProvider.overrideWith((ref) => purchaseStatus),
+      paymentProcessingProvider.overrideWith((ref) => processing),
       linkCopierProvider.overrideWithValue((link) async {
         copiedLinks?.add(link);
       }),
@@ -349,6 +353,43 @@ void main() {
 
       expect(find.byType(ExpiresSoonBanner), findsNothing);
       expect(find.text("Истекает вскоре"), findsNothing);
+    });
+  });
+
+  group("WR-02 in-flight payment feedback", () {
+    testWidgets("shows the waiting notice while the DB poll is in flight", (
+      tester,
+    ) async {
+      await tester.pumpWidget(_shopApp(processing: true));
+      // A live spinner animates forever — pump frames instead of settling.
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byType(PaymentPendingNotice), findsOneWidget);
+      expect(find.text("Ожидаем оплату…"), findsOneWidget);
+    });
+
+    testWidgets("no waiting notice when no purchase is in flight", (
+      tester,
+    ) async {
+      await tester.pumpWidget(_shopApp());
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PaymentPendingNotice), findsNothing);
+      expect(find.text("Ожидаем оплату…"), findsNothing);
+    });
+
+    testWidgets("starting a purchase surfaces the waiting toast", (tester) async {
+      final never = Completer<PaymentFlowResult>();
+      await tester.pumpWidget(
+        _shopApp(starter: (_, __) => never.future),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, "Купить и продлить"));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text("Ожидаем оплату…"), findsWidgets);
     });
   });
 

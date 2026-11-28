@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -148,6 +150,31 @@ void main() {
         verify(() => store.clear()).called(1);
       },
     );
+
+    test("poll runs even when the WebView is never dismissed (WR-02)", () async {
+      stubCreate();
+      stubPoll(const ["provisioned"]);
+      final stuckLauncher = MockWebViewLauncher();
+      // A real Navigator.push Future completes only on pop; this one never
+      // completes, mirroring a user who leaves the payment page open.
+      when(() => stuckLauncher.openPaymentPage(any()))
+          .thenAnswer((_) => Completer<void>().future);
+      final stuckFlow = PaymentFlow(
+        dio: dio,
+        store: store,
+        launcher: stuckLauncher,
+        pollInterval: const Duration(milliseconds: 1),
+        maxAttempts: 5,
+      );
+
+      final result = await stuckFlow
+          .start(const PaymentRequest(kind: "new", days: 7, devices: 2))
+          .timeout(const Duration(seconds: 2));
+
+      expect(result.outcome, PaymentOutcome.provisioned);
+      verify(() => stuckLauncher.openPaymentPage(url)).called(1);
+      verify(() => dio.get(Endpoints.paymentStatus("order-1"))).called(1);
+    });
 
     test("refuses a non-https URL before navigating or persisting", () async {
       stubCreate(paymentUrl: "http://pay.platega.io/x");

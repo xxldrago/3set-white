@@ -715,6 +715,35 @@ String _bannerDate(DateTime date) {
   return "$day.$month.${date.year}";
 }
 
+/// WR-02/21-CONTEXT: in-flight checkout feedback, shown only while the DB
+/// status poll is running. No timer-driven success is implied — the notice is
+/// mirror-only and is cleared when `paymentProcessingProvider` turns false.
+class PaymentPendingNotice extends StatelessWidget {
+  /// Creates the "waiting for payment" notice.
+  const PaymentPendingNotice({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        const SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          "Ожидаем оплату…",
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.amber,
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+      ],
+    );
+  }
+}
+
 /// Pinned buy bar: live total plus the single purchase action.
 class ShopPayBar extends StatelessWidget {
   /// Creates the pinned bar.

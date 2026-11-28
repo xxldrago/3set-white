@@ -218,6 +218,14 @@ class ShopScreen extends ConsumerWidget {
       final starter = ref.read(paymentFlowStarterProvider);
       ref.read(purchaseStatusProvider.notifier).state = null;
       ref.read(paymentProcessingProvider.notifier).state = true;
+      // WR-02/21-CONTEXT: the required in-flight toast stays visible above the
+      // pushed WebView while the DB-status poll runs alongside navigation.
+      ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? pendingToast;
+      if (context.mounted) {
+        pendingToast = ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Ожидаем оплату…")),
+        );
+      }
       try {
         final result = await starter(
           context,
@@ -246,6 +254,8 @@ class ShopScreen extends ConsumerWidget {
           );
         }
       } finally {
+        // Never let the in-flight toast queue ahead of terminal feedback.
+        pendingToast?.close();
         if (context.mounted) {
           ref.read(paymentProcessingProvider.notifier).state = false;
         }
@@ -277,6 +287,11 @@ class ShopScreen extends ConsumerWidget {
                     if (subscription.statusKind == "expiring" ||
                         subscription.graceUntil != null) ...<Widget>[
                       ExpiresSoonBanner(graceUntil: subscription.graceUntil),
+                      const SizedBox(height: 16),
+                    ],
+                    // WR-02: visible while the DB-status poll is in flight.
+                    if (processing) ...<Widget>[
+                      const PaymentPendingNotice(),
                       const SizedBox(height: 16),
                     ],
                     if (!hasKey) ...<Widget>[

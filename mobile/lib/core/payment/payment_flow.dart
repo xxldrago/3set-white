@@ -233,9 +233,13 @@ class PaymentFlow {
       throw const PaymentFlowException("invalid_payment_url");
     }
 
-    // Persist ONLY the non-secret order id, then open the hosted page.
+    // Persist ONLY the non-secret order id, then open the hosted page without
+    // waiting for it to be popped (WR-02). The real launcher's Future completes
+    // only when the WebView route is dismissed — awaiting it here would delay
+    // the 3s/100 DB-status poll until the user manually navigated back, so a
+    // completed payment would go undetected while the page stays open.
     await store.save(orderId);
-    await launcher.openPaymentPage(paymentUrl);
+    unawaited(launcher.openPaymentPage(paymentUrl));
     return _poll(orderId);
   }
 

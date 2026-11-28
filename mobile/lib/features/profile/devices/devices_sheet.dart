@@ -63,6 +63,11 @@ class _DevicesSheetState extends ConsumerState<DevicesSheet> {
           }
         }
       },
+      // Past-tense copy is only honest after the BFF confirms the delete;
+      // until then every surface reads «Отключение…» (WR-02).
+      onDeleteCompleted: () {
+        if (mounted) _notice(context, "Устройство отключено");
+      },
     );
   }
 
@@ -91,7 +96,10 @@ class _DevicesSheetState extends ConsumerState<DevicesSheet> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: const Text("Устройство отключено"),
+          // Mirrors the controller's locked window exactly: the undo action
+          // cannot vanish a second before the DELETE becomes irreversible.
+          duration: _controller.window,
+          content: const Text("Отключение…"),
           action: SnackBarAction(
             label: "Вернуть",
             onPressed: () {
@@ -211,7 +219,7 @@ class _DeviceRow extends StatelessWidget {
               child: Text(name, style: theme.textTheme.bodyMedium),
             ),
             if (pending)
-              Text("Отключается", style: theme.textTheme.bodySmall)
+              Text("Отключение…", style: theme.textTheme.bodySmall)
             else
               Semantics(
                 button: true,

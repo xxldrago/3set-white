@@ -329,7 +329,8 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.close).first);
       await tester.pumpAndSettle();
-      expect(find.text("Устройство отключено"), findsOneWidget);
+      expect(find.text("Отключение…"), findsNWidgets(2));
+      expect(find.text("Устройство отключено"), findsNothing);
       expect(find.text("Вернуть"), findsOneWidget);
 
       await tester.tap(find.text("Вернуть"));
@@ -352,6 +353,33 @@ void main() {
       await tester.pump(const Duration(seconds: 6));
 
       expect(deleted, <String>["tok-a"]);
+    });
+
+    testWidgets("undo action lasts the full window; done copy waits for the BFF", (
+      tester,
+    ) async {
+      final deleted = <String>[];
+      await tester.pumpWidget(_profileApp(deletedTokens: deleted));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.close).first);
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<SnackBar>(find.byType(SnackBar)).duration,
+        const Duration(seconds: 5),
+      );
+      expect(find.text("Отключение…"), findsNWidgets(2));
+      expect(find.text("Устройство отключено"), findsNothing);
+
+      for (var second = 0; second < 6; second++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
+      await tester.pumpAndSettle();
+
+      expect(deleted, <String>["tok-a"]);
+      expect(find.text("Устройство отключено"), findsOneWidget);
+      expect(find.text("Отключение…"), findsNothing);
     });
   });
 }

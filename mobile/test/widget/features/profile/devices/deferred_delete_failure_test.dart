@@ -108,7 +108,8 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.close).first);
     await tester.pumpAndSettle();
-    expect(find.text("Отключается"), findsOneWidget);
+    // Both the row and the snackbar read «Отключение…» while the timer runs.
+    expect(find.text("Отключение…"), findsNWidgets(2));
 
     // Wait past the five-second undo window so the timer fires the DELETE.
     for (var second = 0; second < 6; second++) {
@@ -119,7 +120,7 @@ void main() {
     expect(deleteCalls, <String>["tok-1"]);
     expect(find.text(deviceDeleteFailedNotice), findsOneWidget);
     // The row is no longer dimmed/pending and the list was refetched.
-    expect(find.text("Отключается"), findsNothing);
+    expect(find.text("Отключение…"), findsNothing);
     expect(find.text("Телефон"), findsOneWidget);
     expect(reads, greaterThanOrEqualTo(2));
   });

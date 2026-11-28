@@ -21,12 +21,18 @@ class DeferredDeleteController {
   DeferredDeleteController({
     required Future<void> Function(String token) onDelete,
     this.window = const Duration(seconds: 5),
+    this.onDeleteCompleted,
   }) : _onDelete = onDelete;
 
   final Future<void> Function(String token) _onDelete;
 
-  /// The locked undo window.
+  /// The locked undo window. Also drives the SnackBar duration so the
+  /// «Вернуть» action stays visible for the entire cancellable window.
   final Duration window;
+
+  /// Called only after a fired DELETE completes successfully. Lets the UI
+  /// replace «Отключение…» with past-tense copy once the BFF confirms.
+  final void Function()? onDeleteCompleted;
 
   Timer? _timer;
   String? _pendingToken;
@@ -65,7 +71,7 @@ class DeferredDeleteController {
         // (`whenComplete` alone rethrows the original error).
         unawaited(
           _onDelete(toDelete).then<void>(
-            (_) {},
+            (_) => onDeleteCompleted?.call(),
             onError: (Object _, StackTrace __) {},
           ).whenComplete(() {
             // Allow a later, genuinely new removal after this one settles.

@@ -5,16 +5,16 @@ milestone_name: Мобильный клиент
 current_phase: 22
 current_phase_name: Devices, Settings & Polish
 status: executing
-stopped_at: Completed 22-01-PLAN.md
-last_updated: "2026-11-28T09:52:16.544Z"
+stopped_at: Completed 22-02-PLAN.md
+last_updated: "2026-11-28T10:10:03.519Z"
 last_activity: 2026-11-28
 last_activity_desc: Phase 22 execution started
-state_head: 9f645c4bd5e5092c343deb1d96fe29f0b0281e9b
+state_head: def442f70df6bdcab2053e96e6eea84880faa604
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 33
-  completed_plans: 29
+  completed_plans: 30
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 ## Current Position
 
 Phase: 22 (Devices, Settings & Polish) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-28 — Phase 22 execution started
@@ -145,6 +145,10 @@ None (flat mode)
 - [Phase 21]: Pending payment resume keeps only the non-secret order id, clears it on every terminal status and ends at a 100-poll timeout without fake success
 - [Phase 21]: Client mirrors the server grace-aware hasKey flag; no local entitlement math, no bottom nav and no deep-link confirmation path
 - [Phase 22-01]: D-01/D-04/D-05/D-06/D-08 confirmed 'proceed-locked' at the blocking decision gate before any code; kill switch always-on/read-only, no native VPN code, honest device add via subscription-link + paid upgrade (single issuer), deferred-delete undo with no fake restore, FCM deferred. No implementation file written by the gate.
+- [Phase 22-devices-settings-polish-5-days]: Auto-connect is a caller only: it invokes the existing connect(tab, auto: true) through an injectable seam, adds no second reconnect path and changes no FSM, native VPN, kill-switch or D-15 network-change code.
+- [Phase 22-devices-settings-polish-5-days]: The launch gate is authenticated state plus an active key from userSubscriptionProvider plus the persisted preference; a biometric lockout sets auth unauthenticated, so the gate covers the existing resume gate (real-device timing stays manual).
+- [Phase 22-devices-settings-polish-5-days]: Drift v2 migration creates only the settings table, preserves existing rows, and rebuilds generated bindings with build_runner.
+- [Phase 22-devices-settings-polish-5-days]: Reset Demo clears the biometric-scoped secure-storage namespace in addition to TokenStore.clearAll and SecureStorage.clearAll; it stays purely local with an injected /auth navigation callback for a later profile UI row.
 
 ## Performance Metrics
 
@@ -179,9 +183,10 @@ None (flat mode)
 | Phase 21-subscription-purchase-7-days P05 | 9 min | 3 tasks | 6 files |
 | Phase 21-subscription-purchase-7-days P06 | 9min | 3 tasks | 9 files |
 | Phase 22-devices-settings-polish-5-days P01 | 43 min | 3 tasks | 20 files |
+| Phase 22-devices-settings-polish-5-days P02 | 12 min | 2 tasks | 8 files |
 
 ## Session
 
-**Last session:** 2026-11-28T09:52:16.350Z
-**Stopped at:** Completed 22-01-PLAN.md
+**Last session:** 2026-11-28T10:10:03.332Z
+**Stopped at:** Completed 22-02-PLAN.md
 **Resume file:** None

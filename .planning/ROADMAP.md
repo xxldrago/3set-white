@@ -251,7 +251,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 22-02-PLAN.md — Drift v2 settings, one-shot auto-connect listener, local-only Reset Demo
+- [x] 22-02-PLAN.md — Drift v2 settings, one-shot auto-connect listener, local-only Reset Demo
 
 **Wave 3** *(blocked on Waves 1–2 completion)*
 

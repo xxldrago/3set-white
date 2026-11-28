@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 36
+open_count: 37
 waived_count: 0
 fixed_count: 1
-total_count: 37
-last_updated: 2026-11-28T09:51:19.457Z
+total_count: 38
+last_updated: 2026-11-28T10:09:23.030Z
 ---
 
 # Broken Windows Ledger
@@ -52,6 +52,7 @@ last_updated: 2026-11-28T09:51:19.457Z
 | 35 | 20 | lint-warning |  |  | 20-07 bare flutter analyze exits 1 on ~1632 pre-existing info/warning lints (0 errors); used --no-fatal-infos --no-fatal-warnings with exit 0, no unrelated files touched | open |  | 2026-11-27T11:12:46.608Z |  |
 | 36 | 21 | lint-warning | mobile/pubspec.yaml |  | flutter analyze exits 1 on pre-existing 1690 info/warning lint baseline; 21-01 Dart files have zero errors/warnings | open |  | 2026-11-28T03:08:21.528Z |  |
 | 37 | 22 | deviation | app/api/mobile/payments/create/route.ts |  | 22-01 Rule 2: paid upgrade intent posts no client keyId, so /payments/create now derives the active owned key from the JWT via isKeyConnectable; createOrder remains the sole issuer | open |  | 2026-11-28T09:51:19.457Z |  |
+| 38 | 22 | deviation | mobile/lib/core/settings/reset_demo.dart |  | Reset Demo clears the biometric-scoped secure-storage namespace in addition to TokenStore.clearAll and SecureStorage.clearAll so no biometric prompt can resurrect a session (Rule 2 correction) | open |  | 2026-11-28T10:09:23.030Z |  |
 
 ````json
 [
@@ -497,6 +498,18 @@ last_updated: 2026-11-28T09:51:19.457Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-28T09:51:19.457Z",
+    "resolved_at": null
+  },
+  {
+    "id": 38,
+    "kind": "deviation",
+    "phase": "22",
+    "file": "mobile/lib/core/settings/reset_demo.dart",
+    "line": null,
+    "description": "Reset Demo clears the biometric-scoped secure-storage namespace in addition to TokenStore.clearAll and SecureStorage.clearAll so no biometric prompt can resurrect a session (Rule 2 correction)",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-28T10:09:23.030Z",
     "resolved_at": null
   }
 ]

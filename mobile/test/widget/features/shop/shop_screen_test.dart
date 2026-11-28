@@ -30,6 +30,7 @@ List<PricingTerm> _terms([List<int>? amounts]) {
 SubscriptionStatus _subscription({
   bool isTrial = false,
   String? statusKind = "active",
+  String? graceUntil,
   String? link = _link,
   String? expiresAt = _expiresAt,
   int? remainingDays = 26,
@@ -37,6 +38,7 @@ SubscriptionStatus _subscription({
   return SubscriptionStatus(
     ok: true,
     statusKind: statusKind,
+    graceUntil: graceUntil,
     isTrial: isTrial,
     link: link,
     expiresAt: expiresAt,
@@ -302,6 +304,51 @@ void main() {
       expect(find.text("Нужен активный ключ"), findsOneWidget);
       expect(find.text("Выбрать тариф"), findsOneWidget);
       expect(find.byType(NavigationBar), findsNothing);
+    });
+  });
+
+  group("REQ-SUB-06 expires soon banner (server-driven)", () {
+    testWidgets("expiring statusKind shows the banner with the grace deadline", (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _shopApp(
+          subscription: _subscription(
+            statusKind: "expiring",
+            graceUntil: "2026-11-29T10:00:00.000Z",
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ExpiresSoonBanner), findsOneWidget);
+      expect(find.text("Истекает вскоре"), findsOneWidget);
+      expect(find.text("Доступ сохранён до 29.11.2026"), findsOneWidget);
+    });
+
+    testWidgets("expired key inside grace shows the same server banner", (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _shopApp(
+          subscription: _subscription(
+            statusKind: "expired",
+            graceUntil: "2026-11-28T23:00:00.000Z",
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ExpiresSoonBanner), findsOneWidget);
+      expect(find.text("Истекает вскоре"), findsOneWidget);
+    });
+
+    testWidgets("active key has no expires-soon banner", (tester) async {
+      await tester.pumpWidget(_shopApp(subscription: _subscription()));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ExpiresSoonBanner), findsNothing);
+      expect(find.text("Истекает вскоре"), findsNothing);
     });
   });
 

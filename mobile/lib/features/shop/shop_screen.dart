@@ -273,6 +273,12 @@ class ShopScreen extends ConsumerWidget {
                       onCopyLink: copyLink,
                     ),
                     const SizedBox(height: 16),
+                    // D-10/REQ-SUB-06: server-derived only — no local 24h math.
+                    if (subscription.statusKind == "expiring" ||
+                        subscription.graceUntil != null) ...<Widget>[
+                      ExpiresSoonBanner(graceUntil: subscription.graceUntil),
+                      const SizedBox(height: 16),
+                    ],
                     if (!hasKey) ...<Widget>[
                       ShopNoKeyBanner(
                         onAction: () => Scrollable.ensureVisible(

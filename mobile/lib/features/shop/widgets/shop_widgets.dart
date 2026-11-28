@@ -653,6 +653,68 @@ class TrialNotice extends StatelessWidget {
   }
 }
 
+/// D-10/REQ-SUB-06: "expires soon" notice. Driven ONLY by server fields —
+/// `statusKind`/`graceUntil` arrive already decided from `/subscription`; the
+/// client never computes a 24h grace window or an entitlement decision.
+class ExpiresSoonBanner extends StatelessWidget {
+  /// Creates the server-driven expiry notice.
+  const ExpiresSoonBanner({required this.graceUntil, super.key});
+
+  /// Server-provided grace deadline (ISO-8601), or null when only the
+  /// server's `statusKind == "expiring"` flag is present.
+  final String? graceUntil;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final parsed = graceUntil == null ? null : DateTime.tryParse(graceUntil!);
+    final subtitle = parsed == null
+        ? "Обновите подписку, чтобы не потерять доступ"
+        : "Доступ сохранён до ${_bannerDate(parsed)}";
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppTheme.surface3,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.amber.withValues(alpha: 0.6)),
+      ),
+      child: Row(
+        children: <Widget>[
+          const Icon(Icons.schedule, color: AppTheme.amber),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  "Истекает вскоре",
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.text,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppTheme.muted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _bannerDate(DateTime date) {
+  final day = date.day.toString().padLeft(2, "0");
+  final month = date.month.toString().padLeft(2, "0");
+  return "$day.$month.${date.year}";
+}
+
 /// Pinned buy bar: live total plus the single purchase action.
 class ShopPayBar extends StatelessWidget {
   /// Creates the pinned bar.

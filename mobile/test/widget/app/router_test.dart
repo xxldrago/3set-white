@@ -190,7 +190,7 @@ void main() {
     expect(find.byType(LoginScreen), findsOneWidget);
   });
 
-  testWidgets("shop route shows the phase-21 stub", (
+  testWidgets("shop route renders the real Shop Screen without bottom nav", (
     WidgetTester tester,
   ) async {
     await pumpRouter(tester, state: authenticatedState());
@@ -198,8 +198,9 @@ void main() {
     router.go("/shop");
     await tester.pumpAndSettle();
     expect(find.byType(ShopScreen), findsOneWidget);
-    expect(find.text("Магазин"), findsOneWidget);
-    expect(find.byIcon(Icons.shopping_bag_outlined), findsOneWidget);
+    expect(find.text("Покупка ключа"), findsOneWidget);
+    expect(find.text("Магазин ключей появится в фазе 21"), findsNothing);
+    expect(find.byType(NavigationBar), findsNothing);
   });
 
   testWidgets("unauthenticated auth routes are preserved", (

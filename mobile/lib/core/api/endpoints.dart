@@ -24,6 +24,10 @@ class Endpoints {
   static const String payments = '/api/mobile/payments';
   static const String devices = '/api/mobile/devices';
 
+  /// Opaque device token path segment, URL-encoded (T-22-02). The client never
+  /// sends a keyId; ownership is derived server-side from the JWT.
+  static String device(String token) => '$devices/${Uri.encodeComponent(token)}';
+
   // Payment flow (Phase 21, D-04/D-05/D-06): create returns our non-secret
   // order id plus the server-returned hosted payment URL; status is a DB-only
   // ownership-scoped poll. No amount is ever sent by the client.

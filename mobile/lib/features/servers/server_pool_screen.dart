@@ -16,6 +16,7 @@ import "../../core/vpn/error_mapping.dart" show errorCodeFrom, errorToastFor;
 import "../auth/providers.dart" show currentUserProvider;
 import "../auth/widgets/error_toast.dart";
 import "../home/providers.dart" show currentTabProvider;
+import "../profile/profile_sheet.dart" show ProfileSheet;
 import "providers.dart";
 import "server.dart";
 
@@ -386,7 +387,7 @@ class ServerPoolScreen extends ConsumerWidget {
   void _profileSheet(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
-      builder: (_) => const _ProfileSheet(),
+      builder: (_) => const ProfileSheet(),
     );
   }
 }
@@ -454,30 +455,6 @@ class _LogicSheet extends StatelessWidget {
                 ],
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Profile sheet stub; the full profile lands in phase 21.
-class _ProfileSheet extends StatelessWidget {
-  const _ProfileSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Text("Профиль", style: theme.textTheme.headlineSmall),
-          const SizedBox(height: 12),
-          Text(
-            "Устройства и подписка — фаза 21",
-            style: theme.textTheme.bodyMedium?.copyWith(color: AppTheme.muted),
-          ),
         ],
       ),
     );

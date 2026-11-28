@@ -242,6 +242,22 @@ Plans:
 
 **Goal**: Device management, settings, push notifications, UI polish.
 
+**Plans:** 5 plans
+
+Plans:
+**Wave 1**
+- [ ] 22-01-PLAN.md — Blocking locked-decision gate + end-to-end device slice: ownership-safe GET/DELETE, deferred-delete undo, honest add/limit handoff
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 22-02-PLAN.md — Drift v2 settings, one-shot auto-connect listener, local-only Reset Demo
+
+**Wave 3** *(blocked on Waves 1–2 completion)*
+- [ ] 22-03-PLAN.md — Real profile identity, read-only kill switch/referral/reset/network rows
+- [ ] 22-04-PLAN.md — Package legitimacy gate + local T-7/3/1 expiry reminders, additive native setup (FCM deferred)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+- [ ] 22-05-PLAN.md — Accessibility: real dynamic type, AA contrast, Semantics, reasoned API coverage opt-outs
+
 #### Tasks
 
 | Task | Description | Acceptance |

@@ -54,8 +54,13 @@ class AppTheme {
   /// Prototype `--muted`: secondary text.
   static const Color muted = Color(0xFFa7b8a9);
 
-  /// Prototype `--dim`: tertiary text.
-  static const Color dim = Color(0xFF6f8272);
+  /// Tertiary text on dark cards (WCAG AA 4.5:1).
+  ///
+  /// Accessibility (22.12): the original prototype value `0xFF6f8272` measured
+  /// 4.24:1 on [surface] and 3.92:1 on [surface2], below AA for small text.
+  /// This token stays visually subordinate to [muted] but passes AA on every
+  /// dark card surface, including [surface3].
+  static const Color dim = Color(0xFF829486);
 
   /// `--grad` start color (linear gradient 135deg).
   static const Color gradStart = Color(0xFFd4ff85);

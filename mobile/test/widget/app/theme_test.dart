@@ -4,6 +4,15 @@ import "package:flutter/material.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:mobile/app/theme.dart";
 
+/// WCAG 2.x relative luminance is provided by Flutter's [Color].
+double _contrast(Color foreground, Color background) {
+  final double a = foreground.computeLuminance();
+  final double b = background.computeLuminance();
+  final double light = a > b ? a : b;
+  final double dark = a > b ? b : a;
+  return (light + 0.05) / (dark + 0.05);
+}
+
 void main() {
   group("AppTheme.dark app-wide (D-16)", () {
     test("dark theme is the Material 3 prototype theme", () {
@@ -36,7 +45,7 @@ void main() {
       expect(AppTheme.blue, const Color(0xFF2aabee));
       expect(AppTheme.text, const Color(0xFFf2f7ec));
       expect(AppTheme.muted, const Color(0xFFa7b8a9));
-      expect(AppTheme.dim, const Color(0xFF6f8272));
+      expect(AppTheme.dim, const Color(0xFF829486));
       expect(AppTheme.gradStart, const Color(0xFFd4ff85));
       expect(AppTheme.gradEnd, const Color(0xFF7fd41f));
       expect(AppTheme.gradTealStart, const Color(0xFF8ffbe0));
@@ -134,6 +143,35 @@ void main() {
       expect(lower, isNot(contains("sleep(")));
       expect(lower, isNot(contains("vless://")));
       expect(themeSource, contains("AppTheme.light"));
+    });
+
+    test("secondary text tokens clear WCAG AA 4.5:1 on dark cards", () {
+      for (final Color surface in <Color>[
+        AppTheme.surface,
+        AppTheme.surface2,
+        AppTheme.surface3,
+      ]) {
+        expect(
+          _contrast(AppTheme.dim, surface),
+          greaterThanOrEqualTo(4.5),
+          reason: "dim token on $surface",
+        );
+        expect(
+          _contrast(AppTheme.muted, surface),
+          greaterThanOrEqualTo(4.5),
+          reason: "muted token on $surface",
+        );
+      }
+      expect(_contrast(AppTheme.text, AppTheme.surface), greaterThan(10));
+      expect(AppTheme.dark.textTheme.bodySmall?.color, AppTheme.dim);
+      expect(AppTheme.dark.textTheme.labelSmall?.color, AppTheme.dim);
+    });
+
+    test("main.dart never clamps platform dynamic type at 130 percent", () {
+      final String source = File("lib/main.dart").readAsStringSync();
+      expect(source, contains("AppTextScalePolicy"));
+      expect(source, isNot(contains(".clamp(0.8, 1.3)")));
+      expect(source, isNot(contains("TextScaler.linear")));
     });
 
     test("light theme is retained for a deferred toggle", () {

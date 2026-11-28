@@ -61,15 +61,30 @@ class App extends ConsumerWidget {
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.dark,
       routerConfig: router,
-      builder: (context, child) {
-        // MediaQuery override for text scaling (accessibility)
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            textScaler: TextScaler.linear(MediaQuery.of(context).textScaler.scale(1.0).clamp(0.8, 1.3)),
-          ),
-          child: child!,
-        );
-      },
+      builder: (context, child) => AppTextScalePolicy(child: child),
+    );
+  }
+}
+
+/// Accessibility (22.12): applies the app's dynamic-type policy.
+///
+/// The platform [TextScaler] is carried through unchanged. The previous
+/// 0.8–1.3 upper bound silently rendered a 200% system font setting at 130%,
+/// suppressing a real user accessibility preference. Kept as a small widget so
+/// the policy is verifiable without booting the router or app-level listeners.
+class AppTextScalePolicy extends StatelessWidget {
+  /// Creates the policy wrapper around the routed app content.
+  const AppTextScalePolicy({required this.child, super.key});
+
+  /// Routed app content.
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    final MediaQueryData media = MediaQuery.of(context);
+    return MediaQuery(
+      data: media.copyWith(textScaler: media.textScaler),
+      child: child ?? const SizedBox.shrink(),
     );
   }
 }

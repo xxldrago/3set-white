@@ -24,6 +24,7 @@ import "../subscription/models/subscription.dart";
 import "../subscription/providers.dart"
     show subscriptionNotice, userSubscriptionProvider;
 import "../servers/server_pool_screen.dart" show networkLabelProvider;
+import "../servers/widgets/pool_toolbar.dart" show networkIconForLabel;
 import "devices/devices_sheet.dart" show DevicesSheet;
 import "settings/kill_switch_row.dart" show KillSwitchRow;
 import "settings/logout_row.dart" show LogoutRow;
@@ -261,7 +262,7 @@ class NetworkStatusRow extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   Icon(
-                    offline ? Icons.wifi_off : Icons.wifi,
+                    networkIconForLabel(label),
                     size: 14,
                     color: offline ? AppTheme.red : AppTheme.teal,
                   ),

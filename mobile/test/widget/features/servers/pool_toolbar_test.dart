@@ -84,6 +84,28 @@ void main() {
     expect(find.byIcon(Icons.wifi_off), findsOneWidget);
   });
 
+  testWidgets("the chip icon matches the real connection type", (tester) async {
+    final labels = StreamController<String>.broadcast();
+    addTearDown(labels.close);
+    await tester.pumpWidget(chipApp(labels.stream));
+    await tester.pumpAndSettle();
+
+    labels.add("LTE");
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.signal_cellular_alt), findsOneWidget);
+    expect(find.byIcon(Icons.wifi), findsNothing);
+
+    labels.add("Ethernet");
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.settings_ethernet), findsOneWidget);
+    expect(find.byIcon(Icons.signal_cellular_alt), findsNothing);
+
+    labels.add("Wi-Fi");
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.wifi), findsOneWidget);
+    expect(find.byIcon(Icons.settings_ethernet), findsNothing);
+  });
+
   testWidgets("the chip has no interactive control and a tap changes nothing", (
     tester,
   ) async {

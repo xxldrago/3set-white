@@ -3,6 +3,17 @@ import "package:flutter/material.dart";
 import "../../../app/theme.dart";
 import "../server.dart";
 
+/// Maps the real, read-only network label to its matching icon (D-07).
+///
+/// `Icons.wifi` is honest only for an actual Wi-Fi connection: LTE and
+/// Ethernet must not be rendered as wireless. Offline keeps its own glyph.
+IconData networkIconForLabel(String label) {
+  if (label == "Нет сети") return Icons.wifi_off;
+  if (label == "LTE") return Icons.signal_cellular_alt;
+  if (label == "Ethernet") return Icons.settings_ethernet;
+  return Icons.wifi;
+}
+
 /// Prototype toolbar: mode description, read-only network chip and refresh.
 ///
 /// The network chip reflects the real `connectivity_plus` result only; there
@@ -83,7 +94,7 @@ class PoolToolbar extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Icon(
-            offline ? Icons.wifi_off : Icons.wifi,
+            networkIconForLabel(networkLabel),
             size: 14,
             color: offline ? AppTheme.red : AppTheme.teal,
           ),

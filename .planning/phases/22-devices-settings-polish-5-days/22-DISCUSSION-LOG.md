@@ -48,6 +48,21 @@
 
 **User's choice:** Не трогать нативный код.
 
+## Post-research owner decisions (2026-11-28)
+
+After `22-RESEARCH.md` surfaced provider-contract conflicts and external blockers, the user selected:
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| FCM — отложить | Local notifications only; FCM blocked by missing Firebase project/credentials | ✓ |
+| FCM — credentials | Wait for owner-supplied Firebase project/keys | |
+| FCM — код без прова | Source-only token route with deferred UAT | |
+| Devices — честная интерпретация | Add = subscription-link handoff; paid upgrade for capacity; undo = deferred DELETE cancel, no fake restore | ✓ |
+| Devices — буквально | Free POST add + fake restore (conflicts with ARTEMIDA) | |
+| Devices — только бэкенд | GET/DELETE only, UI later | |
+
+**User's choices:** FCM deferred; honest device semantics. Recorded as D-05..D-09 in `22-CONTEXT.md`.
+
 ## the agent's Discretion
 
 - Формат профиля/настроек и порядок секций — на усмотрение планировщика при сохранении тёмной темы прототипа и отсутствия нижней навигации.

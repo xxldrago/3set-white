@@ -90,8 +90,8 @@
 | ID | Requirement | Priority | Acceptance Criteria |
 |----|-------------|----------|---------------------|
 | REQ-DEV-01 | **Device List** — in profile sheet: name, last seen, remove button | P0 | Shows all registered devices |
-| REQ-DEV-02 | **Remove Device** — DELETE `/api/mobile/devices/{id}` → toast with "Вернуть" undo (5s) | P0 | Undo restores device |
-| REQ-DEV-03 | **Add Current Device** — button "Добавить это устройство" → POST → toast "Устройство добавлено" | P0 | Count increments; appears in list |
+| REQ-DEV-02 | **Remove Device with deferred undo** — DELETE `/api/mobile/devices/{token}` delayed 5s; "Вернуть" cancels before provider call | P0 | Undo prevents the delete; no fake restore after provider delete |
+| REQ-DEV-03 | **Add Device via subscription link** — button "Добавить это устройство" opens/copies the real subscription link; capacity growth via paid upgrade flow only | P0 | Honest handoff; no free POST add, no simulation |
 | REQ-DEV-04 | **Limit Enforcement** — cannot add if at deviceLimit | P0 | Toast "Лимит устройств достигнут" |
 
 ### REQ-SETTINGS: Settings & Profile
@@ -102,14 +102,14 @@
 | REQ-SET-02 | **Auto-Connect Toggle** — on app launch, if connected before → auto connect | P1 | Toggle persists |
 | REQ-SET-03 | **Referral Link** — copy `https://dash.3set.online/?ref=3SET-{code}` | P1 | Copy toast |
 | REQ-SET-04 | **Reset Demo** — clear localStorage (prototype) / secure storage (prod) → reload | P1 | Fresh state |
-| REQ-SET-05 | **Network Chip** — WiFi/LTE toggle in toolbar, invalidates ping cache | P0 | Tap → toggles → toast "Сеть изменена — кеш пинга сброшен" |
+| REQ-SET-05 | **Network Chip (read-only)** — real `connectivity_plus` label; actual network change invalidates Drift ping cache (Phase 19 D-11) | P0 | No fake WiFi/LTE toggle; cache invalidated on real connectivity change |
 
 ### REQ-NOTIF: Push Notifications
 
 | ID | Requirement | Priority | Acceptance Criteria |
 |----|-------------|----------|---------------------|
 | REQ-NOTIF-01 | **Expiry Reminders** — local notifications at T-7d, T-3d, T-1d before expiry | P1 | Shows if app not open; deep-links to shop |
-| REQ-NOTIF-02 | **FCM Token Registration** — register token with backend on login | P1 | Backend can send remote push |
+| REQ-NOTIF-02 | **FCM Token Registration** — DEFERRED (Phase 22 D-08): no Firebase project/credentials | P1 | External blocker; local notifications (REQ-NOTIF-01) ship without it |
 
 ### REQ-BACKEND: Backend API Additions
 

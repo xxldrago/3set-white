@@ -35,6 +35,7 @@ Widget _panel({
   required ConnPhase phase,
   required ConnectedStats stats,
   required VoidCallback onConnect,
+  VoidCallback? onBuy,
   String? notice,
   Server? selected,
   PingCacheData? sample,
@@ -51,7 +52,7 @@ Widget _panel({
           stats: stats,
           outcomeNotice: notice,
           onConnect: onConnect,
-          onBuy: () {},
+          onBuy: onBuy ?? () {},
         ),
       ),
     );
@@ -174,5 +175,56 @@ void main() {
     expect(find.textContaining("VPN-ядро"), findsNothing);
     expect(find.byType(NavigationBar), findsNothing);
     expect(find.byType(LinearProgressIndicator), findsNothing);
+  });
+
+  testWidgets("no-key connection is blocked with the exact toast and shop route", (
+    tester,
+  ) async {
+    var connects = 0;
+    var shops = 0;
+    await tester.pumpWidget(
+      _panel(
+        phase: ConnPhase.idle,
+        stats: ConnectedStats.empty,
+        hasKey: false,
+        onConnect: () => connects++,
+        onBuy: () => shops++,
+      ),
+    );
+
+    // hasKey is server-derived (grace included): this is the no-key/no-grace
+    // state. There is no connect affordance and the buy action is the gate.
+    expect(find.text("Нет активного ключа"), findsOneWidget);
+    expect(find.text("Подключить"), findsNothing);
+    await tester.tap(find.text("Купить"));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text("Нужен активный ключ"), findsOneWidget);
+    expect(shops, 1);
+    expect(connects, 0);
+    expect(find.textContaining("фаза 21"), findsNothing);
+  });
+
+  testWidgets("a connectable key still drives the FSM, not the shop gate", (
+    tester,
+  ) async {
+    var connects = 0;
+    var shops = 0;
+    await tester.pumpWidget(
+      _panel(
+        phase: ConnPhase.idle,
+        stats: ConnectedStats.empty,
+        hasKey: true,
+        onConnect: () => connects++,
+        onBuy: () => shops++,
+      ),
+    );
+
+    await tester.tap(find.text("Подключить"));
+    await tester.pump();
+
+    expect(connects, 1);
+    expect(shops, 0);
+    expect(find.text("Нужен активный ключ"), findsNothing);
   });
 }

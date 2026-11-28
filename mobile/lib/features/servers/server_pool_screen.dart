@@ -4,6 +4,7 @@ import "package:connectivity_plus/connectivity_plus.dart";
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:flutter_riverpod/legacy.dart" show StateProvider;
+import "package:go_router/go_router.dart";
 
 import "../../app/theme.dart";
 import "../../core/connectivity/connectivity_service.dart";
@@ -127,7 +128,7 @@ class ServerPoolScreen extends ConsumerWidget {
                       keyMeta: pools?.key,
                       refreshing: busy,
                       onRefresh: () => unawaited(_refresh(context, ref, tab)),
-                      onShop: () => _shopStub(context),
+                      onShop: () => context.go('/shop'),
                       onLogic: () => _logicSheet(context),
                       onProfile: () => _profileSheet(context),
                       greetingName: greetingName,
@@ -147,7 +148,7 @@ class ServerPoolScreen extends ConsumerWidget {
                             ? "Нет ключа"
                             : "Ключ неактивен — серверы недоступны",
                         actionLabel: "Купить",
-                        onAction: () => _shopStub(context),
+                        onAction: () => context.go('/shop'),
                       ),
                     PoolTabBar(
                       selected: tab,
@@ -187,7 +188,7 @@ class ServerPoolScreen extends ConsumerWidget {
               stats: stats,
               outcomeNotice: fsmNotice,
               onConnect: () => unawaited(_connect(context, ref, tab)),
-              onBuy: () => _shopStub(context),
+              onBuy: () => context.go('/shop'),
             ),
           ],
         ),
@@ -373,10 +374,6 @@ class ServerPoolScreen extends ConsumerWidget {
       return;
     }
     showErrorToast(context, outcome.notice ?? "Нет доступных серверов");
-  }
-
-  void _shopStub(BuildContext context) {
-    showInfoToast(context, "Магазин · Купить — фаза 21");
   }
 
   void _logicSheet(BuildContext context) {

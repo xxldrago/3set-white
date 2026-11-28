@@ -6,6 +6,7 @@ import 'package:mobile/features/auth/providers.dart';
 import 'package:mobile/features/auth/screens/login_screen.dart';
 import 'package:mobile/features/auth/screens/register_screen.dart';
 import 'package:mobile/features/auth/screens/telegram_wait_screen.dart';
+import 'package:mobile/core/payment/payment_flow.dart';
 import 'package:mobile/features/servers/server_pool_screen.dart';
 import 'package:mobile/features/shop/shop_screen.dart';
 
@@ -17,7 +18,9 @@ part 'router.g.dart';
 /// - /register: Registration screen
 /// - /telegram-wait: Telegram authentication wait screen
 /// - /: Main app screen (full prototype server pools, D-15)
-/// - /shop: Shop stub (phase 21; no purchase)
+/// - /shop: real server-driven Shop Screen (no bottom navigation)
+/// - /payment/webview: in-app hosted payment page; the URL is validated https
+///   and is never treated as payment confirmation (status comes from the DB).
 
 /// Riverpod provider for the GoRouter instance
 @riverpod
@@ -95,6 +98,50 @@ GoRouter _createRouter(Ref ref) {
         name: 'shop',
         builder: (context, state) => const ShopScreen(),
       ),
+      // D-05/T-21-34: a dedicated in-app page for the server-returned URL.
+      // Only an absolute https URL is rendered, and this route has NO success
+      // side effect: a deep-link return can never mark an order CONFIRMED.
+      GoRoute(
+        path: '/payment/webview',
+        name: 'paymentWebView',
+        builder: (context, state) {
+          final url = state.extra;
+          if (url is! String || !PaymentFlow.isHttpsPaymentUrl(url)) {
+            return const _UnsafePaymentPage();
+          }
+          return PaymentWebViewPage(url: url);
+        },
+      ),
     ],
   );
+}
+
+/// Safe fallback for a missing or non-https URL: no navigation to untrusted
+/// content, no provider text and no payment-status side effect.
+class _UnsafePaymentPage extends StatelessWidget {
+  const _UnsafePaymentPage();
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(title: const Text("Оплата")),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                const Text(
+                  "Не удалось открыть оплату",
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => context.go('/shop'),
+                  child: const Text("В магазин"),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
 }

@@ -47,7 +47,9 @@ class ConnectPanel extends StatelessWidget {
   /// Connect / cancel / disconnect, driven by [phase].
   final VoidCallback onConnect;
 
-  /// Opens the phase-21 shop stub when there is no active key.
+  /// Routes to the real /shop when there is no active key (D-11).
+  /// Entitlement is never computed here: [hasKey] comes from the server's
+  /// shared grace-aware predicate, and the /servers gate stays authoritative.
   final VoidCallback onBuy;
 
   @override
@@ -64,7 +66,7 @@ class ConnectPanel extends StatelessWidget {
         children: <Widget>[
           _panel(theme),
           const SizedBox(height: 10),
-          _action(theme),
+          _action(context, theme),
           if (outcomeNotice != null) ...<Widget>[
             const SizedBox(height: 8),
             Text(
@@ -85,7 +87,25 @@ class ConnectPanel extends StatelessWidget {
     );
   }
 
-  Widget _action(ThemeData theme) {
+  /// D-11: a connect attempt without a connectable key is refused locally as
+  /// an honest UI mirror, with the locked toast and a shop destination. The
+  /// server gate is unchanged and remains authoritative.
+  void _noKey(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Нужен активный ключ")),
+    );
+    onBuy();
+  }
+
+  void _connect(BuildContext context) {
+    if (!hasKey) {
+      _noKey(context);
+      return;
+    }
+    onConnect();
+  }
+
+  Widget _action(BuildContext context, ThemeData theme) {
     if (!hasKey) {
       return Column(
         mainAxisSize: MainAxisSize.min,
@@ -98,7 +118,10 @@ class ConnectPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          OutlinedButton(onPressed: onBuy, child: const Text("Купить")),
+          OutlinedButton(
+            onPressed: () => _noKey(context),
+            child: const Text("Купить"),
+          ),
         ],
       );
     }
@@ -107,7 +130,7 @@ class ConnectPanel extends StatelessWidget {
     // «Отключение…» is disabled so a second stop cannot be triggered.
     final enabled = phase != ConnPhase.disconnecting;
     return FilledButton(
-      onPressed: enabled ? onConnect : null,
+      onPressed: enabled ? () => _connect(context) : null,
       child: Text(phase.buttonLabel),
     );
   }

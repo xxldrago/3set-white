@@ -243,6 +243,13 @@ void main() {
     expect(routerSource, contains("path: '/register'"));
     expect(routerSource, contains("path: '/telegram-wait'"));
     expect(routerSource, contains("path: '/shop'"));
+    // D-05/T-21-34: the WebView route validates the URL and has no success
+    // side effect; a deep-link return can never confirm a payment.
+    expect(routerSource, contains("path: '/payment/webview'"));
+    expect(routerSource, contains("PaymentFlow.isHttpsPaymentUrl"));
+    expect(routerSource, contains("PaymentWebViewPage(url: url)"));
+    expect(routerSource, isNot(contains("purchaseStatusProvider")));
+    expect(routerSource, isNot(contains("onProvisioned")));
     expect(routerSource, contains("const ServerPoolScreen()"));
     expect(routerSource, isNot(contains("NavigationBar")));
     expect(routerSource, isNot(contains("_HomeContent")));

@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 35
+open_count: 36
 waived_count: 0
 fixed_count: 1
-total_count: 36
-last_updated: 2026-11-28T03:08:21.528Z
+total_count: 37
+last_updated: 2026-11-28T09:51:19.457Z
 ---
 
 # Broken Windows Ledger
@@ -51,6 +51,7 @@ last_updated: 2026-11-28T03:08:21.528Z
 | 34 | 20 | deviation | mobile/test/widget/features/servers/server_pool_screen_test.dart |  | 20-07 Rule 3: pre-existing screen test updated with FakeConnectionNotifier because the plan removed the asserted phase-20 stub copy; file was not in files_modified | open |  | 2026-11-27T11:12:37.969Z |  |
 | 35 | 20 | lint-warning |  |  | 20-07 bare flutter analyze exits 1 on ~1632 pre-existing info/warning lints (0 errors); used --no-fatal-infos --no-fatal-warnings with exit 0, no unrelated files touched | open |  | 2026-11-27T11:12:46.608Z |  |
 | 36 | 21 | lint-warning | mobile/pubspec.yaml |  | flutter analyze exits 1 on pre-existing 1690 info/warning lint baseline; 21-01 Dart files have zero errors/warnings | open |  | 2026-11-28T03:08:21.528Z |  |
+| 37 | 22 | deviation | app/api/mobile/payments/create/route.ts |  | 22-01 Rule 2: paid upgrade intent posts no client keyId, so /payments/create now derives the active owned key from the JWT via isKeyConnectable; createOrder remains the sole issuer | open |  | 2026-11-28T09:51:19.457Z |  |
 
 ````json
 [
@@ -484,6 +485,18 @@ last_updated: 2026-11-28T03:08:21.528Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-28T03:08:21.528Z",
+    "resolved_at": null
+  },
+  {
+    "id": 37,
+    "kind": "deviation",
+    "phase": "22",
+    "file": "app/api/mobile/payments/create/route.ts",
+    "line": null,
+    "description": "22-01 Rule 2: paid upgrade intent posts no client keyId, so /payments/create now derives the active owned key from the JWT via isKeyConnectable; createOrder remains the sole issuer",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-28T09:51:19.457Z",
     "resolved_at": null
   }
 ]

@@ -4,6 +4,8 @@ import 'app/router.dart';
 import 'app/theme.dart';
 import "core/payment/payment_resume_listener.dart"
     show paymentResumeListenerProvider;
+import "core/notifications/expiry_notification_listener.dart"
+    show expiryNotificationListenerProvider;
 import "core/settings/auto_connect_listener.dart"
     show autoConnectListenerProvider;
 import "core/vpn/connection_notifier.dart"
@@ -44,6 +46,11 @@ class App extends ConsumerWidget {
     // deliberately a caller of the existing FSM; no second reconnect path,
     // native rule or kill-switch change is introduced (D-04, D-15 preserved).
     ref.watch(autoConnectListenerProvider);
+    // REQ-NOTIF-01: one local expiry listener for the whole app lifetime. It
+    // schedules T-7/T-3/T-1 reminders from the server expiry and routes a
+    // navigation-only tap to /shop. No FCM, token route or payment effect
+    // exists here (D-08).
+    ref.watch(expiryNotificationListenerProvider);
 
     final router = ref.watch(routerProvider);
 

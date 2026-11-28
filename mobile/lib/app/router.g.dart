@@ -16,7 +16,8 @@ part of 'router.dart';
 /// - /: Main app screen (full prototype server pools, D-15)
 /// - /shop: real server-driven Shop Screen (no bottom navigation)
 /// - /payment/webview: in-app hosted payment page; the URL is validated https
-///   and is never treated as payment confirmation (status comes from the DB).
+///   against the configured provider-host allowlist (T-21-06) and is never
+///   treated as payment confirmation (status comes from the DB).
 /// Riverpod provider for the GoRouter instance
 
 @ProviderFor(router)
@@ -30,7 +31,8 @@ final routerProvider = RouterProvider._();
 /// - /: Main app screen (full prototype server pools, D-15)
 /// - /shop: real server-driven Shop Screen (no bottom navigation)
 /// - /payment/webview: in-app hosted payment page; the URL is validated https
-///   and is never treated as payment confirmation (status comes from the DB).
+///   against the configured provider-host allowlist (T-21-06) and is never
+///   treated as payment confirmation (status comes from the DB).
 /// Riverpod provider for the GoRouter instance
 
 final class RouterProvider
@@ -44,7 +46,8 @@ final class RouterProvider
   /// - /: Main app screen (full prototype server pools, D-15)
   /// - /shop: real server-driven Shop Screen (no bottom navigation)
   /// - /payment/webview: in-app hosted payment page; the URL is validated https
-  ///   and is never treated as payment confirmation (status comes from the DB).
+  ///   against the configured provider-host allowlist (T-21-06) and is never
+  ///   treated as payment confirmation (status comes from the DB).
   /// Riverpod provider for the GoRouter instance
   RouterProvider._()
     : super(

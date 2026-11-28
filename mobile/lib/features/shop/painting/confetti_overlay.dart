@@ -187,12 +187,17 @@ class _ConfettiOnStatusState extends State<ConfettiOnStatus>
         Positioned.fill(child: widget.child),
         if (_celebrating)
           Positioned.fill(
-            child: IgnorePointer(
-              child: AnimatedBuilder(
-                animation: _controller,
-                builder: (context, _) => CustomPaint(
-                  painter: ConfettiPainter(progress: _controller.value),
-                  size: Size.infinite,
+            // Accessibility (22.12): the particles are pure decoration. They
+            // must never appear as a screen-reader node or a false affordance,
+            // but the phase-21 animation and timing are unchanged.
+            child: ExcludeSemantics(
+              child: IgnorePointer(
+                child: AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, _) => CustomPaint(
+                    painter: ConfettiPainter(progress: _controller.value),
+                    size: Size.infinite,
+                  ),
                 ),
               ),
             ),

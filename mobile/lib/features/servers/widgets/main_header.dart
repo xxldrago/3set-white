@@ -133,33 +133,49 @@ class MainHeader extends StatelessWidget {
     ],
   );
 
+  /// Accessibility (22.12): every icon-only action carries an explicit Russian
+  /// [Semantics] label. The copy is frozen and never contains a device token,
+  /// subscription link or provider text (T-22-29).
   Widget _actions(ThemeData theme) => Row(
     mainAxisSize: MainAxisSize.min,
     children: <Widget>[
-      IconButton(
-        tooltip: "Как это работает",
-        icon: const Icon(Icons.help_outline),
-        onPressed: onLogic,
+      Semantics(
+        label: "Как это работает",
+        button: true,
+        child: IconButton(
+          tooltip: "Как это работает",
+          icon: const Icon(Icons.help_outline),
+          onPressed: onLogic,
+        ),
       ),
-      IconButton(
-        tooltip: "Купить ключ",
-        icon: const Icon(Icons.shopping_bag_outlined),
-        onPressed: onShop,
+      Semantics(
+        label: "Купить ключ",
+        button: true,
+        child: IconButton(
+          tooltip: "Купить ключ",
+          icon: const Icon(Icons.shopping_bag_outlined),
+          onPressed: onShop,
+        ),
       ),
-      IconButton(
-        tooltip: "Обновить пинг",
-        icon: refreshing
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Icon(Icons.refresh),
-        onPressed: refreshing ? null : onRefresh,
+      Semantics(
+        label: "Обновить пинг",
+        button: true,
+        child: IconButton(
+          tooltip: "Обновить пинг",
+          icon: refreshing
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.refresh),
+          onPressed: refreshing ? null : onRefresh,
+        ),
       ),
       const SizedBox(width: 2),
       Semantics(
         label: "Профиль",
+        button: true,
         child: GestureDetector(
           onTap: onProfile,
           child: CircleAvatar(

@@ -85,10 +85,19 @@ class DaysRing extends StatelessWidget {
       child: SizedBox(
         width: size,
         height: size,
-        child: CustomPaint(
-          painter: DaysRingPainter(days: value),
-          child: Center(
-            child: Text(
+        // Accessibility (22.12): the drawn arc is decorative and contributes
+        // no semantics node. The day count stays announced by the label above,
+        // so excluding the painter never hides real state from a screen reader.
+        child: Stack(
+          alignment: Alignment.center,
+          children: <Widget>[
+            ExcludeSemantics(
+              child: CustomPaint(
+                painter: DaysRingPainter(days: value),
+                size: Size.square(size),
+              ),
+            ),
+            Text(
               days == null ? "—" : "$days",
               style: Theme.of(context).textTheme.displaySmall?.copyWith(
                     color: days == null
@@ -96,7 +105,7 @@ class DaysRing extends StatelessWidget {
                         : DaysRingPainter.colorForDays(value),
                   ),
             ),
-          ),
+          ],
         ),
       ),
     );

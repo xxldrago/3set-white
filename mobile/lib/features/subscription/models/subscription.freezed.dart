@@ -16,7 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SubscriptionUser {
 
- int get id;@JsonKey(name: "telegramId") int? get telegramId; String? get email;
+ int get id;@JsonKey(name: "telegramId") int? get telegramId; String? get email;@JsonKey(name: "firstName") String? get firstName;@JsonKey(name: "lastName") String? get lastName;@JsonKey(name: "username") String? get username;@JsonKey(name: "referralCode") String? get referralCode;
 /// Create a copy of SubscriptionUser
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,20 +30,20 @@ $SubscriptionUserCopyWith<SubscriptionUser> get copyWith => _$SubscriptionUserCo
 @override
 bool operator ==(Object other) {
   final _this = this as SubscriptionUser;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SubscriptionUser&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.telegramId, _this.telegramId) || other.telegramId == _this.telegramId)&&(identical(other.email, _this.email) || other.email == _this.email));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SubscriptionUser&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.telegramId, _this.telegramId) || other.telegramId == _this.telegramId)&&(identical(other.email, _this.email) || other.email == _this.email)&&(identical(other.firstName, _this.firstName) || other.firstName == _this.firstName)&&(identical(other.lastName, _this.lastName) || other.lastName == _this.lastName)&&(identical(other.username, _this.username) || other.username == _this.username)&&(identical(other.referralCode, _this.referralCode) || other.referralCode == _this.referralCode));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as SubscriptionUser;
-  return Object.hash(runtimeType,_this.id,_this.telegramId,_this.email);
+  return Object.hash(runtimeType,_this.id,_this.telegramId,_this.email,_this.firstName,_this.lastName,_this.username,_this.referralCode);
 }
 
 @override
 String toString() {
   final _this = this as SubscriptionUser;
-  return 'SubscriptionUser(id: ${_this.id}, telegramId: ${_this.telegramId}, email: ${_this.email})';
+  return 'SubscriptionUser(id: ${_this.id}, telegramId: ${_this.telegramId}, email: ${_this.email}, firstName: ${_this.firstName}, lastName: ${_this.lastName}, username: ${_this.username}, referralCode: ${_this.referralCode})';
 }
 
 
@@ -54,7 +54,7 @@ abstract mixin class $SubscriptionUserCopyWith<$Res>  {
   factory $SubscriptionUserCopyWith(SubscriptionUser value, $Res Function(SubscriptionUser) _then) = _$SubscriptionUserCopyWithImpl;
 @useResult
 $Res call({
- int id,@JsonKey(name: "telegramId") int? telegramId, String? email
+ int id,@JsonKey(name: "telegramId") int? telegramId, String? email,@JsonKey(name: "firstName") String? firstName,@JsonKey(name: "lastName") String? lastName,@JsonKey(name: "username") String? username,@JsonKey(name: "referralCode") String? referralCode
 });
 
 
@@ -71,11 +71,15 @@ class _$SubscriptionUserCopyWithImpl<$Res>
 
 /// Create a copy of SubscriptionUser
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? telegramId = freezed,Object? email = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? telegramId = freezed,Object? email = freezed,Object? firstName = freezed,Object? lastName = freezed,Object? username = freezed,Object? referralCode = freezed,}) {
   return _then(SubscriptionUser(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,telegramId: freezed == telegramId ? _self.telegramId : telegramId // ignore: cast_nullable_to_non_nullable
 as int?,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String?,firstName: freezed == firstName ? _self.firstName : firstName // ignore: cast_nullable_to_non_nullable
+as String?,lastName: freezed == lastName ? _self.lastName : lastName // ignore: cast_nullable_to_non_nullable
+as String?,username: freezed == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
+as String?,referralCode: freezed == referralCode ? _self.referralCode : referralCode // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -161,10 +165,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id, @JsonKey(name: "telegramId")  int? telegramId,  String? email)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id, @JsonKey(name: "telegramId")  int? telegramId,  String? email, @JsonKey(name: "firstName")  String? firstName, @JsonKey(name: "lastName")  String? lastName, @JsonKey(name: "username")  String? username, @JsonKey(name: "referralCode")  String? referralCode)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SubscriptionUser() when $default != null:
-return $default(_that.id,_that.telegramId,_that.email);case _:
+return $default(_that.id,_that.telegramId,_that.email,_that.firstName,_that.lastName,_that.username,_that.referralCode);case _:
   return orElse();
 
 }
@@ -182,10 +186,10 @@ return $default(_that.id,_that.telegramId,_that.email);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id, @JsonKey(name: "telegramId")  int? telegramId,  String? email)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id, @JsonKey(name: "telegramId")  int? telegramId,  String? email, @JsonKey(name: "firstName")  String? firstName, @JsonKey(name: "lastName")  String? lastName, @JsonKey(name: "username")  String? username, @JsonKey(name: "referralCode")  String? referralCode)  $default,) {final _that = this;
 switch (_that) {
 case _SubscriptionUser():
-return $default(_that.id,_that.telegramId,_that.email);case _:
+return $default(_that.id,_that.telegramId,_that.email,_that.firstName,_that.lastName,_that.username,_that.referralCode);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -202,10 +206,10 @@ return $default(_that.id,_that.telegramId,_that.email);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id, @JsonKey(name: "telegramId")  int? telegramId,  String? email)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id, @JsonKey(name: "telegramId")  int? telegramId,  String? email, @JsonKey(name: "firstName")  String? firstName, @JsonKey(name: "lastName")  String? lastName, @JsonKey(name: "username")  String? username, @JsonKey(name: "referralCode")  String? referralCode)?  $default,) {final _that = this;
 switch (_that) {
 case _SubscriptionUser() when $default != null:
-return $default(_that.id,_that.telegramId,_that.email);case _:
+return $default(_that.id,_that.telegramId,_that.email,_that.firstName,_that.lastName,_that.username,_that.referralCode);case _:
   return null;
 
 }
@@ -217,12 +221,16 @@ return $default(_that.id,_that.telegramId,_that.email);case _:
 @JsonSerializable()
 
 class _SubscriptionUser implements SubscriptionUser {
-  const _SubscriptionUser({required this.id, @JsonKey(name: "telegramId") this.telegramId, this.email});
+  const _SubscriptionUser({required this.id, @JsonKey(name: "telegramId") this.telegramId, this.email, @JsonKey(name: "firstName") this.firstName, @JsonKey(name: "lastName") this.lastName, @JsonKey(name: "username") this.username, @JsonKey(name: "referralCode") this.referralCode});
   factory _SubscriptionUser.fromJson(Map<String, dynamic> json) => _$SubscriptionUserFromJson(json);
 
 @override final  int id;
 @override@JsonKey(name: "telegramId") final  int? telegramId;
 @override final  String? email;
+@override@JsonKey(name: "firstName") final  String? firstName;
+@override@JsonKey(name: "lastName") final  String? lastName;
+@override@JsonKey(name: "username") final  String? username;
+@override@JsonKey(name: "referralCode") final  String? referralCode;
 
 /// Create a copy of SubscriptionUser
 /// with the given fields replaced by the non-null parameter values.
@@ -237,18 +245,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SubscriptionUser&&(identical(other.id, id) || other.id == id)&&(identical(other.telegramId, telegramId) || other.telegramId == telegramId)&&(identical(other.email, email) || other.email == email));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SubscriptionUser&&(identical(other.id, id) || other.id == id)&&(identical(other.telegramId, telegramId) || other.telegramId == telegramId)&&(identical(other.email, email) || other.email == email)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.username, username) || other.username == username)&&(identical(other.referralCode, referralCode) || other.referralCode == referralCode));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,telegramId,email);
+    return Object.hash(runtimeType,id,telegramId,email,firstName,lastName,username,referralCode);
 }
 
 @override
 String toString() {
-    return 'SubscriptionUser(id: $id, telegramId: $telegramId, email: $email)';
+    return 'SubscriptionUser(id: $id, telegramId: $telegramId, email: $email, firstName: $firstName, lastName: $lastName, username: $username, referralCode: $referralCode)';
 }
 
 
@@ -259,7 +267,7 @@ abstract mixin class _$SubscriptionUserCopyWith<$Res> implements $SubscriptionUs
   factory _$SubscriptionUserCopyWith(_SubscriptionUser value, $Res Function(_SubscriptionUser) _then) = __$SubscriptionUserCopyWithImpl;
 @override @useResult
 $Res call({
- int id,@JsonKey(name: "telegramId") int? telegramId, String? email
+ int id,@JsonKey(name: "telegramId") int? telegramId, String? email,@JsonKey(name: "firstName") String? firstName,@JsonKey(name: "lastName") String? lastName,@JsonKey(name: "username") String? username,@JsonKey(name: "referralCode") String? referralCode
 });
 
 
@@ -276,11 +284,15 @@ class __$SubscriptionUserCopyWithImpl<$Res>
 
 /// Create a copy of SubscriptionUser
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? telegramId = freezed,Object? email = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? telegramId = freezed,Object? email = freezed,Object? firstName = freezed,Object? lastName = freezed,Object? username = freezed,Object? referralCode = freezed,}) {
   return _then(_SubscriptionUser(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,telegramId: freezed == telegramId ? _self.telegramId : telegramId // ignore: cast_nullable_to_non_nullable
 as int?,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String?,firstName: freezed == firstName ? _self.firstName : firstName // ignore: cast_nullable_to_non_nullable
+as String?,lastName: freezed == lastName ? _self.lastName : lastName // ignore: cast_nullable_to_non_nullable
+as String?,username: freezed == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
+as String?,referralCode: freezed == referralCode ? _self.referralCode : referralCode // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

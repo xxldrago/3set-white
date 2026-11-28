@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   listKeys: vi.fn(),
   getSubscription: vi.fn(),
   findUser: vi.fn(),
+  ensureReferral: vi.fn(async (_userId: number) => "3SET-ABC123"),
   days: vi.fn(() => 6),
   // The shared grace helper imports this; mirror the real derivation so the
   // route fixtures exercise the actual predicate.
@@ -38,6 +39,7 @@ vi.mock('../../lib/keys-service', () => ({
   deriveStatusKind: mocks.deriveStatusKind,
 }));
 vi.mock('../../lib/prisma', () => ({ prisma: { user: { findUnique: mocks.findUser } } }));
+vi.mock('../../lib/referrals', () => ({ ensureReferralCode: mocks.ensureReferral }));
 vi.mock('../../lib/logger', () => ({
   logger: { info: mocks.info, error: mocks.error, warn: vi.fn(), debug: vi.fn() },
 }));
@@ -46,7 +48,15 @@ import { GET } from '../../app/api/mobile/subscription/route';
 
 const LINK = 'https://sub.example.test/SECRETSUB123';
 const FUTURE = new Date(Date.now() + 5 * 86_400_000).toISOString();
-const USER = { id: 1, telegramId: BigInt('12345'), email: 'u@example.test' };
+const USER = {
+  id: 1,
+  telegramId: BigInt('12345'),
+  email: 'u@example.test',
+  firstName: 'Алексей',
+  lastName: 'Иванов',
+  username: 'alex_tg',
+  referralCode: null as string | null,
+};
 
 function key(overrides: Partial<RenderedKey> = {}): RenderedKey {
   return {
@@ -78,7 +88,8 @@ const logText = () => JSON.stringify(mocks.info.mock.calls) + JSON.stringify(moc
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.verify.mockResolvedValue({ userId: 1, telegramId: null });
-  mocks.findUser.mockResolvedValue(USER);
+  mocks.findUser.mockImplementation(async () => ({ ...USER }));
+  mocks.ensureReferral.mockResolvedValue("3SET-ABC123");
   mocks.listKeys.mockResolvedValue([key()]);
   mocks.getSubscription.mockImplementation(subscribed);
   mocks.days.mockReturnValue(6);
@@ -119,7 +130,15 @@ describe('real owned-key subscription (D-12 / REQ-SUB-01/02/06)', () => {
       isTrial: false,
       statusKind: 'active',
       graceUntil: null,
-      user: { id: 1, telegramId: 12345, email: 'u@example.test' },
+      user: {
+        id: 1,
+        telegramId: 12345,
+        email: 'u@example.test',
+        firstName: 'Алексей',
+        lastName: 'Иванов',
+        username: 'alex_tg',
+        referralCode: '3SET-ABC123',
+      },
     });
     expect(mocks.getSubscription).toHaveBeenCalledTimes(1);
     expect(mocks.getSubscription).toHaveBeenCalledWith(1, 'key-active');
@@ -196,5 +215,67 @@ describe('no active key / provider degradation (D-11 / D-22)', () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ ok: false, error: 'internal' });
     expect(mocks.error).toHaveBeenCalled();
+  });
+});
+
+describe('real identity and referral from the caller row only (T-22-14, T-22-20)', () => {
+  it('ensures a NULL legacy code on claims.userId only and returns it verbatim', async () => {
+    mocks.findUser.mockResolvedValue({ ...USER, referralCode: null });
+    const res = await GET(request());
+    expect(res.status).toBe(200);
+    const user = ((await res.json()) as { user: Record<string, unknown> }).user;
+    expect(user).toMatchObject({
+      id: 1,
+      firstName: 'Алексей',
+      lastName: 'Иванов',
+      username: 'alex_tg',
+      email: 'u@example.test',
+      referralCode: '3SET-ABC123',
+    });
+    expect(mocks.findUser).toHaveBeenCalledWith({
+      where: { id: 1 },
+      select: expect.objectContaining({
+        firstName: true,
+        lastName: true,
+        username: true,
+        referralCode: true,
+      }),
+    });
+    expect(mocks.ensureReferral).toHaveBeenCalledTimes(1);
+    expect(mocks.ensureReferral).toHaveBeenCalledWith(1);
+  });
+
+  it('returns an already-stored prefixed code verbatim without a second ensure or prefix', async () => {
+    const stored = '3SET-STORED';
+    mocks.findUser.mockResolvedValue({ ...USER, referralCode: stored });
+    const res = await GET(request());
+    const user = ((await res.json()) as { user: Record<string, unknown> }).user;
+    expect(user.referralCode).toBe(stored);
+    expect(String(user.referralCode).match(/3SET-/g)).toHaveLength(1);
+    expect(mocks.ensureReferral).not.toHaveBeenCalled();
+  });
+
+  it('never invents an email, exposes another user or logs identity/referral text', async () => {
+    mocks.findUser.mockResolvedValue({
+      ...USER,
+      email: null,
+      firstName: null,
+      lastName: null,
+      username: null,
+      referralCode: '3SET-OTHER',
+    });
+    const res = await GET(request());
+    const body = (await res.json()) as { user: Record<string, unknown> };
+    expect(body.user.email).toBeNull();
+    expect(body.user.firstName).toBeNull();
+    expect(body.user.username).toBeNull();
+    expect(body.user.referralCode).toBe('3SET-OTHER');
+    expect(mocks.findUser).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 1 } }),
+    );
+    expect(mocks.ensureReferral).not.toHaveBeenCalled();
+    expect(logText()).not.toContain('3SET-OTHER');
+    expect(logText()).not.toContain('Алексей');
+    expect(logText()).not.toContain('u@example.test');
   });
 });

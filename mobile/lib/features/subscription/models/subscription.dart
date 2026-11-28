@@ -12,6 +12,12 @@ abstract class SubscriptionUser with _$SubscriptionUser {
     required int id,
     @JsonKey(name: "telegramId") int? telegramId,
     String? email,
+    @JsonKey(name: "firstName") String? firstName,
+    @JsonKey(name: "lastName") String? lastName,
+    @JsonKey(name: "username") String? username,
+    // The stored code already carries the public `3SET-` prefix; the client
+    // appends it once and never duplicates it.
+    @JsonKey(name: "referralCode") String? referralCode,
   }) = _SubscriptionUser;
 
   /// Parses the backend identity block.

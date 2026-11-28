@@ -11,6 +11,10 @@ _SubscriptionUser _$SubscriptionUserFromJson(Map<String, dynamic> json) =>
       id: (json['id'] as num).toInt(),
       telegramId: (json['telegramId'] as num?)?.toInt(),
       email: json['email'] as String?,
+      firstName: json['firstName'] as String?,
+      lastName: json['lastName'] as String?,
+      username: json['username'] as String?,
+      referralCode: json['referralCode'] as String?,
     );
 
 Map<String, dynamic> _$SubscriptionUserToJson(_SubscriptionUser instance) =>
@@ -18,6 +22,10 @@ Map<String, dynamic> _$SubscriptionUserToJson(_SubscriptionUser instance) =>
       'id': instance.id,
       'telegramId': instance.telegramId,
       'email': instance.email,
+      'firstName': instance.firstName,
+      'lastName': instance.lastName,
+      'username': instance.username,
+      'referralCode': instance.referralCode,
     };
 
 _SubscriptionStatus _$SubscriptionStatusFromJson(Map<String, dynamic> json) =>

@@ -36,14 +36,17 @@ Widget _profileApp({
   List<String>? copiedLinks,
   List<PaymentRequest>? intents,
   List<String>? deletedTokens,
+  SubscriptionUser? user,
 }) {
+  final base = subscription ?? _subscription();
+  final effective = user == null ? base : base.copyWith(user: user);
   return ProviderScope(
     overrides: [
       devicesProvider.overrideWith((ref) async {
         if (devicesError != null) throw StateError(devicesError.toString());
         return devices ?? _devices();
       }),
-      userSubscriptionProvider.overrideWith((ref) async => subscription ?? _subscription()),
+      userSubscriptionProvider.overrideWith((ref) async => effective),
       linkCopierProvider.overrideWithValue((link) async {
         copiedLinks?.add(link);
       }),
@@ -112,6 +115,87 @@ void main() {
       expect(find.text("Трафик вне VPN заблокирован"), findsOneWidget);
       expect(find.byType(Switch), findsNothing);
       expect(find.byType(SwitchListTile), findsNothing);
+    });
+
+    testWidgets("read-only kill switch copy is identical on every rebuild", (
+      tester,
+    ) async {
+      await tester.pumpWidget(_profileApp());
+      await tester.pumpAndSettle();
+
+      expect(find.text("Kill switch: включён"), findsOneWidget);
+      expect(find.text("Трафик вне VPN заблокирован"), findsOneWidget);
+      expect(find.byType(Switch), findsNothing);
+      expect(find.byType(SwitchListTile), findsNothing);
+
+      await tester.pump(); // a plain rebuild must not change the copy
+      expect(find.text("Kill switch: включён"), findsOneWidget);
+      expect(find.text("Трафик вне VPN заблокирован"), findsOneWidget);
+      expect(find.byType(Switch), findsNothing);
+    });
+
+    testWidgets("identity prefers the real firstName over username and email", (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _profileApp(
+          user: const SubscriptionUser(
+            id: 7,
+            telegramId: 55,
+            email: "a@b.test",
+            firstName: "Алик",
+            lastName: "Иванов",
+            username: "tg_user",
+            referralCode: "3SET-ABC123",
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text("Алик"), findsOneWidget);
+      expect(find.text("tg_user"), findsNothing);
+      expect(find.text("a"), findsNothing);
+      expect(find.text("Telegram"), findsOneWidget);
+    });
+
+    testWidgets("identity falls back to username before email local part", (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _profileApp(
+          user: const SubscriptionUser(
+            id: 7,
+            email: "alex@example.test",
+            username: "tg_user",
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text("tg_user"), findsOneWidget);
+      expect(find.text("alex"), findsNothing);
+    });
+
+    testWidgets("identity falls back to the real email local part", (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _profileApp(
+          user: const SubscriptionUser(id: 7, email: "alex@example.test"),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text("alex"), findsOneWidget);
+      expect(find.text("Email"), findsOneWidget);
+    });
+
+    testWidgets("identity ends at the neutral label when no field is present", (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _profileApp(user: const SubscriptionUser(id: 7)),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text("Пользователь"), findsOneWidget);
     });
 
     testWidgets("no bottom navigation and identity comes from the server user", (

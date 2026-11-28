@@ -12,6 +12,7 @@ import {
   listKeysByUserId,
 } from "@/lib/keys-service";
 import { verifyAccessToken } from "@/lib/mobile-auth";
+import { ensureReferralCode } from "@/lib/referrals";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { deriveSubscriptionStatus, isKeyConnectable } from "@/lib/subscription-view";
@@ -24,6 +25,12 @@ interface UserIdentity {
   id: number;
   telegramId: number | null;
   email: string | null;
+  /** Real nullable DB fields — never invented on the server or the client. */
+  firstName: string | null;
+  lastName: string | null;
+  username: string | null;
+  /** Stored public code (already carries the `3SET-` prefix, verbatim). */
+  referralCode: string | null;
 }
 
 interface SubscriptionBody {
@@ -63,7 +70,15 @@ export async function GET(req: NextRequest) {
     // reads `user.id` from a 200 response to persist the userId fast path.
     const user = await prisma.user.findUnique({
       where: { id: claims.userId },
-      select: { id: true, telegramId: true, email: true },
+      select: {
+        id: true,
+        telegramId: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        username: true,
+        referralCode: true,
+      },
     });
     if (!user) {
       logger.info({
@@ -72,10 +87,19 @@ export async function GET(req: NextRequest) {
       });
       return respond({ ok: false, error: "user_not_found" }, requestId, 404);
     }
+    // A NULL legacy code is ensured on the AUTHENTICATED user's own row only.
+    // The stored value already includes the public `3SET-` prefix and is
+    // returned verbatim — never generated or double-prefixed here (T-22-14).
+    const referralCode =
+      user.referralCode ?? (await ensureReferralCode(claims.userId));
     const identity: UserIdentity = {
       id: user.id,
       telegramId: user.telegramId ? Number(user.telegramId) : null,
       email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username,
+      referralCode,
     };
 
     // One owned, connectable key is picked by the SAME predicate /servers and

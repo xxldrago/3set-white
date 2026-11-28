@@ -1,4 +1,4 @@
-// Real dark profile sheet (phase 22-01 tracer slice, D-01/D-04/D-16).
+// Real dark profile sheet (phase 22-01/22-03, D-01/D-04/D-16).
 //
 // Identity comes from the already-fetched `userSubscriptionProvider`; devices
 // come from the ownership-scoped `GET /api/mobile/devices`. The kill switch is a
@@ -12,6 +12,28 @@ import "../subscription/models/subscription.dart";
 import "../subscription/providers.dart"
     show subscriptionNotice, userSubscriptionProvider;
 import "devices/devices_sheet.dart" show DevicesSheet;
+import "settings/kill_switch_row.dart" show KillSwitchRow;
+
+/// Deterministic display-name chain from REAL server fields only.
+///
+/// No email is invented: a missing name falls back to username, then to the
+/// email local part, then to a neutral label. Pure so it is directly testable.
+String profileDisplayName(SubscriptionUser? user) {
+  final first = user?.firstName?.trim();
+  if (first != null && first.isNotEmpty) return first;
+  final username = user?.username?.trim();
+  if (username != null && username.isNotEmpty) return username;
+  final email = user?.email;
+  if (email != null && email.isNotEmpty) {
+    final localPart = email.split("@").first.trim();
+    if (localPart.isNotEmpty) return localPart;
+  }
+  return "Пользователь";
+}
+
+/// Auth-method pill derived from the real identity block, never from a flag.
+String profileAuthMethod(SubscriptionUser? user) =>
+    user?.telegramId != null ? "Telegram" : "Email";
 
 class ProfileSheet extends ConsumerWidget {
   const ProfileSheet({super.key});
@@ -32,7 +54,7 @@ class ProfileSheet extends ConsumerWidget {
             const SizedBox(height: 16),
             _Identity(user: subscription.value?.user),
             const SizedBox(height: 12),
-            const _KillSwitchStatus(),
+            const KillSwitchRow(),
             const SizedBox(height: 16),
             Text("Устройства", style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
@@ -60,15 +82,8 @@ class _Identity extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // No invented email: use the real email local part, then a neutral label.
-    final email = user?.email;
-    final localPart = email != null && email.contains("@")
-        ? email.split("@").first
-        : email;
-    final name = (localPart != null && localPart.isNotEmpty)
-        ? localPart
-        : "Пользователь";
-    final method = user?.telegramId != null ? "Telegram" : "Email";
+    final name = profileDisplayName(user);
+    final method = profileAuthMethod(user);
 
     return Row(
       children: <Widget>[
@@ -92,44 +107,6 @@ class _Identity extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Read-only copy only — D-01 kill switch is always on and D-04 forbids any
-/// native toggle or hidden flag. This is a plain Row, not a ListTile/button.
-class _KillSwitchStatus extends StatelessWidget {
-  const _KillSwitchStatus();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppTheme.surface2,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.line),
-      ),
-      child: Row(
-        children: <Widget>[
-          const Icon(Icons.shield_outlined, color: AppTheme.lime, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text("Kill switch: включён", style: theme.textTheme.bodyMedium),
-                const SizedBox(height: 2),
-                Text(
-                  "Трафик вне VPN заблокирован",
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -6,10 +6,10 @@ current_phase: 22
 current_phase_name: Devices, Settings & Polish
 status: executing
 stopped_at: Phase 22 context gathered
-last_updated: "2026-11-28T09:06:17.206Z"
+last_updated: "2026-11-28T09:08:52.886Z"
 last_activity: 2026-11-28
-last_activity_desc: Phase 21 execution started
-state_head: c94af1638cafd61bc8a7f842366b9bd5d149640b
+last_activity_desc: Phase 22 execution started
+state_head: f2f48050a3e67a9fb5fcf49de1307f3dce651836
 progress:
   total_phases: 6
   completed_phases: 0
@@ -25,15 +25,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-25)
 
 **Core value:** Пользователь за пару кликов покупает или продлевает VPN-подписку через бота или кабинет и сразу получает рабочую ссылку подписки.
-**Current focus:** Phase 21 — Subscription & Purchase
+**Current focus:** Phase 22 — Devices, Settings & Polish
 
 ## Current Position
 
-Phase: 22 (Devices, Settings & Polish) — READY TO EXECUTE
-Plan: 6 of 6
-Status: Ready to execute
+Phase: 22 (Devices, Settings & Polish) — EXECUTING
+Plan: 1 of 5
+Status: Executing Phase 22
 **Progress:** [░░░░░░░░░░] 0%
-Last activity: 2026-11-28 — Phase 21 execution started
+Last activity: 2026-11-28 — Phase 22 execution started
 
 ## Per-Milestone Progress
 
@@ -144,6 +144,7 @@ None (flat mode)
 - [Phase 21]: REQ-BE-05 closed as superseded: webhook → outbox → worker is the sole key issuer, locked by a filesystem regression guard
 - [Phase 21]: Pending payment resume keeps only the non-secret order id, clears it on every terminal status and ends at a 100-poll timeout without fake success
 - [Phase 21]: Client mirrors the server grace-aware hasKey flag; no local entitlement math, no bottom nav and no deep-link confirmation path
+- [Phase 22-01]: D-01/D-04/D-05/D-06/D-08 confirmed 'proceed-locked' at the blocking decision gate before any code; kill switch always-on/read-only, no native VPN code, honest device add via subscription-link + paid upgrade (single issuer), deferred-delete undo with no fake restore, FCM deferred. No implementation file written by the gate.
 
 ## Performance Metrics
 

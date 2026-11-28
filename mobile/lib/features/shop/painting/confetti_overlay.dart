@@ -78,6 +78,7 @@ class ConfettiOnStatus extends StatefulWidget {
     this.expiresAt,
     this.link,
     this.onProvisioned,
+    this.onCopyLink,
     super.key,
   });
 
@@ -95,6 +96,9 @@ class ConfettiOnStatus extends StatefulWidget {
 
   /// Called once on the rising edge so the screen can refresh subscription.
   final VoidCallback? onProvisioned;
+
+  /// Copies the real server link via the Shop's clipboard seam (D-15).
+  final VoidCallback? onCopyLink;
 
   /// True only for the DB-written terminal success statuses.
   static bool isProvisioned(String? status) {
@@ -231,14 +235,26 @@ class _ConfettiOnStatusState extends State<ConfettiOnStatus>
                     ),
                   if (widget.link != null && widget.link!.isNotEmpty) ...<Widget>[
                     const SizedBox(height: 16),
-                    Text(
-                      widget.link!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: AppTheme.teal,
-                      ),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(
+                            widget.link!,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: AppTheme.teal,
+                            ),
+                          ),
+                        ),
+                        if (widget.onCopyLink != null)
+                          IconButton(
+                            tooltip: "Скопировать ссылку",
+                            icon: const Icon(Icons.copy, size: 18),
+                            onPressed: widget.onCopyLink,
+                          ),
+                      ],
                     ),
                   ],
                   const SizedBox(height: 20),

@@ -282,6 +282,37 @@ void main() {
       expect(find.text("Ссылка скопирована"), findsOneWidget);
     });
 
+    testWidgets("success overlay copies the real server link and shows the "
+        "frozen toast", (tester) async {
+      final copied = <String>[];
+      await tester.pumpWidget(_shopApp(copiedLinks: copied));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(FilledButton, "Купить и продлить"));
+      await tester.pumpAndSettle();
+
+      final details = find.ancestor(
+        of: find.text("Ключ активен"),
+        matching: find.byType(Card),
+      );
+      final copy = find.descendant(
+        of: details,
+        matching: find.byTooltip("Скопировать ссылку"),
+      );
+      expect(copy, findsOneWidget);
+
+      // The confetti's own success toast is still on screen after settle.
+      ScaffoldMessenger.of(tester.element(find.byType(ShopScreen)))
+          .hideCurrentSnackBar();
+      await tester.pumpAndSettle();
+
+      await tester.tap(copy);
+      await tester.pump();
+
+      expect(copied, <String>[_link]);
+      expect(find.text("Ссылка скопирована"), findsOneWidget);
+    });
+
     testWidgets("trial hides renew/upgrade and shows the locked copy", (
       tester,
     ) async {
@@ -464,6 +495,60 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(_hasConfetti(tester), isFalse);
+    });
+
+    testWidgets("success overlay exposes a copy action for the real link", (
+      tester,
+    ) async {
+      var copies = 0;
+      Widget overlay(String? status) => MaterialApp(
+            theme: AppTheme.dark,
+            home: Scaffold(
+              body: ConfettiOnStatus(
+                status: status,
+                expiresAt: _expiresAt,
+                link: _link,
+                onCopyLink: () => copies++,
+                child: const Text("shop"),
+              ),
+            ),
+          );
+
+      await tester.pumpWidget(overlay("pending"));
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pumpWidget(overlay("provisioned"));
+      await tester.pumpAndSettle();
+
+      expect(find.text(_link), findsOneWidget);
+      final copy = find.byTooltip("Скопировать ссылку");
+      expect(copy, findsOneWidget);
+      await tester.tap(copy);
+      await tester.pump();
+      expect(copies, 1);
+    });
+
+    testWidgets("success overlay has no copy action without a server link", (
+      tester,
+    ) async {
+      Widget overlay(String? status) => MaterialApp(
+            theme: AppTheme.dark,
+            home: Scaffold(
+              body: ConfettiOnStatus(
+                status: status,
+                expiresAt: _expiresAt,
+                onCopyLink: () => fail("must not copy an absent link"),
+                child: const Text("shop"),
+              ),
+            ),
+          );
+
+      await tester.pumpWidget(overlay("pending"));
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pumpWidget(overlay("provisioned"));
+      await tester.pumpAndSettle();
+
+      expect(find.text("Ключ активен"), findsOneWidget);
+      expect(find.byTooltip("Скопировать ссылку"), findsNothing);
     });
   });
 }

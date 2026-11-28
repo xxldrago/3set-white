@@ -5,6 +5,8 @@
 // discount only from the server preview. Local state holds selection, not
 // authority. The pay action hands off to the single plan-01 PaymentFlow; no
 // amount, URL or key is generated here and there is no bottom navigation.
+import "dart:async";
+
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
@@ -149,9 +151,29 @@ class ShopScreen extends ConsumerWidget {
           status: purchaseStatus,
           expiresAt: subscriptionAsync.value?.expiresAt,
           link: subscriptionAsync.value?.link,
+          onCopyLink: () {
+            unawaited(
+              copySubscriptionLink(context, ref, subscriptionAsync.value?.link),
+            );
+          },
           child: content,
         ),
       ),
+    );
+  }
+
+  /// Copies a real server-provided link through the injectable clipboard seam
+  /// and shows the frozen Russian toast (D-15/T-21-27).
+  Future<void> copySubscriptionLink(
+    BuildContext context,
+    WidgetRef ref,
+    String? link,
+  ) async {
+    if (link == null || link.isEmpty) return;
+    await ref.read(linkCopierProvider)(link);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Ссылка скопирована")),
     );
   }
 
@@ -204,14 +226,8 @@ class ShopScreen extends ConsumerWidget {
       ref.read(appliedPromoCodeProvider.notifier).state = code;
     }
 
-    void copyLink() async {
-      final link = subscription.link;
-      if (link == null || link.isEmpty) return;
-      await ref.read(linkCopierProvider)(link);
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Ссылка скопирована")),
-      );
+    void copyLink() {
+      unawaited(copySubscriptionLink(context, ref, subscription.link));
     }
 
     void buy() async {

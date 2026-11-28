@@ -8,8 +8,11 @@ class Endpoints {
   static const String telegramNonce = '/api/mobile/auth/telegram/nonce';
   static const String telegramPoll = '/api/mobile/auth/telegram/poll';
 
-  // Subscription endpoint
+  // Subscription & Shop endpoints (Phase 21). All prices, promo percentages
+  // and payment URLs come from our BFF; the client never calls ARTEMIDA.
   static const String subscription = '/api/mobile/subscription';
+  static const String pricing = '/api/mobile/pricing';
+  static const String promoApply = '/api/mobile/promo/apply';
 
   // Future endpoints (Phase 19+)
   static const String servers = '/api/mobile/servers';

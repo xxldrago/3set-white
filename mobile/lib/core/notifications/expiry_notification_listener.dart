@@ -36,10 +36,16 @@ final expiryNotificationListenerProvider = Provider<bool>((ref) {
 
   Future<void> apply(String? expiresAt) async {
     if (hasScheduled && expiresAt == lastExpiry) return;
-    hasScheduled = true;
-    lastExpiry = expiresAt;
     try {
+      // The plugin (and the Android runtime grant) must be ready before any
+      // zonedSchedule call; a platform channel that is still initializing can
+      // otherwise drop the alarm silently (WR-03).
+      await ref.read(localNotificationsReadyProvider);
       await scheduler.scheduleFromServerExpiry(expiresAt);
+      // Only a confirmed schedule consumes the attempt. A transient failure
+      // leaves the dedupe guard open so a later emission can retry.
+      hasScheduled = true;
+      lastExpiry = expiresAt;
     } on Object catch (_) {
       // Startup must never break, and no error text is ever logged.
     }

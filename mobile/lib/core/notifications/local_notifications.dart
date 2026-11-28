@@ -6,8 +6,6 @@
 // boundary (T-22-22, T-22-23). REQ-NOTIF-02 (FCM) is deferred by D-08 — there
 // is no Firebase project, credential or backend token route, so no remote-push
 // SDK and no fabricated token are introduced here.
-import "dart:async";
-
 import "package:flutter_local_notifications/flutter_local_notifications.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:mobile/app/router.dart" show routerProvider;
@@ -184,10 +182,11 @@ final localNotificationDispatcherProvider =
 
 /// Timezone database and plugin are prepared exactly once per process.
 /// Startup must never break on a platform that refuses notification access.
-final localNotificationsReadyProvider = Provider<bool>((ref) {
+final localNotificationsReadyProvider = Provider<Future<void>>((ref) {
   tzdata.initializeTimeZones();
-  unawaited(_initializeSafely(ref.read(localNotificationDispatcherProvider)));
-  return true;
+  // Return the cached future instead of a bool: a listener can now await the
+  // real plugin + permission grant before it calls zonedSchedule (WR-03).
+  return _initializeSafely(ref.read(localNotificationDispatcherProvider));
 });
 
 Future<void> _initializeSafely(LocalNotificationDispatcher dispatcher) async {

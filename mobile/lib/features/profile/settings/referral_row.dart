@@ -86,17 +86,23 @@ class _CopyAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          children: <Widget>[
-            Icon(icon, color: AppTheme.lime, size: 18),
-            const SizedBox(width: 12),
-            Expanded(child: Text(label, style: theme.textTheme.bodyMedium)),
-            const Icon(Icons.copy_outlined, color: AppTheme.muted, size: 16),
-          ],
+    // TalkBack/VoiceOver must announce these tappable copy rows as buttons,
+    // not as static text (UI accessibility finding).
+    return Semantics(
+      button: true,
+      label: label,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: <Widget>[
+              Icon(icon, color: AppTheme.lime, size: 18),
+              const SizedBox(width: 12),
+              Expanded(child: Text(label, style: theme.textTheme.bodyMedium)),
+              const Icon(Icons.copy_outlined, color: AppTheme.muted, size: 16),
+            ],
+          ),
         ),
       ),
     );

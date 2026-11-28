@@ -44,21 +44,25 @@ class ResetRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    return InkWell(
-      onTap: () => unawaited(_confirmAndReset(context, ref)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          children: <Widget>[
-            const Icon(Icons.restart_alt, color: AppTheme.amber, size: 18),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                "Сбросить демо-данные",
-                style: theme.textTheme.bodyMedium,
+    return Semantics(
+      button: true,
+      label: "Сбросить демо-данные",
+      child: InkWell(
+        onTap: () => unawaited(_confirmAndReset(context, ref)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: <Widget>[
+              const Icon(Icons.restart_alt, color: AppTheme.amber, size: 18),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "Сбросить демо-данные",
+                  style: theme.textTheme.bodyMedium,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

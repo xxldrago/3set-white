@@ -36,6 +36,32 @@ Widget _app({
 }
 
 void main() {
+  testWidgets("copy rows are announced as buttons, not static text", (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        referralCode: "3SET-ABC123",
+        subscriptionLink: _link,
+        copied: <String>[],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final buttons = tester.widgetList<Semantics>(
+      find.byWidgetPredicate(
+        (w) => w is Semantics && w.properties.button == true,
+      ),
+    );
+    expect(
+      buttons.map((s) => s.properties.label),
+      containsAll(<String>[
+        "Ссылка для друзей",
+        "Копировать ссылку на подписку",
+      ]),
+    );
+  });
+
   testWidgets("referral URL uses the stored code once with exactly one prefix", (
     tester,
   ) async {

@@ -16,6 +16,28 @@ class MockDioClient extends Mock implements DioClient {}
 class MockDio extends Mock implements Dio {}
 
 void main() {
+  testWidgets("the reset row is announced as a button", (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: AppTheme.dark,
+          home: const Scaffold(body: ResetRow()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final buttons = tester.widgetList<Semantics>(
+      find.byWidgetPredicate(
+        (w) => w is Semantics && w.properties.button == true,
+      ),
+    );
+    expect(
+      buttons.map((s) => s.properties.label),
+      contains("Сбросить демо-данные"),
+    );
+  });
+
   testWidgets("confirm then call only the local reset with one navigation", (
     tester,
   ) async {

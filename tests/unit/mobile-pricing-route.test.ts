@@ -33,10 +33,12 @@ const DAYS = [7, 30, 90, 180, 365];
 const SECRET = 'ARTEMIDA_SECRET_SENTINEL_9f3a';
 const PROVIDER_TEXT = 'provider leak: upstream key abc123';
 
-function request(query = 'devices=2'): Request {
-  return new Request(`http://localhost/api/mobile/pricing?${query}`, {
-    headers: { authorization: 'Bearer test-access' },
-  });
+async function request(query = 'devices=2'): Promise<Response> {
+  return GET(
+    new Request(`http://localhost/api/mobile/pricing?${query}`, {
+      headers: { authorization: 'Bearer test-access' },
+    }),
+  );
 }
 
 function goodQuote(days: number, devices = 2) {

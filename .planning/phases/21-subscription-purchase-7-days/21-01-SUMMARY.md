@@ -118,7 +118,7 @@ Each task was committed atomically:
 3. **Task 3: Tracer — backend routes + Wave 0 tests** - `bb556bd` (feat)
 4. **Task 3: Tracer — Flutter WebView flow + Wave 0 tests + pinned dependency** - `3d2b707` (feat)
 
-**Plan metadata:** pending final docs commit (SUMMARY + STATE + ROADMAP)
+**Plan metadata:** `37d3bc6` (docs: summary), `aebc4c3` (docs: STATE + ROADMAP + WINDOWS)
 
 ## Files Created/Modified
 
@@ -185,3 +185,7 @@ None for this plan. Platega test credentials and on-device WebView verification 
 ---
 *Phase: 21-subscription-purchase-7-days*
 *Completed: 2026-11-28*
+
+## Self-Check: PASSED
+
+All 7 implementation files exist, all 6 commits are present in git history, no second key-issuer route exists under `app/api/mobile/keys`, and no 21-01 file is left uncommitted.

@@ -5,16 +5,16 @@ milestone_name: Мобильный клиент
 current_phase: 21
 current_phase_name: Subscription & Purchase
 status: executing
-stopped_at: Completed 21-01-PLAN.md
-last_updated: "2026-11-28T03:08:21.311Z"
+stopped_at: Completed 21-02-PLAN.md
+last_updated: "2026-11-28T03:18:20.549Z"
 last_activity: 2026-11-28
 last_activity_desc: Phase 21 execution started
-state_head: 37d3bc683283f306b60571525b46b4222e9fb970
+state_head: aaf570d8d202d72efaa05ee148f2384d72922f0f
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 28
-  completed_plans: 23
+  completed_plans: 24
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 ## Current Position
 
 Phase: 21 (Subscription & Purchase) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Status: Ready to execute
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-28 — Phase 21 execution started
@@ -127,6 +127,10 @@ None (flat mode)
 - [Phase 21]: 21-01: locked proceed-locked gate confirmed D-01/D-04/D-05/D-16 and D-10 phase-19/20 grace-gate change; single issuer, server-quoted amounts
 - [Phase 21]: 21-01: flutter_inappwebview 6.1.5 exact stable pin human-verified at blocking-human gate; no beta/substitute
 - [Phase 21]: 21-01: REQ-BE-05 closed by supersession - no client-callable key issuer; webhook/outbox/worker sole issuer
+- [Phase 21]: 21-02: D-10 implemented as one pure lib/subscription-view.ts predicate; /servers isActiveKey delegates to it and /config imports isActiveKey, so no inline duplicate status check exists.
+- [Phase 21]: 21-02: Grace is exactly 24 hours (86_400_000ms); trial keys get graceUntil null and raw expired/revoked/disabled/trial-expired keys stay disqualified.
+- [Phase 21]: 21-02: /subscription keeps the user identity block for Flutter session restore and returns no_active_key as 200 machine code rather than 403.
+- [Phase 21]: 21-02: deviceLimit/devices surfaced for display only; add/remove enforcement stays Phase 22, and no client-callable key issuer was added.
 
 ## Performance Metrics
 
@@ -155,9 +159,10 @@ None (flat mode)
 | Phase 20 P06 | 17min | 3 tasks | 5 files |
 | Phase 20 P07 | 12 min | 2 tasks | 6 files |
 | Phase 21-subscription-purchase-7-days P01 | 5h 56m | 3 tasks | 12 files |
+| Phase 21-subscription-purchase-7-days P02 | 6 min | 2 tasks | 7 files |
 
 ## Session
 
-**Last session:** 2026-11-28T03:08:21.192Z
-**Stopped at:** Completed 21-01-PLAN.md
+**Last session:** 2026-11-28T03:18:11.919Z
+**Stopped at:** Completed 21-02-PLAN.md
 **Resume file:** None

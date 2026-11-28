@@ -195,7 +195,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 21-02-PLAN.md — Real `/subscription` + shared 24h grace predicate across phase-19/20 gates
+- [x] 21-02-PLAN.md — Real `/subscription` + shared 24h grace predicate across phase-19/20 gates
 - [ ] 21-03-PLAN.md — Mobile `/pricing` and read-only `/promo/apply` backend routes
 
 **Wave 3** *(blocked on Wave 2 completion)*

@@ -32,6 +32,37 @@ double _contrast(Color foreground, Color background) {
 }
 
 void main() {
+  test("avatar initial comes from real identity, never a hardcoded letter", () {
+    expect(avatarInitial("Алик"), "А");
+    expect(avatarInitial("alex"), "A");
+    expect(avatarInitial("друг"), isNull);
+    expect(avatarInitial("  "), isNull);
+  });
+
+  testWidgets("header shows a neutral avatar when no identity is known", (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: Scaffold(
+          body: MainHeader(
+            keyMeta: null,
+            refreshing: false,
+            onRefresh: () {},
+            onShop: () {},
+            onLogic: () {},
+            onProfile: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text("А"), findsNothing);
+    expect(find.byIcon(Icons.person_outline), findsOneWidget);
+  });
+
   /// A representative profile/device/settings text block, scrollable so a
   /// genuine 200% scale cannot be mistaken for a layout regression.
   Widget representativeBlock() => Builder(
@@ -220,7 +251,15 @@ void main() {
 
     expect(find.semantics.byLabel(KillSwitchRow.label), findsOneWidget);
     expect(find.semantics.byLabel(KillSwitchRow.caption), findsOneWidget);
-    expect(find.byType(Switch), findsNothing);
+    // The kill switch is read-only; the only Switch is the separate persisted
+    // auto-connect preference introduced for REQ-SET-02.
+    expect(
+      find.descendant(
+        of: find.byType(KillSwitchRow),
+        matching: find.byType(Switch),
+      ),
+      findsNothing,
+    );
     expect(find.text("Телефон"), findsOneWidget);
     expect(
       find.byWidgetPredicate(

@@ -3,6 +3,15 @@ import "package:flutter/material.dart";
 import "../../../app/theme.dart";
 import "../server.dart";
 
+/// Derives the avatar initial from the REAL greeting name, never a hardcoded
+/// letter. The generic «друг» fallback means no identity is known, so a
+/// neutral person icon is used instead of fabricating an initial.
+String? avatarInitial(String greetingName) {
+  final trimmed = greetingName.trim();
+  if (trimmed.isEmpty || trimmed == "друг") return null;
+  return trimmed.substring(0, 1).toUpperCase();
+}
+
 /// Prototype main-screen header (`.main-head`).
 ///
 /// Renders brand, greeting, status pill, key pill (D-20), date pill and the
@@ -136,7 +145,9 @@ class MainHeader extends StatelessWidget {
   /// Accessibility (22.12): every icon-only action carries an explicit Russian
   /// [Semantics] label. The copy is frozen and never contains a device token,
   /// subscription link or provider text (T-22-29).
-  Widget _actions(ThemeData theme) => Row(
+  Widget _actions(ThemeData theme) {
+    final initial = avatarInitial(greetingName);
+    return Row(
     mainAxisSize: MainAxisSize.min,
     children: <Widget>[
       Semantics(
@@ -181,17 +192,21 @@ class MainHeader extends StatelessWidget {
           child: CircleAvatar(
             radius: 17,
             backgroundColor: AppTheme.surface3,
-            child: Text(
-              "А",
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: AppTheme.lime2,
-              ),
-            ),
+            child: initial == null
+                ? const Icon(Icons.person_outline,
+                    color: AppTheme.lime2, size: 20)
+                : Text(
+                    initial,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: AppTheme.lime2,
+                    ),
+                  ),
           ),
         ),
       ),
     ],
-  );
+    );
+  }
 
   Widget _statusPill(ThemeData theme) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

@@ -4,17 +4,17 @@ milestone: v2.0
 milestone_name: Мобильный клиент
 current_phase: 21
 current_phase_name: Subscription & Purchase
-status: executing
-stopped_at: Completed 21-05-PLAN.md
-last_updated: "2026-11-28T04:42:54.537Z"
+status: verifying
+stopped_at: Completed 21-06-PLAN.md
+last_updated: "2026-11-28T04:53:37.706Z"
 last_activity: 2026-11-28
 last_activity_desc: Phase 21 execution started
-state_head: c5f6b30081167b0d28533382bc694770e52ad094
+state_head: 765880b1c0abb585a38200faee67b16fa2d6a277
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 28
-  completed_plans: 27
+  completed_plans: 28
   percent: 0
 ---
 
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 
 Phase: 21 (Subscription & Purchase) — EXECUTING
 Plan: 6 of 6
-Status: Ready to execute
+Status: Phase complete — ready for verification
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-28 — Phase 21 execution started
 
@@ -141,6 +141,9 @@ None (flat mode)
 - [Phase 21]: 21-05: real dark Shop Screen replaces the stub with five server-priced terms, 2..10 stepper, promo, persisted UI-only chips, live summary and no bottom nav
 - [Phase 21]: 21-05: days/30 ring and confetti are CustomPainters; confetti fires only on a real CONFIRMED/provisioned edge with a real expiresAt date and no simulation
 - [Phase 21]: 21-05: pay submits intent only (kind new/days/devices); payment chips stay UI-only with no backend paymentMethod field; /subscription exposes no keyId so no renew/upgrade intent is fabricated
+- [Phase 21]: REQ-BE-05 closed as superseded: webhook → outbox → worker is the sole key issuer, locked by a filesystem regression guard
+- [Phase 21]: Pending payment resume keeps only the non-secret order id, clears it on every terminal status and ends at a 100-poll timeout without fake success
+- [Phase 21]: Client mirrors the server grace-aware hasKey flag; no local entitlement math, no bottom nav and no deep-link confirmation path
 
 ## Performance Metrics
 
@@ -173,9 +176,10 @@ None (flat mode)
 | Phase 21-subscription-purchase-7-days P03 | 3 min | 2 tasks | 4 files |
 | Phase 21-subscription-purchase-7-days P04 | 60 min | 3 tasks | 15 files |
 | Phase 21-subscription-purchase-7-days P05 | 9 min | 3 tasks | 6 files |
+| Phase 21-subscription-purchase-7-days P06 | 9min | 3 tasks | 9 files |
 
 ## Session
 
-**Last session:** 2026-11-28T04:42:54.389Z
-**Stopped at:** Completed 21-05-PLAN.md
+**Last session:** 2026-11-28T04:53:37.569Z
+**Stopped at:** Completed 21-06-PLAN.md
 **Resume file:** None

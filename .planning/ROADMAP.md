@@ -186,7 +186,7 @@ Plans:
 
 **Goal**: Full purchase flow — subscription status, shop, Platega payment, key issuance.
 
-**Plans:** 5/6 plans executed
+**Plans:** 6/6 plans executed
 
 Plans:
 **Wave 1**
@@ -208,7 +208,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 21-06-PLAN.md — Killed-app payment resume, real `/shop` routing and no-key gating, single-issuer guard
+- [x] 21-06-PLAN.md — Killed-app payment resume, real `/shop` routing and no-key gating, single-issuer guard
 
 #### Tasks
 

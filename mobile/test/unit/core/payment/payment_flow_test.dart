@@ -223,4 +223,140 @@ void main() {
       verifyNever(() => dio.get(any()));
     });
   });
+
+  group("resume, terminal cleanup and honest timeout (D-06/D-11)", () {
+    PaymentFlow flowWith(void Function() onProvisioned) => PaymentFlow(
+          dio: dio,
+          store: store,
+          launcher: launcher,
+          pollInterval: const Duration(milliseconds: 1),
+          maxAttempts: 5,
+          onProvisioned: () async => onProvisioned(),
+        );
+
+    void stubStatus(String orderId, List<Object?> statuses) {
+      var calls = 0;
+      when(() => dio.get(Endpoints.paymentStatus(orderId))).thenAnswer((_) async {
+        final status = statuses[calls.clamp(0, statuses.length - 1)];
+        calls++;
+        return reply(Endpoints.paymentStatus(orderId), 200, <String, dynamic>{
+          "ok": true,
+          "status": status,
+          "paidAt": null,
+          "provisionedKeyId": null,
+        });
+      });
+    }
+
+    test("resumes a stored PENDING order by polling, never by a second create", () async {
+      when(() => store.read()).thenAnswer((_) async => "order-9");
+      stubStatus("order-9", const <String>["pending", "provisioned"]);
+      var invalidations = 0;
+
+      final result = await flowWith(() => invalidations++).resumePending();
+
+      expect(result?.isSuccess, isTrue);
+      expect(result?.orderId, "order-9");
+      verify(() => dio.get(Endpoints.paymentStatus("order-9"))).called(2);
+      verifyNever(() => dio.post(any(), data: any(named: "data")));
+      verify(() => store.clear()).called(1);
+      // CONFIRMED invalidates the subscription exactly once.
+      expect(invalidations, 1);
+    });
+
+    for (final status in <String>[
+      "canceled",
+      "chargebacked",
+      "disputed",
+      "refunded",
+    ]) {
+      test("clears the stored id on $status without ever showing success", () async {
+        when(() => store.read()).thenAnswer((_) async => "order-7");
+        stubStatus("order-7", <String>[status]);
+        var invalidations = 0;
+
+        final result = await flowWith(() => invalidations++).resumePending();
+
+        expect(result, isNotNull);
+        expect(result!.isSuccess, isFalse);
+        expect(result.outcome, isNot(PaymentOutcome.provisioned));
+        verify(() => store.clear()).called(1);
+        expect(invalidations, 0);
+      });
+    }
+
+    test("normalizes provider status spelling before deriving the terminal outcome", () async {
+      when(() => store.read()).thenAnswer((_) async => "order-8");
+      stubStatus("order-8", const <String>["PROVISIONED"]);
+      var invalidations = 0;
+
+      final result = await flowWith(() => invalidations++).resumePending();
+
+      expect(result?.outcome, PaymentOutcome.provisioned);
+      verify(() => store.clear()).called(1);
+      expect(invalidations, 1);
+    });
+
+    test("persists only the non-secret order id", () async {
+      final spyStore = MockPendingOrderStore();
+      final saved = <String>[];
+      when(() => spyStore.save(any())).thenAnswer((invocation) async {
+        saved.add(invocation.positionalArguments.first as String);
+      });
+      when(() => spyStore.read()).thenAnswer((_) async => null);
+      when(() => spyStore.clear()).thenAnswer((_) async {});
+      final spyFlow = PaymentFlow(
+        dio: dio,
+        store: spyStore,
+        launcher: launcher,
+        pollInterval: const Duration(milliseconds: 1),
+        maxAttempts: 5,
+      );
+      stubCreate();
+      stubStatus("order-1", const <String>["provisioned"]);
+
+      await spyFlow.start(const PaymentRequest(kind: "new", days: 7, devices: 2));
+
+      expect(saved, <String>["order-1"]);
+      for (final value in saved) {
+        expect(value.contains("https"), isFalse);
+        expect(value.contains("token"), isFalse);
+        expect(value.contains("tx_"), isFalse);
+      }
+    });
+
+    test("stops after the 100-attempt cap with a waiting timeout, not a fake success", () async {
+      when(() => store.read()).thenAnswer((_) async => "order-100");
+      var calls = 0;
+      when(() => dio.get(Endpoints.paymentStatus("order-100"))).thenAnswer((
+        _,
+      ) async {
+        calls++;
+        return reply(
+          Endpoints.paymentStatus("order-100"),
+          200,
+          <String, dynamic>{"ok": true, "status": "pending"},
+        );
+      });
+      var invalidations = 0;
+      final capped = PaymentFlow(
+        dio: dio,
+        store: store,
+        launcher: launcher,
+        pollInterval: const Duration(milliseconds: 1),
+        maxAttempts: 100,
+        onProvisioned: () async => invalidations++,
+      );
+
+      final result = await capped.resumePending();
+
+      expect(result?.outcome, PaymentOutcome.timeout);
+      expect(result?.isSuccess, isFalse);
+      expect(result?.isTimedOut, isTrue);
+      expect(calls, 100);
+      expect(invalidations, 0);
+      // The id stays stored so the next launch may continue (D-06).
+      verifyNever(() => store.clear());
+    });
+  });
 }

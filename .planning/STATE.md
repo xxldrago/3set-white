@@ -5,16 +5,16 @@ milestone_name: Мобильный клиент
 current_phase: 21
 current_phase_name: Subscription & Purchase
 status: executing
-stopped_at: Completed 21-02-PLAN.md
-last_updated: "2026-11-28T03:18:20.549Z"
+stopped_at: Completed 21-03-PLAN.md
+last_updated: "2026-11-28T03:25:28.751Z"
 last_activity: 2026-11-28
 last_activity_desc: Phase 21 execution started
-state_head: aaf570d8d202d72efaa05ee148f2384d72922f0f
+state_head: 62afca52c2db8944c06e06a2bd737a8a8931bd17
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 28
-  completed_plans: 24
+  completed_plans: 25
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 ## Current Position
 
 Phase: 21 (Subscription & Purchase) — EXECUTING
-Plan: 3 of 6
+Plan: 4 of 6
 Status: Ready to execute
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-28 — Phase 21 execution started
@@ -131,6 +131,9 @@ None (flat mode)
 - [Phase 21]: 21-02: Grace is exactly 24 hours (86_400_000ms); trial keys get graceUntil null and raw expired/revoked/disabled/trial-expired keys stay disqualified.
 - [Phase 21]: 21-02: /subscription keeps the user identity block for Flutter session restore and returns no_active_key as 200 machine code rather than 403.
 - [Phase 21]: 21-02: deviceLimit/devices surfaced for display only; add/remove enforcement stays Phase 22, and no client-callable key issuer was added.
+- [Phase 21]: 21-03: /api/mobile/pricing is the single mobile price authority - one batched loop over TARIFF_DAYS through resolveTariffQuote, no hardcoded prices, mobile-only 2..10 device bounds with TARIFF_MAX_DEVICES left at 9999
+- [Phase 21]: 21-03: /api/mobile/promo/apply is read-only - validatePromo preview returns a percentage only, consumePromo stays in createOrder, and unknown/malformed/exhausted/expired/fixed codes collapse to one promo_invalid code with no oracle
+- [Phase 21]: 21-03: both new mobile routes degrade provider and unexpected failures to HTTP 200 stable codes with Retry-After on rate limits, never a 5xx, never provider text/requestId/promo code/amount in bodies or logs
 
 ## Performance Metrics
 
@@ -160,9 +163,10 @@ None (flat mode)
 | Phase 20 P07 | 12 min | 2 tasks | 6 files |
 | Phase 21-subscription-purchase-7-days P01 | 5h 56m | 3 tasks | 12 files |
 | Phase 21-subscription-purchase-7-days P02 | 6 min | 2 tasks | 7 files |
+| Phase 21-subscription-purchase-7-days P03 | 3 min | 2 tasks | 4 files |
 
 ## Session
 
-**Last session:** 2026-11-28T03:18:11.919Z
-**Stopped at:** Completed 21-02-PLAN.md
+**Last session:** 2026-11-28T03:25:28.605Z
+**Stopped at:** Completed 21-03-PLAN.md
 **Resume file:** None

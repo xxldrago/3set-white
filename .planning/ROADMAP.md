@@ -242,7 +242,7 @@ Plans:
 
 **Goal**: Device management, settings, push notifications, UI polish.
 
-**Plans:** 3/5 plans executed
+**Plans:** 4/5 plans executed
 
 Plans:
 **Wave 1**
@@ -256,7 +256,7 @@ Plans:
 **Wave 3** *(blocked on Waves 1–2 completion)*
 
 - [x] 22-03-PLAN.md — Real profile identity, read-only kill switch/referral/reset/network rows
-- [ ] 22-04-PLAN.md — Package legitimacy gate + local T-7/3/1 expiry reminders, additive native setup (FCM deferred)
+- [x] 22-04-PLAN.md — Package legitimacy gate + local T-7/3/1 expiry reminders, additive native setup (FCM deferred)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 

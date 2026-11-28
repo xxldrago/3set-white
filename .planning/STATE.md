@@ -5,16 +5,16 @@ milestone_name: Мобильный клиент
 current_phase: 22
 current_phase_name: Devices, Settings & Polish
 status: executing
-stopped_at: Completed 22-03-PLAN.md
-last_updated: "2026-11-28T10:23:21.783Z"
+stopped_at: Completed 22-04-PLAN.md
+last_updated: "2026-11-28T10:43:41.781Z"
 last_activity: 2026-11-28
 last_activity_desc: Phase 22 execution started
-state_head: b32b071d75128c50789c325d8cf071923bcf1788
+state_head: 51f3e4acfe6b01057e126e3e8fa3aa226453676f
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 33
-  completed_plans: 31
+  completed_plans: 32
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 ## Current Position
 
 Phase: 22 (Devices, Settings & Polish) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-28 — Phase 22 execution started
@@ -56,6 +56,7 @@ None (flat mode)
 - **Phase 18 P0 — Telegram deep-link login cannot complete:** the bot `/start` handler parses only `login_` and `link_` payloads, never `nonce_`, so `telegram/poll` stays `202 pending` until TTL expiry. Needs a handshake decision (nonce-only bind vs code-confirmed) before Phase 18 can close.
 - Phase 18 UAT: signed App Links/Universal Links (assetlinks fingerprint + AASA Team ID), biometric hardware
 - Mobile app hardcodes the production base URL (`dio_client.dart:23`, `auth_interceptor.dart:99`) — no non-prod target, so login/restart UAT cannot be exercised without creating production accounts
+- REQ-NOTIF-02 (FCM token registration) deferred by D-08: no Firebase project, credentials or backend token route exist; no fake token/route added. Requires owner decision before a future scoped task.
 
 ## Next Actions
 
@@ -151,6 +152,9 @@ None (flat mode)
 - [Phase 22-devices-settings-polish-5-days]: Reset Demo clears the biometric-scoped secure-storage namespace in addition to TokenStore.clearAll and SecureStorage.clearAll; it stays purely local with an injected /auth navigation callback for a later profile UI row.
 - [Phase 22-devices-settings-polish-5-days]: 22-03: identity and referral stay server-authoritative on the own-user row; NULL legacy codes are ensured via ensureReferralCode(claims.userId) and stored 3SET- codes are returned verbatim — T-22-14: no other user's code, no invented email, no client-side prefix duplication
 - [Phase 22-devices-settings-polish-5-days]: 22-03: kill switch remains a read-only always-on status row and the network chip a pure observer; no toggle, fake switch, tap toast or native/FSM change — D-01/D-02/D-04/D-07 locked decisions; cache invalidation stays with the existing networkPingInvalidationProvider listener
+- [Phase 22]: 22-04: D-09 blocking-human package gate approved by user — flutter_local_notifications stable 23.0.4 (dexterx.dev, github.com/MaikuB/flutter_local_notifications, SDK ^3.12.0/Flutter >=3.44.0) and direct timezone ^0.11.x verified before install; no beta or substitute.
+- [Phase 22]: 22-04: REQ-NOTIF-01 ships local T-7/T-3/T-1 reminders from server expiresAt with absolute TZDateTime instants, past skip, stable-id cancel-before-reschedule and navigation-only 'shop' payload; FCM (REQ-NOTIF-02) remains deferred by D-08 with no fake token route.
+- [Phase 22]: 22-04: timezone 0.11.2 moved initializeTimeZones() to package:timezone/data/latest.dart; imported the bundled data library (Rule 1 auto-fix) and verified FLN 23.x named-argument signatures against installed 23.0.4 source.
 
 ## Performance Metrics
 
@@ -187,9 +191,10 @@ None (flat mode)
 | Phase 22-devices-settings-polish-5-days P01 | 43 min | 3 tasks | 20 files |
 | Phase 22-devices-settings-polish-5-days P02 | 12 min | 2 tasks | 8 files |
 | Phase 22-devices-settings-polish-5-days P03 | 9 min 47s | 2 tasks | 13 files |
+| Phase 22-devices-settings-polish-5-days P22-04 | 13min | 3 tasks | 9 files |
 
 ## Session
 
-**Last session:** 2026-11-28T10:23:21.601Z
-**Stopped at:** Completed 22-03-PLAN.md
+**Last session:** 2026-11-28T10:43:33.496Z
+**Stopped at:** Completed 22-04-PLAN.md
 **Resume file:** None

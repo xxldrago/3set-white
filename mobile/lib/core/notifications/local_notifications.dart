@@ -29,6 +29,18 @@ const String expiryChannelName = "Напоминания";
 /// Description of the dedicated expiry channel.
 const String expiryChannelDescription = "Срок подписки";
 
+// Frozen Russian copy for the permission row (REQ-NOTIF-01). No account data,
+// link or token is ever interpolated into any of these strings.
+/// Title of the read-only reminder-permission row.
+const String notificationStatusTitle = "Уведомления о сроке подписки";
+/// Status copy when the OS grant is present.
+const String notificationStatusGranted = "Включены";
+/// Status copy when the user denied the OS grant.
+const String notificationStatusDenied =
+    "Отключены — включите в настройках системы";
+/// Status copy while the OS permission state is still being read.
+const String notificationStatusChecking = "Проверяем доступ…";
+
 /// Fixed notification title. No account data is interpolated (T-22-22).
 const String expiryNotificationTitle = "Подписка истекает";
 
@@ -43,6 +55,15 @@ abstract class LocalNotificationDispatcher {
 
   /// Initializes the plugin once and registers the tap handler.
   Future<void> initialize();
+
+  /// Requests the Android 13+ `POST_NOTIFICATIONS` runtime permission.
+  ///
+  /// Returns whether notifications may be posted. A `null` platform answer
+  /// (iOS / unsupported Android) is normalized to `true`: it is not a denial.
+  Future<bool> requestNotificationsPermission();
+
+  /// Reads the current OS-level notification permission state for the UI row.
+  Future<bool> notificationsEnabled();
 
   /// Schedules one absolute reminder.
   Future<void> schedule({
@@ -72,7 +93,14 @@ class FlutterLocalNotificationDispatcher
   Future<void> initialize() {
     final pending = _initialization;
     if (pending != null) return pending;
-    final started = _plugin.initialize(
+    return _initialization = _initializeOnce();
+  }
+
+  /// Plugin setup plus the explicit Android runtime grant. A manifest
+  /// declaration alone is silently ignored on API 33+, so the reminder stream
+  /// would otherwise be dropped on the dominant platform (CR-01).
+  Future<void> _initializeOnce() async {
+    await _plugin.initialize(
       settings: const InitializationSettings(
         android: AndroidInitializationSettings("@mipmap/ic_launcher"),
         iOS: IOSInitializationSettings(),
@@ -80,7 +108,23 @@ class FlutterLocalNotificationDispatcher
       onDidReceiveNotificationResponse:
           (NotificationResponse response) => _onTap(response.payload),
     );
-    return _initialization = started.then<void>((_) {});
+    await requestNotificationsPermission();
+  }
+
+  @override
+  Future<bool> requestNotificationsPermission() async {
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    // FLN returns null when there is no Android implementation (iOS or an
+    // unsupported platform) — that is not a denial.
+    return await android?.requestNotificationsPermission() ?? true;
+  }
+
+  @override
+  Future<bool> notificationsEnabled() async {
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    return await android?.areNotificationsEnabled() ?? true;
   }
 
   @override
@@ -153,3 +197,16 @@ Future<void> _initializeSafely(LocalNotificationDispatcher dispatcher) async {
     // Deliberately silent: no token, payload or provider text is ever logged.
   }
 }
+
+/// Current permission state for the read-only settings row. Goes through the
+/// cached dispatcher seam, so no widget test ever touches a platform channel.
+/// A platform that cannot answer is not reported as a denial.
+final notificationPermissionStatusProvider = FutureProvider<bool>((ref) async {
+  final dispatcher = ref.read(localNotificationDispatcherProvider);
+  try {
+    await dispatcher.initialize();
+    return await dispatcher.notificationsEnabled();
+  } on Object catch (_) {
+    return true;
+  }
+});

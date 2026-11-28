@@ -4,10 +4,20 @@
 // come from the ownership-scoped `GET /api/mobile/devices`. The kill switch is a
 // READ-ONLY status row (D-01/D-02): no Switch, no flag, no navigation. This
 // sheet never touches native VPN code, the FSM or the connection toast.
+import "dart:async";
+
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
 import "../../app/theme.dart";
+import "../../core/notifications/local_notifications.dart"
+    show
+        localNotificationDispatcherProvider,
+        notificationPermissionStatusProvider,
+        notificationStatusChecking,
+        notificationStatusDenied,
+        notificationStatusGranted,
+        notificationStatusTitle;
 import "../subscription/models/subscription.dart";
 import "../subscription/providers.dart"
     show subscriptionNotice, userSubscriptionProvider;
@@ -71,6 +81,7 @@ class ProfileSheet extends ConsumerWidget {
               referralCode: subscription.value?.user?.referralCode,
               subscriptionLink: subscription.value?.link,
             ),
+            const NotificationStatusRow(),
             const NetworkStatusRow(),
             const ResetRow(),
             if (subscription.hasError)
@@ -85,6 +96,61 @@ class ProfileSheet extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+/// Read-only expiry-reminder permission row (REQ-NOTIF-01, CR-01).
+///
+/// The OS grant is requested once at plugin init; this row never invents a
+/// permission value and never enables notifications by itself. A denial is
+/// surfaced in stable Russian copy with an explicit re-request affordance.
+class NotificationStatusRow extends ConsumerWidget {
+  /// Creates the permission status row.
+  const NotificationStatusRow({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final status = ref.watch(notificationPermissionStatusProvider);
+    final granted = status.value;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: <Widget>[
+          const Icon(Icons.notifications_none, color: AppTheme.lime, size: 18),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(notificationStatusTitle,
+                    style: theme.textTheme.bodyMedium),
+                const SizedBox(height: 2),
+                Text(
+                  granted == null
+                      ? notificationStatusChecking
+                      : (granted ? notificationStatusGranted : notificationStatusDenied),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: granted == false ? AppTheme.red : AppTheme.dim,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (granted == false)
+            TextButton(
+              onPressed: () => unawaited(_requestAgain(ref)),
+              child: const Text("Разрешить"),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _requestAgain(WidgetRef ref) async {
+    await ref.read(localNotificationDispatcherProvider)
+        .requestNotificationsPermission();
+    ref.invalidate(notificationPermissionStatusProvider);
   }
 }
 

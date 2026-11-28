@@ -35,6 +35,12 @@ class FakeNotificationDispatcher implements LocalNotificationDispatcher {
   Future<void> initialize() async {}
 
   @override
+  Future<bool> requestNotificationsPermission() async => true;
+
+  @override
+  Future<bool> notificationsEnabled() async => true;
+
+  @override
   Future<void> schedule({
     required int id,
     required tz.TZDateTime when,

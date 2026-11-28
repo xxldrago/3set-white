@@ -5,11 +5,11 @@ milestone_name: Мобильный клиент
 current_phase: 22
 current_phase_name: Devices, Settings & Polish
 status: verifying
-stopped_at: Completed 22-05-PLAN.md
-last_updated: "2026-11-28T10:57:17.500Z"
+stopped_at: Phase 23 context gathered
+last_updated: "2026-11-28T21:25:51.506Z"
 last_activity: 2026-11-28
 last_activity_desc: Phase 22 execution started
-state_head: e3d6e2031352e7ce3de58b97a25397088a104514
+state_head: ea33d744e846106f0802d85cef1fc429e70ae24a
 progress:
   total_phases: 6
   completed_phases: 0
@@ -199,6 +199,6 @@ None (flat mode)
 
 ## Session
 
-**Last session:** 2026-11-28T10:57:17.332Z
-**Stopped at:** Completed 22-05-PLAN.md
-**Resume file:** None
+**Last session:** 2026-11-28T21:25:51.198Z
+**Stopped at:** Phase 23 context gathered
+**Resume file:** .planning/phases/23-hardening-release-7-days/23-CONTEXT.md

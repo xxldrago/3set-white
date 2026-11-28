@@ -4,6 +4,8 @@ import 'app/router.dart';
 import 'app/theme.dart';
 import "core/payment/payment_resume_listener.dart"
     show paymentResumeListenerProvider;
+import "core/settings/auto_connect_listener.dart"
+    show autoConnectListenerProvider;
 import "core/vpn/connection_notifier.dart"
     show connectionReconnectListenerProvider;
 import 'features/auth/providers.dart';
@@ -38,6 +40,10 @@ class App extends ConsumerWidget {
     // Kept in main.dart (not the router) so the WebView route stays side-effect
     // free (T-21-34, router_test.dart).
     ref.watch(paymentResumeListenerProvider);
+    // REQ-SET-02: one-shot auto-connect after auth restore + active key. It is
+    // deliberately a caller of the existing FSM; no second reconnect path,
+    // native rule or kill-switch change is introduced (D-04, D-15 preserved).
+    ref.watch(autoConnectListenerProvider);
 
     final router = ref.watch(routerProvider);
 

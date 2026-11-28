@@ -19,6 +19,7 @@ import "package:mobile/features/subscription/models/subscription.dart";
 import "package:mobile/features/subscription/providers.dart";
 
 import "../../app/theme.dart";
+import "painting/confetti_overlay.dart";
 import "widgets/shop_widgets.dart";
 
 /// Copies a subscription link. The default is the Flutter clipboard only —
@@ -85,6 +86,7 @@ class ShopScreen extends ConsumerWidget {
     final subscriptionAsync = ref.watch(userSubscriptionProvider);
     final promoAsync = ref.watch(promoPreviewStateProvider);
     final processing = ref.watch(paymentProcessingProvider);
+    final purchaseStatus = ref.watch(purchaseStatusProvider);
 
     // One place applies the server percentage to presentation-only state.
     ref.listen<AsyncValue<PromoPreview?>>(
@@ -142,7 +144,14 @@ class ShopScreen extends ConsumerWidget {
           onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
-      body: SafeArea(child: content),
+      body: SafeArea(
+        child: ConfettiOnStatus(
+          status: purchaseStatus,
+          expiresAt: subscriptionAsync.value?.expiresAt,
+          link: subscriptionAsync.value?.link,
+          child: content,
+        ),
+      ),
     );
   }
 

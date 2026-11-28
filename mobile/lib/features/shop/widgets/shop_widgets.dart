@@ -8,6 +8,7 @@ import "dart:math" as math;
 import "package:flutter/material.dart";
 
 import "../../../app/theme.dart";
+import "../painting/ring_painter.dart";
 
 /// One server-quoted term card. The «Хит» badge is keyed off the server's
 /// 30-day term, never off a hardcoded price table.
@@ -495,7 +496,7 @@ class LiveSummary extends StatelessWidget {
 }
 
 /// Key summary card: real days/link/expiry from the subscription provider.
-/// The days/30 ring is layered in by the painting task (D-13).
+/// The days/30 ring is a CustomPainter from the painting layer (D-13).
 class ShopKeyCard extends StatelessWidget {
   /// Creates the key summary card.
   const ShopKeyCard({
@@ -530,22 +531,7 @@ class ShopKeyCard extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
-          Container(
-            width: 64,
-            height: 64,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppTheme.surface3,
-              border: Border.all(color: AppTheme.line2, width: 2),
-            ),
-            child: Text(
-              days == null ? "—" : "$days",
-              style: theme.textTheme.displaySmall?.copyWith(
-                color: AppTheme.lime,
-              ),
-            ),
-          ),
+          DaysRing(days: days),
           const SizedBox(width: 14),
           Expanded(
             child: Column(

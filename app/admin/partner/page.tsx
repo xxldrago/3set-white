@@ -1,94 +1,67 @@
-// /admin/partner — partner-only dashboard (the single section the partner
-// role holds). Enforcement lives HERE (layouts are not a boundary —
-// T-05-01): signed-out → /login, any non-partner role → 404. Shows the
-// caller's own code/link, rate, stats, personal promos, and payout history.
-// Withdrawals go through the cabinet ReferralSection (same wallet); support
-// stays in the cabinet (/support) — the shared queue is never exposed.
+// /admin/partner — partner dashboard. Partner-only: the role matrix gives
+// this page (and its sibling sections) to `partner` alone. Shows the referral
+// link, effective rate, invited/earned/balance, personal promo codes, the
+// funnel and a short downline preview.
 import Link from 'next/link';
-import { notFound, redirect } from 'next/navigation';
 import FunnelCharts from '@/components/admin/FunnelCharts';
-import ReferralSection from '@/components/ReferralSection';
-import { requireRole } from '@/lib/admin-auth';
+import { requirePartnerUserId } from '@/lib/admin-partner';
 import { env } from '@/lib/env';
-import { t } from '@/lib/i18n';
-import { prisma } from '@/lib/prisma';
 import { listPromosByOwner } from '@/lib/promo';
-import {
-  getReferralSettings,
-  getReferralSummary,
-  listDownlineDetails,
-  listOwnWithdrawals,
-} from '@/lib/referrals';
-import { AdminError, SessionError } from '@/lib/session';
+import { getReferralSummary, listDownlineDetails } from '@/lib/referrals';
 
 export const dynamic = 'force-dynamic';
 
-const CARD = 'flex flex-col gap-3 rounded-2xl border border-line p-6 border-line';
+const CARD = 'flex flex-col gap-3 rounded-2xl border border-line p-6';
+const MINI = 5;
+
+function rateText(rate: { kind: string; value: number }): string {
+  if (rate.kind === 'percent') return `${rate.value}%`;
+  if (rate.kind === 'fixed') return `${rate.value} ₽`;
+  return `${rate.value} дн.`;
+}
 
 export default async function AdminPartnerPage() {
-  // The admin shell (and requireRole) is Telegram-session based: a partner
-  // without a linked Telegram cannot open this page and uses the cabinet
-  // ReferralSection instead. The users row is resolved server-side — never
-  // from client input.
-  let telegramId: number;
-  try {
-    ({ telegramId } = await requireRole('partner'));
-  } catch (err) {
-    if (err instanceof SessionError) redirect('/login');
-    if (err instanceof AdminError) notFound();
-    throw err;
-  }
-  const row = await prisma.user.findUnique({
-    where: { telegramId: BigInt(telegramId) },
-    select: { id: true },
-  });
-  if (!row) notFound();
-  const userId = row.id;
-
-  const [summary, settings, promos, withdrawals, downline] = await Promise.all([
+  const userId = await requirePartnerUserId();
+  const [summary, promos, downline] = await Promise.all([
     getReferralSummary(userId),
-    getReferralSettings(),
     listPromosByOwner(userId),
-    listOwnWithdrawals(userId),
     listDownlineDetails(userId),
   ]);
-  const link = `${env.APP_BASE_URL}/?ref=${summary.code}`;
-  const rate =
-    settings.inviterKind === 'fixed'
-      ? `${settings.inviterValue} ₽`
-      : `${settings.inviterValue}%`;
+  const link = `${env.APP_BASE_URL}/signup?ref=${summary.code}`;
+  const preview = downline.slice(0, MINI);
 
   return (
     <section className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h2 className="text-xl font-semibold text-foreground">{t('admin.partnerTitle')}</h2>
-        <p className="text-sm text-muted">{t('admin.partnerSubtitle')}</p>
+        <h2 className="text-xl font-semibold text-foreground">Партнёрский дашборд</h2>
+        <p className="text-sm text-muted">Ваша ссылка, ставка, доход и последние рефералы.</p>
       </div>
 
       <div className={CARD}>
         <div className="flex flex-col gap-1">
-          <span className="text-sm text-muted">{t('auth.refYourLink')}</span>
+          <span className="text-sm text-muted">Ваша ссылка</span>
           <code className="break-all font-mono text-sm text-foreground">{link}</code>
         </div>
         <p className="text-sm text-muted">
-          {t('admin.partnerRate')}: <span className="font-semibold text-foreground">{rate}</span>{' '}
-          <span className="text-xs">({t('admin.partnerRateGlobal')})</span>
+          Ваша ставка:{' '}
+          <span className="font-semibold text-foreground">{rateText(summary.myRate)}</span>{' '}
+          <span className="text-xs">(глобальная)</span>
         </p>
         <dl className="grid grid-cols-3 gap-2 text-center min-w-0">
           <div className="flex flex-col gap-1 rounded-2xl bg-panel p-3">
-            <dt className="text-xs text-muted">{t('auth.refStatsInvited')}</dt>
+            <dt className="text-xs text-muted">Приглашено</dt>
             <dd className="truncate text-lg sm:text-xl font-semibold tabular-nums text-foreground">
               {summary.referrals}
             </dd>
           </div>
           <div className="flex flex-col gap-1 rounded-2xl bg-panel p-3">
-            <dt className="text-xs text-muted">{t('auth.refStatsEarned')}</dt>
+            <dt className="text-xs text-muted">Заработано</dt>
             <dd className="truncate text-lg sm:text-xl font-semibold tabular-nums text-foreground">
               {summary.earned} ₽
             </dd>
           </div>
           <div className="flex flex-col gap-1 rounded-2xl bg-panel p-3">
-            <dt className="text-xs text-muted">{t('auth.refStatsBalance')}</dt>
+            <dt className="text-xs text-muted">Баланс</dt>
             <dd className="truncate text-lg sm:text-xl font-semibold tabular-nums text-foreground">
               {summary.balance} ₽
             </dd>
@@ -97,19 +70,27 @@ export default async function AdminPartnerPage() {
       </div>
 
       <div className={CARD}>
-        <h3 className="text-base font-semibold text-foreground">
-          {t('admin.partnerPromoTitle')}
-        </h3>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-base font-semibold text-foreground">Персональные промокоды</h3>
+          <Link href="/admin/partner/promos" className="text-sm text-muted hover:text-foreground">
+            Все промокоды
+          </Link>
+        </div>
         {promos.length === 0 ? (
-          <p className="text-sm text-muted">{t('admin.partnerPromoEmpty')}</p>
+          <p className="text-sm text-muted">
+            Промокодов пока нет —{' '}
+            <Link href="/admin/partner/promos" className="text-foreground underline">
+              создайте первый
+            </Link>
+            .
+          </p>
         ) : (
           <ul className="flex flex-col gap-1 text-sm">
-            {promos.map((row) => (
+            {promos.slice(0, 3).map((row) => (
               <li key={row.id} className="flex justify-between gap-2 tabular-nums">
                 <span className="font-mono">{row.code}</span>
                 <span>
-                  {row.type === 'fixed' ? `${row.discount} ₽` : `${row.discount}%`} ·{' '}
-                  {row.usedCount}
+                  {row.type === 'fixed' ? `${row.discount} ₽` : `${row.discount}%`} · {row.usedCount}
                   {row.maxUses === null ? '' : `/${row.maxUses}`}
                 </span>
               </li>
@@ -118,56 +99,32 @@ export default async function AdminPartnerPage() {
         )}
       </div>
 
-      {withdrawals.length > 0 && (
-        <div className={CARD}>
-          <h3 className="text-base font-semibold text-foreground">
-            {t('admin.refWithdrawalsTitle')}
-          </h3>
-          <ul className="flex flex-col gap-1 text-sm">
-            {withdrawals.map((row) => (
-              <li key={row.id} className="flex justify-between gap-2 tabular-nums">
-                <span>{row.amount} ₽</span>
-                <span className="text-muted">{row.status}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
       <div className={CARD}>
-        <h3 className="text-base font-semibold text-foreground">
-          {t('admin.funnelTitle')}
-        </h3>
+        <h3 className="text-base font-semibold text-foreground">Воронка рефералов</h3>
         <FunnelCharts endpoint="/api/referrals/stats" />
       </div>
 
       <div className={CARD}>
-        <h3 className="text-base font-semibold text-foreground">
-          {t('admin.partnerDownlineTitle')}
-        </h3>
-        {downline.length === 0 ? (
-          <p className="text-sm text-muted">{t('admin.partnerDownlineEmpty')}</p>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-base font-semibold text-foreground">Последние рефералы</h3>
+          <Link href="/admin/partner/referrals" className="text-sm text-muted hover:text-foreground">
+            Все рефералы
+          </Link>
+        </div>
+        {preview.length === 0 ? (
+          <p className="text-sm text-muted">Пока никого — поделитесь ссылкой выше.</p>
         ) : (
           <div className="overflow-x-auto rounded-2xl border border-line">
-            <table className="w-full min-w-[36rem] text-left text-sm">
+            <table className="w-full min-w-[32rem] text-left text-sm">
               <thead>
                 <tr className="border-b border-line">
-                  <th scope="col" className="px-3 py-2 font-semibold text-muted">
-                    {t('admin.partnerColWho')}
-                  </th>
-                  <th scope="col" className="px-3 py-2 font-semibold text-muted">
-                    {t('admin.partnerColDownline')}
-                  </th>
-                  <th scope="col" className="px-3 py-2 font-semibold text-muted">
-                    {t('admin.partnerColSales')}
-                  </th>
-                  <th scope="col" className="px-3 py-2 font-semibold text-muted">
-                    {t('admin.partnerColEarned')}
-                  </th>
+                  <th scope="col" className="px-3 py-2 font-semibold text-muted">Реферал</th>
+                  <th scope="col" className="px-3 py-2 font-semibold text-muted">Покупки</th>
+                  <th scope="col" className="px-3 py-2 font-semibold text-muted">Заработано</th>
                 </tr>
               </thead>
               <tbody>
-                {downline.map((row) => (
+                {preview.map((row) => (
                   <tr key={row.userId} className="border-b border-line last:border-0">
                     <td className="px-3 py-3 align-middle">
                       <div className="flex flex-col">
@@ -179,7 +136,6 @@ export default async function AdminPartnerPage() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-3 py-3 align-middle tabular-nums">{row.downline}</td>
                     <td className="px-3 py-3 align-middle tabular-nums">
                       {row.purchases} · {row.revenue} ₽
                     </td>
@@ -193,19 +149,15 @@ export default async function AdminPartnerPage() {
       </div>
 
       <div className={CARD}>
-        <h3 className="text-base font-semibold text-foreground">
-          {t('admin.partnerSupportTitle')}
-        </h3>
-        <p className="text-sm text-muted">{t('admin.partnerSupportBody')}</p>
+        <h3 className="text-base font-semibold text-foreground">Поддержка</h3>
+        <p className="text-sm text-muted">Вопросы по выплатам и коду — напишите нам.</p>
         <Link
           href="/support"
           className="flex h-11 items-center justify-center rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5"
         >
-          {t('admin.partnerSupportCta')}
+          Открыть поддержку
         </Link>
       </div>
-
-      <ReferralSection />
     </section>
   );
 }

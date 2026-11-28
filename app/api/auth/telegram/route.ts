@@ -91,8 +91,14 @@ export async function POST(req: Request): Promise<Response> {
           username: typeof user.username === "string" ? user.username : undefined,
           signupIpHash: signupIpHash || undefined,
         },
-        select: { id: true },
+        select: { id: true, blockedAt: true },
       });
+      // Session gates reject a blocked account; refusing here avoids handing
+      // out a cookie that cannot be used.
+      if (row.blockedAt) {
+        logger.warn({ via: "initdata", telegramId: user.id, outcome: "blocked" });
+        return Response.json({ error: "blocked" }, { status: 403 });
+      }
       const token = await signSession(row.id, user.id, env.SESSION_SECRET);
       logger.info({ via: "initdata", telegramId: user.id, outcome: "issued" });
       return Response.json(
@@ -140,8 +146,12 @@ export async function POST(req: Request): Promise<Response> {
         username: widget.username,
         signupIpHash: signupIpHash || undefined,
       },
-      select: { id: true },
+      select: { id: true, blockedAt: true },
     });
+    if (row.blockedAt) {
+      logger.warn({ via: "widget", telegramId: widget.id, outcome: "blocked" });
+      return Response.json({ error: "blocked" }, { status: 403 });
+    }
     const token = await signSession(row.id, widget.id, env.SESSION_SECRET);
     logger.info({ via: "widget", telegramId: widget.id, outcome: "issued" });
     return Response.json(

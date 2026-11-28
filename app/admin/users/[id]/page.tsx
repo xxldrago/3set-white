@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import AdminKeyRow from '@/components/admin/AdminKeyRow';
 import RewardControl from '@/components/admin/RewardControl';
+import PartnerPlanRewards from '@/components/admin/PartnerPlanRewards';
 import SubdomainControl from '@/components/admin/SubdomainControl';
 import RoleChangeControl from '@/components/admin/RoleChangeControl';
 import UserProfileCard from '@/components/admin/UserProfileCard';
@@ -27,6 +28,7 @@ import {
   loadAdminTickets,
 } from '@/lib/admin-service';
 import { t } from '@/lib/i18n';
+import { listPartnerPlanRewards } from '@/lib/referrals';
 import { logger } from '@/lib/logger';
 import type { OrderHistoryRow } from '@/lib/orders-service';
 import { AdminError, SessionError } from '@/lib/session';
@@ -266,6 +268,7 @@ export default async function AdminUserProfilePage({
 
   const header = await loadAdminHeader(userId);
   if (!header) notFound();
+  const planRewards = caller.role === 'administrator' ? await listPartnerPlanRewards(userId) : [];
 
   // UI-SPEC §4 role action: rendered for an administrator ONLY, and only for a
   // staff target (there is no role row to change otherwise). It is absent from
@@ -290,6 +293,9 @@ export default async function AdminUserProfilePage({
             current={header.customInviterReward}
             currentKind={header.customInviterKind}
           />
+        )}
+        {caller.role === 'administrator' && (
+          <PartnerPlanRewards userId={header.userId} initial={planRewards} />
         )}
         {caller.role === 'administrator' && (
           <SubdomainControl userId={header.userId} current={header.customSubdomain} />

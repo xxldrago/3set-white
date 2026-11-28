@@ -66,21 +66,24 @@ export async function requireSession(): Promise<SessionIdentity> {
   if (claims.userId !== null) {
     const user = await prisma.user.findUnique({
       where: { id: claims.userId },
-      select: { id: true, credentialsChangedAt: true },
+      select: { id: true, credentialsChangedAt: true, blockedAt: true },
     });
     if (user && isRevoked(claims.issuedAt, user.credentialsChangedAt)) {
       throw new SessionError();
     }
+    // Admin block revokes every existing token immediately.
+    if (user?.blockedAt) throw new SessionError();
     return { userId: claims.userId, telegramId: claims.telegramId };
   }
   // Legacy tid-only token: resolve the userId via the telegram row.
   if (claims.telegramId === null) throw new SessionError();
   const user = await prisma.user.findUnique({
     where: { telegramId: BigInt(claims.telegramId) },
-    select: { id: true, credentialsChangedAt: true },
+    select: { id: true, credentialsChangedAt: true, blockedAt: true },
   });
   if (!user) throw new SessionError();
   if (isRevoked(claims.issuedAt, user.credentialsChangedAt)) throw new SessionError();
+  if (user.blockedAt) throw new SessionError();
   return { userId: user.id, telegramId: claims.telegramId };
 }
 
@@ -104,11 +107,12 @@ export async function requireTelegramSession(): Promise<number> {
   // rows keep working exactly as before (D-82).
   const user = await prisma.user.findUnique({
     where: { telegramId: BigInt(claims.telegramId) },
-    select: { credentialsChangedAt: true },
+    select: { credentialsChangedAt: true, blockedAt: true },
   });
   if (user && isRevoked(claims.issuedAt, user.credentialsChangedAt)) {
     throw new SessionError();
   }
+  if (user?.blockedAt) throw new SessionError();
   return claims.telegramId;
 }
 

@@ -187,7 +187,7 @@ export default function ReferralSection() {
     if (!summary) return;
     try {
       await navigator.clipboard.writeText(
-        `${window.location.origin}/?ref=${summary.code}`,
+        `${window.location.origin}/signup?ref=${summary.code}`,
       );
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -228,7 +228,7 @@ export default function ReferralSection() {
   if (failed) return null;
   if (!summary) return <ReferralSectionSkeleton />;
 
-  const link = `/?ref=${summary.code}`;
+  const link = `/signup?ref=${summary.code}`;
 
   return (
     <section id="referrals" className={CARD}>

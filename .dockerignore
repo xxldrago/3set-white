@@ -1,6 +1,9 @@
 node_modules
 .next
 out
+# Flutter app sources + build outputs are a separate product; never ship them
+# into the web image context (1.4 GB of IPA/app bundles).
+mobile
 .git
 .gitignore
 README.md

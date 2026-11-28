@@ -10,7 +10,12 @@ import type { Order, Outbox } from "../generated/prisma/client";
 import { logger } from "./logger";
 import { consumePromo, validatePromo } from "./promo";
 import { resolveTariffQuote, resolveUpgradeQuote } from "./pricing";
-import { creditReferralForPaidOrder, pinReferrer, walletBalance } from "./referrals";
+import {
+  creditReferralForPaidOrder,
+  ensureReferralCode,
+  pinReferrer,
+  walletBalance,
+} from "./referrals";
 import { env } from "./env";
 import { getKeyForUser, getKeyForUserId, type RenderedKey } from "./keys-service";
 import { enqueueFulfillJob } from "./outbox";
@@ -181,7 +186,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       logger.warn({ route: "orders", outcome: "promo_rejected", reason: preview.reason });
       throw new OrderPromoError();
     }
-    const consumed = await consumePromo(rawPromo);
+    const consumed = await consumePromo(rawPromo, amount);
     if (!consumed) {
       logger.warn({ route: "orders", outcome: "promo_race_lost" });
       throw new OrderPromoError();
@@ -195,8 +200,11 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         where: { id: consumed.ownerUserId },
         select: { referralCode: true },
       });
-      if (owner?.referralCode) {
-        await pinReferrer(user.id, owner.referralCode).catch(() => null);
+      if (owner) {
+        // The code is minted lazily elsewhere; a partner who never opened the
+        // cabinet would otherwise lose the attribution silently.
+        const code = owner.referralCode ?? (await ensureReferralCode(consumed.ownerUserId));
+        await pinReferrer(user.id, code).catch(() => null);
       }
     }
   }
@@ -264,11 +272,15 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     const paymentClient = getPaymentClient(plategaMerchant);
     // Return targets: for bot channel, redirect back to the bot via deep link.
     // For web channel, use the cabinet success/fail pages.
+    // The bot channel always returns the payer straight into the bot chat,
+    // even when the payment itself runs through the site merchant: a buyer who
+    // started in Telegram should never land on the cabinet success page.
     const botUsername = env.TELEGRAM_BOT_USERNAME;
-    const returnUrl = plategaMerchant === "bot"
+    const botReturn = input.channel === "bot" && Boolean(botUsername);
+    const returnUrl = botReturn
       ? `https://t.me/${botUsername}?start=payment_success_${order.id}`
       : `${env.APP_BASE_URL}/pay/success`;
-    const failedUrl = plategaMerchant === "bot"
+    const failedUrl = botReturn
       ? `https://t.me/${botUsername}?start=payment_failed_${order.id}`
       : `${env.APP_BASE_URL}/pay/fail`;
     const paymentResult = await paymentClient.createPayment({
@@ -510,9 +522,11 @@ export async function applyConfirmedPayment(orderId: string): Promise<boolean> {
   try {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      select: { userId: true, finalAmount: true },
+      select: { userId: true, finalAmount: true, days: true },
     });
-    if (order) await creditReferralForPaidOrder(order.userId, order.finalAmount, orderId);
+    if (order) {
+      await creditReferralForPaidOrder(order.userId, order.finalAmount, orderId, order.days);
+    }
   } catch {
     logger.error({ route: "orders", outcome: "referral_credit_failed", orderId });
   }

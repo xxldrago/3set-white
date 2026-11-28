@@ -69,6 +69,8 @@ export interface DirectoryRow {
   lastOrderAt: string | null;
   emailVerified: boolean;
   bonusDays: number;
+  /** Admin block timestamp ISO, null = active account. */
+  blockedAt: string | null;
   /** Derived from the mailbox/handle, never a stored flag. */
   isTest: boolean;
 }
@@ -364,6 +366,7 @@ export async function adminUsersDirectory(
       createdAt: true,
       emailVerifiedAt: true,
       bonusDays: true,
+      blockedAt: true,
       rfm: { select: { segment: true } },
     },
   });
@@ -438,6 +441,7 @@ export async function adminUsersDirectory(
     lastOrderAt: lastOrderById.get(user.id)?.toISOString() ?? null,
     emailVerified: user.emailVerifiedAt !== null,
     bonusDays: Math.max(0, user.bonusDays ?? 0),
+    blockedAt: user.blockedAt ? user.blockedAt.toISOString() : null,
     isTest: isTestAccount(user.email, user.username, user.firstName),
   }));
 

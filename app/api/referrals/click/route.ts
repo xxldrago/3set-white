@@ -6,8 +6,8 @@
 import { z } from "zod";
 import { clientIp } from "../../../../lib/client-ip";
 import { logger } from "../../../../lib/logger";
-import { prisma } from "../../../../lib/prisma";
 import { recordClick } from "../../../../lib/referral-stats";
+import { resolveReferralCode } from "../../../../lib/referrals";
 
 export const dynamic = "force-dynamic";
 
@@ -31,13 +31,10 @@ export async function POST(req: Request): Promise<Response> {
   try {
     const code = parsed.data.code.trim().toUpperCase();
     const ip = clientIp(req);
-    // Try as referral code first
-    const owner = await prisma.user.findUnique({
-      where: { referralCode: code },
-      select: { id: true },
-    });
-    if (owner) {
-      await recordClick(owner.id, code, ip, "link", { kind: "referral" });
+    // Try as referral code first — per-account codes AND partner-made links.
+    const resolved = await resolveReferralCode(code);
+    if (resolved) {
+      await recordClick(resolved.targetUserId, code, ip, "link", { kind: "referral" });
       return Response.json({ ok: true });
     }
     // Otherwise treat as promo/generic

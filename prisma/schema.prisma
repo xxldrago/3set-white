@@ -42,6 +42,9 @@ model User {
   // pre-existing 30-day tokens stay valid for untouched accounts).
   credentialsChangedAt DateTime? @map("credentials_changed_at")
   twoFactorEnabled   Boolean @default(false) @map("two_factor_enabled")
+  // Admin block: a non-null timestamp revokes every session (requireSession
+  // rejects the row) and is surfaced in the admin directory. Null = active.
+  blockedAt          DateTime? @map("blocked_at")
   chatId       BigInt?  @map("chat_id")
   firstName  String?  @map("first_name")
   lastName   String?  @map("last_name")
@@ -70,6 +73,16 @@ model User {
   // inviter = my entitlement minus the downline share (floored at zero).
   subRateKind         String? @map("sub_rate_kind")
   subRateValue        Int?    @map("sub_rate_value")
+  // Per-subpartner rate set by the upline PARTNER on THIS (subpartner's) row:
+  // the share of the partner's income paid to that subpartner. Null = global.
+  // Resolved after the admin custom rate but before the upline's global
+  // sub-rate, so each subpartner link can carry its own percent.
+  partnerRateKind     String? @map("partner_rate_kind")
+  partnerRateValue    Int?    @map("partner_rate_value")
+  // Per-plan payouts this partner earns per SOLD KEY of a given duration
+  // (7/30/90/180/365 days, editable in the admin profile). A matching row
+  // overrides the custom/global rate for that order's term.
+  planRewards         PartnerPlanReward[]
   // Bonus subscription days (user referral program): credited instead of
   // money for non-partner inviters/invitees; spent via key extension.
   bonusDays           Int     @default(0) @map("bonus_days")
@@ -81,6 +94,8 @@ model User {
   walletTx           WalletTx[]
   withdrawals        Withdrawal[]
   referralClicks     ReferralClick[]
+  referralLinksOwned  ReferralLink[] @relation("ReferralLinksOwned")
+  referralLinksTarget ReferralLink[] @relation("ReferralLinksTarget")
 
   // Phase 2 trial anti-abuse (D-21): one trial per telegram-id. `trialUsed`
   // is claimed by a single atomic UPDATE ... WHERE trial_used=false (D-22);
@@ -530,6 +545,13 @@ model PromoCode {
   maxUses     Int?      // null = unlimited
   usedCount   Int       @default(0)
   expiresAt   DateTime? // null = permanently valid
+  // Manual on/off switch. Checkout rejects inactive codes without consuming
+  // a use, so a code can be paused and resumed (unlike deletion).
+  active      Boolean   @default(true)
+  // Minimum order amount (whole RUB) the code can be applied to; null = any.
+  minSum      Int?      @map("min_sum")
+  // Free-form admin note (campaign, owner, terms). Cabinet-only.
+  note        String?
   createdAt   DateTime  @default(now()) @map("created_at")
   // Personal partner code: orders paying with it attribute the buyer to this
   // account (first-wins pin at order time) and surface in its dashboard.
@@ -591,6 +613,45 @@ model ReferralClick {
   @@index([ownerUserId, createdAt])
   @@index([ipHash, createdAt])
   @@map("referral_clicks")
+}
+
+// Partner-managed referral links: a partner mints as many named codes as they
+// need, each attributing new accounts either to the partner themself (`own`
+// link) or to one of their DIRECT subpartners (sub-referral link). Codes keep
+// the `3SET-XXXXXX` shape of per-account codes, so the pin path accepts them
+// unchanged; resolution order is users.referral_code, then this table.
+// `owner_id` is the partner who manages the link (and the partner's cabinet
+// scope), `target_user_id` is the account that earns from registrations.
+model ReferralLink {
+  id           String   @id @default(cuid())
+  ownerId      Int      @map("owner_id")
+  owner        User     @relation("ReferralLinksOwned", fields: [ownerId], references: [id], onDelete: Cascade)
+  targetUserId Int      @map("target_user_id")
+  target       User     @relation("ReferralLinksTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  code         String   @unique
+  label        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([ownerId, createdAt])
+  @@index([targetUserId])
+  @@map("referral_links")
+}
+
+// Fixed RUB a partner earns for one SOLD key of a given term. The admin sets
+// these per partner, so a weekly key and a yearly key can pay different sums.
+// `days` is the order's term (orders.days); a missing row falls back to the
+// partner's custom/global rate.
+model PartnerPlanReward {
+  id        String   @id @default(cuid())
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  days      Int
+  amount    Int
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, days])
+  @@map("partner_plan_rewards")
 }
 
 // Payout request: created with a `withdrawal_hold` debit reserving the

@@ -9,6 +9,7 @@
 import { z } from "zod";
 import { requireRole } from "../../../../../../lib/admin-auth";
 import { logger } from "../../../../../../lib/logger";
+import { canPartnerAccessTicket } from "../../../../../../lib/partner-support";
 import { NOTIFY_TICKET_REPLY, enqueueNotification } from "../../../../../../lib/outbox";
 import { AdminError, SessionError } from "../../../../../../lib/session";
 import { addSupportMessage } from "../../../../../../lib/tickets-service";
@@ -22,8 +23,9 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
+  let actor: Awaited<ReturnType<typeof requireRole>>;
   try {
-    await requireRole("administrator", "support");
+    actor = await requireRole("administrator", "support", "partner");
   } catch (err) {
     if (err instanceof SessionError) {
       return Response.json({ error: "unauthorized" }, { status: 401 });
@@ -50,6 +52,14 @@ export async function POST(
   const body = bodySchema.safeParse(typeof rawBody === "string" ? rawBody : "");
   if (!body.success) {
     return Response.json({ error: "bad_request" }, { status: 400 });
+  }
+
+  // A partner may answer only tickets opened by their direct referrals.
+  if (
+    actor.role === "partner" &&
+    !(await canPartnerAccessTicket(actor.telegramId, parsedId.data))
+  ) {
+    return Response.json({ error: "not_found" }, { status: 404 });
   }
 
   try {

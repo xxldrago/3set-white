@@ -30,7 +30,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Панель', icon: LayoutDashboard },
   { href: '/subscription', label: 'Мои ключи', icon: Key },
-  { href: '/faq', label: 'Инструкции', icon: CircleHelp },
+  { href: '/install', label: 'Инструкции', icon: CircleHelp },
   { href: '/support', label: 'Поддержка', icon: LifeBuoy },
 ];
 

@@ -313,7 +313,7 @@ export default function SupportClient({ tickets, user, isStaff, unread, now }: P
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="m2 21l9.6-9.6M7.5 15.5l2.3 2.3" /></svg>
                 Мои ключи
               </Link>
-              <Link href="/faq" className="nl">
+              <Link href="/install" className="nl">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" /></svg>
                 Инструкции
               </Link>
@@ -340,7 +340,7 @@ export default function SupportClient({ tickets, user, isStaff, unread, now }: P
           <div className="mm-inner">
             <Link href="/" className="nl">Панель</Link>
             <Link href="/subscription" className="nl">Мои ключи</Link>
-            <Link href="/faq" className="nl">Инструкции</Link>
+            <Link href="/install" className="nl">Инструкции</Link>
             <Link href="/profile" className="nl">Профиль</Link>
             {isStaff && <Link href="/admin" className="nl">Админ-панель</Link>}
           </div>
@@ -497,7 +497,7 @@ export default function SupportClient({ tickets, user, isStaff, unread, now }: P
                 <b>Telegram-чат</b>
                 <p>Самый быстрый канал: можно прислать скриншоты и видео.</p>
               </div>
-              <Link href="/faq" className="chan reveal">
+              <Link href="/install" className="chan reveal">
                 <span className="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>
                 <span className="cic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg></span>
                 <b>Инструкции</b>
@@ -520,7 +520,7 @@ export default function SupportClient({ tickets, user, isStaff, unread, now }: P
               <p className="dim" style={{ fontSize: 12.5, margin: '8px 0 0' }}>VPN-подписки: покупка и управление ключами · © 2026</p>
             </div>
             <div className="f-links">
-              <a href="#tickets">Обращения</a><a href="/faq">Инструкции</a>
+              <a href="#tickets">Обращения</a><a href="/install">Инструкции</a>
               <button onClick={() => toast('Политика конфиденциальности')}>Политика</button>
               <button onClick={() => toast('Публичная оферта')}>Оферта</button>
             </div>

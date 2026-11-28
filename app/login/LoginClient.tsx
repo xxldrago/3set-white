@@ -38,14 +38,16 @@ declare global {
 
 interface LoginClientProps {
   initialMode: Mode;
-  ref: string | null;
+  // Never name this prop `ref`: React reserves it, and a Server Component
+  // passing it to a Client Component throws at render (digest 1362685469).
+  referralCode: string | null;
   activeKeys: number;
   legalBaseUrl: string;
 }
 
 export default function LoginClient({
   initialMode,
-  ref: refParam,
+  referralCode: refParam,
   activeKeys,
   legalBaseUrl,
 }: LoginClientProps) {
@@ -643,7 +645,7 @@ export default function LoginClient({
             <span>3<em>set</em><span className="dom mono">.online</span></span>
           </a>
           <div className="bp-title reveal" style={{ '--d': '80ms' } as React.CSSProperties}>
-            <h1>Приватность<br />в <em>три</em> клика.</h1>
+            <h1>VPN который <em>работает</em> везде.</h1>
             <p>Один ключ — все ваши устройства. WireGuard-подключение, безлимитный трафик и личный кабинет, где всё под контролем.</p>
           </div>
           <div className="feats reveal" style={{ '--d': '160ms' } as React.CSSProperties}>

@@ -53,7 +53,7 @@ export async function POST(req: Request): Promise<Response> {
     }
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true, passwordHash: true, telegramId: true },
+      select: { id: true, passwordHash: true, telegramId: true, blockedAt: true },
     });
     if (!user || !user.passwordHash) {
       // Equal-cost path: no oracle on account existence or password presence.
@@ -65,6 +65,12 @@ export async function POST(req: Request): Promise<Response> {
     if (!(await verifyPassword(user.passwordHash, password))) {
       await recordFailedLogin(email, ip);
       logger.warn({ route: "email-login", outcome: "rejected" });
+      return invalid();
+    }
+    // A blocked account takes the generic 401 path — no block oracle.
+    if (user.blockedAt) {
+      await recordFailedLogin(email, ip);
+      logger.warn({ route: "email-login", outcome: "blocked" });
       return invalid();
     }
     await resetLoginAttempts(email, ip);

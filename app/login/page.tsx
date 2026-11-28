@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import LoginClient from './LoginClient';
 import { getSessionUser } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
+import { pinReferrer } from '@/lib/referrals';
 import { env } from '@/lib/env';
 import { t } from '@/lib/i18n';
 
@@ -23,7 +24,12 @@ export default async function LoginPage({
   const { mode, ref } = await searchParams;
 
   const user = await getSessionUser();
-  if (user) redirect('/');
+  if (user) {
+    // Legacy `/?ref=` links land here too: pin an unpinned signed-in account
+    // before bouncing it to the cabinet.
+    if (ref) await pinReferrer(user.userId, ref).catch(() => null);
+    redirect('/');
+  }
 
   const initialMode = mode === 'register' ? 'register' : 'login';
 
@@ -41,7 +47,7 @@ export default async function LoginPage({
   return (
     <LoginClient
       initialMode={initialMode}
-      ref={ref ?? null}
+      referralCode={ref ?? null}
       activeKeys={activeKeys}
       legalBaseUrl={env.LEGAL_BASE_URL}
     />

@@ -6,19 +6,18 @@
 // lib/admin-promos-directory.ts, prisma/schema.prisma):
 //   * create one code (POST /api/admin/promos) or a batch of N distinct codes
 //     (POST /api/admin/promos/batch);
+//   * switch a code on/off, set its minimum order amount and its note
+//     (PATCH /api/admin/promos/[id]) and switch many at once
+//     (PATCH /api/admin/promos/bulk);
 //   * delete one code (DELETE /api/admin/promos/[id]) — historic orders keep
 //     their own promoCode/finalAmount snapshot, so revenue never regresses;
 //   * read-only validation of any code against the checkout logic
 //     (GET /api/admin/promos/check), optionally priced against a base amount.
 //
-// `promo_codes` stores code/discount/type/maxUses/usedCount/expiresAt/
-// ownerUserId ONLY. There is no `active` flag, no minimum-order column, no
-// note/comment and no PATCH endpoint — so the template's disable toggle,
-// min-order threshold, comments and bulk enable/disable render as explicitly
-// disabled controls with a reason. Nothing is faked: status is DERIVED from
-// usedCount/maxUses/expiresAt exactly the way checkout derives it, revenue and
-// discount come from real paid orders, and clicks come from the public beacon
-// (per-IP hourly dedupe, so a lower bound — stated as such).
+// Status is DERIVED from `active`/usedCount/maxUses/expiresAt exactly the way
+// checkout derives it, revenue and discount come from real paid orders, and
+// clicks come from the public beacon (per-IP hourly dedupe, so a lower bound —
+// stated as such).
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type {
   PromoDirectory,
@@ -82,6 +81,7 @@ const FILTERS: { key: PromoFilter; label: string }[] = [
   { key: 'soon', label: 'Истекают' },
   { key: 'expired', label: 'Просрочены' },
   { key: 'exhausted', label: 'Исчерпаны' },
+  { key: 'disabled', label: 'Выключенные' },
   { key: 'personal', label: 'Персональные' },
 ];
 
@@ -90,6 +90,7 @@ const STATUS_META: Record<string, { cls: string; label: string }> = {
   soon: { cls: 'warn', label: 'Истекает' },
   expired: { cls: 'bad', label: 'Просрочен' },
   exhausted: { cls: 'dim', label: 'Исчерпан' },
+  disabled: { cls: 'bad', label: 'Выключен' },
 };
 
 const SORTS: { key: PromoSort; label: string }[] = [
@@ -138,6 +139,8 @@ export default function PromosApp({ initial }: { initial: PromoDirectory }) {
   const [maxUses, setMaxUses] = useState('');
   const [expires, setExpires] = useState('');
   const [ownerUserId, setOwnerUserId] = useState('');
+  const [minSum, setMinSum] = useState('');
+  const [note, setNote] = useState('');
   const [creating, setCreating] = useState(false);
   const [codeTaken, setCodeTaken] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -167,6 +170,8 @@ export default function PromosApp({ initial }: { initial: PromoDirectory }) {
   const [cmdQ, setCmdQ] = useState('');
   const [cmdSel, setCmdSel] = useState(0);
   const [freshCode, setFreshCode] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
   const toastId = useRef(0);
 
   const toast = useCallback((msg: string, t: ToastType = '') => {
@@ -236,6 +241,11 @@ export default function PromosApp({ initial }: { initial: PromoDirectory }) {
       setFormError('ID владельца — целое положительное число (пусто — общий код).');
       return;
     }
+    const min = minSum.trim() === '' ? null : Number(minSum);
+    if (min !== null && (!Number.isInteger(min) || min < 0)) {
+      setFormError('Минимальная сумма — целое число от 0 (пусто — без ограничения).');
+      return;
+    }
 
     setCreating(true);
     try {
@@ -249,6 +259,8 @@ export default function PromosApp({ initial }: { initial: PromoDirectory }) {
           maxUses: limit,
           expiresAt: endOfDayIso(expires),
           ownerUserId: owner,
+          minSum: min,
+          note: note.trim() || null,
         }),
       });
       if (res.ok) {
@@ -259,6 +271,8 @@ export default function PromosApp({ initial }: { initial: PromoDirectory }) {
         setMaxUses('');
         setExpires('');
         setOwnerUserId('');
+        setMinSum('');
+        setNote('');
         setFreshCode(made);
         toast(`Промокод ${made} создан`);
         burstConfetti();
@@ -286,6 +300,68 @@ export default function PromosApp({ initial }: { initial: PromoDirectory }) {
     } finally {
       setCreating(false);
     }
+  }
+
+  /* ------------------------------------------------------- switch on/off */
+
+  /** PATCH one code's fields; returns true when the server accepted it. */
+  async function patchPromo(id: string, patch: { active?: boolean; minSum?: number | null }) {
+    try {
+      const res = await fetch(`/api/admin/promos/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      });
+      if (!res.ok) throw new Error('failed');
+      const body = (await res.json()) as { promo: PromoRow };
+      setData((prev) => ({
+        ...prev,
+        rows: prev.rows.map((row) => (row.id === id ? body.promo : row)),
+      }));
+      setDetail((prev) => (prev && prev.id === id ? body.promo : prev));
+      return true;
+    } catch {
+      toast('Не удалось сохранить изменения кода', 'err');
+      return false;
+    }
+  }
+
+  async function toggleActive(row: PromoRow) {
+    const ok = await patchPromo(row.id, { active: !row.active });
+    if (ok) {
+      toast(row.active ? `Код ${row.code} выключен` : `Код ${row.code} включён`);
+      void load();
+    }
+  }
+
+  async function bulkActive(active: boolean) {
+    if (selected.size === 0 || bulkBusy) return;
+    setBulkBusy(true);
+    try {
+      const res = await fetch('/api/admin/promos/bulk', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: [...selected], active }),
+      });
+      if (!res.ok) throw new Error('failed');
+      const body = (await res.json()) as { updated: number };
+      toast(`${active ? 'Включено' : 'Выключено'} кодов: ${body.updated}`);
+      setSelected(new Set());
+      await load();
+    } catch {
+      toast('Не удалось изменить выбранные коды', 'err');
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
   /* ------------------------------------------------------------- batch */
@@ -318,6 +394,8 @@ export default function PromosApp({ initial }: { initial: PromoDirectory }) {
           type,
           maxUses: maxUses.trim() === '' ? null : Number(maxUses),
           expiresAt: endOfDayIso(expires),
+          minSum: minSum.trim() === '' ? null : Number(minSum),
+          note: note.trim() || null,
         }),
       });
       if (!res.ok) throw new Error('failed');
@@ -624,7 +702,9 @@ export default function PromosApp({ initial }: { initial: PromoDirectory }) {
                           ? stats.expired
                           : f.key === 'exhausted'
                             ? stats.exhausted
-                            : stats.active;
+                            : f.key === 'disabled'
+                              ? stats.disabled
+                              : stats.active;
                 return (
                   <button
                     key={f.key}
@@ -701,6 +781,19 @@ export default function PromosApp({ initial }: { initial: PromoDirectory }) {
                 <table className="tbl">
                   <thead>
                     <tr>
+                      <th style={{ width: 34 }}>
+                        <input
+                          type="checkbox"
+                          className="cbx"
+                          aria-label="Выбрать все коды на странице"
+                          checked={data.rows.length > 0 && data.rows.every((r) => selected.has(r.id))}
+                          onChange={(e) =>
+                            setSelected(
+                              e.target.checked ? new Set(data.rows.map((r) => r.id)) : new Set(),
+                            )
+                          }
+                        />
+                      </th>
                       <th>Код</th>
                       <th>Скидка</th>
                       <th>Использования</th>
@@ -722,6 +815,15 @@ export default function PromosApp({ initial }: { initial: PromoDirectory }) {
                           style={{ animationDelay: `${Math.min(i * 35, 300)}ms` }}
                         >
                           <td>
+                            <input
+                              type="checkbox"
+                              className="cbx"
+                              aria-label={`Выбрать ${r.code}`}
+                              checked={selected.has(r.id)}
+                              onChange={() => toggleSelect(r.id)}
+                            />
+                          </td>
+                          <td>
                             <div className="code-cell">
                               <span className="cc">{r.code}</span>
                               <button
@@ -741,11 +843,21 @@ export default function PromosApp({ initial }: { initial: PromoDirectory }) {
                                 персональный · {r.ownerName ?? `#${r.ownerUserId}`}
                               </span>
                             )}
+                            {r.note && (
+                              <span className="dim" style={{ fontSize: 10.8, display: 'block', marginTop: 3 }}>
+                                {r.note}
+                              </span>
+                            )}
                           </td>
                           <td>
                             <b className="num" style={{ color: 'var(--lime)' }}>
                               {discountLabel(r)}
                             </b>
+                            {r.minSum !== null && (
+                              <span className="dim" style={{ fontSize: 10.8, display: 'block', marginTop: 3 }}>
+                                от {money(r.minSum)}
+                              </span>
+                            )}
                           </td>
                           <td>
                             <div className="usage">
@@ -785,6 +897,24 @@ export default function PromosApp({ initial }: { initial: PromoDirectory }) {
                           </td>
                           <td>
                             <span className="acts">
+                              <button
+                                className={`ibtn${r.active ? '' : ' dgr'}`}
+                                type="button"
+                                title={r.active ? 'Выключить код' : 'Включить код'}
+                                aria-label={r.active ? 'Выключить код' : 'Включить код'}
+                                onClick={() => void toggleActive(r)}
+                              >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  {r.active ? (
+                                    <>
+                                      <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+                                      <path d="M12 2v10" />
+                                    </>
+                                  ) : (
+                                    <path d="M5 3l14 18" />
+                                  )}
+                                </svg>
+                              </button>
                               <button className="ibtn" type="button" title="Подробнее" onClick={() => setDetail(r)}>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                   <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z" />
@@ -823,6 +953,47 @@ export default function PromosApp({ initial }: { initial: PromoDirectory }) {
                     ? 'Измените запрос или сбросьте фильтр статуса.'
                     : 'Создайте первый код в форме справа — он сразу появится в реестре.'}
                 </p>
+              </div>
+            )}
+
+            {selected.size > 0 && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  flexWrap: 'wrap',
+                  marginTop: 12,
+                  padding: '10px 12px',
+                  border: '1px solid var(--line)',
+                  borderRadius: 12,
+                }}
+              >
+                <b style={{ fontSize: 12.4 }}>Выбрано: {selected.size}</b>
+                <button
+                  className="btn btn-quiet xs"
+                  type="button"
+                  disabled={bulkBusy}
+                  onClick={() => void bulkActive(true)}
+                >
+                  Включить
+                </button>
+                <button
+                  className="btn btn-danger xs"
+                  type="button"
+                  disabled={bulkBusy}
+                  onClick={() => void bulkActive(false)}
+                >
+                  Выключить
+                </button>
+                <button
+                  className="btn btn-quiet xs"
+                  type="button"
+                  style={{ marginLeft: 'auto' }}
+                  onClick={() => setSelected(new Set())}
+                >
+                  Снять выделение
+                </button>
               </div>
             )}
 
@@ -956,6 +1127,32 @@ export default function PromosApp({ initial }: { initial: PromoDirectory }) {
               </div>
 
               <div className="field">
+                <label htmlFor="pr-minsum">Минимальная сумма заказа, ₽</label>
+                <input
+                  id="pr-minsum"
+                  className="input"
+                  inputMode="numeric"
+                  value={minSum}
+                  onChange={(e) => setMinSum(e.target.value.replace(/[^\d]/g, ''))}
+                  placeholder="Без ограничения"
+                />
+                <span className="hint">Скидка не сработает на заказ меньше этой суммы</span>
+              </div>
+
+              <div className="field">
+                <label htmlFor="pr-note">Комментарий</label>
+                <input
+                  id="pr-note"
+                  className="input"
+                  value={note}
+                  maxLength={300}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Например: канал «ВПН для мам», до 31.12"
+                />
+                <span className="hint">Виден только в админке</span>
+              </div>
+
+              <div className="field">
                 <label htmlFor="pr-owner">Владелец — ID пользователя</label>
                 <input
                   id="pr-owner"
@@ -992,9 +1189,9 @@ export default function PromosApp({ initial }: { initial: PromoDirectory }) {
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
                 <span>
-                  <b>Редактирования нет.</b> Поля кода после создания неизменяемы: в схеме нет
-                  PATCH-эндпоинта. Чтобы изменить условия — удалите код и создайте новый; история
-                  заказов при этом сохраняется.
+                  <b>Включение и выключение</b> — в строке реестра. Скидку и срок после
+                  создания изменить нельзя: удалите код и создайте новый, история заказов
+                  сохраняется.
                 </span>
               </div>
             </div>
@@ -1202,57 +1399,6 @@ export default function PromosApp({ initial }: { initial: PromoDirectory }) {
               </p>
             </div>
 
-            <div className="card reveal in">
-              <div className="card-h">
-                <div>
-                  <span className="kick">Ограничения</span>
-                  <h3 className="sub" style={{ marginTop: 6 }}>
-                    Что бэкенд не умеет
-                  </h3>
-                  <p>Эти возможности шаблона недоступны — в схеме нет соответствующих полей</p>
-                </div>
-              </div>
-              <div className="lockbox" style={{ marginBottom: 9 }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect width="18" height="11" x="3" y="11" rx="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-                <span>
-                  <b>Включение/выключение кода.</b> Флага <span className="mono">active</span> нет —
-                  отключить код можно только удалением.
-                </span>
-              </div>
-              <div className="lockbox" style={{ marginBottom: 9 }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect width="18" height="11" x="3" y="11" rx="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-                <span>
-                  <b>Минимальная сумма заказа.</b> Поля <span className="mono">minSum</span> нет —
-                  код применяется к любой сумме.
-                </span>
-              </div>
-              <div className="lockbox" style={{ marginBottom: 9 }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect width="18" height="11" x="3" y="11" rx="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-                <span>
-                  <b>Комментарий к коду.</b> Колонки для заметки нет — назначение кода видно только
-                  по его имени и владельцу.
-                </span>
-              </div>
-              <div className="lockbox">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect width="18" height="11" x="3" y="11" rx="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-                <span>
-                  <b>Массовое включение/выключение.</b> Нет ни флага, ни PATCH-эндпоинта — только
-                  удаление по одному.
-                </span>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -1436,6 +1582,14 @@ export default function PromosApp({ initial }: { initial: PromoDirectory }) {
               <b>{detail.expiresAt ? fmtDT(detail.expiresAt) : 'бессрочно'}</b>
             </div>
             <div className="kv">
+              <span>Минимальная сумма</span>
+              <b>{detail.minSum === null ? 'без ограничения' : money(detail.minSum)}</b>
+            </div>
+            <div className="kv">
+              <span>Комментарий</span>
+              <b style={{ fontWeight: 500 }}>{detail.note ?? '—'}</b>
+            </div>
+            <div className="kv">
               <span>Владелец</span>
               <b>
                 {detail.ownerUserId === null
@@ -1447,6 +1601,13 @@ export default function PromosApp({ initial }: { initial: PromoDirectory }) {
             <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
               <button className="btn btn-ghost" type="button" onClick={() => copyCode(detail.code)}>
                 Скопировать код
+              </button>
+              <button
+                className="btn btn-quiet"
+                type="button"
+                onClick={() => void toggleActive(detail)}
+              >
+                {detail.active ? 'Выключить' : 'Включить'}
               </button>
               <button
                 className="btn btn-danger"
@@ -1618,7 +1779,7 @@ export default function PromosApp({ initial }: { initial: PromoDirectory }) {
 interface CheckResult {
   code: string;
   found: true;
-  status: 'active' | 'soon' | 'expired' | 'exhausted';
+  status: 'active' | 'soon' | 'expired' | 'exhausted' | 'disabled';
   usable: boolean;
   type: string;
   discount: number;
@@ -1626,6 +1787,9 @@ interface CheckResult {
   usedCount: number;
   expiresAt: string | null;
   ownerUserId: number | null;
+  active: boolean;
+  minSum: number | null;
+  note: string | null;
   amount: number | null;
   finalAmount: number | null;
 }

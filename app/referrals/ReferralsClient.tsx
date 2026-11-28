@@ -45,7 +45,7 @@ export default function ReferralsClient({ user, summary, referralLink, isAdmin, 
   }, []);
 
   const code = summary?.code ?? '3SET-XXXXXX';
-  const link = referralLink || `https://dash.3set.online/?ref=${code}`;
+  const link = referralLink || `https://dash.3set.online/signup?ref=${code}`;
 
   // Real referral stats from the server summary.
   const invited = summary?.referrals ?? 0;
@@ -96,7 +96,7 @@ export default function ReferralsClient({ user, summary, referralLink, isAdmin, 
               <Link href="/" className="nl">Панель</Link>
               <Link href="/subscription" className="nl">Мои ключи</Link>
               <Link href="/referrals" className="nl active">Рефералы</Link>
-              <Link href="/faq" className="nl">Инструкции</Link>
+              <Link href="/install" className="nl">Инструкции</Link>
               <Link href="/support" className="nl">Поддержка</Link>
             </div>
             <div className="nav-right">
@@ -113,7 +113,7 @@ export default function ReferralsClient({ user, summary, referralLink, isAdmin, 
             <div className="mm-inner">
               <Link href="/referrals" className="nl">Реферальная программа</Link>
               <Link href="/subscription" className="nl">Мои ключи</Link>
-              <Link href="/faq" className="nl">Инструкции</Link>
+              <Link href="/install" className="nl">Инструкции</Link>
               <Link href="/support" className="nl">Поддержка</Link>
             </div>
           </div>
@@ -282,7 +282,7 @@ export default function ReferralsClient({ user, summary, referralLink, isAdmin, 
             </div>
             <div className="f-links">
               <Link href="/subscription">Мои ключи</Link>
-              <Link href="/faq">Инструкции</Link>
+              <Link href="/install">Инструкции</Link>
               <Link href="/support">Поддержка</Link>
               <button onClick={() => addToast('Политика конфиденциальности')}>Политика</button>
             </div>

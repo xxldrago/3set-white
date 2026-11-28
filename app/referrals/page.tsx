@@ -43,7 +43,7 @@ export default async function ReferralsPage() {
     }
   }
 
-  const referralLink = summary ? `${env.APP_BASE_URL}/?ref=${summary.code}` : '';
+  const referralLink = summary ? `${env.APP_BASE_URL}/signup?ref=${summary.code}` : '';
 
   let displayName = 'друг';
   let userEmail: string | null = null;

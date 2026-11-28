@@ -35,13 +35,14 @@ const JOURNAL_LIMIT = 20;
  */
 const MAX_CODES = 5_000;
 
-export type PromoStatus = "active" | "soon" | "expired" | "exhausted";
+export type PromoStatus = "active" | "soon" | "expired" | "exhausted" | "disabled";
 
 export const PROMO_STATUSES: readonly PromoStatus[] = [
   "active",
   "soon",
   "expired",
   "exhausted",
+  "disabled",
 ] as const;
 
 /** Chips the registry offers. `personal` is the owner filter, not a status. */
@@ -53,6 +54,7 @@ export const PROMO_FILTERS: readonly PromoFilter[] = [
   "soon",
   "expired",
   "exhausted",
+  "disabled",
   "personal",
 ] as const;
 
@@ -84,6 +86,12 @@ export interface PromoRow {
   usedCount: number;
   /** ISO, null = never expires. */
   expiresAt: string | null;
+  /** Manual switch (PATCH /api/admin/promos/[id]). */
+  active: boolean;
+  /** Minimum order amount, whole RUB; null = any amount. */
+  minSum: number | null;
+  /** Free-form admin note. */
+  note: string | null;
   createdAt: string;
   ownerUserId: number | null;
   ownerName: string | null;
@@ -142,6 +150,7 @@ export interface PromoStats {
   soon: number;
   expired: number;
   exhausted: number;
+  disabled: number;
   personal: number;
   /** Sum of `usedCount` across every code — the real limit counter. */
   redemptions: number;
@@ -221,9 +230,12 @@ function displayNameOf(user: {
  * would actually reject with.
  */
 export function promoStatusOf(
-  row: { maxUses: number | null; usedCount: number; expiresAt: Date | null },
+  row: { maxUses: number | null; usedCount: number; expiresAt: Date | null; active?: boolean },
   now: number,
 ): PromoStatus {
+  // validatePromo checks the switch first, so the admin badge names the same
+  // reason checkout would reject with.
+  if (row.active === false) return "disabled";
   if (row.maxUses !== null && row.usedCount >= row.maxUses) return "exhausted";
   if (row.expiresAt !== null && row.expiresAt.getTime() <= now) return "expired";
   if (row.expiresAt !== null && row.expiresAt.getTime() - now <= SOON_DAYS * 86_400_000) {
@@ -360,6 +372,9 @@ export async function adminPromosDirectory(
       maxUses: code.maxUses,
       usedCount: code.usedCount,
       expiresAt: code.expiresAt ? code.expiresAt.toISOString() : null,
+      active: code.active,
+      minSum: code.minSum,
+      note: code.note,
       createdAt: code.createdAt.toISOString(),
       ownerUserId: code.ownerUserId,
       ownerName: code.ownerUserId === null ? null : (ownerName.get(code.ownerUserId) ?? null),
@@ -383,7 +398,7 @@ export async function adminPromosDirectory(
     if (filter === "personal" && row.ownerUserId === null) return false;
     if (filter !== "all" && filter !== "personal" && row.status !== filter) return false;
     if (!needle) return true;
-    return `${row.code} ${row.ownerName ?? ""}`.toLowerCase().includes(needle);
+    return `${row.code} ${row.ownerName ?? ""} ${row.note ?? ""}`.toLowerCase().includes(needle);
   });
 
   filtered.sort((a, b) => {
@@ -463,6 +478,7 @@ export async function adminPromosDirectory(
     soon: allRows.filter((row) => row.status === "soon").length,
     expired: allRows.filter((row) => row.status === "expired").length,
     exhausted: allRows.filter((row) => row.status === "exhausted").length,
+    disabled: allRows.filter((row) => row.status === "disabled").length,
     personal: allRows.filter((row) => row.ownerUserId !== null).length,
     redemptions: allRows.reduce((sum, row) => sum + row.usedCount, 0),
     remaining:

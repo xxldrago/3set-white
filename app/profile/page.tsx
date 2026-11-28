@@ -59,7 +59,7 @@ export default async function ProfilePage() {
     // Cosmetic.
   }
 
-  const referralLink = summary ? `${env.APP_BASE_URL}/?ref=${summary.code}` : '';
+  const referralLink = summary ? `${env.APP_BASE_URL}/signup?ref=${summary.code}` : '';
 
   return <ProfileClient user={user} summary={summary} referralLink={referralLink} isAdmin={isAdmin} hasActiveSub={hasActiveSub} legalBaseUrl={env.LEGAL_BASE_URL} />;
 }

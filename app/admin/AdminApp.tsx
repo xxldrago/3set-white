@@ -1,636 +1,768 @@
 'use client';
 
-// /admin — админ-панель в стиле шаблона. Все показываемые данные из реальных
-// BFF-эндпоинтов (ADM-02): /api/admin/referrals/stats, /api/admin/referrals/top-refs,
-// /api/admin/wallet, /api/admin/promos, /api/admin/users/search?q=, /api/admin/roles.
-// Гаданий и заглушек нет — секции без данных показываются честно пустыми.
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, Download, RotateCcw, Command } from 'lucide-react';
-import './admin.css';
+// /admin — dashboard in the template's visual language. Every number comes
+// from `/api/admin/overview` (aggregated real queries); sections that live on
+// their own pages are linked, never duplicated with fixtures.
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import Link from 'next/link';
+import {
+  AlertTriangle,
+  ArrowRight,
+  ArrowUpRight,
+  CheckCircle2,
+  CreditCard,
+  Download,
+  KeyRound,
+  MessageSquare,
+  Send,
+  Smartphone,
+  Tag,
+  TrendingUp,
+  UserPlus,
+  Users,
+  Wallet,
+} from 'lucide-react';
+import type { AdminOverview } from '@/lib/admin-overview';
 
-type Promo = {
-  id: string;
-  code: string;
-  type: string;
-  discount: number;
-  usedCount: number;
-  maxUses: number | null;
-  expiresAt: string | null;
-  ownerUserId: number | null;
-};
-type Stats = { clicks: number; registrations: number; purchases: number; revenue: number; devices: number };
-type Wallet = { balance?: number | null; unlimited?: boolean; limit?: number | null } & Record<string, unknown>;
-type TopRef = { userId: number; telegramId: string | null; displayName: string | null; email: string | null; referrals: number; earned: number };
-type RoleRow = {
-  name: string;
-  description: string;
-  users: number;
-  maxUsers: number | null;
-  features: string;
-  priority: number | null;
-  isDefault: boolean;
-  globalScope: boolean;
-  protectsDomain: boolean;
-  apply: string | null;
-  hidden: boolean;
-};
+const PERIODS: Array<7 | 30 | 90> = [7, 30, 90];
+const nf = new Intl.NumberFormat('ru-RU');
 
-type Toast = { id: number; message: string; type: 'success' | 'error' };
-
-const PERIODS = [7, 30, 90];
-
-function money(v: number) {
-  return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Math.round(v));
+function money(value: number): string {
+  return `${nf.format(Math.round(value))} ₽`;
 }
 
-function fmtAdm(iso: string | null) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+/** `dd.mm HH:MM` in Moscow time — identical on server and client. */
+const stampFormat = new Intl.DateTimeFormat('ru-RU', {
+  timeZone: 'Europe/Moscow',
+  day: '2-digit',
+  month: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
+function stamp(iso: string): string {
+  return stampFormat.format(new Date(iso)).replace(',', '');
 }
 
-function initials(name: string | null) {
-  return name ? name[0].toUpperCase() : '—';
+function periodLabel(period: number): string {
+  return `${period} дней`;
 }
 
-function UserAvatar({ name }: { name: string | null }) {
-  return <span className="av">{initials(name)}</span>;
-}
+type Toast = { id: number; message: string; type: 'ok' | 'err' };
 
-interface CommandItem {
-  id: string;
-  label: string;
-  desc: string;
-  shortcut: string;
-  icon: React.ReactNode;
-  action: () => void;
-}
+const DONUT_COLORS = ['#b7ff45', '#8fdc2c', '#63d7c8', '#e4dfd1', '#0c4f36'];
 
-const commands: CommandItem[] = [
-  { id: 'refresh', label: 'Обновить данные', desc: 'Перезагрузить все метрики', shortcut: 'R', icon: <RotateCcw size={16} />, action: () => {} },
-  { id: 'export', label: 'Экспорт пользователей (CSV)', desc: 'Скачать таблицу пользователей', shortcut: 'E', icon: <Download size={16} />, action: () => {} },
-  { id: 'overview', label: 'Перейти: Обзор', desc: 'Открыть раздел обзора', shortcut: '1', icon: <div className="icon-grid" />, action: () => {} },
-  { id: 'analytics', label: 'Перейти: Аналитика', desc: 'Открыть аналитику', shortcut: '2', icon: <div className="icon-chart" />, action: () => {} },
-  { id: 'users', label: 'Перейти: Пользователи', desc: 'Открыть список пользователей', shortcut: '3', icon: <div className="icon-users" />, action: () => {} },
-  { id: 'wallet', label: 'Перейти: Баланс API', desc: 'Открыть баланс ARTEMIDA', shortcut: '4', icon: <div className="icon-wallet" />, action: () => {} },
-  { id: 'promos', label: 'Перейти: Промокоды', desc: 'Управление промокодами', shortcut: '5', icon: <div className="icon-promo" />, action: () => {} },
-  { id: 'referrals', label: 'Перейти: Рефералы', desc: 'Топ рефералов', shortcut: '6', icon: <div className="icon-referral" />, action: () => {} },
-  { id: 'roles', label: 'Перейти: Роли', desc: 'Управление ролями', shortcut: '7', icon: <div className="icon-roles" />, action: () => {} },
-  { id: 'tickets', label: 'Перейти: Обращения', desc: 'Тикеты поддержки', shortcut: '8', icon: <div className="icon-tickets" />, action: () => {} },
-  { id: 'broadcast', label: 'Перейти: Рассылки', desc: 'Массовые уведомления', shortcut: '9', icon: <div className="icon-broadcast" />, action: () => {} },
-];
-
-export default function AdminApp() {
-  const [period, setPeriod] = useState(30);
-  const [searchQ, setSearchQ] = useState('');
-  const [rows, setRows] = useState<Array<{ userId: number; telegramId: string | null; email: string | null; displayName: string | null; staffRole?: string | null }>>([]);
-  const [count, setCount] = useState(0);
-  const [truncated, setTruncated] = useState(false);
-  const [promos, setPromos] = useState<Promo[]>([]);
-  const [stats, setStats] = useState<Stats>({ clicks: 0, registrations: 0, purchases: 0, revenue: 0, devices: 0 });
-  const [wallet, setWallet] = useState<Wallet | null>(null);
-  const [topRefs, setTopRefs] = useState<TopRef[]>([]);
-  const [roles, setRoles] = useState<RoleRow[]>([]);
-
-  const [sec, setSec] = useState<string>('overview');
-  const [cmdOpen, setCmdOpen] = useState(false);
-  const [cmdQuery, setCmdQuery] = useState('');
-  const [cmdSelected, setCmdSelected] = useState(0);
+export default function AdminApp({ initial }: { initial: AdminOverview }) {
+  const [data, setData] = useState<AdminOverview>(initial);
+  const [loading, setLoading] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastIdRef = useRef(0);
+  const toastId = useRef(0);
 
-  const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
-    const id = ++toastIdRef.current;
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
+  const showToast = useCallback((message: string, type: Toast['type'] = 'ok') => {
+    const id = ++toastId.current;
+    setToasts((prev) => [...prev, { id, message, type }]);
+    window.setTimeout(() => setToasts((prev) => prev.filter((item) => item.id !== id)), 3200);
   }, []);
 
-  const load = useCallback(async (q: string, from?: Date, to?: Date) => {
-    const qs = q ? `q=${encodeURIComponent(q.trim())}` : '';
-    const params = new URLSearchParams();
-    if (from) params.set('from', from.toISOString());
-    if (to) params.set('to', to.toISOString());
-    const qs2 = params.toString();
-    const [statsRes, walletRes, promosRes, refsRes, rolesRes, usersRes] = await Promise.allSettled([
-      fetch(`/api/admin/referrals/stats${qs2 ? `?${qs2}` : ''}`),
-      fetch('/api/admin/wallet'),
-      fetch('/api/admin/promos'),
-      fetch('/api/admin/referrals/top-refs'),
-      fetch('/api/admin/roles'),
-      fetch(`/api/admin/users/search${qs ? `?${qs}` : ''}`),
-    ]);
-    if (statsRes.status === 'fulfilled' && statsRes.value.ok) setStats(await statsRes.value.json());
-    if (walletRes.status === 'fulfilled' && walletRes.value.ok) setWallet(await walletRes.value.json());
-    if (promosRes.status === 'fulfilled' && promosRes.value.ok) setPromos((await promosRes.value.json()).promos ?? []);
-    if (refsRes.status === 'fulfilled' && refsRes.value.ok) setTopRefs((await refsRes.value.json()).refs ?? []);
-    if (rolesRes.status === 'fulfilled' && rolesRes.value.ok) setRoles((await rolesRes.value.json()).roles ?? []);
-    if (usersRes.status === 'fulfilled' && usersRes.value.ok) {
-      const j = await usersRes.value.json();
-      setRows(j.rows ?? []);
-      setCount(j.count ?? 0);
-      setTruncated(!!j.truncated);
-    }
-  }, []);
-
-  useEffect(() => {
-    let alive = true;
-    void (async () => {
-      const from = new Date(Date.now() - period * 86400000);
-      const to = new Date();
-      const [statsRes, walletRes, promosRes, refsRes, rolesRes] = await Promise.allSettled([
-        fetch(`/api/admin/referrals/stats?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`),
-        fetch('/api/admin/wallet'),
-        fetch('/api/admin/promos'),
-        fetch('/api/admin/referrals/top-refs'),
-        fetch('/api/admin/roles'),
-      ]);
-      if (!alive) return;
-      if (statsRes.status === 'fulfilled' && statsRes.value.ok) setStats(await statsRes.value.json());
-      if (walletRes.status === 'fulfilled' && walletRes.value.ok) setWallet(await walletRes.value.json());
-      if (promosRes.status === 'fulfilled' && promosRes.value.ok) setPromos((await promosRes.value.json()).promos ?? []);
-      if (refsRes.status === 'fulfilled' && refsRes.value.ok) setTopRefs((await refsRes.value.json()).refs ?? []);
-      if (rolesRes.status === 'fulfilled' && rolesRes.value.ok) setRoles((await rolesRes.value.json()).roles ?? []);
-      const usersRes = await fetch('/api/admin/users/search').catch(() => null);
-      if (usersRes && usersRes.ok) {
-        const j = await usersRes.json();
-        if (alive) {
-          setRows(j.rows ?? []);
-          setCount(j.count ?? 0);
-          setTruncated(!!j.truncated);
-        }
+  const load = useCallback(
+    async (period: 7 | 30 | 90) => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/admin/overview?period=${period}`, { cache: 'no-store' });
+        if (!res.ok) throw new Error(String(res.status));
+        const next = (await res.json()) as AdminOverview;
+        setData(next);
+      } catch {
+        showToast('Не удалось загрузить данные', 'err');
+      } finally {
+        setLoading(false);
       }
-    })();
-    return () => { alive = false; };
-  }, [period]);
+    },
+    [showToast],
+  );
 
-  const searchUsers = useCallback(async (q: string) => {
-    const from = new Date(Date.now() - period * 86400000);
-    const to = new Date();
-    const params = new URLSearchParams({ q: q.trim() });
-    params.set('from', from.toISOString());
-    params.set('to', to.toISOString());
-    const res = await fetch(`/api/admin/users/search?${params.toString()}`);
-    if (res.ok) {
-      const j = await res.json();
-      setRows(j.rows ?? []);
-      setCount(j.count ?? 0);
-      setTruncated(!!j.truncated);
-    }
-  }, [period]);
+  const switchPeriod = useCallback(
+    (period: 7 | 30 | 90) => {
+      if (period === data.period || loading) return;
+      void load(period);
+    },
+    [data.period, loading, load],
+  );
 
+  // The shell's refresh button re-reads the current window instead of resetting
+  // the operator's period selection.
   useEffect(() => {
-    const t = setTimeout(() => { if (searchQ.trim()) void searchUsers(searchQ); }, 300);
-    return () => clearTimeout(t);
-  }, [searchQ, searchUsers]);
+    const onRefresh = () => void load(data.period);
+    window.addEventListener('admin:refresh', onRefresh);
+    return () => window.removeEventListener('admin:refresh', onRefresh);
+  }, [load, data.period]);
 
-  const navItems = useMemo(() => [
-    ['overview', 'Обзор', null],
-    ['analytics', 'Аналитика', null],
-    ['users', 'Пользователи', count],
-    ['tickets', 'Обращения', null],
-    ['broadcast', 'Рассылки', null],
-    ['segments', 'Сегменты', null],
-    ['pricing', 'Тарифы', null],
-    ['promos', 'Промокоды', promos.length],
-    ['referrals', 'Рефералы', topRefs.length],
-    ['wallet', 'Баланс API', null],
-    ['roles', 'Роли', roles.length],
-    ['alerts', 'Алерты', null],
-  ] as const, [count, promos.length, topRefs.length, roles.length]);
+  const exportCsv = useCallback(() => {
+    const rows: Array<Array<string | number>> = [
+      ['metric', 'value'],
+      ['period_days', data.period],
+      ['revenue_rub', data.orders.revenue],
+      ['paid_orders', data.orders.paid],
+      ['avg_check_rub', data.orders.avgCheck],
+      ['new_orders', data.orders.newCount],
+      ['renew_orders', data.orders.renewCount],
+      ['upgrade_orders', data.orders.upgradeCount],
+      ['failed_orders', data.orders.failed],
+      ['refunded_orders', data.orders.refunded],
+      ['users_total', data.users.total],
+      ['users_new', data.users.newInPeriod],
+      ['keys_active', data.keys.active],
+      ['keys_trial', data.keys.trial],
+      ['devices', data.keys.devices],
+      ['tickets_open', data.tickets.open],
+      ['tickets_unread', data.tickets.unread],
+      ['referral_clicks', data.funnel.clicks],
+      ['referral_registrations', data.funnel.registrations],
+      ['referral_purchases', data.funnel.purchases],
+      ['referral_revenue_rub', data.funnel.revenue],
+      ['api_balance_rub', data.wallet?.balance ?? ''],
+    ];
+    const csv = rows.map((row) => row.join(';')).join('\n');
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
+    link.download = `3set-overview-${data.period}d.csv`;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(link.href), 1500);
+    showToast('Отчёт выгружен');
+  }, [data, showToast]);
 
-  const filteredCommands = useMemo(() => {
-    if (!cmdQuery.trim()) return commands;
-    const q = cmdQuery.toLowerCase();
-    return commands.filter(c =>
-      c.label.toLowerCase().includes(q) ||
-      c.desc.toLowerCase().includes(q) ||
-      c.shortcut.toLowerCase().includes(q)
-    );
-  }, [cmdQuery]);
-
-  const executeCommand = (cmd: CommandItem) => {
-    switch (cmd.id) {
-      case 'refresh':
-        void load(searchQ.trim());
-        showToast('Данные обновлены');
-        break;
-      case 'export':
-        exportUsers(searchQ.trim());
-        showToast('CSV экспортирован');
-        break;
-      case 'overview': setSec('overview'); break;
-      case 'analytics': setSec('analytics'); break;
-      case 'users': setSec('users'); break;
-      case 'wallet': setSec('wallet'); break;
-      case 'promos': setSec('promos'); break;
-      case 'referrals': setSec('referrals'); break;
-      case 'roles': setSec('roles'); break;
-      case 'tickets': setSec('tickets'); break;
-      case 'broadcast': setSec('broadcast'); break;
-    }
-    setCmdOpen(false);
-    setCmdQuery('');
-    setCmdSelected(0);
-  };
-
-  const handleKeyDownNative = (e: KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-      e.preventDefault();
-      setCmdOpen(true);
-      setCmdQuery('');
-      setCmdSelected(0);
-    }
-    if (e.key === 'Escape') {
-      setCmdOpen(false);
-    }
-    if (cmdOpen) {
-      if (e.key === 'ArrowDown') { e.preventDefault(); setCmdSelected(i => Math.min(filteredCommands.length - 1, i + 1)); }
-      else if (e.key === 'ArrowUp') { e.preventDefault(); setCmdSelected(i => Math.max(0, i - 1)); }
-      else if (e.key === 'Enter') { e.preventDefault(); if (filteredCommands[cmdSelected]) executeCommand(filteredCommands[cmdSelected]); }
-    }
-    if (!e.metaKey && !e.ctrlKey && !e.altKey && e.key >= '1' && e.key <= '9') {
-      const idx = parseInt(e.key) - 1;
-      if (navItems[idx]) setSec(navItems[idx][0]);
-    }
-    if (!e.metaKey && !e.ctrlKey && e.key.toLowerCase() === 'r' && (e.target as HTMLElement).tagName !== 'INPUT') {
-      e.preventDefault();
-      void load(searchQ.trim());
-      showToast('Данные обновлены');
-    }
-    if (!e.metaKey && !e.ctrlKey && e.key.toLowerCase() === 'e' && (e.target as HTMLElement).tagName !== 'INPUT') {
-      e.preventDefault();
-      exportUsers(searchQ.trim());
-      showToast('CSV экспортирован');
-    }
-  };
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => handleKeyDownNative(e);
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [cmdOpen, cmdSelected, filteredCommands, navItems, load, searchQ, showToast]);
-
-  const exportUsers = async (q: string) => {
-    try {
-      const res = await fetch(`/api/admin/users/search?q=${encodeURIComponent(q)}`);
-      const j = await res.json().catch(() => null);
-      const rows = Array.isArray(j?.rows) ? j.rows : [];
-      const csv = ['id;telegramId;email;displayName;role'].concat(
-        rows.map((r: { userId: number; telegramId: string | null; email: string | null; displayName: string | null; staffRole?: string | null }) =>
-          [r.userId, r.telegramId ?? '', r.email ?? '', r.displayName ?? '', r.staffRole ?? ''].join(';')),
-      ).join('\n');
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
-      a.download = '3set-admin-users.csv';
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1500);
-    } catch {
-      showToast('Ошибка экспорта', 'error');
-    }
-  };
-
-  const handlePeriodChange = (p: number) => {
-    setPeriod(p);
-    showToast(`Период изменён на ${p} дней`);
-  };
-
-  const logout = () => {
-    showToast('Выход...', 'success');
-    window.location.href = '/api/auth/email/logout';
-  };
+  const revenueSeries = useMemo(() => data.series.map((point) => point.revenue), [data.series]);
+  const donutTotal = useMemo(
+    () => data.expiryBuckets.reduce((sum, bucket) => sum + bucket.count, 0),
+    [data.expiryBuckets],
+  );
 
   return (
-    <>
-      <div className="admin" onKeyDown={(e) => handleKeyDownNative(e as unknown as KeyboardEvent)}>
-        <header className="topbar">
-          <a className="brand" href="#" onClick={e => e.preventDefault()}><span>3set</span><span>admin</span></a>
-          <div className="spacer"></div>
-          <div className="searchbox">
-            <Search size={16} />
-            <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Поиск по имени, email или ID…" aria-label="Поиск пользователей" />
-            <span className="kbd mono">↵</span>
+    <div className="admin-dash">
+      <div className="sec-head">
+        <div className="t">
+          <span className="kick">Статистика · {periodLabel(data.period)}</span>
+          <h2 className="st">Панель управления 3set VPN</h2>
+        </div>
+        <div className="head-tools">
+          <div className="seg" role="group" aria-label="Период статистики">
+            {PERIODS.map((period) => (
+              <button
+                key={period}
+                type="button"
+                className={data.period === period ? 'on' : ''}
+                onClick={() => void switchPeriod(period)}
+                disabled={loading}
+              >
+                {period} дней
+              </button>
+            ))}
           </div>
-          <div className="live"><i /><span>Сейчас 7 онлайн</span></div>
-          <button className="tb-btn" onClick={() => { void load(searchQ.trim()); showToast('Данные обновлены'); }} aria-label="Обновить данные (R)" title="Обновить (R)"><RotateCcw size={18} /></button>
-          <button className="tb-btn" onClick={() => { exportUsers(searchQ.trim()); showToast('CSV экспортирован'); }} aria-label="Экспорт пользователей (E)" title="Экспорт CSV (E)"><Download size={18} /></button>
-        </header>
-        <div className="wrap">
-          <aside className="side">
-            <div className="side-top"><span className="gtitle">Навигация</span></div>
-            <nav className="nav">
-              {navItems.map(([id, label, cnt]) => (
-                <button
-                  key={id}
-                  type="button"
-                  className={`nav-i${sec === id ? ' on' : ''}${cnt != null ? ' has-cnt' : ''}`}
-                  data-sec={id}
-                  aria-current={sec === id ? 'page' : undefined}
-                  onClick={() => setSec(id)}
-                >
-                  {label}
-                  {cnt != null && <span className="cnt chip-with-count">{cnt}</span>}
-                </button>
-              ))}
-            </nav>
-            <div className="side-foot">
-              <div className="me">
-                <span className="av">АД</span>
-                <span className="t"><b>Admin</b><span>3set VPN</span></span>
-              </div>
-              <button className="btn-logout" onClick={logout}>Выйти</button>
-            </div>
-          </aside>
-          <main className="content">
-            {sec === 'overview' && <Overview stats={stats} wallet={wallet} promos={promos} period={period} onPeriod={handlePeriodChange} />}
-            {sec === 'analytics' && <Analytics stats={stats} />}
-            {sec === 'users' && <Users rows={rows} count={count} truncated={truncated} />}
-            {sec === 'wallet' && <Wallet wallet={wallet} />}
-            {sec === 'promos' && <Promos promos={promos} />}
-            {sec === 'referrals' && <TopRefs refs={topRefs} />}
-            {sec === 'roles' && <Roles roles={roles} />}
-            {sec === 'tickets' && <Placeholder title="Обращения" desc="Здесь будет список тикетов поддержки" />}
-            {sec === 'broadcast' && <Placeholder title="Рассылки" desc="Инструмент для массовых уведомлений пользователям" />}
-            {sec === 'segments' && <Placeholder title="Сегменты" desc="Сегментация пользователей для таргетированных действий" />}
-            {sec === 'pricing' && <Placeholder title="Тарифы" desc="Управление тарифными планами и ценами" />}
-            {sec === 'alerts' && <Placeholder title="Алерты" desc="Настройка уведомлений о критичных метриках" />}
-          </main>
+          <button type="button" className="btn btn-ghost sm" onClick={exportCsv}>
+            <Download size={15} />
+            Экспорт
+          </button>
+          <Link className="btn btn-primary sm" href="/admin/broadcast">
+            <Send size={15} />
+            Рассылка
+          </Link>
         </div>
       </div>
 
-      {/* Command Palette */}
-      <div className={`cmd-palette${cmdOpen ? ' open' : ''}`} role="dialog" aria-label="Командная палитра">
-        <input
-          type="text"
-          value={cmdQuery}
-          onChange={e => { setCmdQuery(e.target.value); setCmdSelected(0); }}
-          placeholder="Введите команду… (⌘K)"
-          autoComplete="off"
-          spellCheck={false}
-          autoFocus={cmdOpen}
+      {loading && <div className="admin-loading" aria-hidden="true" />}
+
+      <div className="kpi-grid">
+        <Kpi
+          icon={<CreditCard size={15} />}
+          label="Выручка"
+          value={money(data.orders.revenue)}
+          foot={`${data.orders.paid} оплат за период`}
         />
-        <div className="cmd-results">
-          {filteredCommands.map((c, i) => (
-            <div
-              key={c.id}
-              className={`cmd-item${i === cmdSelected ? ' selected' : ''}`}
-              onClick={() => executeCommand(c)}
-              onMouseEnter={() => setCmdSelected(i)}
-            >
-              <span className="icon">{c.icon}</span>
+        <Kpi
+          icon={<Users size={15} />}
+          label="Пользователи"
+          value={nf.format(data.users.total)}
+          foot={`+${data.users.newInPeriod} за период`}
+        />
+        <Kpi
+          icon={<TrendingUp size={15} />}
+          label="Средний чек"
+          value={money(data.orders.avgCheck)}
+          foot={data.orders.paid > 0 ? `${data.orders.paid} платежей` : 'платежей не было'}
+        />
+        <Kpi
+          icon={<KeyRound size={15} />}
+          label="Активные ключи"
+          value={nf.format(data.keys.active)}
+          foot={`${data.keys.trial} триалов · ${data.keys.expiring7} истекают за 7 дн.`}
+        />
+        <Kpi
+          icon={<Smartphone size={15} />}
+          label="Устройства"
+          value={nf.format(data.keys.devices)}
+          foot={`${nf.format(data.keys.total)} ключей всего`}
+        />
+        <Kpi
+          icon={<Wallet size={15} />}
+          label="Баланс ARTEMIDA"
+          value={data.wallet ? money(data.wallet.balance) : '—'}
+          foot={
+            data.wallet
+              ? `порог ${money(data.walletThreshold)}`
+              : 'провайдер недоступен'
+          }
+          tone={
+            data.wallet && !data.wallet.unlimited && data.wallet.balance <= data.walletThreshold
+              ? 'warn'
+              : undefined
+          }
+        />
+      </div>
+
+      <div className="g-2">
+        <div className="card">
+          <div className="card-h">
+            <div>
+              <h3>Выручка и платежи</h3>
+              <p>Столбцы — выручка по дням, линия — накопительный итог</p>
+            </div>
+            <div className="legend">
+              <span><i style={{ background: 'var(--deep)' }} />Выручка</span>
+              <span><i style={{ background: 'var(--lime)' }} />Итог</span>
+            </div>
+          </div>
+          <RevenueChart labels={data.series.map((point) => point.label)} values={revenueSeries} />
+          <div className="card-foot">
+            <div>
+              <span className="lbl">Выручка</span>
+              <div className="num">{money(data.orders.revenue)}</div>
+              <span className="hint">за {periodLabel(data.period)}</span>
+            </div>
+            <div>
+              <span className="lbl">Средний чек</span>
+              <div className="num">{money(data.orders.avgCheck)}</div>
+              <span className="hint">по оплаченным заказам</span>
+            </div>
+            <div>
+              <span className="lbl">Триалы</span>
+              <div className="num">{nf.format(data.keys.trial)}</div>
+              <span className="hint">триал-ключей в базе</span>
+            </div>
+            <Link className="btn btn-ghost sm" href="/admin/analytics">
+              Подробнее
+              <ArrowRight size={15} />
+            </Link>
+          </div>
+        </div>
+
+        <div className="stack">
+          <div className="card">
+            <div className="card-h">
               <div>
-                <div className="label">{c.label}</div>
-                <div className="desc">{c.desc}</div>
+                <h3>Структура подписок</h3>
+                <p>Активные ключи по остатку срока</p>
               </div>
-              <span className="shortcut">{c.shortcut}</span>
+            </div>
+            <div className="donut-wrap">
+              <div className="donut">
+                <Donut buckets={data.expiryBuckets} total={donutTotal} />
+                <div className="ct">
+                  <b>{nf.format(donutTotal)}</b>
+                  <span>ключей</span>
+                </div>
+              </div>
+              <div className="dlist">
+                {data.expiryBuckets.length === 0 && <span className="hint">Активных ключей нет</span>}
+                {data.expiryBuckets.map((bucket, index) => (
+                  <div className="dl" key={bucket.label}>
+                    <i style={{ background: DONUT_COLORS[index % DONUT_COLORS.length] }} />
+                    <span>{bucket.label}</span>
+                    <b>{nf.format(bucket.count)}</b>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="card pad-sm">
+            <div className="card-h tight">
+              <h3>Баланс ARTEMIDA API</h3>
+              {data.wallet ? (
+                <span
+                  className={`pill ${
+                    data.wallet.unlimited || data.wallet.balance > data.walletThreshold ? 'ok' : 'warn'
+                  }`}
+                >
+                  <i />
+                  {data.wallet.unlimited || data.wallet.balance > data.walletThreshold ? 'В норме' : 'Низкий'}
+                </span>
+              ) : (
+                <span className="pill bad"><i />Недоступен</span>
+              )}
+            </div>
+            <div className="balance-row">
+              <b className="num">{data.wallet ? money(data.wallet.balance) : '—'}</b>
+              <span className="hint">порог {money(data.walletThreshold)}</span>
+            </div>
+            <div className="prog">
+              <i
+                style={{
+                  width: data.wallet
+                    ? `${Math.min(100, Math.max(4, (data.wallet.balance / Math.max(1, data.walletThreshold * 4)) * 100))}%`
+                    : '0%',
+                }}
+              />
+            </div>
+            <div className="row-actions">
+              <Link className="btn btn-primary sm" href="/admin/wallet">
+                Пополнить
+              </Link>
+              <Link className="btn btn-ghost sm" href="/admin/wallet">
+                Детали
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-h">
+          <div>
+            <h3>Показатели выручки</h3>
+            <p>Детализация по периоду <b style={{ color: 'var(--lime)' }}>{periodLabel(data.period)}</b></p>
+          </div>
+          <span className="pill dim mono">обновлено {stamp(data.generatedAt)}</span>
+        </div>
+        <div className="g-6">
+          <Mini label="Выручка (факт)" value={money(data.orders.revenue)} hint={`${data.orders.paid} оплат`} />
+          <Mini label="Новые" value={nf.format(data.orders.newCount)} hint="заказы new" />
+          <Mini label="Продления" value={nf.format(data.orders.renewCount)} hint="заказы renew" />
+          <Mini label="Апгрейды" value={nf.format(data.orders.upgradeCount)} hint="заказы upgrade" />
+          <Mini label="Неудачные" value={nf.format(data.orders.failed)} hint="статус failed" />
+          <Mini label="Возвраты" value={nf.format(data.orders.refunded)} hint="статус refunded" />
+        </div>
+      </div>
+
+      <div className="g-2e">
+        <div className="card">
+          <div className="card-h">
+            <div>
+              <h3>Топ промокодов</h3>
+              <p>По числу применений</p>
+            </div>
+            <Link className="btn btn-quiet xs" href="/admin/promos">
+              Все промокоды
+            </Link>
+          </div>
+          {data.promos.length === 0 && <p className="hint">Промокодов пока нет</p>}
+          {data.promos.map((promo) => (
+            <div className="lrow" key={promo.code}>
+              <span className="lic mono">{promo.code.slice(0, 2)}</span>
+              <span className="lt">
+                <b className="mono">{promo.code}</b>
+                <span>
+                  {promo.type === 'percentage' ? `−${promo.discount}%` : `${promo.discount} ₽`} ·{' '}
+                  {promo.maxUses ? `лимит ${promo.maxUses}` : 'без лимита'}
+                </span>
+              </span>
+              <span className="num">{nf.format(promo.usedCount)}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="card">
+          <div className="card-h">
+            <div>
+              <h3>Топ рефереров</h3>
+              <p>По числу приглашённых аккаунтов</p>
+            </div>
+            <Link className="btn btn-quiet xs" href="/admin/referrals">
+              Рефералы
+            </Link>
+          </div>
+          {data.referrers.length === 0 && <p className="hint">Реферальных приглашений пока нет</p>}
+          {data.referrers.map((referrer) => (
+            <div className="lrow" key={referrer.userId}>
+              <span className="lic">{(referrer.name ?? '?').slice(0, 1).toUpperCase()}</span>
+              <span className="lt">
+                <b>{referrer.name ?? `#${referrer.userId}`}</b>
+                <span>{referrer.email ?? `ID ${referrer.userId}`}</span>
+              </span>
+              <span className="num">
+                {nf.format(referrer.referrals)}
+                <span className="hint" style={{ display: 'block' }}>{money(referrer.revenue)}</span>
+              </span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Toast Container */}
-      <div className="toast-container">
-        {toasts.map(t => (
-          <div key={t.id} className={`toast ${t.type}`}>
-            <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              {t.type === 'success' ? <polyline points="20 6 9 17 4 12" /> : <><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></>}
-            </svg>
-            <span className="msg">{t.message}</span>
+      <div className="card">
+        <div className="card-h">
+          <div>
+            <h3>Воронка рефералов</h3>
+            <p>Клики → регистрации → покупки за {periodLabel(data.period)}</p>
+          </div>
+          <span className="pill info"><i />{data.funnel.clicks} кликов</span>
+        </div>
+        <Funnel funnel={data.funnel} />
+      </div>
+
+      <div className="g-2">
+        <div className="card">
+          <div className="card-h">
+            <div>
+              <h3>Лента событий</h3>
+              <p>Оплаты, регистрации и обращения</p>
+            </div>
+            <span className="pill ok"><i />Live</span>
+          </div>
+          <div className="feed">
+            {data.events.length === 0 && <p className="hint">Событий пока нет</p>}
+            {data.events.map((event) => (
+              <div className={`fi ${event.kind}`} key={event.id}>
+                <span className="fi-ic">
+                  {event.kind === 'payment' ? (
+                    <CheckCircle2 size={14} />
+                  ) : event.kind === 'signup' ? (
+                    <UserPlus size={14} />
+                  ) : (
+                    <MessageSquare size={14} />
+                  )}
+                </span>
+                <span className="fi-t">
+                  <b>{event.title}</b>
+                  <span>{event.detail}</span>
+                </span>
+                <span className="fi-time mono">{stamp(event.at)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="stack">
+          <div className="card">
+            <div className="card-h">
+              <div>
+                <h3>Состояние системы</h3>
+                <p>Очереди, поддержка и провайдер</p>
+              </div>
+            </div>
+            <div className="health">
+              <HealthRow
+                label="ARTEMIDA API"
+                value={data.wallet ? money(data.wallet.balance) : 'недоступен'}
+                tone={data.wallet ? 'ok' : 'warn'}
+              />
+              <HealthRow
+                label="Открытые обращения"
+                value={nf.format(data.tickets.open)}
+                tone={data.tickets.stale > 0 ? 'warn' : 'ok'}
+              />
+              <HealthRow
+                label="Непрочитанные"
+                value={nf.format(data.tickets.unread)}
+                tone={data.tickets.unread > 0 ? 'warn' : 'ok'}
+              />
+              <HealthRow
+                label="Сработавшие алерты"
+                value={nf.format(data.alerts.firing)}
+                tone={data.alerts.firing > 0 ? 'warn' : 'ok'}
+              />
+              <HealthRow
+                label="Очередь outbox"
+                value={`${nf.format(data.outbox.pending)} / ${nf.format(data.outbox.failed)}`}
+                tone={data.outbox.failed > 0 ? 'warn' : 'ok'}
+              />
+            </div>
+            {data.alerts.latest.length > 0 && (
+              <div className="alert-list">
+                {data.alerts.latest.map((alert) => (
+                  <div className="alert-row" key={`${alert.type}-${alert.firedAt}`}>
+                    <AlertTriangle size={14} />
+                    <span>{alert.message}</span>
+                    <b className="mono">{stamp(alert.firedAt)}</b>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="card">
+            <div className="card-h tight">
+              <h3>Быстрые действия</h3>
+            </div>
+            <div className="quick">
+              <Link className="btn btn-ghost sm block" href="/admin/users">
+                <Users size={16} />
+                Найти пользователя
+              </Link>
+              <Link className="btn btn-ghost sm block" href="/admin/promos">
+                <Tag size={16} />
+                Создать промокод
+              </Link>
+              <Link className="btn btn-ghost sm block" href="/admin/broadcast">
+                <Send size={16} />
+                Отправить рассылку
+              </Link>
+              <Link className="btn btn-ghost sm block" href="/admin/tickets">
+                <MessageSquare size={16} />
+                Ответить на обращения
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {data.broadcasts.length > 0 && (
+        <div className="card">
+          <div className="card-h">
+            <div>
+              <h3>Последние рассылки</h3>
+              <p>Статус доставки кампаний</p>
+            </div>
+            <Link className="btn btn-quiet xs" href="/admin/broadcast">
+              Все рассылки
+            </Link>
+          </div>
+          <div className="table-wrap">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>Сообщение</th>
+                  <th>Статус</th>
+                  <th>Всего</th>
+                  <th>Доставлено</th>
+                  <th>Ошибки</th>
+                  <th>Дата</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.broadcasts.map((row) => (
+                  <tr key={`${row.createdAt}-${row.body.slice(0, 12)}`}>
+                    <td>{row.body.length > 70 ? `${row.body.slice(0, 70)}…` : row.body}</td>
+                    <td>
+                      <span className={`pill ${row.status === 'sent' ? 'ok' : row.status === 'failed' ? 'bad' : 'warn'}`}>
+                        <i />
+                        {row.status}
+                      </span>
+                    </td>
+                    <td className="num">{nf.format(row.total)}</td>
+                    <td className="num">{nf.format(row.sent)}</td>
+                    <td className="num">{nf.format(row.failed)}</td>
+                    <td className="mono dim">{stamp(row.createdAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      <div className="toasts" aria-live="polite">
+        {toasts.map((toast) => (
+          <div className={`toast show ${toast.type === 'err' ? 'err' : ''}`} key={toast.id}>
+            <span className="ti">{toast.type === 'err' ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} />}</span>
+            {toast.message}
           </div>
         ))}
       </div>
-
-      <style jsx>{`
-        .icon-grid { width: 20px; height: 20px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px; }
-        .icon-grid::before, .icon-grid::after { content: ''; display: block; width: 8px; height: 8px; background: currentColor; border-radius: 2px; opacity: 0.5; }
-        .icon-grid::after { grid-column: 2; }
-        .icon-chart { width: 20px; height: 20px; position: relative; }
-        .icon-chart::before, .icon-chart::after { content: ''; position: absolute; bottom: 0; width: 4px; background: currentColor; border-radius: 1px; }
-        .icon-chart::before { left: 2px; height: 60%; }
-        .icon-chart::after { left: 10px; height: 30%; }
-        .icon-users { width: 20px; height: 20px; position: relative; }
-        .icon-users::before { content: ''; position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; border-radius: 50%; border: 2px solid currentColor; }
-        .icon-users::after { content: ''; position: absolute; bottom: 0; left: 2px; right: 2px; height: 8px; border-radius: 4px 4px 0 0; border: 2px solid currentColor; border-bottom: none; }
-        .icon-wallet { width: 20px; height: 20px; position: relative; }
-        .icon-wallet::before { content: ''; position: absolute; top: 2px; left: 2px; right: 2px; height: 12px; border: 2px solid currentColor; border-radius: 2px; }
-        .icon-wallet::after { content: ''; position: absolute; top: 6px; left: 6px; right: 6px; height: 2px; background: currentColor; }
-        .icon-promo { width: 20px; height: 20px; position: relative; }
-        .icon-promo::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 14px; height: 14px; border: 2px solid currentColor; border-radius: 3px; }
-        .icon-promo::after { content: '%'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8px; font-weight: bold; }
-        .icon-referral { width: 20px; height: 20px; position: relative; }
-        .icon-referral::before { content: ''; position: absolute; top: 4px; left: 4px; width: 6px; height: 6px; background: currentColor; border-radius: 50%; }
-        .icon-referral::after { content: ''; position: absolute; bottom: 4px; right: 4px; width: 6px; height: 6px; background: currentColor; border-radius: 50%; }
-        .icon-roles { width: 20px; height: 20px; position: relative; }
-        .icon-roles::before { content: ''; position: absolute; top: 2px; left: 2px; right: 2px; height: 12px; border: 2px solid currentColor; border-radius: 2px; }
-        .icon-roles::after { content: ''; position: absolute; top: 8px; left: 6px; right: 6px; height: 2px; background: currentColor; }
-        .icon-tickets { width: 20px; height: 20px; position: relative; }
-        .icon-tickets::before { content: ''; position: absolute; top: 2px; left: 2px; right: 2px; bottom: 2px; border: 2px solid currentColor; border-radius: 2px; }
-        .icon-tickets::after { content: ''; position: absolute; top: 6px; left: 6px; right: 6px; height: 1px; background: currentColor; }
-        .icon-broadcast { width: 20px; height: 20px; position: relative; }
-        .icon-broadcast::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 6px; height: 6px; background: currentColor; border-radius: 50%; }
-        .icon-broadcast::after { content: ''; position: absolute; top: 2px; left: 2px; right: 2px; bottom: 2px; border: 1px dashed currentColor; border-radius: 50%; opacity: 0.5; animation: pulse 1.5s infinite; }
-      `}</style>
-    </>
+    </div>
   );
 }
 
-function Overview({ stats, wallet, promos, period, onPeriod }: {
-  stats: Stats; wallet: Wallet | null; promos: Promo[]; period: number; onPeriod: (n: number) => void;
+function Kpi({
+  icon,
+  label,
+  value,
+  foot,
+  tone,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  foot: string;
+  tone?: 'warn';
 }) {
-  const balance = wallet?.unlimited ? '∞' : money(wallet?.balance ?? 0) + ' ₽';
-  const low = typeof wallet?.limit === 'number' && (wallet?.balance ?? 0) < wallet.limit;
+  return (
+    <div className="kpi">
+      <div className="kpi-top">
+        <span className={`ic${tone === 'warn' ? ' warn' : ''}`}>{icon}</span>
+        <span className="lbl">{label}</span>
+      </div>
+      <b>{value}</b>
+      <div className="foot">
+        <span className={`delta ${tone === 'warn' ? 'down' : 'flat'}`}>{foot}</span>
+      </div>
+    </div>
+  );
+}
+
+function Mini({ label, value, hint }: { label: string; value: string; hint: string }) {
+  return (
+    <div className="mini">
+      <span className="lbl">{label}</span>
+      <b>{value}</b>
+      <span className="hint">{hint}</span>
+    </div>
+  );
+}
+
+function HealthRow({ label, value, tone }: { label: string; value: string; tone: 'ok' | 'warn' }) {
+  return (
+    <div className="health-row">
+      <span className={`dot ${tone}`} />
+      <span className="lt">{label}</span>
+      <b className="num">{value}</b>
+    </div>
+  );
+}
+
+function RevenueChart({ labels, values }: { labels: string[]; values: number[] }) {
+  const W = 700;
+  const H = 230;
+  const padL = 44;
+  const padR = 14;
+  const padT = 14;
+  const padB = 24;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+  const maxBar = Math.max(1, ...values);
+  const cumulative: number[] = [];
+  values.reduce((sum, value) => {
+    const next = sum + value;
+    cumulative.push(next);
+    return next;
+  }, 0);
+  const maxLine = Math.max(1, ...cumulative);
+  const barWidth = Math.max(1.5, Math.min(14, innerW / Math.max(1, values.length) - 2));
+  const x = (index: number) => padL + (values.length === 1 ? innerW / 2 : (index / (values.length - 1)) * innerW);
+  const yBar = (value: number) => padT + innerH - (value / maxBar) * innerH;
+  const yLine = (value: number) => padT + innerH - (value / maxLine) * innerH;
+  const linePoints = cumulative.map((value, index) => `${x(index).toFixed(1)},${yLine(value).toFixed(1)}`).join(' ');
+  const every = Math.max(1, Math.round(values.length / 8));
 
   return (
-    <>
-      <h1>Обзор</h1>
-      <div className="kpi-grid">
-        {[
-          { label: 'Выручка', v: money(stats.revenue) },
-          { label: 'Регистрации', v: String(stats.registrations) },
-          { label: 'Покупки', v: String(stats.purchases) },
-          { label: 'Клики по реф', v: String(stats.clicks) },
-          { label: 'Баланс API', v: balance },
-          { label: 'Активные ключи', v: '—' },
-        ].map((k, i) => (
-          <div key={i} className="kpi"><span className="l">{k.label}</span><b>{k.v}</b></div>
+    <div className="chart-box">
+      <svg className="chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label="Выручка по дням">
+        <defs>
+          <linearGradient id="adminBar" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#8fdc2c" stopOpacity=".85" />
+            <stop offset="100%" stopColor="#0c4f36" stopOpacity=".55" />
+          </linearGradient>
+        </defs>
+        {[0, 1, 2, 3].map((tick) => {
+          const y = padT + (innerH * tick) / 3;
+          return (
+            <g key={tick}>
+              <line x1={padL} y1={y} x2={W - padR} y2={y} stroke="rgba(255,255,255,.055)" />
+              <text className="ch-y" x={padL - 8} y={y + 3.5} textAnchor="end">
+                {nf.format(Math.round(maxBar * (1 - tick / 3)))}
+              </text>
+            </g>
+          );
+        })}
+        {values.map((value, index) => (
+          <rect
+            key={index}
+            x={x(index) - barWidth / 2}
+            y={yBar(value)}
+            width={barWidth}
+            height={Math.max(value > 0 ? 1 : 0, padT + innerH - yBar(value))}
+            rx={2}
+            fill="url(#adminBar)"
+          >
+            <title>{`${labels[index]}: ${money(value)}`}</title>
+          </rect>
         ))}
-      </div>
-      <div className="card">
-        <h3>Операционная воронка (клики → оплаты)</h3>
-        <div className="chbars-with-values" aria-hidden="true">
-          {stats.clicks > 0 && <div className="bar2"><b>{stats.clicks} кликов</b><span className="b" style={{ height: '100%' }} /></div>}
-          {stats.registrations > 0 && <div className="bar2"><b>{stats.registrations} регистраций</b><span className="b" style={{ height: '80%' }} /></div>}
-          {stats.purchases > 0 && <div className="bar2"><b>{stats.purchases} покупок</b><span className="b" style={{ height: '30%' }} /></div>}
-          {stats.revenue > 0 && <div className="bar2"><b>{money(stats.revenue)} руб</b><span className="b" style={{ height: '20%' }} /></div>}
+        <polyline points={linePoints} fill="none" stroke="#b7ff45" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        {labels.map((label, index) =>
+          index % every === 0 || index === labels.length - 1 ? (
+            <text key={index} className="ch-x" x={x(index)} y={H - 7} textAnchor="middle">
+              {index === labels.length - 1 ? 'сейчас' : label}
+            </text>
+          ) : null,
+        )}
+      </svg>
+      <span className="chart-note mono">
+        линия: накопленный итог · max {money(maxLine)}
+      </span>
+    </div>
+  );
+}
+
+function Donut({ buckets, total }: { buckets: { label: string; count: number }[]; total: number }) {
+  const R = 52;
+  const C = 2 * Math.PI * R;
+  let offset = 0;
+  return (
+    <svg viewBox="0 0 132 132" role="img" aria-label="Структура подписок">
+      <circle cx="66" cy="66" r={R} fill="none" stroke="rgba(255,255,255,.06)" strokeWidth="14" />
+      {total > 0 &&
+        buckets.map((bucket, index) => {
+          const length = (bucket.count / total) * C;
+          const dash = `${length.toFixed(2)} ${(C - length).toFixed(2)}`;
+          const circle = (
+            <circle
+              key={bucket.label}
+              cx="66"
+              cy="66"
+              r={R}
+              fill="none"
+              stroke={DONUT_COLORS[index % DONUT_COLORS.length]}
+              strokeWidth="14"
+              strokeDasharray={dash}
+              strokeDashoffset={(-offset).toFixed(2)}
+            >
+              <title>{`${bucket.label}: ${bucket.count}`}</title>
+            </circle>
+          );
+          offset += length;
+          return circle;
+        })}
+    </svg>
+  );
+}
+
+function Funnel({ funnel }: { funnel: AdminOverview['funnel'] }) {
+  const steps = [
+    { label: 'Клики', value: funnel.clicks },
+    { label: 'Регистрации', value: funnel.registrations },
+    { label: 'Покупки', value: funnel.purchases },
+  ];
+  const max = Math.max(1, ...steps.map((step) => step.value));
+  return (
+    <div className="funnel">
+      {steps.map((step, index) => {
+        const previous = index === 0 ? step.value : steps[index - 1].value;
+        const conversion = index === 0 || previous === 0 ? null : Math.round((step.value / previous) * 100);
+        return (
+          <div className="fn" key={step.label}>
+            <span className="fl">{step.label}</span>
+            <span className="fb">
+              <i style={{ width: `${Math.max(step.value > 0 ? 3 : 0, (step.value / max) * 100)}%` }} />
+            </span>
+            <span className="fv">
+              {nf.format(step.value)}
+              {conversion !== null && <em>{conversion}%</em>}
+            </span>
+          </div>
+        );
+      })}
+      <div className="funnel-foot">
+        <div>
+          <span className="lbl">Выручка по рефералам</span>
+          <b className="num">{money(funnel.revenue)}</b>
         </div>
-      </div>
-      <div className="card">
-        <h3>Таблица активных промокодов (топ-5 по использованию)</h3>
-        <table className="tbl table-mobile">
-          <thead><tr><th>Код</th><th>Тип</th><th>Значение</th><th>Использований</th><th>Лимит</th></tr></thead>
-          <tbody>
-            {promos.slice().sort((a, b) => b.usedCount - a.usedCount).slice(0, 5).map(p => (
-              <tr key={p.id || p.code}><td>{p.code}</td><td>{p.type === 'percentage' ? '%' : p.type}</td><td>{p.type === 'percentage' ? p.discount : money(p.discount)}</td><td>{p.usedCount}</td><td>{p.maxUses ?? '∞'}</td></tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="row"><div className="t"><b>Период воронки</b><span className="muted-adm">7/30/90 дней</span></div><div className="chips">{PERIODS.map(p => <button key={p} type="button" className={`chip${period === p ? ' on' : ''}`} onClick={() => onPeriod(p)}>{p} дн.</button>)}</div></div>
-      <div className="row"><div className="t"><b>Период остальных карточек</b><span className="muted-adm">30 дней</span></div></div>
-      <div className="row"><div className="t"><b>Баланс ARTEMIDA API</b><span className="muted-adm">Порог 500 ₽</span></div><span>{money(wallet?.balance ?? 0)} ₽</span></div>
-      <div className="row"><div className="t"><b>Вывод на сервер</b><span className="muted-adm">Активирован через оплату выше порога</span></div><button className="btn btn-r" disabled>Ожидает проверку</button></div>
-    </>
-  );
-}
-
-function Analytics({ stats }: { stats: Stats }) {
-  const n = [stats.clicks, stats.registrations, stats.purchases, stats.revenue];
-  return (
-    <>
-      <h1>Аналитика</h1>
-      <div className="card">
-        <h3>Воронка рефералов</h3>
-        <div className="chbars chbars-with-values">
-          {n[0] > 0 && <div><b>{stats.clicks} кликов</b><span className="b" style={{ height: '90%' }} /></div>}
-          {n[1] > 0 && <div><b>{stats.registrations} регистраций</b><span className="b" style={{ height: '60%' }} /></div>}
-          {n[2] > 0 && <div><b>{stats.purchases} покупок</b><span className="b" style={{ height: '25%' }} /></div>}
-          {n[3] > 0 && <div><b>{money(stats.revenue)} ₽</b><span className="b" style={{ height: '15%' }} /></div>}
+        <div>
+          <span className="lbl">Устройства</span>
+          <b className="num">{nf.format(funnel.devices)}</b>
         </div>
+        <Link className="btn btn-quiet xs" href="/admin/referrals">
+          Открыть рефералов
+          <ArrowUpRight size={14} />
+        </Link>
       </div>
-      <div className="kpi-grid">
-        {[['Клики', String(stats.clicks)], ['Регистрации', String(stats.registrations)], ['Покупки', String(stats.purchases)], ['Выручка', money(stats.revenue) + ' ₽'], ['Устройства', String(stats.devices)]].map(([l, v]) => (
-          <div key={l} className="kpi"><span className="l">{l}</span><b>{v}</b></div>
-        ))}
-      </div>
-    </>
-  );
-}
-
-type UserRow = { userId: number; telegramId: string | null; email: string | null; displayName: string | null; staffRole?: string | null };
-
-function Users({ rows, count, truncated }: { rows: UserRow[]; count: number; truncated: boolean }) {
-  return (
-    <>
-      <h1>Пользователи</h1>
-      <div className="card">
-        <table className="tbl table-mobile">
-          <thead><tr><th>Пользователь</th><th>Telegram</th><th>Email</th><th>Роль</th></tr></thead>
-          <tbody>
-            {rows.length === 0 && <tr><td colSpan={4} className="empty-row">Поиск не дал результатов</td></tr>}
-            {rows.map(r => (
-              <tr key={r.userId}>
-                <td><UserAvatar name={r.displayName} /><b>{r.displayName ?? r.email ?? '#' + r.userId}</b></td>
-                <td><span>{r.telegramId ?? '—'}</span></td>
-                <td><span>{r.email ?? '—'}</span></td>
-                <td><span className="chip">{r.staffRole ?? 'клиент'}</span></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {truncated && <p className="muted-adm" style={{ marginTop: 10 }}>Показано не все результаты (50 максимум)</p>}
-        <p className="muted-adm" style={{ marginTop: 8, fontSize: 11 }}>Всего пользователей: {count}</p>
-      </div>
-    </>
-  );
-}
-
-function Wallet({ wallet }: { wallet: Wallet | null }) {
-  const balance = wallet?.balance ?? 0;
-  const low = typeof wallet?.limit === 'number' && balance < wallet.limit;
-  return (
-    <>
-      <h1>Баланс API ARTEMIDA</h1>
-      <div className="kpi-grid">
-        {[['Баланс, ₽', money(balance)], ['Порог предупреждения, ₽', String(wallet?.limit ?? 500)], ['Статус', wallet?.unlimited ? 'безлимит' : 'ограничен']].map(([l, v]) => (
-          <div key={l} className="kpi"><span className="l">{l}</span><b>{v}</b></div>
-        ))}
-      </div>
-      <div className="row"><div className="t"><b>Предупреждение о трате</b><span className="muted-adm">Если баланс ниже порога — алерт</span></div><span>{low ? 'Активен' : 'Неактивен'}</span></div>
-    </>
-  );
-}
-
-function Promos({ promos }: { promos: Promo[] }) {
-  return (
-    <>
-      <h1>Промокоды</h1>
-      <div className="card">
-        <table className="tbl table-mobile">
-          <thead><tr><th>Код</th><th>Тип</th><th>Значение</th><th>Использований</th><th>Лимит</th><th>Действует до</th></tr></thead>
-          <tbody>
-            {promos.length === 0 && <tr><td colSpan={6} className="empty-row">Нет промокодов</td></tr>}
-            {promos.map(p => (
-              <tr key={p.id || p.code}><td>{p.code}</td><td>{p.type === 'percentage' ? '%' : p.type}</td><td>{p.discount}</td><td>{p.usedCount}</td><td>{p.maxUses ?? '∞'}</td><td>{fmtAdm(p.expiresAt)}</td></tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </>
-  );
-}
-
-function TopRefs({ refs }: { refs: TopRef[] }) {
-  return (
-    <>
-      <h1>Топ-рефералы</h1>
-      <div className="card">
-        <h3>Кто больше всего привел платежей</h3>
-        <table className="tbl table-mobile">
-          <thead><tr><th>Пользователь</th><th>Telegram</th><th>Приведёно</th><th>Заработано, ₽</th></tr></thead>
-          <tbody>
-            {refs.length === 0 && <tr><td colSpan={4} className="empty-row">Нет данных о заработке рефералов</td></tr>}
-            {refs.map(r => (
-              <tr key={r.userId}><td><UserAvatar name={r.displayName} /><b>{r.displayName ?? r.telegramId ?? '#' + r.userId}</b></td><td><span>{r.telegramId ?? '—'}</span></td><td><b>{r.referrals}</b></td><td><b>{money(r.earned)}</b></td></tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </>
-  );
-}
-
-function Roles({ roles }: { roles: RoleRow[] }) {
-  return (
-    <>
-      <h1>Роли</h1>
-      <div className="card">
-        <h3>Справочник ролей</h3>
-        <table className="tbl table-mobile">
-          <thead><tr><th>Роль</th><th>Пользователи</th><th>Лимит</th><th>Приоритет</th><th>Описание</th></tr></thead>
-          <tbody>
-            {roles.length === 0 && <tr><td colSpan={5} className="empty-row">Роли недоступны</td></tr>}
-            {roles.map(r => (
-              <tr key={r.name}><td><span className="chip">{r.name}</span></td><td><b>{r.users}</b></td><td>{r.maxUsers ?? '—'}</td><td>{r.priority ?? '—'}</td><td>{r.description}</td></tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="card">
-        <h3>Права и функции по ролям</h3>
-        <table className="tbl table-mobile">
-          <thead><tr><th>Роль</th><th>Функции</th><th>Особенности</th></tr></thead>
-          <tbody>
-            {roles.map(r => (
-              <tr key={r.name + '-f'}>
-                <td><span className="chip">{r.name}</span></td>
-                <td><span>{r.features}</span></td>
-                <td><span>{r.globalScope ? 'Глобальная область' : ''}{r.isDefault ? ', по умолчанию' : ''}{r.protectsDomain ? ', защищённый домен' : ''}{r.apply ? `, apply: ${r.apply}` : ''}{r.hidden ? ', скрытая' : ''}</span></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </>
-  );
-}
-
-function Placeholder({ title, desc }: { title: string; desc: string }) {
-  return (
-    <>
-      <h1>{title}</h1>
-      <div className="card">
-        <p style={{ color: 'var(--muted)', fontSize: 14 }}>{desc}</p>
-        <p className="muted-adm" style={{ marginTop: 12 }}>Раздел в разработке</p>
-      </div>
-    </>
+    </div>
   );
 }

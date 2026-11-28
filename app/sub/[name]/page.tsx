@@ -1,6 +1,6 @@
 // /sub/[name] — partner-subdomain resolver (server-side, Node runtime).
 // The edge middleware forwards `<name>.3set.online` here; this page resolves
-// the owner and redirects to `/?ref=CODE` (permanent attribution happens at
+// the owner and redirects to `/signup?ref=CODE` (permanent attribution happens at
 // registration via the first-wins pin). Unknown/reserved names → home.
 // Sessions are pinned immediately when signed in (best-effort).
 import { headers } from "next/headers";
@@ -33,5 +33,5 @@ export default async function SubPage({ params }: { params: Promise<{ name: stri
     if (!(err instanceof SessionError)) throw err;
     // Anonymous: the ref code travels in the URL for register/RefCapture.
   }
-  redirect(`/?ref=${owner.code}`);
+  redirect(`/signup?ref=${owner.code}`);
 }

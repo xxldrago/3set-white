@@ -6,17 +6,13 @@
 // only — never tokens, JWTs, or full updates. User-visible strings resolve
 // through i18n keys (D-16), never hardcoded copy.
 import { randomUUID } from "node:crypto";
-import { Telegraf } from "telegraf";
+import { Telegraf, type Context } from "telegraf";
 import { normalizeImage, saveAttachment } from "./attachments";
 import { resolveTariffQuote } from "./pricing";
 import { env } from "./env";
-import { t, tp, type I18nKey } from "./i18n";
-import {
-  TARIFF_DAYS,
-  TARIFF_MAX_DEVICES,
-  TARIFF_MIN_DEVICES,
-  tariffDaysLabel,
-} from "./tariff-grid";
+import { t, tp } from "./i18n";
+import { TARIFF_DAYS, tariffDaysLabel } from "./tariff-grid";
+import { guidePlatformMessage, isGuidePlatform } from "./bot-guides";
 import {
   formatKeyDate,
   getSubscriptionForUser,
@@ -44,7 +40,12 @@ import {
 import { bindLoginToken, parseLoginStartPayload } from "./telegram-login";
 import { bindLinkToken, parseLinkStartPayload } from "./telegram-link";
 import { bindMobileNonce, parseNonceStartPayload } from "./telegram-mobile-nonce";
-import { REFERRAL_CODE_RE, getReferralSummary, pinReferrer } from "./referrals";
+import {
+  REFERRAL_CODE_RE,
+  ensureReferralCode,
+  getReferralSummary,
+  pinReferrer,
+} from "./referrals";
 import { validatePromo } from "./promo";
 
 export const WEBHOOK_SECRET = env.WEBHOOK_SECRET;
@@ -61,6 +62,111 @@ const token =
 
 export const bot = new Telegraf(token, {
   telegram: { apiRoot: env.TELEGRAM_API_ROOT },
+});
+
+type PanelExtra = Parameters<Context["reply"]>[1];
+
+/**
+ * Keep an interaction inside ONE message: a button tap edits the message that
+ * owns the button instead of stacking a new one. Commands (nothing to edit)
+ * and non-editable messages fall back to a normal reply.
+ */
+async function showPanel(ctx: Context, text: string, extra?: PanelExtra): Promise<void> {
+  if (ctx.callbackQuery?.message) {
+    try {
+      await ctx.editMessageText(text, extra as never);
+      return;
+    } catch (err) {
+      const description = String((err as { description?: unknown } | null)?.description ?? "");
+      // Re-tapping the same button is not an error worth a duplicate message.
+      if (description.includes("message is not modified")) return;
+    }
+  }
+  await ctx.reply(text, extra);
+}
+
+type InlineButton = { text: string; url: string } | { text: string; callback_data: string };
+
+const MAIN_MENU_CALLBACK = "menu:home";
+
+/**
+ * Telegram rejects inline button URLs outside http(s)/tg: a `v2rayng://`
+ * import button fails the WHOLE message (`BUTTON_URL_INVALID`), which is why
+ * the key-link panel answered «Не удалось загрузить ссылку» and the guides
+ * never appeared. Every button that opens an app therefore uses https, and the
+ * subscription link travels as message text.
+ */
+function installPageUrl(): string {
+  return `${env.APP_BASE_URL}/install`;
+}
+
+/**
+ * A panel must never be a dead end: every keyboard ends with a «В меню» row
+ * that edits the same message back to the main menu.
+ */
+function withMenu(rows: InlineButton[][]): InlineButton[][] {
+  return [...rows, [{ text: t("bot.backToMenu"), callback_data: MAIN_MENU_CALLBACK }]];
+}
+
+/** The main menu keyboard — shared by /start and every «В меню» tap. */
+function mainMenuKeyboard(): { inline_keyboard: InlineButton[][] } {
+  return {
+    inline_keyboard: [
+      [
+        { text: t("bot.menuTrial"), callback_data: "menu:trial" },
+        { text: t("bot.menuTariffs"), callback_data: "menu:tariffs" },
+      ],
+      [{ text: t("bot.menuKeys"), callback_data: "menu:keys" }],
+      [{ text: t("bot.menuReferrals"), callback_data: "menu:referrals" }],
+      [
+        { text: t("bot.menuGuides"), callback_data: "menu:guides" },
+        { text: t("bot.menuHelp"), callback_data: "menu:help" },
+      ],
+      [{ text: t("bot.menuSupport"), callback_data: "menu:support" }],
+      [{ text: t("bot.menuShare"), callback_data: "menu:share" }],
+      [
+        { text: t("bot.menuPrivacy"), callback_data: "menu:privacy" },
+        { text: t("bot.menuTerms"), callback_data: "menu:terms" },
+      ],
+    ],
+  };
+}
+
+/**
+ * Subscription URL of the user's first NON-expired key: fresh from the
+ * provider, with the cached value as a fallback so a provider blip never hides
+ * a subscription the user already paid for. Expired keys are skipped entirely.
+ */
+async function activeSubscriptionUrl(telegramId: bigint): Promise<string | null> {
+  const keys = await listKeys(telegramId);
+  const key = keys.find((row) => row.statusKind !== "expired");
+  if (!key) return null;
+  try {
+    const subscription = await getSubscriptionForUser(telegramId, key.id);
+    if (subscription?.subscriptionUrl) return subscription.subscriptionUrl;
+  } catch {
+    // fall through to the cached mirror
+  }
+  return key.subscriptionUrl ?? null;
+}
+
+// An admin block (users.blocked_at) also closes the bot: every update for a
+// blocked account gets one explanation instead of a working menu. The cabinet
+// session gates reject the same flag, so both surfaces agree.
+bot.use(async (ctx, next) => {
+  const from = ctx.from;
+  if (!from || from.is_bot) return next();
+  const row = await prisma.user
+    .findUnique({
+      where: { telegramId: BigInt(from.id) },
+      select: { blockedAt: true },
+    })
+    .catch(() => null);
+  if (row?.blockedAt) {
+    await ctx.reply(t("bot.blocked")).catch(() => null);
+    return;
+  }
+  return next();
 });
 
 // /start skeleton (D-15): upsert telegram id + chat id into the shared
@@ -179,19 +285,13 @@ bot.start(async (ctx) => {
     await ctx.reply(t("bot.payFailed"));
     logger.info({ updateId: ctx.update.update_id, telegramId, outcome: "payment-return-failed", orderId });
   }
-  await ctx.reply(t("bot.welcome"), {
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: t("bot.menuTrial"), callback_data: "menu:trial" }, { text: t("bot.menuTariffs"), callback_data: "menu:tariffs" }],
-        [{ text: t("bot.menuKeys"), callback_data: "menu:keys" }],
-        [{ text: t("bot.menuReferrals"), callback_data: "menu:referrals" }],
-        [{ text: t("bot.menuGuides"), callback_data: "menu:guides" }, { text: t("bot.menuHelp"), callback_data: "menu:help" }],
-        [{ text: t("bot.menuSupport"), callback_data: "menu:support" }],
-        [{ text: t("bot.menuShare"), callback_data: "menu:share" }],
-        [{ text: t("bot.menuPrivacy"), callback_data: "menu:privacy" }, { text: t("bot.menuTerms"), callback_data: "menu:terms" }],
-      ],
-    },
-  });
+  await ctx.reply(t("bot.welcome"), { reply_markup: mainMenuKeyboard() });
+});
+
+// Every panel's «В меню» button: edit the same message back to the main menu.
+bot.action(MAIN_MENU_CALLBACK, async (ctx) => {
+  await ctx.answerCbQuery();
+  await showPanel(ctx, t("bot.welcome"), { reply_markup: mainMenuKeyboard() });
 });
 
 // ---------------------------------------------------------------------------
@@ -213,22 +313,45 @@ bot.action("menu:referrals", async (ctx) => {
       return;
     }
     const summary = await getReferralSummary(user.id);
-    const link = `${env.APP_BASE_URL}/?ref=${summary.code}`;
+    const link = `${env.APP_BASE_URL}/signup?ref=${summary.code}`;
     const settings = await import("./referrals").then((m) => m.getReferralSettings());
-    await ctx.reply(
-      t("bot.refStats", {
-        code: summary.code,
-        link,
-        invited: summary.referrals,
-        earned: summary.earned,
-        balance: summary.balance,
-        days: summary.bonusDays,
-        inviterDays: settings.userMode === "days" ? settings.userDays : 0,
-        inviterDaysLabel: settings.userMode === "days" ? "дней" : "",
-        inviteeDays: settings.inviteeDays,
-        inviteeDaysLabel: "дней",
-      }),
-    );
+    // Money-mode earners (partners and percent/fixed inviters) get their rate
+    // instead of the days line, so nobody sees "0 бонусных дней".
+    if (summary.myRate.kind === "days") {
+      await showPanel(
+        ctx,
+        t("bot.refStats", {
+          code: summary.code,
+          link,
+          invited: summary.referrals,
+          earned: summary.earned,
+          balance: summary.balance,
+          days: summary.bonusDays,
+          inviterDays: settings.userMode === "days" ? settings.userDays : summary.myRate.value,
+          inviterDaysLabel: settings.userMode === "days" ? "дней" : "дней",
+          inviteeDays: settings.inviteeDays,
+          inviteeDaysLabel: "дней",
+        }),
+        { reply_markup: { inline_keyboard: withMenu([]) } },
+      );
+    } else {
+      const rate =
+        summary.myRate.kind === "percent"
+          ? `${summary.myRate.value}% с оборота`
+          : `${summary.myRate.value} ₽ за заказ`;
+      await showPanel(
+        ctx,
+        t("bot.refStatsMoney", {
+          code: summary.code,
+          link,
+          invited: summary.referrals,
+          earned: summary.earned,
+          balance: summary.balance,
+          rate,
+        }),
+        { reply_markup: { inline_keyboard: withMenu([]) } },
+      );
+    }
     logger.info({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "ref-stats" });
   } catch {
     await ctx.reply(t("bot.keysError"));
@@ -277,8 +400,6 @@ bot.command("promo", async (ctx) => {
 // Prisma or fetch logic. Raw provider text is never sent (D-19/D-24): failures
 // reply with an i18n message only.
 // ---------------------------------------------------------------------------
-const MIN_DEVICES = TARIFF_MIN_DEVICES;
-const MAX_DEVICES = TARIFF_MAX_DEVICES;
 const priceFormatter = new Intl.NumberFormat("ru-RU");
 
 function daysLabel(days: number): string {
@@ -294,37 +415,16 @@ function tariffDaysKeyboard() {
   }));
   const rows: Array<Array<{ text: string; callback_data: string }>> = [];
   for (let i = 0; i < all.length; i += 3) rows.push(all.slice(i, i + 3));
+  rows.push([{ text: t("bot.backToMenu"), callback_data: MAIN_MENU_CALLBACK }]);
   return { inline_keyboard: rows };
 }
 
-/** Device counts offered as one-tap presets; anything else is typed. */
-const DEVICE_PRESETS = [2, 3, 5, 10] as const;
-
 /**
- * Pending "type a device count" prompts, keyed by telegram id.
- *
- * The device ceiling is 9999, so an inline keyboard cannot enumerate the
- * choices (Telegram caps a message at ~100 buttons). Presets cover the common
- * counts; the rest arrives as typed text, which needs to remember WHICH term
- * the user picked. This lives in process memory with a short TTL: the bot runs
- * as a single long-lived process, and a lost prompt after a restart is
- * harmless — the user simply taps the tariff button again.
+ * Device counts offered as inline presets. The storefront sells 2–10 devices
+ * (see the help copy), so the whole range fits one inline keyboard — there is
+ * no typed "other count" prompt, every control in the bot is an inline button.
  */
-const pendingDevicePrompt = new Map<string, { days: number; expiresAt: number }>();
-const DEVICE_PROMPT_TTL_MS = 10 * 60 * 1000;
-
-function setPendingDevicePrompt(telegramId: string, days: number): void {
-  pendingDevicePrompt.set(telegramId, { days, expiresAt: Date.now() + DEVICE_PROMPT_TTL_MS });
-}
-
-/** Consume a pending prompt; null when absent or expired (single use). */
-function takePendingDevicePrompt(telegramId: string): number | null {
-  const entry = pendingDevicePrompt.get(telegramId);
-  if (!entry) return null;
-  pendingDevicePrompt.delete(telegramId);
-  if (entry.expiresAt < Date.now()) return null;
-  return entry.days;
-}
+const DEVICE_PRESETS = [2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 
 function tariffDevicesKeyboard(days: number) {
   const presets = DEVICE_PRESETS.map((d) => ({
@@ -333,8 +433,8 @@ function tariffDevicesKeyboard(days: number) {
   }));
   const rows: Array<Array<{ text: string; callback_data: string }>> = [];
   for (let i = 0; i < presets.length; i += 3) rows.push(presets.slice(i, i + 3));
-  // Escape hatch for counts above the presets (up to MAX_DEVICES).
-  rows.push([{ text: t("pricing.devicesOther"), callback_data: `tariff:custom:${days}` }]);
+  rows.push([{ text: t("common.cancel"), callback_data: "menu:tariffs" }]);
+  rows.push([{ text: t("bot.backToMenu"), callback_data: MAIN_MENU_CALLBACK }]);
   return { inline_keyboard: rows };
 }
 
@@ -371,7 +471,11 @@ bot.action("menu:trial", async (ctx) => {
     }
     // The sub-link message is finalized in plan 02-05; here send the key id
     // plus the fixed trial offer meta (1 day / 2 devices).
-    await ctx.reply(`${t("bot.trialIssued")}\n${t("trial.subtitle")}\n${result.key.id}`);
+    await ctx.reply(`${t("bot.trialIssued")}\n${t("trial.subtitle")}\n${result.key.id}`, {
+      reply_markup: {
+        inline_keyboard: withMenu([[{ text: t("bot.menuKeys"), callback_data: "menu:keys" }]]),
+      },
+    });
     logger.info({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "trial-created" });
   } catch {
     await ctx.reply(t("trial.error"));
@@ -382,7 +486,7 @@ bot.action("menu:trial", async (ctx) => {
 // D-25 tariff keyboard: days → devices → live price from the shared path.
 bot.action("menu:tariffs", async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.reply(t("pricing.title"), { reply_markup: tariffDaysKeyboard() });
+  await showPanel(ctx, t("pricing.title"), { reply_markup: tariffDaysKeyboard() });
 });
 
 // The trial expiry reminder's buy CTA lands here (D-63): reply the days keyboard
@@ -391,26 +495,21 @@ bot.action("menu:tariffs", async (ctx) => {
 // purchase is a fresh `new` order through the tariff picker).
 bot.action("tariff:start", async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.reply(t("pricing.title"), { reply_markup: tariffDaysKeyboard() });
+  await showPanel(ctx, t("pricing.title"), { reply_markup: tariffDaysKeyboard() });
 });
 
 bot.action(/^tariff:days:(\d+)$/, async (ctx) => {
   const days = Number(ctx.match?.[1]);
   await ctx.answerCbQuery();
-  await ctx.reply(t("pricing.devicesLabel"), { reply_markup: tariffDevicesKeyboard(days) });
+  await showPanel(ctx, t("pricing.devicesLabel"), { reply_markup: tariffDevicesKeyboard(days) });
 });
 
 /** Quote a (days, devices) pair and offer the second-tap purchase button. */
-async function replyTariffQuote(
-  ctx: {
-    reply: (text: string, extra?: Record<string, unknown>) => Promise<unknown>;
-  },
-  days: number,
-  devices: number,
-): Promise<void> {
+async function replyTariffQuote(ctx: Context, days: number, devices: number): Promise<void> {
   try {
     const pricing = await resolveTariffQuote(days, devices);
-    await ctx.reply(
+    await showPanel(
+      ctx,
       `${daysLabel(days)} · ${devices}\n${t("pricing.price", {
         price: priceFormatter.format(pricing.amount),
       })}`,
@@ -418,9 +517,9 @@ async function replyTariffQuote(
       // then the user buys — the server re-quotes on creation.
       {
         reply_markup: {
-          inline_keyboard: [
+          inline_keyboard: withMenu([
             [{ text: t("pay.cta"), callback_data: `tariff:buy:${days}:${devices}` }],
-          ],
+          ]),
         },
       },
     );
@@ -434,18 +533,6 @@ bot.action(/^tariff:devices:(\d+):(\d+)$/, async (ctx) => {
   const devices = Number(ctx.match?.[2]);
   await ctx.answerCbQuery();
   await replyTariffQuote(ctx, days, devices);
-});
-
-// "Other count": the user types the number instead of tapping a preset.
-bot.action(/^tariff:custom:(\d+)$/, async (ctx) => {
-  const days = Number(ctx.match?.[1]);
-  await ctx.answerCbQuery();
-  if (ctx.from) setPendingDevicePrompt(String(ctx.from.id), days);
-  await ctx.reply(
-    t("pricing.devicesPrompt", { max: String(MAX_DEVICES) }),
-    // Force a keyboard so the number cannot be swallowed by a stale menu.
-    { reply_markup: { force_reply: true, input_field_placeholder: "2" } },
-  );
 });
 
 // ---------------------------------------------------------------------------
@@ -509,7 +596,7 @@ async function createBotOrderAndReply(
         .catch(() => undefined);
     }
     await ctx.reply(t("bot.payCreated"), {
-      reply_markup: { inline_keyboard: [[buildPayButton(result.url)]] },
+      reply_markup: { inline_keyboard: withMenu([[buildPayButton(result.url)]]) },
     });
     return result.order.id;
   } catch {
@@ -608,15 +695,18 @@ bot.action("menu:keys", async (ctx) => {
       });
     });
 
-    if (cached.length === 0) {
-      await ctx.reply(t("bot.keysEmpty"));
+    // Expired, non-renewed subscriptions are NOT listed: their link is dead,
+    // so showing it only produces "link unavailable" taps.
+    const active = cached.filter((key) => key.statusKind !== "expired");
+    if (active.length === 0) {
+      await showPanel(ctx, t("bot.keysNoActive"));
       return;
     }
 
-    const shown = cached.slice(0, 10);
+    const shown = active.slice(0, 10);
     const header =
-      cached.length >= 2
-        ? `${t("bot.keysTitle")} · ${tp("subs.count", cached.length)}`
+      active.length >= 2
+        ? `${t("bot.keysTitle")} · ${tp("subs.count", active.length)}`
         : t("bot.keysTitle");
     const lines = shown.map((key) => {
       const expiry = key.expiresAt ? formatKeyDate(key.expiresAt) : "—";
@@ -629,16 +719,17 @@ bot.action("menu:keys", async (ctx) => {
       })}\n${devices}`;
     });
     // One inline control per key opens its subscription link (02-05 / CAB-04).
-    // Index-based callback_data keeps the payload short (Telegram 64-byte cap).
-    const keyboard = shown.map((key, index) => [
+    // The callback carries the KEY ID: the list hides expired keys, so a
+    // positional index no longer matches the stored order.
+    const keyboard = shown.map((key) => [
       {
         text: `${key.label ?? key.name ?? key.id} · ${t("key.linkTitle")}`,
-        callback_data: `key:link:${index}`,
+        callback_data: `key:link:${key.id}`,
       },
     ]);
     // Cap the message well under Telegram's 4096-char limit.
-    await ctx.reply([header, ...lines].join("\n\n").slice(0, 4000), {
-      reply_markup: { inline_keyboard: keyboard },
+    await showPanel(ctx, [header, ...lines].join("\n\n").slice(0, 4000), {
+      reply_markup: { inline_keyboard: withMenu(keyboard) },
     });
     logger.info({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "keys-listed" });
   } catch {
@@ -651,21 +742,42 @@ bot.action("menu:keys", async (ctx) => {
 // getSubscriptionForUser service the cabinet uses, then reply with the URL plus
 // a «Как подключиться» pointer. The subscription URL is credential-bearing
 // (T-02-18): it is sent to the owning chat only and never written to a log.
-bot.action(/^key:link:(\d+)$/, async (ctx) => {
+bot.action(/^key:link:(.+)$/, async (ctx) => {
   const from = ctx.from;
   await ctx.answerCbQuery();
   if (!from) return;
   const telegramId = BigInt(from.id);
   try {
     const keys = await listKeys(telegramId);
-    const key = keys[Number(ctx.match?.[1])];
+    const rawId = ctx.match?.[1] ?? "";
+    // Legacy messages carried a positional index; resolve by id first.
+    const key =
+      keys.find((row) => row.id === rawId) ??
+      (/^\d+$/.test(rawId) ? keys[Number(rawId)] : undefined);
     if (!key) {
-      await ctx.reply(t("key.linkUnavailable"));
+      await showPanel(ctx, t("key.linkUnavailable"));
       return;
     }
-    const subscription = await getSubscriptionForUser(telegramId, key.id);
-    if (!subscription?.subscriptionUrl) {
-      await ctx.reply(t("key.linkUnavailable"));
+    // An expired, non-renewed subscription has no usable link — never show one.
+    if (key.statusKind === "expired") {
+      await showPanel(ctx, t("bot.keyExpired"));
+      return;
+    }
+    // Fresh provider read with the cached link as a fallback: a provider blip
+    // must not hide a subscription the user already paid for.
+    let subscriptionUrl: string | null = key.subscriptionUrl ?? null;
+    try {
+      const subscription = await getSubscriptionForUser(telegramId, key.id);
+      if (subscription?.subscriptionUrl) subscriptionUrl = subscription.subscriptionUrl;
+    } catch {
+      logger.warn({
+        updateId: ctx.update.update_id,
+        telegramId: from.id,
+        outcome: "key-link-fetch-failed",
+      });
+    }
+    if (!subscriptionUrl) {
+      await showPanel(ctx, t("key.linkUnavailable"));
       logger.info({
         updateId: ctx.update.update_id,
         telegramId: from.id,
@@ -673,18 +785,12 @@ bot.action(/^key:link:(\d+)$/, async (ctx) => {
       });
       return;
     }
-    const subscriptionUrl = subscription.subscriptionUrl;
-    const importUrls = {
-      v2ray: `v2rayng://import?url=${encodeURIComponent(subscriptionUrl)}`,
-      streisand: `streisand://import?url=${encodeURIComponent(subscriptionUrl)}`,
-      hiddify: `hiddify://import?url=${encodeURIComponent(subscriptionUrl)}`,
-    };
     // Non-trial keys also get renew/upgrade entry points on the link message;
     // trial keys keep only the buy deep-link (D-44 — no renew/upgrade at all).
     // A7: renew/upgrade callbacks carry the key id (never a list index) so a
     // button opened later still targets the right key.
     const limit = keyDeviceLimit(key);
-    const actionRows = key.isTrial
+    const actionRows: InlineButton[][] = key.isTrial
       ? []
       : [
           [{ text: t("renew.cta"), callback_data: `key:renew:${key.id}` }],
@@ -692,21 +798,17 @@ bot.action(/^key:link:(\d+)$/, async (ctx) => {
             ? [[{ text: t("upgrade.cta"), callback_data: `key:upgrade:${key.id}` }]]
             : []),
         ];
-    // Add import buttons for each app
-    const importRows = [
-      [{ text: t("bot.connectImportV2ray"), url: importUrls.v2ray }],
-      [{ text: t("bot.connectImportStreisand"), url: importUrls.streisand }],
-      [{ text: t("bot.connectImportHiddify"), url: importUrls.hiddify }],
-    ];
-    await ctx.reply(
-      `${t("bot.connectGuidesCta")}\n${subscriptionUrl}`,
-      {
-        reply_markup: {
-          inline_keyboard: [...importRows, ...actionRows],
-        },
-        link_preview_options: { is_disabled: true },
+    // The URL travels as TEXT: Telegram rejects non-http(s) button URLs, and
+    // `v2rayng://import?...` failed the whole message with BUTTON_URL_INVALID.
+    await showPanel(ctx, t("bot.keySubscriptionLink", { url: subscriptionUrl }), {
+      reply_markup: {
+        inline_keyboard: withMenu([
+          [{ text: t("bot.guidesOnSite"), url: installPageUrl() }],
+          ...actionRows,
+        ]),
       },
-    );
+      link_preview_options: { is_disabled: true },
+    });
     logger.info({ updateId: ctx.update.update_id, telegramId: from.id, outcome: "key-link-sent" });
   } catch {
     await ctx.reply(t("key.linkError"));
@@ -719,163 +821,103 @@ bot.action(/^key:link:(\d+)$/, async (ctx) => {
 // document link.
 bot.action("menu:privacy", async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.reply(
+  await showPanel(
+    ctx,
     t("bot.legalLink", {
       title: t("bot.menuPrivacy"),
       url: `${env.LEGAL_BASE_URL}/privacy`,
     }),
+    { reply_markup: { inline_keyboard: withMenu([]) } },
   );
 });
 
 bot.action("menu:terms", async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.reply(
+  await showPanel(
+    ctx,
     t("bot.legalLink", {
       title: t("bot.menuTerms"),
       url: `${env.LEGAL_BASE_URL}/terms`,
     }),
+    { reply_markup: { inline_keyboard: withMenu([]) } },
   );
 });
 
 bot.action("menu:help", async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.reply(t("bot.helpText"), { parse_mode: "HTML" });
+  await showPanel(ctx, t("bot.helpText"), {
+    parse_mode: "HTML",
+    reply_markup: { inline_keyboard: withMenu([]) },
+  });
 });
 
 bot.action("menu:share", async (ctx) => {
   await ctx.answerCbQuery();
-  const botUrl = `https://t.me/${env.TELEGRAM_BOT_USERNAME}`;
-  await ctx.reply(
-    t("bot.shareText", { botUrl }),
-    {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: t("bot.shareButton"), switch_inline_query: "" }],
-        ],
-      },
+  const from = ctx.from;
+  const botBase = `https://t.me/${env.TELEGRAM_BOT_USERNAME}`;
+  // Share the caller's personal referral link so an invited friend is pinned
+  // to them. Falls back to the plain bot link for a missing user row.
+  let shareUrl = botBase;
+  if (from) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { telegramId: BigInt(from.id) },
+        select: { id: true },
+      });
+      if (user) shareUrl = `${botBase}?start=${await ensureReferralCode(user.id)}`;
+    } catch {
+      // A lookup failure must not break sharing — plain bot link is fine.
+    }
+  }
+  const text = t("bot.shareText", { botUrl: shareUrl });
+  // `t.me/share/url` opens Telegram's native share sheet. `switch_inline_query`
+  // needs inline mode enabled in BotFather, so it silently did nothing here.
+  const shareHref = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`;
+  await showPanel(ctx, text, {
+    reply_markup: {
+      inline_keyboard: withMenu([[{ text: t("bot.shareButton"), url: shareHref }]]),
     },
-  );
+    link_preview_options: { is_disabled: true },
+  });
 });
 
-// TRIAL-03 bot half: the «Инструкции» button resolves the SAME guide sections
-// as app/guides/page.tsx — one copy, referenced by key, never duplicated.
+// TRIAL-03 bot half: «Инструкции» shows EVERY app for the chosen platform in
+// one message — install link, steps, and an import button when an active
+// subscription exists. A platform tap is the only tap: the old second "pick an
+// app" step was a dead end.
 bot.action("menu:guides", async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.reply(
-    t("bot.guidesTitle"),
-    {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: t("bot.guidesPlatformAndroid"), callback_data: "guides:platform:android" }],
-          [{ text: t("bot.guidesPlatformIOS"), callback_data: "guides:platform:ios" }],
-          [{ text: t("bot.guidesPlatformDesktop"), callback_data: "guides:platform:desktop" }],
-        ],
-      },
-      parse_mode: "HTML",
+  await showPanel(ctx, t("bot.guidesTitle"), {
+    reply_markup: {
+      inline_keyboard: withMenu([
+        [{ text: t("bot.guidesPlatformAndroid"), callback_data: "guides:platform:android" }],
+        [{ text: t("bot.guidesPlatformIOS"), callback_data: "guides:platform:ios" }],
+        [{ text: t("bot.guidesPlatformDesktop"), callback_data: "guides:platform:desktop" }],
+        [{ text: t("bot.guidesOnSite"), url: installPageUrl() }],
+      ]),
     },
-  );
+  });
 });
 
 bot.action(/^guides:platform:(android|ios|desktop)$/, async (ctx) => {
   await ctx.answerCbQuery();
-  const platform = ctx.match?.[1] as "android" | "ios" | "desktop";
-  const platformKeys = {
-    android: "bot.guidesPlatformAndroid" as const,
-    ios: "bot.guidesPlatformIOS" as const,
-    desktop: "bot.guidesPlatformDesktop" as const,
-  };
-  const appOptions = {
-    android: [
-      { key: "bot.guidesAppV2ray" as const, callback: "guides:app:v2ray" },
-      { key: "bot.guidesAppHiddify" as const, callback: "guides:app:hiddify" },
-    ],
-    ios: [
-      { key: "bot.guidesAppStreisand" as const, callback: "guides:app:streisand" },
-      { key: "bot.guidesAppHiddify" as const, callback: "guides:app:hiddify" },
-    ],
-    desktop: [
-      { key: "bot.guidesAppHiddify" as const, callback: "guides:app:hiddify" },
-      { key: "bot.guidesAppV2ray" as const, callback: "guides:app:v2ray" },
-    ],
-  };
-
-  const apps = appOptions[platform];
-  await ctx.reply(
-    `📱 <b>Инструкции для ${t(platformKeys[platform])}</b>\n\nВыберите приложение:`,
-    {
-      reply_markup: {
-        inline_keyboard: [
-          ...apps.map((a) => [{ text: t(a.key), callback_data: a.callback }]),
-          [{ text: t("common.cancel"), callback_data: "menu:guides" }],
-        ],
-      },
-      parse_mode: "HTML",
-    },
-  );
-});
-
-bot.action(/^guides:app:(v2ray|streisand|hiddify)$/, async (ctx) => {
-  await ctx.answerCbQuery();
-  const app = ctx.match?.[1] as "v2ray" | "streisand" | "hiddify";
+  const raw = ctx.match?.[1] ?? "";
+  if (!isGuidePlatform(raw)) return;
   const from = ctx.from;
-  if (!from) return;
-
-  const telegramId = BigInt(from.id);
-  let subscriptionUrl: string | null = null;
+  const subscriptionUrl = from
+    ? await activeSubscriptionUrl(BigInt(from.id)).catch(() => null)
+    : null;
+  const { text, keyboard } = guidePlatformMessage(raw, subscriptionUrl, installPageUrl());
   try {
-    const keys = await listKeys(telegramId);
-    if (keys.length > 0) {
-      const sub = await getSubscriptionForUser(telegramId, keys[0].id);
-      subscriptionUrl = sub?.subscriptionUrl ?? null;
-    }
+    await showPanel(ctx, text, {
+      reply_markup: { inline_keyboard: withMenu(keyboard) },
+      parse_mode: "HTML",
+      link_preview_options: { is_disabled: true },
+    });
   } catch {
-    // ignore
+    await ctx.reply(t("bot.guidesError"));
+    logger.warn({ updateId: ctx.update.update_id, telegramId: from?.id, outcome: "guides-failed" });
   }
-
-  const storeUrls = {
-    v2ray: "https://github.com/2dust/v2rayNG/releases",
-    streisand: "https://apps.apple.com/app/streisand/id6450534064",
-    hiddify: "https://github.com/hiddify/hiddify-app/releases",
-  };
-
-  const importUrls = {
-    v2ray: `v2rayng://import?url=${encodeURIComponent(subscriptionUrl ?? "")}`,
-    streisand: `streisand://import?url=${encodeURIComponent(subscriptionUrl ?? "")}`,
-    hiddify: `hiddify://import?url=${encodeURIComponent(subscriptionUrl ?? "")}`,
-  };
-
-  const appKeys = {
-    v2ray: "bot.guidesAppV2ray" as const,
-    streisand: "bot.guidesAppStreisand" as const,
-    hiddify: "bot.guidesAppHiddify" as const,
-  };
-  const importKeys = {
-    v2ray: "bot.connectImportV2ray" as const,
-    streisand: "bot.connectImportStreisand" as const,
-    hiddify: "bot.connectImportHiddify" as const,
-  };
-
-  const lines = [
-    t("bot.guidesStepInstall", { app: t(appKeys[app]), storeUrl: storeUrls[app] }),
-    "",
-    subscriptionUrl ? t("bot.guidesStepImport", { app: t(appKeys[app]) }) : "⚠️ Сначала оформите подписку в разделе «Тарифы» — тогда появится ссылка для импорта.",
-    "",
-    t("bot.guidesStepConnect", { app: t(appKeys[app]), platform: "вашем устройстве" }),
-  ];
-
-  const keyboard: Array<Array<{ text: string; callback_data: string } | { text: string; url: string }>> = [
-    [{ text: t("common.cancel"), callback_data: "menu:guides" }],
-  ];
-
-  if (subscriptionUrl) {
-    keyboard.unshift([{ text: t(importKeys[app]), url: importUrls[app] }]);
-  }
-
-  await ctx.reply(lines.join("\n"), {
-    reply_markup: { inline_keyboard: keyboard },
-    parse_mode: "HTML",
-    link_preview_options: { is_disabled: true },
-  });
 });
 
 // ---------------------------------------------------------------------------
@@ -887,36 +929,15 @@ bot.action(/^guides:app:(v2ray|streisand|hiddify)$/, async (ctx) => {
 // A photo is downloaded through the Bot API (`getFileLink` → `fetch`) and
 // normalized by the shared `lib/attachments.normalizeImage`. Failures reply
 // keyed copy only — never a provider/API error or the file link (D-19/D-24).
-// Typed device count for the «Другое число» escape hatch. Registered BEFORE the
-// support intake handler so a number sent in reply to our force-reply prompt is
-// consumed here; without a pending prompt this handler does nothing and the
-// update falls through untouched.
-bot.on("text", async (ctx, next) => {
-  const from = ctx.from;
-  if (!from) return next();
-  const telegramId = String(from.id);
-  if (!pendingDevicePrompt.has(telegramId)) return next();
-  const text = ctx.message.text.trim();
-  if (!/^\d{1,4}$/.test(text)) return next();
-  const days = takePendingDevicePrompt(telegramId);
-  if (days === null) return next();
-  const devices = Number(text);
-  if (devices < MIN_DEVICES || devices > MAX_DEVICES) {
-    await ctx.reply(t("pricing.devicesPrompt", { max: String(MAX_DEVICES) }));
-    setPendingDevicePrompt(telegramId, days);
-    return;
-  }
-  await replyTariffQuote(ctx, days, devices);
-});
-
-// ---------------------------------------------------------------------------
 bot.action("menu:support", async (ctx) => {
   await ctx.answerCbQuery();
   const from = ctx.from;
   if (!from) return;
   try {
     await beginSupportPrompt(BigInt(from.id));
-    await ctx.reply(t("bot.supportPrompt"));
+    await showPanel(ctx, t("bot.supportPrompt"), {
+      reply_markup: { inline_keyboard: withMenu([]) },
+    });
     logger.info({
       updateId: ctx.update.update_id,
       telegramId: from.id,
@@ -1016,13 +1037,30 @@ bot.on(["text", "photo"], async (ctx) => {
 
 // Polling guard: dev only, test token (selected above), never during
 // `next build` module collection, never in webhook (prod) mode.
+//
+// `bot.launch()` RESOLVES only when polling stops; a rejected launch (Telegram
+// 409 «terminated by other getUpdates request» — a restart overlap, a stray
+// probe, a second instance — or a network blip) would otherwise leave the bot
+// silently dead until the container is restarted. Re-entering the loop after a
+// short delay is what makes the poller self-healing.
+const POLLING_RETRY_MS = 5_000;
+
+async function pollForever(): Promise<void> {
+  for (;;) {
+    try {
+      await bot.launch();
+      logger.warn({ outcome: "bot-polling-stopped" });
+    } catch (err: unknown) {
+      logger.error({ outcome: "bot-polling-failed", err });
+    }
+    await new Promise((resolve) => setTimeout(resolve, POLLING_RETRY_MS));
+  }
+}
+
 if (env.BOT_MODE === "polling" && process.env["NEXT_PHASE"] !== "phase-production-build") {
   const g = globalThis as unknown as { __setwhiteBotLaunched?: boolean };
   if (!g.__setwhiteBotLaunched) {
     g.__setwhiteBotLaunched = true;
-    void bot
-      .launch()
-      .then(() => logger.info({ outcome: "bot-polling-started" }))
-      .catch((err: unknown) => logger.error({ outcome: "bot-polling-failed", err }));
+    void pollForever();
   }
 }

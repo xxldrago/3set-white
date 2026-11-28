@@ -38,6 +38,7 @@ interface Row {
   lastOrderAt: string | null;
   emailVerified: boolean;
   bonusDays: number;
+  blockedAt: string | null;
   isTest: boolean;
 }
 
@@ -80,6 +81,7 @@ interface ProfileHeader {
   customInviterReward: number | null;
   customInviterKind: string | null;
   customSubdomain: string | null;
+  blockedAt: string | null;
   passwordSet: boolean;
   trialUsed: boolean;
   bonusDays: number;
@@ -333,6 +335,7 @@ export default function UsersApp({
   const [drawerId, setDrawerId] = useState<number | null>(null);
   const [modal, setModal] = useState<null | 'days' | 'role' | 'ticket'>(null);
   const [cmdOpen, setCmdOpen] = useState(false);
+  const [blocking, setBlocking] = useState(false);
   const [cmdQuery, setCmdQuery] = useState('');
   const [cmdSel, setCmdSel] = useState(0);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -490,6 +493,65 @@ export default function UsersApp({
       if (allSelected) return new Set();
       return new Set(data.rows.map((row) => row.id));
     });
+  }
+
+  /* -------------------------------------------------- block / delete */
+
+  async function setBlocked(ids: number[], blocked: boolean) {
+    if (ids.length === 0 || blocking) return;
+    setBlocking(true);
+    let ok = 0;
+    let failed = 0;
+    for (const id of ids) {
+      try {
+        const res = await fetch(`/api/admin/users/${id}/block`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ blocked }),
+        });
+        if (res.ok) ok += 1;
+        else failed += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+    setBlocking(false);
+    if (ok > 0) {
+      toast(
+        `${blocked ? 'Заблокирован' : 'Разблокирован'}${ok > 1 ? `о: ${ok}` : ''}${failed ? ` · отказов: ${failed}` : ''}`,
+        failed ? 'warn' : '',
+      );
+      void load();
+    } else {
+      toast('Не удалось изменить блокировку — нужны права администратора', 'err');
+    }
+  }
+
+  async function deleteUser(id: number): Promise<boolean> {
+    try {
+      const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        toast(
+          res.status === 400
+            ? 'Удаление запрещено: это ваш аккаунт или администратор'
+            : 'Не удалось удалить пользователя',
+          'err',
+        );
+        return false;
+      }
+      toast(`Пользователь #${id} удалён`);
+      if (drawerId === id) setDrawerId(null);
+      setSelected((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      void load();
+      return true;
+    } catch {
+      toast('Сеть недоступна — повторите', 'err');
+      return false;
+    }
   }
 
   /* -------------------------------------------------------------- ⌘K menu */
@@ -947,6 +1009,11 @@ export default function UsersApp({
                             вы
                           </span>
                         )}
+                        {row.blockedAt && (
+                          <span className="pill bad" style={{ padding: '3px 9px', fontSize: 10.6, marginLeft: 4 }}>
+                            заблокирован
+                          </span>
+                        )}
                       </td>
                       <td>
                         {row.segment ? (
@@ -1001,11 +1068,18 @@ export default function UsersApp({
                             <Icon path={ICONS.chat} size={15} />
                           </button>
                           <button
-                            className="ibtn dgr"
+                            className={`ibtn${row.blockedAt ? '' : ' dgr'}`}
                             type="button"
-                            disabled
-                            title="Блокировка аккаунта не реализована в бэкенде"
-                            aria-label="Заблокировать"
+                            disabled={isSelf || blocking}
+                            title={
+                              isSelf
+                                ? 'Нельзя заблокировать свой аккаунт'
+                                : row.blockedAt
+                                  ? 'Разблокировать аккаунт'
+                                  : 'Заблокировать аккаунт'
+                            }
+                            aria-label={row.blockedAt ? 'Разблокировать' : 'Заблокировать'}
+                            onClick={() => void setBlocked([row.id], !row.blockedAt)}
                           >
                             <Icon path={ICONS.ban} size={15} />
                           </button>
@@ -1062,10 +1136,18 @@ export default function UsersApp({
               <button
                 className="btn btn-danger xs"
                 type="button"
-                disabled
-                title="Блокировка аккаунта не реализована в бэкенде"
+                disabled={blocking}
+                onClick={() => void setBlocked([...selected], true)}
               >
                 Заблокировать
+              </button>
+              <button
+                className="btn btn-quiet xs"
+                type="button"
+                disabled={blocking}
+                onClick={() => void setBlocked([...selected], false)}
+              >
+                Разблокировать
               </button>
               <button
                 className="btn btn-quiet xs"
@@ -1148,6 +1230,16 @@ export default function UsersApp({
           onOpenModal={(kind, id) => {
             setSelected(new Set([id]));
             setModal(kind);
+          }}
+          onToggleBlock={(id, blocked) => void setBlocked([id], blocked)}
+          onDelete={(id, title) => {
+            if (
+              window.confirm(
+                `Удалить пользователя ${title} (#${id})? Удаляются заказы, ключи, обращения и история кошелька. Действие необратимо.`,
+              )
+            ) {
+              void deleteUser(id);
+            }
           }}
         />
       )}
@@ -1402,12 +1494,16 @@ function UserDrawer({
   onClose,
   onToast,
   onOpenModal,
+  onToggleBlock,
+  onDelete,
 }: {
   userId: number;
   callerTelegramId: number | null;
   onClose: () => void;
   onToast: (message: string, kind?: ToastKind) => void;
   onOpenModal: (kind: 'days' | 'role' | 'ticket', id: number) => void;
+  onToggleBlock: (id: number, blocked: boolean) => void;
+  onDelete: (id: number, title: string) => void;
 }) {
   const [tab, setTab] = useState<DrawerTab>('profile');
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -1494,6 +1590,7 @@ function UserDrawer({
               {header?.telegramId && <span className="pill info">Telegram</span>}
               {header?.email && <span className="pill info">Email</span>}
               {header?.bonusDays ? <span className="pill ok">+{header.bonusDays} бонусных дней</span> : null}
+              {header?.blockedAt && <span className="pill bad">заблокирован</span>}
               {isSelf && <span className="pill warn">это вы</span>}
             </div>
           </div>
@@ -1662,9 +1759,13 @@ function UserDrawer({
               <button
                 className="btn btn-ghost sm"
                 type="button"
-                disabled
-                title="Роль выдаётся по Telegram ID на странице «Роли»"
-                onClick={() => onToast('Смена роли доступна на странице «Роли» — роли привязаны к Telegram ID', 'warn')}
+                disabled={header !== null && header.telegramId === null}
+                title={
+                  header?.telegramId
+                    ? 'Назначить роль'
+                    : 'Роли выдаются по Telegram ID — у аккаунта его нет'
+                }
+                onClick={() => onOpenModal('role', userId)}
               >
                 <Icon path={ICONS.shield} /> Роль
               </button>
@@ -1683,18 +1784,16 @@ function UserDrawer({
             ) : (
               <div className="g2">
                 <button
-                  className="btn btn-danger sm"
+                  className={`btn sm ${header?.blockedAt ? 'btn-ghost' : 'btn-danger'}`}
                   type="button"
-                  disabled
-                  title="Блокировка аккаунта не реализована в бэкенде"
+                  onClick={() => onToggleBlock(userId, !header?.blockedAt)}
                 >
-                  Заблокировать
+                  {header?.blockedAt ? 'Разблокировать' : 'Заблокировать'}
                 </button>
                 <button
                   className="btn btn-danger sm"
                   type="button"
-                  disabled
-                  title="Удаление аккаунта не реализовано в бэкенде"
+                  onClick={() => onDelete(userId, title)}
                 >
                   Удалить
                 </button>

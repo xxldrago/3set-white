@@ -8,7 +8,7 @@ import { useCallback, useState, type ReactNode } from 'react';
 import { Share2 } from 'lucide-react';
 
 interface Props {
-  /** Absolute URL or app-relative path (e.g. `/?ref=CODE`). */
+  /** Absolute URL or app-relative path (e.g. `/signup?ref=CODE`). */
   url: string;
   title?: string;
   text?: string;

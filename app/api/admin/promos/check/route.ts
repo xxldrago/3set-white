@@ -65,25 +65,28 @@ export async function GET(req: Request): Promise<Response> {
     }
     const status = promoStatusOf(row, Date.now());
     const amount = parsed.data.amount;
+    // A code is usable when its switch/limits pass AND (when the admin priced
+    // the order) the order reaches its minimum amount.
+    const baseUsable = status === "active" || status === "soon";
+    const minSumOk = row.minSum === null || amount === undefined || amount >= row.minSum;
+    const usable = baseUsable && minSumOk;
     return Response.json({
       code: row.code,
       found: true,
       status,
-      usable: status === "active" || status === "soon",
+      usable,
       type: row.type,
       discount: row.discount,
       maxUses: row.maxUses,
       usedCount: row.usedCount,
       expiresAt: row.expiresAt ? row.expiresAt.toISOString() : null,
       ownerUserId: row.ownerUserId,
+      active: row.active,
+      minSum: row.minSum,
+      note: row.note,
       // Only computed when the admin supplied a base price.
       amount: amount ?? null,
-      finalAmount:
-        amount === undefined
-          ? null
-          : status === "active" || status === "soon"
-            ? applyDiscount(amount, row)
-            : null,
+      finalAmount: amount !== undefined && usable ? applyDiscount(amount, row) : null,
     });
   } catch {
     logger.error({ route: "admin-promos-check", outcome: "read_error" });

@@ -264,28 +264,55 @@ export async function ensureReferralCode(userId: number): Promise<string> {
 }
 
 /**
+ * Resolve a public code to the account that earns from it. Two sources: the
+ * account's own `referral_code` (legacy/lazy code) and a partner-created
+ * `referral_links` row (multiple named links, possibly attributing to a
+ * subpartner). Unknown or malformed codes resolve to null — no oracle.
+ */
+export interface ResolvedReferralCode {
+  /** Account that gets the referral. */
+  targetUserId: number;
+  /** Partner who manages the link (null for a per-account code). */
+  linkOwnerId: number | null;
+}
+
+export async function resolveReferralCode(
+  rawCode: string,
+): Promise<ResolvedReferralCode | null> {
+  const code = rawCode.trim().toUpperCase();
+  if (!REFERRAL_CODE_RE.test(code)) return null;
+  const account = await prisma.user.findUnique({
+    where: { referralCode: code },
+    select: { id: true },
+  });
+  if (account) return { targetUserId: account.id, linkOwnerId: null };
+  const link = await prisma.referralLink.findUnique({
+    where: { code },
+    select: { ownerId: true, targetUserId: true },
+  });
+  return link ? { targetUserId: link.targetUserId, linkOwnerId: link.ownerId } : null;
+}
+
+/**
  * Pin the inviter once. No-ops when the account already has one, when the
  * code is unknown/malformed, or when it resolves to self. Returns the
  * inviter userId when pinned, null otherwise.
  */
 export async function pinReferrer(userId: number, rawCode: string): Promise<number | null> {
-  const code = rawCode.trim().toUpperCase();
-  if (!REFERRAL_CODE_RE.test(code)) return null;
-  const inviter = await prisma.user.findUnique({
-    where: { referralCode: code },
-    select: { id: true },
-  });
-  if (!inviter || inviter.id === userId) return null;
+  const resolved = await resolveReferralCode(rawCode);
+  if (!resolved) return null;
+  const inviterId = resolved.targetUserId;
+  if (inviterId === userId) return null;
   const claimed = await prisma.user.updateMany({
     where: { id: userId, referredById: null },
-    data: { referredById: inviter.id },
+    data: { referredById: inviterId },
   });
   // count === 0: already pinned (first wins) or the row is gone.
   if (claimed.count !== 1) return null;
   // Best-effort partner push — never awaited, never throws (see module).
   const { notifyReferralPinned } = await import("./partner-notify");
-  notifyReferralPinned(inviter.id);
-  return inviter.id;
+  notifyReferralPinned(inviterId);
+  return inviterId;
 }
 
 /** Wallet balance = SUM(amount). Single-row aggregate, no caching. */
@@ -337,6 +364,8 @@ export async function getReferralSummary(userId: number): Promise<ReferralSummar
         customInviterKind: true,
         subRateKind: true,
         subRateValue: true,
+        partnerRateKind: true,
+        partnerRateValue: true,
       },
     }),
     getReferralSettings(),
@@ -395,6 +424,8 @@ interface EarnerRow {
   referredById: number | null;
   customInviterReward: number | null;
   customInviterKind: string | null;
+  partnerRateKind?: string | null;
+  partnerRateValue?: number | null;
 }
 
 /**
@@ -407,7 +438,13 @@ async function resolveEarnerRate(
   earner: EarnerRow,
   settings: ReferralSettings,
   partnerEarner: boolean,
+  planAmount?: number | null,
 ): Promise<EarningRate> {
+  // Per-term payout the admin set for this partner wins over every other rate:
+  // a weekly key and a yearly key can pay different fixed sums.
+  if (planAmount !== null && planAmount !== undefined) {
+    return { kind: "fixed", value: Math.max(0, planAmount) };
+  }
   if (
     earner.customInviterKind === "percent" ||
     earner.customInviterKind === "fixed" ||
@@ -420,6 +457,17 @@ async function resolveEarnerRate(
   }
   if (earner.customInviterReward !== null && earner.customInviterReward !== undefined) {
     return { kind: "fixed", value: Math.max(0, earner.customInviterReward) };
+  }
+  // Per-subpartner rate the upline partner set for THIS account — it narrows
+  // what this account earns out of the partner's own income.
+  if (
+    (earner.partnerRateKind === "percent" ||
+      earner.partnerRateKind === "fixed" ||
+      earner.partnerRateKind === "days") &&
+    earner.partnerRateValue !== null &&
+    earner.partnerRateValue !== undefined
+  ) {
+    return { kind: earner.partnerRateKind, value: Math.max(0, earner.partnerRateValue) };
   }
   if (partnerEarner) {
     return { kind: settings.inviterKind, value: Math.max(0, settings.inviterValue) };
@@ -441,6 +489,68 @@ async function resolveEarnerRate(
     return { kind: "days", value: Math.max(0, settings.userDays) };
   }
   return { kind: settings.inviterKind, value: Math.max(0, settings.inviterValue) };
+}
+
+/**
+ * Fixed RUB this account earns for one sold key of `days` days, or null when
+ * the admin has not set a plan-specific payout (→ custom/global rate applies).
+ */
+async function planRewardAmount(userId: number, days: number | null): Promise<number | null> {
+  if (days === null || !Number.isSafeInteger(days) || days <= 0) return null;
+  const row = await prisma.partnerPlanReward.findUnique({
+    where: { userId_days: { userId, days } },
+    select: { amount: true },
+  });
+  return row ? Math.max(0, row.amount) : null;
+}
+
+export interface PartnerPlanRewardRow {
+  days: number;
+  amount: number;
+}
+
+/** Plan payouts configured for a partner, ascending by term. */
+export async function listPartnerPlanRewards(userId: number): Promise<PartnerPlanRewardRow[]> {
+  const rows = await prisma.partnerPlanReward.findMany({
+    where: { userId },
+    orderBy: { days: "asc" },
+    select: { days: true, amount: true },
+  });
+  return rows;
+}
+
+/**
+ * Replace the partner's per-term payouts. An amount of null (or an omitted
+ * term) deletes that row; every value is validated before any write, so a bad
+ * payload cannot leave a half-applied grid.
+ */
+export async function setPartnerPlanRewards(
+  userId: number,
+  rows: { days: number; amount: number | null }[],
+): Promise<PartnerPlanRewardRow[]> {
+  const clean: { days: number; amount: number }[] = [];
+  for (const row of rows) {
+    if (!Number.isSafeInteger(row.days) || row.days <= 0 || row.days > 3650) {
+      throw new Error("referral:bad_plan_days");
+    }
+    if (row.amount === null) continue;
+    if (!Number.isSafeInteger(row.amount) || row.amount < 0 || row.amount > 1_000_000) {
+      throw new Error("referral:bad_plan_amount");
+    }
+    clean.push({ days: row.days, amount: row.amount });
+  }
+  const days = clean.map((row) => row.days);
+  await prisma.$transaction([
+    prisma.partnerPlanReward.deleteMany({ where: { userId, days: { notIn: days } } }),
+    ...clean.map((row) =>
+      prisma.partnerPlanReward.upsert({
+        where: { userId_days: { userId, days: row.days } },
+        update: { amount: row.amount },
+        create: { userId, days: row.days, amount: row.amount },
+      }),
+    ),
+  ]);
+  return listPartnerPlanRewards(userId);
 }
 
 async function creditDays(userId: number, days: number, refId: string): Promise<void> {
@@ -477,6 +587,7 @@ export async function creditReferralForPaidOrder(
   userId: number,
   finalAmount: number,
   orderId: string,
+  orderDays?: number | null,
 ): Promise<void> {
   const referred = await prisma.user.findUnique({
     where: { id: userId },
@@ -494,6 +605,8 @@ export async function creditReferralForPaidOrder(
       referredById: true,
       customInviterReward: true,
       customInviterKind: true,
+      partnerRateKind: true,
+      partnerRateValue: true,
     },
   });
   if (!inviter) return;
@@ -501,8 +614,11 @@ export async function creditReferralForPaidOrder(
 
   // First-payment gate for the non-partner direct leg: any marker pointing
   // at this account means an earlier order already credited both sides.
+  // A subpartner whose percent was set by their partner is commissioned like
+  // a partner — they earn on EVERY payment, not only the first.
+  const commissionedSubpartner = inviter.partnerRateKind !== null;
   const orderRef = `${userId}:${orderId}`;
-  if (!inviterIsPartner) {
+  if (!inviterIsPartner && !commissionedSubpartner) {
     const existing = await prisma.walletTx.findFirst({
       where: {
         reason: { in: ["referral_bonus", "referral_days"] },
@@ -513,8 +629,14 @@ export async function creditReferralForPaidOrder(
     if (existing) return;
   }
 
-  const rate = await resolveEarnerRate(inviter, settings, inviterIsPartner);
-  const directRefId = inviterIsPartner ? orderRef : String(userId);
+  const rate = await resolveEarnerRate(
+    inviter,
+    settings,
+    inviterIsPartner,
+    await planRewardAmount(inviter.id, orderDays ?? null),
+  );
+  const directRefId =
+    inviterIsPartner || commissionedSubpartner ? orderRef : String(userId);
 
   try {
     let directMoneyShare = 0;
@@ -552,10 +674,17 @@ export async function creditReferralForPaidOrder(
           referredById: true,
           customInviterReward: true,
           customInviterKind: true,
+          partnerRateKind: true,
+          partnerRateValue: true,
         },
       });
       if (up && (await isPartner(up.id, up.telegramId))) {
-        const upRate = await resolveEarnerRate(up, settings, true);
+        const upRate = await resolveEarnerRate(
+          up,
+          settings,
+          true,
+          await planRewardAmount(up.id, orderDays ?? null),
+        );
         if (upRate.kind !== "days") {
           const residual = Math.max(0, moneyOf(upRate, finalAmount) - directMoneyShare);
           if (residual > 0) {
@@ -645,6 +774,73 @@ export async function setSubRate(
     },
   });
   return rate;
+}
+
+export type PartnerSubRateOutcome =
+  | { ok: true; percent: number }
+  | { ok: false; reason: "not_found" | "bad_rate" | "exceeds_own" };
+
+/**
+ * Set the percent a partner pays ONE of their direct subpartners out of their
+ * own income. The rate is written on the subpartner's row as
+ * `partnerRateKind = percent`; the partner's residual is their own entitlement
+ * minus this share (floored at zero by the ledger), so no money is created.
+ * `null` clears the override (the subpartner falls back to the partner's
+ * global downline rate / site defaults).
+ *
+ * Only direct referrals are addressable: the update is scoped by
+ * `{ id: subUserId, referredById: partnerId }`, so a foreign id changes
+ * nothing. The value is capped at the partner's own percent when their own
+ * entitlement is a percent — nobody can promise more than they earn.
+ */
+export async function setPartnerSubRate(
+  partnerId: number,
+  subUserId: number,
+  percent: number | null,
+): Promise<PartnerSubRateOutcome> {
+  if (percent !== null && (!Number.isSafeInteger(percent) || percent < 0 || percent > 100)) {
+    return { ok: false, reason: "bad_rate" };
+  }
+  const partner = await prisma.user.findUnique({
+    where: { id: partnerId },
+    select: {
+      id: true,
+      telegramId: true,
+      referredById: true,
+      customInviterReward: true,
+      customInviterKind: true,
+      partnerRateKind: true,
+      partnerRateValue: true,
+    },
+  });
+  if (!partner) return { ok: false, reason: "not_found" };
+  if (percent !== null) {
+    const ownPercent = await partnerMaxPercent(partner);
+    if (ownPercent !== null && percent > ownPercent) {
+      return { ok: false, reason: "exceeds_own" };
+    }
+  }
+  const updated = await prisma.user.updateMany({
+    where: { id: subUserId, referredById: partnerId },
+    data:
+      percent === null
+        ? { partnerRateKind: null, partnerRateValue: null }
+        : { partnerRateKind: "percent", partnerRateValue: percent },
+  });
+  if (updated.count === 0) return { ok: false, reason: "not_found" };
+  return { ok: true, percent: percent ?? 0 };
+}
+
+/**
+ * The partner's own cut as a percent (null when they earn fixed RUB or days —
+ * a percent cap does not apply then). Mirrors the resolution order used for
+ * payouts so the UI cap matches the ledger.
+ */
+export async function partnerMaxPercent(partner: EarnerRow): Promise<number | null> {
+  const settings = await getReferralSettings();
+  const partnerEarner = await isPartner(partner.id, partner.telegramId);
+  const rate = await resolveEarnerRate(partner, settings, partnerEarner);
+  return rate.kind === "percent" ? Math.max(0, rate.value) : null;
 }
 
 /** Spendable bonus-day balance (SUM-free counter, single row read). */
@@ -777,6 +973,196 @@ export async function listDownlineDetails(ownerId: number): Promise<DownlineRow[
       };
     }),
   );
+}
+
+export interface SubpartnerLinkRow {
+  userId: number;
+  displayName: string | null;
+  email: string | null;
+  code: string;
+  /** Percent the partner pays this subpartner out of their own income. */
+  partnerPercent: number | null;
+}
+
+/**
+ * Direct referrals (subpartners) with their own referral code, so a partner
+ * can hand out both their own link and each subpartner's link. Codes are
+ * lazily ensured, exactly like the cabinet and bot surfaces.
+ */
+export async function listSubpartnerLinks(ownerId: number): Promise<SubpartnerLinkRow[]> {
+  const rows = await prisma.user.findMany({
+    where: { referredById: ownerId },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      username: true,
+      partnerRateKind: true,
+      partnerRateValue: true,
+    },
+  });
+  return Promise.all(
+    rows.map(async (row) => {
+      const full = [row.firstName, row.lastName]
+        .map((part) => part?.trim() ?? "")
+        .filter((part) => part.length > 0)
+        .join(" ")
+        .trim();
+      return {
+        userId: row.id,
+        displayName: full.length > 0 ? full : (row.username ?? null),
+        email: row.email,
+        code: await ensureReferralCode(row.id),
+        partnerPercent: row.partnerRateKind === "percent" ? (row.partnerRateValue ?? null) : null,
+      };
+    }),
+  );
+}
+
+export interface PartnerLinkRow {
+  id: string;
+  code: string;
+  label: string | null;
+  targetUserId: number;
+  /** Display name of the account the link attributes to. */
+  targetName: string | null;
+  createdAt: Date;
+}
+
+/** Hard cap per partner — keeps a runaway client from minting codes forever. */
+const MAX_LINKS_PER_PARTNER = 100;
+
+function displayNameOf(row: {
+  firstName: string | null;
+  lastName: string | null;
+  username: string | null;
+  email: string | null;
+}): string | null {
+  const full = [row.firstName, row.lastName]
+    .map((part) => part?.trim() ?? "")
+    .filter((part) => part.length > 0)
+    .join(" ")
+    .trim();
+  return full.length > 0 ? full : (row.username ?? row.email ?? null);
+}
+
+/** Codes live in two unique spaces (users.referral_code, referral_links.code). */
+async function freshLinkCode(): Promise<string | null> {
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const code = randomCode();
+    const [account, link] = await Promise.all([
+      prisma.user.findUnique({ where: { referralCode: code }, select: { id: true } }),
+      prisma.referralLink.findUnique({ where: { code }, select: { id: true } }),
+    ]);
+    if (!account && !link) return code;
+  }
+  return null;
+}
+
+/** Links a partner created, newest first, with the target's display name. */
+export async function listPartnerLinks(ownerId: number): Promise<PartnerLinkRow[]> {
+  const rows = await prisma.referralLink.findMany({
+    where: { ownerId },
+    orderBy: { createdAt: "desc" },
+    take: MAX_LINKS_PER_PARTNER,
+    select: {
+      id: true,
+      code: true,
+      label: true,
+      targetUserId: true,
+      createdAt: true,
+      target: {
+        select: { firstName: true, lastName: true, username: true, email: true },
+      },
+    },
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    code: row.code,
+    label: row.label,
+    targetUserId: row.targetUserId,
+    targetName: displayNameOf(row.target),
+    createdAt: row.createdAt,
+  }));
+}
+
+export type CreatePartnerLinkOutcome =
+  | { ok: true; link: PartnerLinkRow }
+  | { ok: false; reason: "not_found" | "limit" | "failed" };
+
+/**
+ * Mint a new code for the partner. `targetUserId` omitted/null = the partner's
+ * own link; any other value must be a DIRECT referral of the caller, so a
+ * partner can hand out sub-referral links but can never attribute traffic to
+ * a stranger's account. The label is optional and only for the cabinet.
+ */
+export async function createPartnerLink(
+  ownerId: number,
+  input: { label?: string | null; targetUserId?: number | null },
+): Promise<CreatePartnerLinkOutcome> {
+  const targetUserId = input.targetUserId ?? ownerId;
+  if (targetUserId !== ownerId) {
+    const sub = await prisma.user.findFirst({
+      where: { id: targetUserId, referredById: ownerId },
+      select: { id: true },
+    });
+    if (!sub) return { ok: false, reason: "not_found" };
+  }
+  const existing = await prisma.referralLink.count({ where: { ownerId } });
+  if (existing >= MAX_LINKS_PER_PARTNER) return { ok: false, reason: "limit" };
+
+  const label = input.label?.trim().slice(0, 60) || null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const code = await freshLinkCode();
+    if (!code) break;
+    try {
+      const row = await prisma.referralLink.create({
+        data: { ownerId, targetUserId, code, label },
+        select: {
+          id: true,
+          code: true,
+          label: true,
+          targetUserId: true,
+          createdAt: true,
+          target: {
+            select: { firstName: true, lastName: true, username: true, email: true },
+          },
+        },
+      });
+      logger.info({ route: "referrals", outcome: "link_created", ownerId, targetUserId });
+      return {
+        ok: true,
+        link: {
+          id: row.id,
+          code: row.code,
+          label: row.label,
+          targetUserId: row.targetUserId,
+          targetName: displayNameOf(row.target),
+          createdAt: row.createdAt,
+        },
+      };
+    } catch (err: unknown) {
+      if (
+        typeof err === "object" &&
+        err !== null &&
+        "code" in err &&
+        (err as { code: unknown }).code === "P2002"
+      ) {
+        continue;
+      }
+      throw err;
+    }
+  }
+  return { ok: false, reason: "failed" };
+}
+
+/** Delete one of the partner's own links (scoped by ownerId). */
+export async function deletePartnerLink(ownerId: number, id: string): Promise<boolean> {
+  const removed = await prisma.referralLink.deleteMany({ where: { id, ownerId } });
+  return removed.count > 0;
 }
 
 export interface WithdrawalRequest {

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import LoginClient from '@/app/login/LoginClient';
 import { getSessionUser } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
+import { pinReferrer } from '@/lib/referrals';
 import { env } from '@/lib/env';
 import { t } from '@/lib/i18n';
 
@@ -22,7 +23,12 @@ export default async function SignupPage({
   const { ref } = await searchParams;
 
   const user = await getSessionUser();
-  if (user) redirect('/');
+  if (user) {
+    // A signed-in visitor cannot register, but an invited account that has not
+    // been pinned yet still deserves attribution — pin once, best-effort.
+    if (ref) await pinReferrer(user.userId, ref).catch(() => null);
+    redirect('/');
+  }
 
   let activeKeys = 0;
   try {
@@ -36,7 +42,7 @@ export default async function SignupPage({
   return (
     <LoginClient
       initialMode="register"
-      ref={ref ?? null}
+      referralCode={ref ?? null}
       activeKeys={activeKeys}
       legalBaseUrl={env.LEGAL_BASE_URL}
     />

@@ -160,9 +160,9 @@ export const ROLE_MATRIX: readonly RoleDescriptor[] = [
   },
   {
     name: "partner",
-    description: "Партнёр: видит только свою партнёрскую панель.",
+    description: "Партнёр: свой дашборд, рефералы, промокоды и заработок — без доступа к чужим данным.",
     maxUsers: null,
-    features: ["partner"] as const,
+    features: ["partner", "partnerReferrals", "partnerPromos", "partnerPayouts"] as const,
     priority: 1,
     isDefault: false,
     globalScope: true,

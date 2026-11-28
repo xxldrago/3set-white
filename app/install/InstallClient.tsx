@@ -268,7 +268,7 @@ export default function InstallClient({ keys, initialKeyId, user }: Props) {
               <Link className="nl" href="/">Панель</Link>
               <Link className="nl" href="/subscription">Мои ключи</Link>
               <Link className="nl active" href="/install">Подключение</Link>
-              <Link className="nl" href="/faq">Инструкции</Link>
+              <Link className="nl" href="/install">Инструкции</Link>
               <Link className="nl" href="/support">Поддержка</Link>
             </div>
             <div className="nav-right">
@@ -583,7 +583,7 @@ export default function InstallClient({ keys, initialKeyId, user }: Props) {
             </div>
             <div className="f-links">
               <Link href="/subscription">Мои ключи</Link>
-              <Link href="/faq">Инструкции</Link>
+              <Link href="/install">Инструкции</Link>
               <button onClick={() => addToast('Политика конфиденциальности')}>Политика</button>
             </div>
           </div>

@@ -1,28 +1,45 @@
-// Admin shell (UI-SPEC §1). The session + role gate here is UX/nav filtering
-// ONLY — Next.js layouts are not a security boundary (partial rendering means a
-// segment/RSC payload can be fetched without re-running the layout), so every
-// /admin page and every /api/admin route re-checks requireRole (T-05-01).
+// Admin shell (template layout). The session + role gate here is UX/nav
+// filtering ONLY — Next.js layouts are not a security boundary (partial
+// rendering means a segment/RSC payload can be fetched without re-running the
+// layout), so every /admin page and every /api/admin route re-checks
+// requireRole (T-05-01).
 //
 // Signed-out → redirect('/login'). A signed-in caller with no staff role gets
 // the same nav-less shell; the page below resolves to 404 (never a distinct
 // forbidden page — D-51).
 import type { ReactNode } from 'react';
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import AdminNav from '@/components/admin/AdminNav';
-import RoleChip, { roleLabel } from '@/components/admin/RoleChip';
+import AdminShell from './AdminShell';
 import { loadAdminUnreadTicketCount } from '@/lib/admin-service';
 import { can, getAdminRole, type AdminSection } from '@/lib/admin-auth';
-import { t } from '@/lib/i18n';
 import { requireTelegramSession, SessionError } from '@/lib/session';
+import './admin.css';
 
 export const dynamic = 'force-dynamic';
 
 /** Nav destinations in display order — filtered server-side by `can()`. */
-const NAV_SECTIONS: AdminSection[] = ['overview', 'analytics', 'users', 'tickets', 'broadcast', 'pricing', 'promos', 'referrals', 'partner', 'roles', 'segments', 'alerts', 'wallet'];
-
-const CABINET_LINK =
-  'flex h-11 items-center justify-center rounded-lg border border-solid border-line px-4 text-sm transition-colors hover:bg-foreground/5 border-line ';
+const NAV_SECTIONS: AdminSection[] = [
+  'overview',
+  'analytics',
+  'users',
+  'tickets',
+  'broadcast',
+  'segments',
+  'pricing',
+  'promos',
+  'referrals',
+  'partner',
+  'partnerReferrals',
+  'partnerPromos',
+  'partnerPayouts',
+  'partnerLinks',
+  'partnerSupport',
+  'wallet',
+  'roles',
+  'alerts',
+  'providers',
+  'fraud',
+];
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   let telegramId: number;
@@ -43,29 +60,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       : 0;
 
   return (
-    <div className="flex flex-col flex-1 items-center bg-background font-sans bg-background">
-      <main className="flex flex-1 w-full max-w-6xl flex-col gap-8 px-6 py-12 sm:px-16">
-        <header className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-3xl font-semibold leading-10 tracking-tight text-foreground">
-              {t('admin.title')}
-            </h1>
-            <Link href="/" className={CABINET_LINK}>
-              {t('admin.toCabinet')}
-            </Link>
-          </div>
-          {role && (
-            <p className="flex flex-wrap items-center gap-2 text-sm text-muted">
-              {t('admin.currentRole', { role: roleLabel(role) })}
-              <RoleChip role={role} />
-            </p>
-          )}
-        </header>
-
-        {role && <AdminNav sections={allowed} unreadTickets={unreadTickets} />}
-
-        {children}
-      </main>
-    </div>
+    <AdminShell sections={allowed} role={role ?? 'client'} unreadTickets={unreadTickets}>
+      {children}
+    </AdminShell>
   );
 }

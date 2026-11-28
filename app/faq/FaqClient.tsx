@@ -454,7 +454,7 @@ export default function FaqClient({ name, email, isStaff, unread }: Props) {
   const navLinks = [
     { href: '/', label: 'Панель', icon: LayoutDashboard, active: false },
     { href: '/subscription', label: 'Мои ключи', icon: KeyRound, active: false },
-    { href: '/faq', label: 'Инструкции', icon: CircleHelp, active: true },
+    { href: '/install', label: 'Инструкции', icon: CircleHelp, active: false },
     { href: '/support', label: 'Поддержка', icon: LifeBuoy, active: false },
   ];
 

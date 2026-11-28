@@ -337,3 +337,9 @@
   .adm-pm *{animation-duration:.001s!important;transition-duration:.001s!important}
   .adm-pm .reveal{opacity:1;transform:none}
 }
+
+/* Registry multi-select checkboxes (native input, styled like the users page). */
+.adm-pm .cbx{appearance:none;-webkit-appearance:none}
+.adm-pm .cbx:checked{background:var(--lime);border-color:var(--lime)}
+.adm-pm .cbx:checked::after{content:"";position:absolute;left:5px;top:1.6px;width:5px;height:9px;
+  border:solid #101a05;border-width:0 2.2px 2.2px 0;transform:rotate(45deg)}

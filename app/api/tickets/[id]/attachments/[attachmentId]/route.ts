@@ -15,6 +15,7 @@ import { z } from "zod";
 import { getAdminRole } from "../../../../../../lib/admin-auth";
 import { readAttachment } from "../../../../../../lib/attachments";
 import { logger } from "../../../../../../lib/logger";
+import { canPartnerAccessTicket } from "../../../../../../lib/partner-support";
 import { requireSession, requireTelegramSession, SessionError } from "../../../../../../lib/session";
 import {
   getOwnedAttachment,
@@ -65,6 +66,13 @@ export async function GET(
 
     let attachment: { path: string; mime: string } | null = null;
     if (isStaff && telegramId !== null) {
+      attachment = await getOwnedAttachment(BigInt(telegramId), id, attachmentId, true);
+    } else if (
+      role === "partner" &&
+      telegramId !== null &&
+      (await canPartnerAccessTicket(telegramId, id))
+    ) {
+      // Partners see attachments only on downline tickets they may answer.
       attachment = await getOwnedAttachment(BigInt(telegramId), id, attachmentId, true);
     } else if (userId !== null) {
       attachment = await getOwnedAttachmentByUserId(userId, id, attachmentId, false);

@@ -40,6 +40,11 @@ export type AdminSection =
   | "promos"
   | "referrals"
   | "partner"
+  | "partnerReferrals"
+  | "partnerPromos"
+  | "partnerPayouts"
+  | "partnerLinks"
+  | "partnerSupport"
   | "roles"
   | "segments"
   | "alerts"
@@ -70,10 +75,18 @@ const MATRIX: Record<AdminRole, readonly AdminSection[]> = {
   ],
   support: ["users", "profileKeys", "profileTickets", "tickets"],
   manager: ["overview", "analytics", "users", "profilePayments", "segments"],
-  // Partners see ONLY their own dashboard. They never enter the shared
-  // queues (users/tickets/roles) — чужі дані недоступні. Support contact
-  // stays in the cabinet (/support), linked from the dashboard.
-  partner: ["partner"],
+  // Partners see ONLY their own surfaces: dashboard, their downline and their
+  // payout history/form. They never enter the shared queues (users/tickets/
+  // roles) — чужі дані недоступні. Support contact stays in the cabinet
+  // (/support), linked from the dashboard.
+  partner: [
+    "partner",
+    "partnerReferrals",
+    "partnerPromos",
+    "partnerPayouts",
+    "partnerLinks",
+    "partnerSupport",
+  ],
 };
 
 /** Pure section check — testable without a Next runtime. */

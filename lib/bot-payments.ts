@@ -12,6 +12,7 @@
 // - every visible string resolves through `t()` — no Platega status/id, no
 //   ARTEMIDA error, no raw `order.kind`/`order.status` is ever rendered.
 import { getSubscriptionForUser } from "./keys-service";
+import { env } from "./env";
 import { t } from "./i18n";
 import type { OrderHistoryRow } from "./orders-service";
 import { renderSubscriptionQrPng } from "./qr";
@@ -136,6 +137,8 @@ export function buildProvisionedPush(subscriptionUrl: string | null): Notificati
   const lines = [t("bot.payProvisioned")];
   if (subscriptionUrl) {
     lines.push("");
+    lines.push(t("bot.payConnectSteps"));
+    lines.push("");
     lines.push(t("bot.connectGuidesCta"));
     lines.push(subscriptionUrl);
     return { 
@@ -212,19 +215,15 @@ export async function dispatchNotification(
       }
       const push = buildProvisionedPush(subscriptionUrl);
       
-      // Build inline keyboard with import buttons for each app
+      // Buttons must be https: Telegram rejects `v2rayng://` import buttons
+      // with BUTTON_URL_INVALID and the whole push then fails. The link travels
+      // in the text; the button opens the site's install page.
       const extra: Record<string, unknown> = {};
       if (push.subscriptionUrl) {
-        const importUrls = {
-          v2ray: `v2rayng://import?url=${encodeURIComponent(push.subscriptionUrl)}`,
-          streisand: `streisand://import?url=${encodeURIComponent(push.subscriptionUrl)}`,
-          hiddify: `hiddify://import?url=${encodeURIComponent(push.subscriptionUrl)}`,
-        };
         extra.reply_markup = {
           inline_keyboard: [
-            [{ text: t("bot.connectImportV2ray"), url: importUrls.v2ray }],
-            [{ text: t("bot.connectImportStreisand"), url: importUrls.streisand }],
-            [{ text: t("bot.connectImportHiddify"), url: importUrls.hiddify }],
+            [{ text: t("bot.guidesOnSite"), url: `${env.APP_BASE_URL}/install` }],
+            [{ text: t("bot.backToMenu"), callback_data: "menu:home" }],
           ],
         };
       }

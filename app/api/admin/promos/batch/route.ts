@@ -46,6 +46,9 @@ const bodySchema = z.object({
   type: z.enum(["percentage", "fixed"]),
   maxUses: z.number().int().min(1).max(1_000_000).nullable().optional(),
   expiresAt: z.string().datetime({ offset: true }).nullable().optional(),
+  // Shared conditions copied onto every code in the batch.
+  minSum: z.number().int().min(0).max(PROMO_MAX_DISCOUNT_RUB).nullable().optional(),
+  note: z.string().trim().max(300).nullable().optional(),
 });
 
 function suffix(): string {
@@ -87,7 +90,7 @@ export async function POST(req: Request): Promise<Response> {
   if (!parsed.success) {
     return Response.json({ error: "bad_request" }, { status: 400 });
   }
-  const { count, discount, type, maxUses, expiresAt } = parsed.data;
+  const { count, discount, type, maxUses, expiresAt, minSum, note } = parsed.data;
   if (type === "percentage" && discount > PROMO_MAX_DISCOUNT_PCT) {
     return Response.json({ error: "bad_request" }, { status: 400 });
   }
@@ -112,6 +115,8 @@ export async function POST(req: Request): Promise<Response> {
           type,
           maxUses: maxUses ?? null,
           expiresAt: expiresAt ?? null,
+          minSum: minSum ?? null,
+          note: note ?? null,
         });
         created.push({ id: row.id, code: row.code });
         made = true;

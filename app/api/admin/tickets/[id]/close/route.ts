@@ -7,6 +7,7 @@
 import { z } from "zod";
 import { requireRole } from "../../../../../../lib/admin-auth";
 import { logger } from "../../../../../../lib/logger";
+import { canPartnerAccessTicket } from "../../../../../../lib/partner-support";
 import { AdminError, SessionError } from "../../../../../../lib/session";
 import { closeTicket } from "../../../../../../lib/tickets-service";
 
@@ -18,8 +19,9 @@ export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
+  let actor: Awaited<ReturnType<typeof requireRole>>;
   try {
-    await requireRole("administrator", "support");
+    actor = await requireRole("administrator", "support", "partner");
   } catch (err) {
     if (err instanceof SessionError) {
       return Response.json({ error: "unauthorized" }, { status: 401 });
@@ -35,6 +37,14 @@ export async function POST(
   const parsed = idSchema.safeParse(id);
   if (!parsed.success) {
     return Response.json({ error: "bad_request" }, { status: 400 });
+  }
+
+  // A partner may close only tickets opened by their direct referrals.
+  if (
+    actor.role === "partner" &&
+    !(await canPartnerAccessTicket(actor.telegramId, parsed.data))
+  ) {
+    return Response.json({ error: "not_found" }, { status: 404 });
   }
 
   try {

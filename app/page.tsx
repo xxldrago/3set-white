@@ -62,10 +62,12 @@ export default async function Home({
   const navUser = await getSessionUser();
   if (!navUser) {
     const { ref } = await searchParams;
+    // Referral traffic lands on the signup form (register segment first); the
+    // code rides in `?ref=` and is pinned at registration.
     const target =
       typeof ref === 'string' && ref.trim().length > 0
-        ? `/login?ref=${encodeURIComponent(ref.trim())}`
-        : '/login';
+        ? `/signup?ref=${encodeURIComponent(ref.trim())}`
+        : '/signup';
     redirect(target);
   }
 
@@ -106,7 +108,7 @@ export default async function Home({
   let referralLink: string | null = null;
   try {
     const code = await ensureReferralCode(navUser.userId);
-    referralLink = `${env.APP_BASE_URL}/?ref=${code}`;
+    referralLink = `${env.APP_BASE_URL}/signup?ref=${code}`;
   } catch {
     logger.warn({ route: 'home', outcome: 'ref_link_failed' });
   }

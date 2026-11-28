@@ -76,6 +76,8 @@ export interface AdminProfileHeader {
   customInviterReward: number | null;
   customInviterKind: string | null;
   customSubdomain: string | null;
+  /** ISO timestamp of the admin block, null = active. */
+  blockedAt: string | null;
   /** Password presence only — the hash itself never leaves the server. */
   passwordSet: boolean;
     trialUsed: boolean;
@@ -261,6 +263,7 @@ export async function loadAdminHeader(userId: number): Promise<AdminProfileHeade
             trialUsed: true,
             emailVerifiedAt: true,
             bonusDays: true,
+            blockedAt: true,
           },
     }),
     prisma.order.aggregate({
@@ -292,6 +295,7 @@ export async function loadAdminHeader(userId: number): Promise<AdminProfileHeade
     customInviterReward: user.customInviterReward,
     customInviterKind: user.customInviterKind,
     customSubdomain: user.customSubdomain,
+    blockedAt: user.blockedAt ? user.blockedAt.toISOString() : null,
       passwordSet: user.passwordHash !== null,
       trialUsed: user.trialUsed,
       bonusDays: Math.max(0, user.bonusDays ?? 0),

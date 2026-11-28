@@ -1,4 +1,6 @@
 // Contract tests for the phase-21 live subscription state layer (21-04).
+import "dart:async";
+
 // Fixtures are arbitrary server values on purpose: the Dart layer must decode
 // whatever the backend sends, never generate prices or entitlement itself.
 import "package:dio/dio.dart";
@@ -116,7 +118,7 @@ void main() {
       final dioClient = MockDioClient();
       when(() => dioClient.dio).thenReturn(dio);
       container = ProviderContainer(
-        overrides: <Override>[dioClientProvider.overrideWithValue(dioClient)],
+        overrides: [dioClientProvider.overrideWithValue(dioClient)],
       );
     });
 
@@ -188,18 +190,24 @@ void main() {
         ),
       );
 
-      await expectLater(
-        container.read(userSubscriptionProvider.future),
-        throwsA(
-          isA<SubscriptionFailure>()
-              .having((failure) => failure.code, "code", "no_active_key")
-              .having(
-                (failure) => subscriptionNotice(failure),
-                "notice",
-                "Нужен активный ключ",
-              ),
-        ),
+      // Observe the AsyncValue the UI sees via AsyncValue.when(error: ...).
+      final errors = Completer<Object?>();
+      final listener = container.listen(userSubscriptionProvider, (_, next) {
+        if (next.hasError && !errors.isCompleted) errors.complete(next.error);
+      });
+      final error = await errors.future.timeout(const Duration(seconds: 2));
+      expect(
+        error,
+        isA<SubscriptionFailure>()
+            .having((failure) => failure.code, "code", "no_active_key")
+            .having(
+              (failure) => subscriptionNotice(failure),
+              "notice",
+              "Нужен активный ключ",
+            ),
       );
+      expect(error, isNot(isA<DioException>()));
+      listener.close();
     });
 
     test("createPaymentProvider posts intent without an amount and returns "

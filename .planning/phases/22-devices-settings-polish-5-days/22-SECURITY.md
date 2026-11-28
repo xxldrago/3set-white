@@ -82,6 +82,7 @@ created: "2026-11-28"
 | Audit Date | Threats Total | Closed | Open | Run By |
 |------------|---------------|--------|------|--------|
 | 2026-11-28 | 32 (31 numbered + T-22-SC, deduplicated) | 32 | 0 | gsd-security-auditor |
+| 2026-11-28 | 18 re-checked after fixes `3711ac1`…`a7b9477` | 18 | 0 | gsd-security-auditor (post-fix re-verification; no backend/native/pubspec/FSM/payment file changed) |
 
 ---
 

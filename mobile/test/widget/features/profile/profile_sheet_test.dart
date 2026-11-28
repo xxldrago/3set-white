@@ -11,6 +11,8 @@ import "package:mobile/features/profile/devices/devices_providers.dart";
 import "package:mobile/features/shop/shop_screen.dart"
     show linkCopierProvider, paymentFlowStarterProvider;
 import "package:mobile/features/profile/profile_sheet.dart";
+import "package:mobile/features/profile/settings/kill_switch_row.dart"
+    show KillSwitchRow;
 import "package:mobile/features/subscription/models/subscription.dart";
 import "package:mobile/features/subscription/providers.dart";
 
@@ -113,8 +115,22 @@ void main() {
 
       expect(find.text("Kill switch: включён"), findsOneWidget);
       expect(find.text("Трафик вне VPN заблокирован"), findsOneWidget);
-      expect(find.byType(Switch), findsNothing);
-      expect(find.byType(SwitchListTile), findsNothing);
+      // The kill switch itself is still read-only; the only switch in the
+      // sheet is the separate persisted auto-connect preference (REQ-SET-02).
+      expect(
+        find.descendant(
+          of: find.byType(KillSwitchRow),
+          matching: find.byType(Switch),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(KillSwitchRow),
+          matching: find.byType(SwitchListTile),
+        ),
+        findsNothing,
+      );
     });
 
     testWidgets("read-only kill switch copy is identical on every rebuild", (
@@ -125,13 +141,33 @@ void main() {
 
       expect(find.text("Kill switch: включён"), findsOneWidget);
       expect(find.text("Трафик вне VPN заблокирован"), findsOneWidget);
-      expect(find.byType(Switch), findsNothing);
-      expect(find.byType(SwitchListTile), findsNothing);
+      // The kill switch itself is still read-only; the only switch in the
+      // sheet is the separate persisted auto-connect preference (REQ-SET-02).
+      expect(
+        find.descendant(
+          of: find.byType(KillSwitchRow),
+          matching: find.byType(Switch),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(KillSwitchRow),
+          matching: find.byType(SwitchListTile),
+        ),
+        findsNothing,
+      );
 
       await tester.pump(); // a plain rebuild must not change the copy
       expect(find.text("Kill switch: включён"), findsOneWidget);
       expect(find.text("Трафик вне VPN заблокирован"), findsOneWidget);
-      expect(find.byType(Switch), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(KillSwitchRow),
+          matching: find.byType(Switch),
+        ),
+        findsNothing,
+      );
     });
 
     testWidgets("identity prefers the real firstName over username and email", (

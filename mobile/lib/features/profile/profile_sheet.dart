@@ -18,6 +18,8 @@ import "../../core/notifications/local_notifications.dart"
         notificationStatusDenied,
         notificationStatusGranted,
         notificationStatusTitle;
+import "../../core/settings/auto_connect_listener.dart"
+    show autoConnectStoreProvider;
 import "../subscription/models/subscription.dart";
 import "../subscription/providers.dart"
     show subscriptionNotice, userSubscriptionProvider;
@@ -77,6 +79,7 @@ class ProfileSheet extends ConsumerWidget {
             const SizedBox(height: 16),
             Text("Настройки", style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
+            const AutoConnectRow(),
             ReferralRow(
               referralCode: subscription.value?.user?.referralCode,
               subscriptionLink: subscription.value?.link,
@@ -94,6 +97,74 @@ class ProfileSheet extends ConsumerWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Persisted auto-connect writer for REQ-SET-02.
+///
+/// The switch is read-only until the singleton settings row has been read, so
+/// it can never overwrite a stored `true` with its default `false` on load.
+/// Each user toggle issues exactly one `setAutoConnect` call through the store
+/// seam; no FSM, native VPN or reconnect code is touched from this widget.
+class AutoConnectRow extends ConsumerStatefulWidget {
+  /// Creates the auto-connect preference row.
+  const AutoConnectRow({super.key});
+
+  @override
+  ConsumerState<AutoConnectRow> createState() => _AutoConnectRowState();
+}
+
+class _AutoConnectRowState extends ConsumerState<AutoConnectRow> {
+  bool _value = false;
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    bool stored;
+    try {
+      stored = await ref.read(autoConnectStoreProvider).readAutoConnect();
+    } on Object {
+      // A local storage failure must not break the sheet; leave the switch
+      // read-only instead of presenting an unpersisted preference.
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _value = stored;
+      _loaded = true;
+    });
+  }
+
+  Future<void> _write(bool value) async {
+    setState(() => _value = value);
+    try {
+      await ref.read(autoConnectStoreProvider).setAutoConnect(value);
+    } on Object {
+      if (!mounted) return;
+      setState(() => _value = !value);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Semantics(
+      label: "Автоподключение",
+      child: SwitchListTile(
+        value: _value,
+        // Read-only until the persisted value is known: no optimistic write.
+        onChanged: _loaded ? _write : null,
+        secondary: const Icon(Icons.auto_mode, color: AppTheme.lime, size: 18),
+        title: Text("Автоподключение", style: theme.textTheme.bodyMedium),
+        subtitle: Text("Подключаться при запуске",
+            style: theme.textTheme.bodySmall),
       ),
     );
   }

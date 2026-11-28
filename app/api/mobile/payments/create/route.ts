@@ -20,6 +20,8 @@ import {
   TRIAL_ERROR_CODE,
   type CreateOrderInput,
 } from "@/lib/orders-service";
+import { listKeysByUserId } from "@/lib/keys-service";
+import { isKeyConnectable } from "@/lib/subscription-view";
 import { TARIFF_DAYS } from "@/lib/tariff-grid";
 import { logger } from "@/lib/logger";
 
@@ -56,14 +58,19 @@ const bodySchema = z
       }
       return;
     }
+    if (value.kind === "upgrade") {
+      // D-05: capacity growth posts addDevices only — the client never holds
+      // a keyId, so the server derives the active owned key from the JWT.
+      if (value.addDevices === undefined) {
+        ctx.addIssue({ code: "custom", message: "addDevices is required for kind=upgrade" });
+      }
+      return;
+    }
     if (value.keyId === undefined) {
-      ctx.addIssue({ code: "custom", message: "keyId is required for renew/upgrade" });
+      ctx.addIssue({ code: "custom", message: "keyId is required for kind=renew" });
     }
-    if (value.kind === "renew" && value.days === undefined) {
+    if (value.days === undefined) {
       ctx.addIssue({ code: "custom", message: "days is required for kind=renew" });
-    }
-    if (value.kind === "upgrade" && value.addDevices === undefined) {
-      ctx.addIssue({ code: "custom", message: "addDevices is required for kind=upgrade" });
     }
   });
 
@@ -126,7 +133,20 @@ export async function POST(req: Request): Promise<Response> {
         channel: "web",
       };
     } else {
-      const precheck = await precheckOwnedKeyByUserId(userId, parsed.data.keyId ?? "");
+      let resolvedKeyId = parsed.data.keyId;
+      if (parsed.data.kind === "upgrade" && !resolvedKeyId) {
+        // No client keyId is accepted for capacity growth: resolve the single
+        // active owned key with the SAME predicate the device routes use. This
+        // is a lookup only — createOrder remains the sole key issuer (D-05).
+        const keys = await listKeysByUserId(userId);
+        const active = keys.find(isKeyConnectable);
+        if (!active) {
+          logger.info({ route: ROUTE, requestId, outcome: "not_found", durationMs: Date.now() - started });
+          return respond({ ok: false, error: "not_found" }, requestId, 404);
+        }
+        resolvedKeyId = active.id;
+      }
+      const precheck = await precheckOwnedKeyByUserId(userId, resolvedKeyId ?? "");
       if (!precheck.ok) {
         const code = precheck.reason === "trial" ? TRIAL_ERROR_CODE : "not_found";
         const status = precheck.reason === "trial" ? 409 : 404;

@@ -11,8 +11,7 @@ import "../../app/theme.dart";
 import "../subscription/models/subscription.dart";
 import "../subscription/providers.dart"
     show subscriptionNotice, userSubscriptionProvider;
-import "devices/device.dart";
-import "devices/devices_providers.dart" show devicesProvider;
+import "devices/devices_sheet.dart" show DevicesSheet;
 
 class ProfileSheet extends ConsumerWidget {
   const ProfileSheet({super.key});
@@ -21,7 +20,6 @@ class ProfileSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final subscription = ref.watch(userSubscriptionProvider);
-    final devices = ref.watch(devicesProvider);
 
     return SafeArea(
       child: Padding(
@@ -38,7 +36,7 @@ class ProfileSheet extends ConsumerWidget {
             const SizedBox(height: 16),
             Text("Устройства", style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
-            _DevicesSection(state: devices),
+            const DevicesSheet(),
             if (subscription.hasError)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
@@ -132,51 +130,6 @@ class _KillSwitchStatus extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _DevicesSection extends StatelessWidget {
-  const _DevicesSection({required this.state});
-
-  final AsyncValue<List<Device>> state;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    // No load indicator and no simulated row: while the BFF request is in
-    // flight the section is simply empty.
-    if (state.isLoading) return const SizedBox.shrink();
-    if (state.hasError) {
-      return Text(
-        subscriptionNotice(state.error),
-        style: theme.textTheme.bodySmall?.copyWith(color: AppTheme.red),
-      );
-    }
-    final devices = state.value ?? const <Device>[];
-    if (devices.isEmpty) {
-      return Text("Нет устройств", style: theme.textTheme.bodyMedium);
-    }
-    return Column(
-      children: <Widget>[
-        for (final device in devices)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              children: <Widget>[
-                const Icon(Icons.devices_other_outlined,
-                    color: AppTheme.lime, size: 18),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    deviceDisplayName(device),
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
     );
   }
 }

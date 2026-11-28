@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
   listKeys: vi.fn(),
   listDevices: vi.fn(),
   removeDevice: vi.fn(),
+  createOrder: vi.fn(),
+  precheck: vi.fn(),
   // subscription-view imports deriveStatusKind from keys-service; mirror the
   // real derivation so fixtures exercise the actual connectable predicate.
   deriveStatusKind: vi.fn((status: string, expiresAt: Date | null) => {
@@ -40,7 +42,16 @@ vi.mock('../../lib/logger', () => ({
   logger: { info: mocks.info, warn: mocks.warn, error: mocks.error, debug: vi.fn() },
 }));
 
+vi.mock('../../lib/orders-service', () => ({
+  createOrder: mocks.createOrder,
+  precheckOwnedKeyByUserId: mocks.precheck,
+  keyDeviceLimit: vi.fn(() => 5),
+  TRIAL_ERROR_CODE: 'trial',
+}));
+
 import { GET } from '../../app/api/mobile/devices/route';
+import { DELETE } from '../../app/api/mobile/devices/[token]/route';
+import { POST as createPayment } from '../../app/api/mobile/payments/create/route';
 
 const FUTURE = new Date(Date.now() + 5 * 86_400_000).toISOString();
 const TOKEN_A = 'opaque-token-AAA';
@@ -169,5 +180,131 @@ describe('GET /devices — provider degradation (no 5xx, no provider text)', () 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: false, error: 'internal' });
     expect(logText()).not.toContain(PROVIDER_SECRET);
+  });
+});
+
+const deleteRequest = (token: string) =>
+  new Request(`http://localhost/api/mobile/devices/${encodeURIComponent(token)}`, {
+    method: 'DELETE',
+  }) as NextRequest;
+
+const callDelete = (token: string) =>
+  DELETE(deleteRequest(token), { params: Promise.resolve({ token }) });
+
+describe('DELETE /devices/{token} — auth, zod bounds and ownership (T-22-01/02)', () => {
+  beforeEach(() => {
+    mocks.removeDevice.mockResolvedValue(true);
+  });
+
+  it('401 without a JWT and makes no ownership or provider call', async () => {
+    mocks.verify.mockResolvedValue(null);
+    const res = await callDelete(TOKEN_A);
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ ok: false, error: 'unauthorized' });
+    expect(mocks.listKeys).not.toHaveBeenCalled();
+    expect(mocks.removeDevice).not.toHaveBeenCalled();
+  });
+
+  it('rejects an out-of-bounds token with zod before any provider call', async () => {
+    const tooLong = 'x'.repeat(301);
+    const empty = '';
+    for (const token of [tooLong, empty]) {
+      const res = await callDelete(token);
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ ok: false, error: 'bad_request' });
+    }
+    expect(mocks.listKeys).not.toHaveBeenCalled();
+    expect(mocks.removeDevice).not.toHaveBeenCalled();
+    expect(logText()).not.toContain(tooLong);
+  });
+
+  it('derives the key from claims.userId and deletes only the opaque token', async () => {
+    const res = await callDelete(TOKEN_A);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+    expect(mocks.removeDevice).toHaveBeenCalledTimes(1);
+    expect(mocks.removeDevice).toHaveBeenCalledWith(1, 'key-active', TOKEN_A);
+    expect(logText()).not.toContain(TOKEN_A);
+  });
+
+  it('returns the same no_active_key outcome for a non-owned key and a missing key', async () => {
+    mocks.removeDevice.mockResolvedValue(false);
+    const nonOwned = await callDelete(TOKEN_A);
+    expect(nonOwned.status).toBe(200);
+    expect(await nonOwned.json()).toEqual({ ok: false, error: 'no_active_key' });
+
+    mocks.listKeys.mockResolvedValue([]);
+    const missing = await callDelete(TOKEN_A);
+    expect(missing.status).toBe(200);
+    expect(await missing.json()).toEqual({ ok: false, error: 'no_active_key' });
+    expect(mocks.removeDevice).toHaveBeenCalledTimes(1); // none for the missing key
+  });
+});
+
+describe('DELETE /devices/{token} — stable degradation (T-22-04/07)', () => {
+  beforeEach(() => {
+    mocks.removeDevice.mockResolvedValue(true);
+  });
+
+  it('degrades a provider rate limit to a stable 200 code with Retry-After', async () => {
+    mocks.removeDevice.mockRejectedValue(
+      new ArtemidaError('rate_limited', 429, 5, PROVIDER_SECRET),
+    );
+    const res = await callDelete(TOKEN_B);
+    expect(res.status).toBe(200);
+    const body = await res.json() as Record<string, unknown>;
+    expect(body).toMatchObject({ ok: false, error: 'rate_limited', retryAfterSec: 5 });
+    expect(res.headers.get('Retry-After')).toBe('5');
+    expect(JSON.stringify(body)).not.toContain(PROVIDER_SECRET);
+    expect(logText()).not.toContain(PROVIDER_SECRET);
+    expect(logText()).not.toContain(TOKEN_B);
+  });
+
+  it('two concurrent deletes for one token resolve to the same stable outcome', async () => {
+    const results = await Promise.all([callDelete(TOKEN_A), callDelete(TOKEN_A)]);
+    expect(results.map((res) => res.status)).toEqual([200, 200]);
+    const bodies = await Promise.all(results.map((res) => res.json()));
+    expect(bodies).toEqual([{ ok: true }, { ok: true }]);
+    expect(logText()).not.toContain(TOKEN_A);
+  });
+});
+
+const paymentRequest = (body: unknown) =>
+  new Request('http://localhost/api/mobile/payments/create', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: 'Bearer test-access' },
+    body: JSON.stringify(body),
+  });
+
+describe('paid upgrade handoff (D-05, no second issuer)', () => {
+  it('derives the active owned key from the JWT when no client keyId is sent', async () => {
+    mocks.precheck.mockResolvedValue({ ok: true, key: { id: 'key-active' } });
+    mocks.createOrder.mockResolvedValue({
+      kind: 'created',
+      order: { id: 'ord-1' },
+      url: 'https://pay.invalid/x',
+    });
+
+    const res = await createPayment(paymentRequest({ kind: 'upgrade', addDevices: 1 }));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ ok: true, orderId: 'ord-1' });
+    expect(mocks.precheck).toHaveBeenCalledWith(1, 'key-active');
+    expect(mocks.createOrder).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'upgrade',
+        addDevices: 1,
+        userId: 1,
+        keyId: 'key-active',
+      }),
+    );
+  });
+
+  it('returns not_found when there is no active key, without any provider call', async () => {
+    mocks.listKeys.mockResolvedValue([]);
+    const res = await createPayment(paymentRequest({ kind: 'upgrade', addDevices: 1 }));
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ ok: false, error: 'not_found' });
+    expect(mocks.precheck).not.toHaveBeenCalled();
+    expect(mocks.createOrder).not.toHaveBeenCalled();
   });
 });

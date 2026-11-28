@@ -4,8 +4,12 @@ import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:mobile/app/theme.dart";
+import "package:mobile/core/payment/payment_flow.dart"
+    show PaymentFlowResult, PaymentOutcome, PaymentRequest;
 import "package:mobile/features/profile/devices/device.dart";
 import "package:mobile/features/profile/devices/devices_providers.dart";
+import "package:mobile/features/shop/shop_screen.dart"
+    show linkCopierProvider, paymentFlowStarterProvider;
 import "package:mobile/features/profile/profile_sheet.dart";
 import "package:mobile/features/subscription/models/subscription.dart";
 import "package:mobile/features/subscription/providers.dart";
@@ -29,6 +33,9 @@ Widget _profileApp({
   List<Device>? devices,
   SubscriptionStatus? subscription,
   Object? devicesError,
+  List<String>? copiedLinks,
+  List<PaymentRequest>? intents,
+  List<String>? deletedTokens,
 }) {
   return ProviderScope(
     overrides: [
@@ -37,6 +44,16 @@ Widget _profileApp({
         return devices ?? _devices();
       }),
       userSubscriptionProvider.overrideWith((ref) async => subscription ?? _subscription()),
+      linkCopierProvider.overrideWithValue((link) async {
+        copiedLinks?.add(link);
+      }),
+      paymentFlowStarterProvider.overrideWithValue((context, request) async {
+        intents?.add(request);
+        return const PaymentFlowResult(PaymentOutcome.provisioned, "ord-1");
+      }),
+      deleteDeviceProvider.overrideWithValue((token) async {
+        deletedTokens?.add(token);
+      }),
     ],
     child: MaterialApp(
       theme: AppTheme.dark,
@@ -117,6 +134,104 @@ void main() {
 
       expect(find.text("Нет соединения. Повторите"), findsOneWidget);
       expect(find.text(_link), findsNothing);
+    });
+  });
+
+  group("honest add, paid upgrade and deferred undo", () {
+    testWidgets("below the limit the add button only copies the real link", (
+      tester,
+    ) async {
+      final copied = <String>[];
+      final intents = <PaymentRequest>[];
+      final deleted = <String>[];
+      await tester.pumpWidget(
+        _profileApp(copiedLinks: copied, intents: intents, deletedTokens: deleted),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text("Добавить это устройство"), findsOneWidget);
+      await tester.tap(find.text("Добавить это устройство"));
+      await tester.pumpAndSettle();
+
+      expect(copied, <String>[_link]);
+      expect(intents, isEmpty);
+      expect(deleted, isEmpty);
+      expect(find.text("Ссылка скопирована"), findsOneWidget);
+    });
+
+    testWidgets("at exactly deviceLimit only the paid upgrade is offered", (
+      tester,
+    ) async {
+      final copied = <String>[];
+      final intents = <PaymentRequest>[];
+      final subscription = SubscriptionStatus(
+        ok: true,
+        user: const SubscriptionUser(id: 7, telegramId: null, email: "a@b.test"),
+        deviceLimit: 2,
+        devices: 2,
+        link: _link,
+      );
+      await tester.pumpWidget(
+        _profileApp(
+          subscription: subscription,
+          copiedLinks: copied,
+          intents: intents,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text("Добавить это устройство"), findsNothing);
+      expect(find.text("Лимит устройств достигнут"), findsOneWidget);
+      expect(find.text("Увеличить лимит"), findsOneWidget);
+
+      await tester.tap(find.text("Увеличить лимит"));
+      await tester.pumpAndSettle();
+
+      expect(intents, hasLength(1));
+      final intent = intents.single;
+      expect(intent.kind, "upgrade");
+      expect(intent.addDevices, 1);
+      expect(intent.keyId, isNull);
+      expect(intent.days, isNull);
+      expect(intent.devices, isNull);
+      expect(intent.toJson().containsKey("amount"), isFalse);
+      expect(copied, isEmpty);
+    });
+
+    testWidgets("undo cancels before the DELETE reaches the BFF", (
+      tester,
+    ) async {
+      final deleted = <String>[];
+      await tester.pumpWidget(
+        _profileApp(deletedTokens: deleted),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.close).first);
+      await tester.pumpAndSettle();
+      expect(find.text("Устройство отключено"), findsOneWidget);
+      expect(find.text("Вернуть"), findsOneWidget);
+
+      await tester.tap(find.text("Вернуть"));
+      await tester.pump(const Duration(seconds: 6));
+
+      expect(deleted, isEmpty);
+      expect(find.text("Нет соединения. Повторите"), findsNothing);
+    });
+
+    testWidgets("a fired timer sends exactly one DELETE", (
+      tester,
+    ) async {
+      final deleted = <String>[];
+      await tester.pumpWidget(
+        _profileApp(deletedTokens: deleted),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.close).first);
+      await tester.pump(const Duration(seconds: 6));
+
+      expect(deleted, <String>["tok-a"]);
     });
   });
 }

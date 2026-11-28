@@ -13,6 +13,8 @@ validated: "2026-11-28"
 > Per-phase validation contract for pricing/subscription/payment backend, Platega reuse, and Flutter Shop/WebView/UI.
 > Audited 2026-11-28 against the six executed plans (21-01..21-06) and their real test files. Every automated
 > command below was executed in the audit session; statuses reflect observed results, not plan claims.
+> Re-checked 2026-11-28 after code-review fixes `d9b7a6f` (REQ-SUB-06 banner) and `4bcfac9`
+> (WR-02 «Ожидаем оплату…» notice) — the single prior escalation is now resolved and COVERED.
 
 ---
 
@@ -60,7 +62,7 @@ deferred out of phase scope).
 | REQ-SUB-03 ("ключ · N дн." header + days/30 ring) | 21-05-02/03 | `server_pool_screen_test.dart` (header), `shop_screen_test.dart` (ring thresholds) | COVERED |
 | REQ-SUB-04 (device-limit enforcement) | 21-02-02 (display only) | `mobile-subscription-route.test.ts` (surface only) | MISSING — deferred to Phase 22 by locked decision; no add/remove endpoint in scope |
 | REQ-SUB-05 (copy link → toast) | 21-05-01/03 | `shop_screen_test.dart` | COVERED |
-| REQ-SUB-06 (24h grace + "expires soon" banner) | 21-02-01, 21-04-02 | `subscription-grace.test.ts`, `mobile-servers-route.test.ts`, `mobile-config-route.test.ts`, `providers_test.dart` | **PARTIAL** — 24h server grace fully proven; client "expires soon" banner is NOT implemented (escalated below) |
+| REQ-SUB-06 (24h grace + "expires soon" banner) | 21-02-01, 21-04-02, 21-05-01/03 (+ WR-01 fix `d9b7a6f`) | `subscription-grace.test.ts`, `mobile-servers-route.test.ts`, `mobile-config-route.test.ts`, `providers_test.dart`, `shop_screen_test.dart` (3 banner vectors) | **COVERED** — server 24h grace ±1ms proven; `ExpiresSoonBanner` driven only by server `statusKind`/`graceUntil` (no local 24h math), with passing widget tests for expiring/graced/active keys |
 | REQ-SHOP-01 (5 terms, locked prices, Хит badge) | 21-03-01, 21-04-01/02, 21-05-01/03 | `mobile-pricing-route.test.ts`, `tariff-markup.test.ts`, `shop_screen_test.dart` | COVERED |
 | REQ-SHOP-02 (2..10 stepper + dots) | 21-03-01, 21-05-01/03 | `mobile-pricing-route.test.ts`, `shop_screen_test.dart` | COVERED |
 | REQ-SHOP-03 (promo preview, invalid error) | 21-03-02, 21-04-02/03, 21-05-01/03 | `mobile-promo-route.test.ts`, `providers_test.dart`, `shop_screen_test.dart` | COVERED |
@@ -96,6 +98,8 @@ human approvals, recorded as complete in the 21-01 SUMMARY — not automatable a
 | 21-05-01 (Shop screen + widgets) | 05 | 4 | REQ-SHOP-01..05 / SUB-02/05/08 | T-21-26/27/29/31 | server terms; stepper bounds; trial block; no bottom nav; no fake price | widget | `cd mobile && flutter test test/widget/features/shop/shop_screen_test.dart && flutter analyze --no-fatal-infos --no-fatal-warnings` | ✅ | ✅ green |
 | 21-05-02 (ring + confetti painters) | 05 | 4 | REQ-SUB-03 / SHOP-07 | T-21-28 | clamped CustomPainter; status-driven confetti; real-date toast | widget | `cd mobile && flutter test test/widget/features/shop/shop_screen_test.dart` | ✅ | ✅ green |
 | 21-05-03 (Shop widget tests) | 05 | 4 | REQ-SUB-02/03/05 / SHOP-01..08 | T-21-26..31 | behavior assertions; confetti needs real transition; no simulation | widget | `cd mobile && flutter test test/widget/features/shop/shop_screen_test.dart && flutter analyze --no-fatal-infos --no-fatal-warnings` | ✅ | ✅ green |
+| post-audit fix `d9b7a6f` (WR-01 banner) | 05 | 4 | **REQ-SUB-06** | T-21-30 | server-driven `ExpiresSoonBanner` on `statusKind=="expiring"` or `graceUntil != null`; no local 24h math | widget | `cd mobile && flutter test test/widget/features/shop/shop_screen_test.dart --plain-name "REQ-SUB-06 expires soon banner"` (3/3 pass) | ✅ | ✅ **COVERED** (escalation resolved) |
+| post-audit fix `4bcfac9` (WR-02 notice) | 05/06 | 4/5 | REQ-SHOP-06 | T-21-08 | «Ожидаем оплату…» shown only while DB-status poll in flight; no timer-driven success | widget+unit | `cd mobile && flutter test test/widget/features/shop/shop_screen_test.dart test/unit/core/payment/payment_flow_test.dart` (38/38 pass) | ✅ | ✅ green |
 | 21-06-01 (resume pending order) | 06 | 5 | REQ-SHOP-06 / BE-04 | T-21-32/33/37 | resume by stored id only; terminal cleanup; exactly-once invalidation; 100-poll timeout | unit | `cd mobile && flutter test test/unit/core/payment/payment_flow_test.dart && flutter analyze --no-fatal-infos --no-fatal-warnings` | ✅ | ✅ green |
 | 21-06-02 (router + no-key gate) | 06 | 5 | REQ-SUB-02 / SHOP-06 | T-21-30/34/35 | real /shop; https WebView; no deep-link confirm; exact toast; no bottom nav | widget | `cd mobile && flutter test test/widget/features/servers/connect_panel_test.dart test/widget/app/router_test.dart && flutter analyze --no-fatal-infos --no-fatal-warnings` | ✅ | ✅ green |
 | 21-06-03 (single-issuer guard) | 06 | 5 | REQ-BE-04 / BE-05 / BE-07 | T-21-36 | no mobile issuer; webhook re-query/amount/one-row; worker idempotency key | unit | `npx vitest run tests/unit/mobile-single-issuer.test.ts tests/unit/callback-route.test.ts tests/unit/outbox-worker.test.ts && npx prisma validate` | ✅ | ✅ green (caveat: verify block also lists `trial-claim.test.ts`, blocked by an unrelated DB migration) |
@@ -103,7 +107,9 @@ human approvals, recorded as complete in the 21-01 SUMMARY — not automatable a
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky. All 14 implementation tasks verified green in the
 2026-11-28 audit session: 92 phase-21 backend tests, 56 phase-21 mobile tests, plus 11 existing header
 tests (`server_pool_screen_test.dart`) pass; `npx tsc --noEmit` 0 errors; `npx prisma validate` valid;
-`flutter analyze --no-fatal-infos --no-fatal-warnings` exit 0.*
+`flutter analyze --no-fatal-infos --no-fatal-warnings` exit 0. After the code-review fixes (`d9b7a6f`,
+`4bcfac9`) the phase-21 mobile suites total **64/64 pass** (shop 19, payment 19, providers 12, connect
+panel 8, router 6); banner vectors 3/3; analyzer still exit 0.*
 
 ---
 
@@ -125,7 +131,6 @@ tests (`server_pool_screen_test.dart`) pass; `npx tsc --noEmit` 0 errors; `npx p
 | WebView lifecycle + resume pending order | REQ-SHOP-06 | Device/browser | Kill app during payment, relaunch, confirm polling resumes from stored orderId. |
 | Confetti + ring + shop UX | REQ-SHOP-07/SUB-03 | Visual judgment | Compare with prototype; colors/thresholds. |
 | Grace connection on device | REQ-SUB-06/D-10 | Needs expired key + real tunnel | Key at `expiresAt + 24h ±1ms`: `/servers`/`/config` allow connect. |
-| **"Expires soon" banner when <24h left — ESCALATED** | **REQ-SUB-06** | **NOT IMPLEMENTED — no UI banner exists in the client; no automated test can be written until it is implemented. The 24h server grace is fully covered; only this client acceptance criterion is unmet.** | **Implement a banner driven by server `statusKind=="expiring"`/`graceUntil`, then add a widget test asserting the notice renders for a graced/expiring key and not for an active key. Escalated to developer — implementation files were not modified by this audit.** |
 | Phase 19/20 deferred UAT | inherited | Device/live key | `/gsd-verify-work 19` and `/gsd-verify-work 20` before milestone close. |
 
 *All other phase behaviors have automated verification. Device-limit enforcement (REQ-SUB-04) and
@@ -143,8 +148,8 @@ not phase-21 gaps.*
 - [x] Feedback latency < 180s
 - [x] `nyquist_compliant: true` set in frontmatter — all 14 implementation tasks have a passing automated command
 
-**Approval:** validated by Nyquist audit 2026-11-28 (one requirement-level escalation tracked above; no
-automated coverage gap remains).
+**Approval:** validated by Nyquist audit 2026-11-28, re-checked 2026-11-28 after code-review fixes; no
+requirement-level escalation and no automated coverage gap remains.
 
 ---
 
@@ -162,17 +167,18 @@ proved it.
 | 2 | No verification evidence; `status: draft`, `nyquist_compliant: false` | State A draft | **RESOLVED** — 92 backend + 56 mobile phase-21 tests executed and passing; tsc 0 errors; prisma valid; analyzer exit 0 | Audit run log; frontmatter now validated/true |
 | 3 | `tariff-markup.test.ts` referenced by 21-03-01 fails 6 tests | Audit run | **RESOLVED (not a phase-21 gap)** — all 6 failures are in `PATCH/GET/PUT /api/admin/pricing` admin sections from uncommitted out-of-phase edits; the locked price-calibration vectors pass | Test lines 248–302; 92/92 phase-21 backend tests green |
 | 4 | `trial-claim.test.ts` listed in 21-06-03 verify block cannot run | Audit run | **RESOLVED (not a phase-21 gap)** — Prisma error: local DB lacks `users.partner_rate_kind` from an unapplied out-of-scope migration; the 3 suites authored/owned by the plan pass 28/28 | Audit run; 21-06 SUMMARY "Issues Encountered" |
-| 5 | REQ-SUB-06 acceptance "banner shows when <24h left" | Audit read | **ESCALATED (BLOCKER for that criterion)** — no "expires soon" banner exists anywhere in the client (`graceUntil` is decoded and used only for `_hasConnectableKey` gating). Cannot be automated without implementation. Server-side 24h grace remains fully COVERED. | `grep` of `lib/` shows no banner copy; Manual-Only table above |
+| 5 | REQ-SUB-06 acceptance "banner shows when <24h left" | Audit read | **ESCALATED (BLOCKER for that criterion)** at first pass — no "expires soon" banner existed (`graceUntil` only fed `_hasConnectableKey`). **RESOLVED by follow-up commit `d9b7a6f` — see row 7.** | `grep` of `lib/` at first pass; row 7 below |
 | 6 | REQ-SUB-04 device-limit enforcement; REQ-BE-08 OpenAPI→Dart | Plan review | **DEFERRED (out of phase scope by locked decision)** — not escalated; tracked in requirement map and 21-VALIDATION Manual-Only context | 21-02/21-04 plans + summaries |
+| 7 | **Follow-up (code-review fixes):** REQ-SUB-06 banner escalation + WR-02 «Ожидаем оплату…» notice | After audit: `d9b7a6f`, `4bcfac9` | **RESOLVED / FILLED** — `ExpiresSoonBanner` added to `shop_screen.dart`/`shop_widgets.dart`, rendered only when server `statusKind=="expiring"` or `graceUntil != null`; it parses the server grace deadline for display only (no `DateTime.now()`/24h arithmetic). 3 widget tests prove expiring → banner + deadline, expired-in-grace → banner, active → no banner. `4bcfac9` adds `PaymentPendingNotice` («Ожидаем оплату…») shown only while the DB poll is in flight, with 3 widget tests + 2 payment-flow unit tests. Re-ran: shop 19/19, payment 19/19, all 5 phase-21 mobile files 64/64, analyzer exit 0. Escalation removed from Manual-Only; REQ-SUB-06 now COVERED. | `git show d9b7a6f`, `git show 4bcfac9`; `flutter test ... --plain-name "REQ-SUB-06 expires soon banner"` → 3/3 pass; full phase-21 mobile run → 64/64 |
 
-### Requirement classification summary
+### Requirement classification summary (after follow-up fixes)
 
-- **COVERED (16):** REQ-SUB-01, 02, 03, 05; REQ-SHOP-01..08; REQ-BE-03, 04, 05 (superseded), 07.
-- **PARTIAL (1):** REQ-SUB-06 — automated 24h server grace + server-derived `graceUntil`; client "expires soon" banner missing (escalated).
+- **COVERED (17):** REQ-SUB-01, 02, 03, **06**, 05; REQ-SHOP-01..08; REQ-BE-03, 04, 05 (superseded), 07.
+- **PARTIAL (0):** none — REQ-SUB-06's "expires soon" banner is now implemented and covered by 3 passing widget tests.
 - **MISSING / deferred (2):** REQ-SUB-04 (Phase 22), REQ-BE-08 (advisory).
 
 ### Implementation files modified by this audit
 
-None. Only this validation document was changed; no test file needed authoring because every automated
-check already existed and passed. The one unmet criterion (REQ-SUB-06 banner) requires an implementation
-change and was escalated rather than patched.
+None. Only this validation document was changed. The formerly unmet REQ-SUB-06 banner criterion was fixed
+upstream by code review (`d9b7a6f`, plus the WR-02 notice in `4bcfac9`) and re-verified here; the audit
+author did not touch any implementation or test file.

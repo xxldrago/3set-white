@@ -11,8 +11,11 @@ import "../../app/theme.dart";
 import "../subscription/models/subscription.dart";
 import "../subscription/providers.dart"
     show subscriptionNotice, userSubscriptionProvider;
+import "../servers/server_pool_screen.dart" show networkLabelProvider;
 import "devices/devices_sheet.dart" show DevicesSheet;
 import "settings/kill_switch_row.dart" show KillSwitchRow;
+import "settings/referral_row.dart" show ReferralRow;
+import "settings/reset_row.dart" show ResetRow;
 
 /// Deterministic display-name chain from REAL server fields only.
 ///
@@ -44,7 +47,9 @@ class ProfileSheet extends ConsumerWidget {
     final subscription = ref.watch(userSubscriptionProvider);
 
     return SafeArea(
-      child: Padding(
+      // The sheet can grow past the viewport once settings rows are present;
+      // scrolling keeps every honest row reachable without a bottom nav.
+      child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -59,6 +64,15 @@ class ProfileSheet extends ConsumerWidget {
             Text("Устройства", style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             const DevicesSheet(),
+            const SizedBox(height: 16),
+            Text("Настройки", style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            ReferralRow(
+              referralCode: subscription.value?.user?.referralCode,
+              subscriptionLink: subscription.value?.link,
+            ),
+            const NetworkStatusRow(),
+            const ResetRow(),
             if (subscription.hasError)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
@@ -69,6 +83,60 @@ class ProfileSheet extends ConsumerWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Read-only network chip for the settings section (D-07 / D-11).
+///
+/// The label comes from the real `connectivity_plus` stream via
+/// `networkLabelProvider`; there is NO tap handler, no WiFi/LTE switch and no
+/// toast on tap. Cache invalidation stays owned by the existing
+/// `networkPingInvalidationProvider` listener in `main.dart`.
+class NetworkStatusRow extends ConsumerWidget {
+  /// Creates the read-only network chip row.
+  const NetworkStatusRow({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final label = ref.watch(networkLabelProvider).value ?? "Онлайн";
+    final offline = label == "Нет сети";
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: <Widget>[
+          Text("Сеть", style: theme.textTheme.bodyMedium),
+          const SizedBox(width: 12),
+          Semantics(
+            label: "Сеть: $label",
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppTheme.surface2,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: AppTheme.line),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(
+                    offline ? Icons.wifi_off : Icons.wifi,
+                    size: 14,
+                    color: offline ? AppTheme.red : AppTheme.teal,
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    label,
+                    style: theme.textTheme.labelSmall
+                        ?.copyWith(color: AppTheme.text),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

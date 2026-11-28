@@ -250,5 +250,112 @@ void main() {
       expect(created.paymentUrl, "https://pay.invalid/ord-42");
       expect(created.paymentUrl, isNot(contains("payment/mock")));
     });
+
+    test("promo preview applies the server percentage to preview only", () async {
+      when(
+        () => dio.post<dynamic>(
+          Endpoints.promoApply,
+          data: <String, dynamic>{"code": "LIME15"},
+        ),
+      ).thenAnswer(
+        (_) async => reply(Endpoints.promoApply, <String, dynamic>{
+          "ok": true,
+          "code": "LIME15",
+          "discountPercent": 15,
+        }),
+      );
+
+      final preview = await container.read(promoPreviewProvider("LIME15").future);
+      expect(preview.code, "LIME15");
+      expect(preview.discountPercent, 15);
+      expect(preview.toJson().containsKey("amount"), isFalse);
+
+      // D-03 preview: server unit × devices/2 × (1 − server %), rounded up.
+      expect(previewTotalRub(unitAmount: 115, devices: 2, discountPercent: 15), 98);
+      expect(previewTotalRub(unitAmount: 115, devices: 3, discountPercent: 0), 173);
+      expect(previewTotalRub(unitAmount: 115, devices: 2, discountPercent: 100), 0);
+    });
+
+    test("payment status decodes the DB-written terminal status", () async {
+      when(() => dio.get<dynamic>(Endpoints.paymentStatus("ord-42")))
+          .thenAnswer(
+        (_) async => reply(Endpoints.paymentStatus("ord-42"), <String, dynamic>{
+          "ok": true,
+          "status": "provisioned",
+          "paidAt": "2026-11-28T04:00:00.000Z",
+          "provisionedKeyId": "key-9",
+        }),
+      );
+
+      final status = await container.read(paymentStatusProvider("ord-42").future);
+      expect(status.status, "provisioned");
+      expect(status.paidAt, "2026-11-28T04:00:00.000Z");
+      expect(status.provisionedKeyId, "key-9");
+    });
+
+    test("unknown wire codes and transport errors never reach the UI as text",
+        () async {
+      when(() => dio.get<dynamic>(Endpoints.subscription)).thenAnswer(
+        (_) async => reply(Endpoints.subscription, <String, dynamic>{
+          "ok": false,
+          "error": "upstream_secret_error_with_key=abc",
+        }),
+      );
+
+      final errors = Completer<Object?>();
+      final listener = container.listen(userSubscriptionProvider, (_, next) {
+        if (next.hasError && !errors.isCompleted) errors.complete(next.error);
+      });
+      final error = await errors.future.timeout(const Duration(seconds: 2));
+      expect(error, isA<SubscriptionFailure>());
+      final failure = error as SubscriptionFailure;
+      expect(failure.code, "internal");
+      expect(failure.notice, subscriptionNotices["internal"]);
+      expect(failure.notice, isNot(contains("upstream_secret_error")));
+      expect(failure.notice, isNot(contains("503")));
+      expect(
+        subscriptionNotice(
+          DioException(
+            requestOptions: RequestOptions(path: Endpoints.subscription),
+            error: "HTTP 503 upstream boom",
+          ),
+        ),
+        "Нет соединения. Повторите",
+      );
+      listener.close();
+    });
+
+    test("create maps a 409 trial envelope to the locked trial notice", () async {
+      when(
+        () => dio.post<dynamic>(Endpoints.paymentCreate, data: any(named: "data")),
+      ).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: Endpoints.paymentCreate),
+          response: reply(Endpoints.paymentCreate, <String, dynamic>{
+            "ok": false,
+            "error": "trial",
+          }, status: 409),
+        ),
+      );
+
+      final errors = Completer<Object?>();
+      final provider = createPaymentProvider(
+        (
+          kind: "renew",
+          days: 7,
+          devices: null,
+          keyId: "trial-key",
+          addDevices: null,
+        ),
+      );
+      final listener = container.listen(provider, (_, next) {
+        if (next.hasError && !errors.isCompleted) errors.complete(next.error);
+      });
+      final error = await errors.future.timeout(const Duration(seconds: 2));
+      expect(error, isA<SubscriptionFailure>());
+      expect((error as SubscriptionFailure).code, "trial");
+      expect(subscriptionNotice(error), "Триал не продлевается");
+      listener.close();
+    });
   });
 }

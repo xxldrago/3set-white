@@ -5,16 +5,16 @@ milestone_name: Мобильный клиент
 current_phase: 22
 current_phase_name: Devices, Settings & Polish
 status: executing
-stopped_at: Completed 22-02-PLAN.md
-last_updated: "2026-11-28T10:10:03.519Z"
+stopped_at: Completed 22-03-PLAN.md
+last_updated: "2026-11-28T10:23:21.783Z"
 last_activity: 2026-11-28
 last_activity_desc: Phase 22 execution started
-state_head: def442f70df6bdcab2053e96e6eea84880faa604
+state_head: b32b071d75128c50789c325d8cf071923bcf1788
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 33
-  completed_plans: 30
+  completed_plans: 31
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 ## Current Position
 
 Phase: 22 (Devices, Settings & Polish) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-28 — Phase 22 execution started
@@ -149,6 +149,8 @@ None (flat mode)
 - [Phase 22-devices-settings-polish-5-days]: The launch gate is authenticated state plus an active key from userSubscriptionProvider plus the persisted preference; a biometric lockout sets auth unauthenticated, so the gate covers the existing resume gate (real-device timing stays manual).
 - [Phase 22-devices-settings-polish-5-days]: Drift v2 migration creates only the settings table, preserves existing rows, and rebuilds generated bindings with build_runner.
 - [Phase 22-devices-settings-polish-5-days]: Reset Demo clears the biometric-scoped secure-storage namespace in addition to TokenStore.clearAll and SecureStorage.clearAll; it stays purely local with an injected /auth navigation callback for a later profile UI row.
+- [Phase 22-devices-settings-polish-5-days]: 22-03: identity and referral stay server-authoritative on the own-user row; NULL legacy codes are ensured via ensureReferralCode(claims.userId) and stored 3SET- codes are returned verbatim — T-22-14: no other user's code, no invented email, no client-side prefix duplication
+- [Phase 22-devices-settings-polish-5-days]: 22-03: kill switch remains a read-only always-on status row and the network chip a pure observer; no toggle, fake switch, tap toast or native/FSM change — D-01/D-02/D-04/D-07 locked decisions; cache invalidation stays with the existing networkPingInvalidationProvider listener
 
 ## Performance Metrics
 
@@ -184,9 +186,10 @@ None (flat mode)
 | Phase 21-subscription-purchase-7-days P06 | 9min | 3 tasks | 9 files |
 | Phase 22-devices-settings-polish-5-days P01 | 43 min | 3 tasks | 20 files |
 | Phase 22-devices-settings-polish-5-days P02 | 12 min | 2 tasks | 8 files |
+| Phase 22-devices-settings-polish-5-days P03 | 9 min 47s | 2 tasks | 13 files |
 
 ## Session
 
-**Last session:** 2026-11-28T10:10:03.332Z
-**Stopped at:** Completed 22-02-PLAN.md
+**Last session:** 2026-11-28T10:23:21.601Z
+**Stopped at:** Completed 22-03-PLAN.md
 **Resume file:** None

@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 37
+open_count: 39
 waived_count: 0
 fixed_count: 1
-total_count: 38
-last_updated: 2026-11-28T10:09:23.030Z
+total_count: 40
+last_updated: 2026-11-28T10:23:12.015Z
 ---
 
 # Broken Windows Ledger
@@ -53,6 +53,8 @@ last_updated: 2026-11-28T10:09:23.030Z
 | 36 | 21 | lint-warning | mobile/pubspec.yaml |  | flutter analyze exits 1 on pre-existing 1690 info/warning lint baseline; 21-01 Dart files have zero errors/warnings | open |  | 2026-11-28T03:08:21.528Z |  |
 | 37 | 22 | deviation | app/api/mobile/payments/create/route.ts |  | 22-01 Rule 2: paid upgrade intent posts no client keyId, so /payments/create now derives the active owned key from the JWT via isKeyConnectable; createOrder remains the sole issuer | open |  | 2026-11-28T09:51:19.457Z |  |
 | 38 | 22 | deviation | mobile/lib/core/settings/reset_demo.dart |  | Reset Demo clears the biometric-scoped secure-storage namespace in addition to TokenStore.clearAll and SecureStorage.clearAll so no biometric prompt can resurrect a session (Rule 2 correction) | open |  | 2026-11-28T10:09:23.030Z |  |
+| 39 | 22 | deviation | mobile/lib/features/profile/profile_sheet.dart | 52 | Profile settings section needed SingleChildScrollView to avoid RenderFlex overflow (22-03 Rule 1) | open |  | 2026-11-28T10:23:11.950Z |  |
+| 40 | 22 | deviation | mobile/test/widget/features/profile/reset_row_test.dart |  | Added reset-row widget test beyond the plan file list to prove zero-outbound acceptance (22-03 Rule 2) | open |  | 2026-11-28T10:23:12.015Z |  |
 
 ````json
 [
@@ -510,6 +512,30 @@ last_updated: 2026-11-28T10:09:23.030Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-28T10:09:23.030Z",
+    "resolved_at": null
+  },
+  {
+    "id": 39,
+    "kind": "deviation",
+    "phase": "22",
+    "file": "mobile/lib/features/profile/profile_sheet.dart",
+    "line": 52,
+    "description": "Profile settings section needed SingleChildScrollView to avoid RenderFlex overflow (22-03 Rule 1)",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-28T10:23:11.950Z",
+    "resolved_at": null
+  },
+  {
+    "id": 40,
+    "kind": "deviation",
+    "phase": "22",
+    "file": "mobile/test/widget/features/profile/reset_row_test.dart",
+    "line": null,
+    "description": "Added reset-row widget test beyond the plan file list to prove zero-outbound acceptance (22-03 Rule 2)",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-28T10:23:12.015Z",
     "resolved_at": null
   }
 ]

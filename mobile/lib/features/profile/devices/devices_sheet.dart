@@ -139,11 +139,36 @@ class _DevicesSheetState extends ConsumerState<DevicesSheet> {
     final devicesAsync = ref.watch(devicesProvider);
     final subscriptionAsync = ref.watch(userSubscriptionProvider);
 
-    if (devicesAsync.isLoading) return const SizedBox.shrink();
+    // A fetch in flight must be visible, not an empty hole in the sheet.
+    if (devicesAsync.isLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Center(
+          child: SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+    // A failed read offers the phase's «Повторить» recovery, and the notice
+    // stays the frozen mapped copy — never raw transport wording.
     if (devicesAsync.hasError) {
-      return Text(
-        subscriptionNotice(devicesAsync.error),
-        style: theme.textTheme.bodySmall?.copyWith(color: AppTheme.red),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            subscriptionNotice(devicesAsync.error),
+            style: theme.textTheme.bodySmall?.copyWith(color: AppTheme.red),
+          ),
+          const SizedBox(height: 4),
+          TextButton.icon(
+            onPressed: () => ref.invalidate(devicesProvider),
+            icon: const Icon(Icons.refresh, size: 16),
+            label: const Text("Повторить"),
+          ),
+        ],
       );
     }
 

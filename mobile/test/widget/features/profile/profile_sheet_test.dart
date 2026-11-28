@@ -43,13 +43,18 @@ Widget _profileApp({
   SubscriptionUser? user,
   bool subscriptionLoading = false,
   Object? subscriptionError,
+  Future<List<Device>>? devicesFuture,
+  bool Function()? shouldFailDevices,
 }) {
   final base = subscription ?? _subscription();
   final effective = user == null ? base : base.copyWith(user: user);
   return ProviderScope(
     overrides: [
       devicesProvider.overrideWith((ref) async {
-        if (devicesError != null) throw StateError(devicesError.toString());
+        if (devicesFuture != null) return devicesFuture;
+        if (devicesError != null || (shouldFailDevices?.call() ?? false)) {
+          throw StateError("network");
+        }
         return devices ?? _devices();
       }),
       userSubscriptionProvider.overrideWith((ref) async {
@@ -115,6 +120,43 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text("Устройство"), findsOneWidget);
+    });
+  });
+
+  group("device list loading and retry", () {
+    testWidgets("an in-flight device read shows progress, not an empty hole", (
+      tester,
+    ) async {
+      final completer = Completer<List<Device>>();
+      await tester.pumpWidget(_profileApp(devicesFuture: completer.future));
+      // A spinner animates forever; never pumpAndSettle on a loading state.
+      await tester.pump();
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text("Нет устройств"), findsNothing);
+
+      // Resolve before the test ends so no animation timer is left pending.
+      completer.complete(_devices());
+      await tester.pumpAndSettle();
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    });
+
+    testWidgets("a failed device read offers a working Повторить action", (
+      tester,
+    ) async {
+      var fail = true;
+      await tester.pumpWidget(_profileApp(shouldFailDevices: () => fail));
+      await tester.pumpAndSettle();
+
+      expect(find.text("Нет соединения. Повторите"), findsOneWidget);
+      expect(find.text("Повторить"), findsOneWidget);
+
+      fail = false;
+      await tester.tap(find.text("Повторить"));
+      await tester.pumpAndSettle();
+
+      expect(find.text("Повторить"), findsNothing);
+      expect(find.text("Телефон"), findsOneWidget);
     });
   });
 

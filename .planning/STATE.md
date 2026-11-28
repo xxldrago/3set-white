@@ -5,16 +5,16 @@ milestone_name: Мобильный клиент
 current_phase: 21
 current_phase_name: Subscription & Purchase
 status: executing
-stopped_at: Completed 21-04-PLAN.md
-last_updated: "2026-11-28T04:29:07.039Z"
+stopped_at: Completed 21-05-PLAN.md
+last_updated: "2026-11-28T04:42:54.537Z"
 last_activity: 2026-11-28
 last_activity_desc: Phase 21 execution started
-state_head: 0be80f9e0a0272d57525436c01b25cbbb9eed39a
+state_head: c5f6b30081167b0d28533382bc694770e52ad094
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 28
-  completed_plans: 26
+  completed_plans: 27
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 ## Current Position
 
 Phase: 21 (Subscription & Purchase) — EXECUTING
-Plan: 5 of 6
+Plan: 6 of 6
 Status: Ready to execute
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-28 — Phase 21 execution started
@@ -138,6 +138,9 @@ None (flat mode)
 - [Phase 21-subscription-purchase-7-days]: 21-04: one SubscriptionFailure mapper with frozen Russian notices; unknown wire codes collapse to internal so no provider text or 5xx wording reaches the UI — T-21-23 requires stable UI copy at the provider → UI trust boundary
 - [Phase 21-subscription-purchase-7-days]: 21-04: preview is presentation-only ceil(server unit × devices/2 × (1 − server percentage)); payment create posts intent only with no amount or discount — D-03 keeps the server amount authoritative (T-21-21)
 - [Phase 21-subscription-purchase-7-days]: 21-04: payment create/status providers bind plan 01 routes and typed models; the mock payment URL is removed and no second key issuer was added — D-04/D-06 require the single webhook → outbox → worker issuer
+- [Phase 21]: 21-05: real dark Shop Screen replaces the stub with five server-priced terms, 2..10 stepper, promo, persisted UI-only chips, live summary and no bottom nav
+- [Phase 21]: 21-05: days/30 ring and confetti are CustomPainters; confetti fires only on a real CONFIRMED/provisioned edge with a real expiresAt date and no simulation
+- [Phase 21]: 21-05: pay submits intent only (kind new/days/devices); payment chips stay UI-only with no backend paymentMethod field; /subscription exposes no keyId so no renew/upgrade intent is fabricated
 
 ## Performance Metrics
 
@@ -169,9 +172,10 @@ None (flat mode)
 | Phase 21-subscription-purchase-7-days P02 | 6 min | 2 tasks | 7 files |
 | Phase 21-subscription-purchase-7-days P03 | 3 min | 2 tasks | 4 files |
 | Phase 21-subscription-purchase-7-days P04 | 60 min | 3 tasks | 15 files |
+| Phase 21-subscription-purchase-7-days P05 | 9 min | 3 tasks | 6 files |
 
 ## Session
 
-**Last session:** 2026-11-28T04:28:40.958Z
-**Stopped at:** Completed 21-04-PLAN.md
+**Last session:** 2026-11-28T04:42:54.389Z
+**Stopped at:** Completed 21-05-PLAN.md
 **Resume file:** None

@@ -186,7 +186,7 @@ Plans:
 
 **Goal**: Full purchase flow — subscription status, shop, Platega payment, key issuance.
 
-**Plans:** 1/6 plans executed
+**Plans:** 5/6 plans executed
 
 Plans:
 **Wave 1**
@@ -204,7 +204,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 21-05-PLAN.md — Real dark Shop Screen, stepper/promo/chips/summary, ring, status-driven confetti
+- [x] 21-05-PLAN.md — Real dark Shop Screen, stepper/promo/chips/summary, ring, status-driven confetti
 
 **Wave 5** *(blocked on Wave 4 completion)*
 

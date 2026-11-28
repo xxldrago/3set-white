@@ -48,9 +48,20 @@ class _DevicesSheetState extends ConsumerState<DevicesSheet> {
     _controller = DeferredDeleteController(
       onDelete: (token) async {
         // Only a fired timer reaches here. A completed delete is followed by a
-        // fresh READ; no row is ever reinserted locally.
-        await ref.read(deleteDeviceProvider)(token);
-        if (mounted) ref.invalidate(devicesProvider);
+        // fresh READ; no row is ever reinserted locally. A BFF failure is
+        // handled here so it cannot become an unhandled async error: show one
+        // stable notice, then refresh in `finally` so the row cannot stay
+        // dimmed/pending forever (WR-01).
+        try {
+          await ref.read(deleteDeviceProvider)(token);
+        } on Object {
+          if (mounted) _notice(context, deviceDeleteFailedNotice);
+        } finally {
+          if (mounted) {
+            ref.invalidate(devicesProvider);
+            setState(() {});
+          }
+        }
       },
     );
   }
@@ -62,7 +73,10 @@ class _DevicesSheetState extends ConsumerState<DevicesSheet> {
   }
 
   void _notice(BuildContext context, String text) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+    // A stale undo snackbar must never queue a newer outcome behind it.
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(text)));
   }
 
   void _remove(BuildContext context, String token) {

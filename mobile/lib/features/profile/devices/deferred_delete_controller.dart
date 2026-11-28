@@ -4,6 +4,10 @@ import "dart:async";
 /// or in flight. No provider text or transport wording ever reaches the UI.
 const String deviceAlreadyPendingNotice = "Устройство уже отключается";
 
+/// Frozen notice when a fired DELETE fails at the BFF. No transport wording
+/// ever reaches the UI.
+const String deviceDeleteFailedNotice = "Не удалось отключить устройство";
+
 /// Five-second deferred DELETE with a cancellable timer (D-06, T-22-04).
 ///
 /// Invariants:
@@ -56,8 +60,14 @@ class DeferredDeleteController {
       _pendingToken = null;
       _pendingTokens.clear();
       if (toDelete != null) {
+        // Consume the error here as well as in the UI callback: a failed BFF
+        // delete must never surface as an unhandled async exception
+        // (`whenComplete` alone rethrows the original error).
         unawaited(
-          _onDelete(toDelete).whenComplete(() {
+          _onDelete(toDelete).then<void>(
+            (_) {},
+            onError: (Object _, StackTrace __) {},
+          ).whenComplete(() {
             // Allow a later, genuinely new removal after this one settles.
             _inFlight = false;
           }),

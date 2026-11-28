@@ -186,12 +186,12 @@ Plans:
 
 **Goal**: Full purchase flow — subscription status, shop, Platega payment, key issuance.
 
-**Plans:** 6 plans
+**Plans:** 1/6 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 21-01-PLAN.md — Blocking decision/WebView gates + end-to-end payment tracer (single issuer, no simulation)
+- [x] 21-01-PLAN.md — Blocking decision/WebView gates + end-to-end payment tracer (single issuer, no simulation)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 

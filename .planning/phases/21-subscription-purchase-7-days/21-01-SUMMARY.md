@@ -166,7 +166,7 @@ Each task was committed atomically:
 
 ## Issues Encountered
 
-- **`flutter analyze` is non-zero on this repository's baseline.** It reports 1690 pre-existing info/warning issues (including a legacy analyzer-plugin warning in `analysis_options.yaml` and single-quote/line-length infos even on import directives). Our 21-01 Dart files introduce **zero errors and zero warnings**; the remaining infos are the project's existing style convention. Per the scope boundary, pre-existing lint issues were not fixed.
+- **`flutter analyze` is non-zero on this repository's baseline.** Bare analysis reports 1690 pre-existing info/warning issues (including a legacy analyzer-plugin warning in `analysis_options.yaml` and single-quote/line-length infos even on import directives); our 21-01 Dart files introduce **zero errors and zero warnings**. Following the phase-20 precedent, `flutter analyze --no-fatal-infos --no-fatal-warnings` exits **0**. Per the scope boundary, pre-existing lint issues were not fixed.
 - **`dart run build_runner build --delete-conflicting-outputs` warns that the flag was removed and ignored** in this build_runner version; re-ran `dart run build_runner build` successfully (exit 0, no conflicts).
 - **Live payment verification is blocked** on Platega test credentials (external blocker recorded in STATE.md); no real payment was attempted, and simulation is explicitly forbidden.
 - A transport timeout interrupted the executor after the Dart tests passed; no work was lost and no gate was re-run.

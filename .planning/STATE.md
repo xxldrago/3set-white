@@ -5,16 +5,16 @@ milestone_name: Мобильный клиент
 current_phase: 21
 current_phase_name: Subscription & Purchase
 status: executing
-stopped_at: Phase 21 context gathered
-last_updated: "2026-11-27T21:10:39.807Z"
+stopped_at: Completed 21-01-PLAN.md
+last_updated: "2026-11-28T03:08:21.311Z"
 last_activity: 2026-11-28
 last_activity_desc: Phase 21 execution started
-state_head: f56f466c3b2bb4b394462ce4b8bae1dedd03f145
+state_head: 37d3bc683283f306b60571525b46b4222e9fb970
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 28
-  completed_plans: 22
+  completed_plans: 23
   percent: 0
 ---
 
@@ -30,8 +30,8 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 ## Current Position
 
 Phase: 21 (Subscription & Purchase) — EXECUTING
-Plan: 1 of 6
-Status: Executing Phase 21
+Plan: 2 of 6
+Status: Ready to execute
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-28 — Phase 21 execution started
 
@@ -124,6 +124,9 @@ None (flat mode)
 - [Phase 20]: 20-07: real api.ipify.org GET through the tunnel (2 s timeout) with InternetAddress validation and «—» fallback; libbox traffic counters formatted losslessly at two decimals; no fake IP/traffic
 - [Phase 21-01]: D-01/D-04/D-05/D-16/D-10 gate confirmed "proceed-locked" at blocking checkpoint — user explicitly confirmed all five locked costly decisions before any code; D-10 includes changing already-shipped phase-19/20 /servers + /config gates via one shared server-side 24h grace predicate (boundary tests expiresAt ± 24h ± 1ms); single money pipeline (createOrder → shared Platega webhook → outbox/worker sole issuer, REQ-BE-05 superseded), server-quoted amount, in-app WebView behind separate blocking-human package gate, real Shop Screen with no bottom nav. No code written by this gate.
 - [Phase 21-01]: D-05 flutter_inappwebview 6.1.5 package-legitimacy gate approved by human at blocking-human checkpoint — package identity/publisher (github.com/pichillilorenzo/flutter_inappwebview), exact stable pin 6.1.5 (NOT beta 6.2.0-beta.3) and SDK compatibility with Flutter 3.50.1 / Dart 3.14.0 explicitly confirmed; install only that pin; escalate on any resolution/analyze/build failure, no substitute package or beta.
+- [Phase 21]: 21-01: locked proceed-locked gate confirmed D-01/D-04/D-05/D-16 and D-10 phase-19/20 grace-gate change; single issuer, server-quoted amounts
+- [Phase 21]: 21-01: flutter_inappwebview 6.1.5 exact stable pin human-verified at blocking-human gate; no beta/substitute
+- [Phase 21]: 21-01: REQ-BE-05 closed by supersession - no client-callable key issuer; webhook/outbox/worker sole issuer
 
 ## Performance Metrics
 
@@ -151,9 +154,10 @@ None (flat mode)
 | Phase 20 P05 | 13 min | 2 tasks | 10 files |
 | Phase 20 P06 | 17min | 3 tasks | 5 files |
 | Phase 20 P07 | 12 min | 2 tasks | 6 files |
+| Phase 21-subscription-purchase-7-days P01 | 5h 56m | 3 tasks | 12 files |
 
 ## Session
 
-**Last session:** 2026-11-27T12:00:55.771Z
-**Stopped at:** Phase 21 context gathered
-**Resume file:** .planning/phases/21-subscription-purchase-7-days/21-CONTEXT.md
+**Last session:** 2026-11-28T03:08:21.192Z
+**Stopped at:** Completed 21-01-PLAN.md
+**Resume file:** None

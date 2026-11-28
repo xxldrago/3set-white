@@ -98,7 +98,7 @@
 
 | ID | Requirement | Priority | Acceptance Criteria |
 |----|-------------|----------|---------------------|
-| REQ-SET-01 | **Kill Switch Toggle** — in profile sheet, persists, affects disconnect behavior | P0 | Toggle → toast "Kill switch включён/выключен" |
+| REQ-SET-01 | **Kill Switch Status (read-only)** — profile row: "Kill switch: включён" + explanation; always-on per Phase 20 D-09 / REQ-CONN-06, no toggle and no native change | P0 | Status is displayed and non-interactive; traffic stays blocked outside VPN |
 | REQ-SET-02 | **Auto-Connect Toggle** — on app launch, if connected before → auto connect | P1 | Toggle persists |
 | REQ-SET-03 | **Referral Link** — copy `https://dash.3set.online/?ref=3SET-{code}` | P1 | Copy toast |
 | REQ-SET-04 | **Reset Demo** — clear localStorage (prototype) / secure storage (prod) → reload | P1 | Fresh state |

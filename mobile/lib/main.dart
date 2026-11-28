@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/router.dart';
 import 'app/theme.dart';
+import "core/payment/payment_resume_listener.dart"
+    show paymentResumeListenerProvider;
 import "core/vpn/connection_notifier.dart"
     show connectionReconnectListenerProvider;
 import 'features/auth/providers.dart';
@@ -32,6 +34,10 @@ class App extends ConsumerWidget {
     // alive for the whole app lifetime (debounce + VPN-only filter live in the
     // notifier). No bottom navigation is reintroduced.
     ref.watch(connectionReconnectListenerProvider);
+    // D-06/REQ-SHOP-06: resume the last pending payment once per launch.
+    // Kept in main.dart (not the router) so the WebView route stays side-effect
+    // free (T-21-34, router_test.dart).
+    ref.watch(paymentResumeListenerProvider);
 
     final router = ref.watch(routerProvider);
 

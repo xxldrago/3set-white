@@ -26,6 +26,7 @@ import "../subscription/providers.dart"
 import "../servers/server_pool_screen.dart" show networkLabelProvider;
 import "devices/devices_sheet.dart" show DevicesSheet;
 import "settings/kill_switch_row.dart" show KillSwitchRow;
+import "settings/logout_row.dart" show LogoutRow;
 import "settings/referral_row.dart" show ReferralRow;
 import "settings/reset_row.dart" show ResetRow;
 
@@ -95,6 +96,7 @@ class ProfileSheet extends ConsumerWidget {
                   style: theme.textTheme.bodySmall?.copyWith(color: AppTheme.red),
                 ),
               ),
+            const LogoutRow(),
           ],
         ),
       ),

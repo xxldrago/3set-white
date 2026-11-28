@@ -133,6 +133,7 @@ class PaymentFlow {
     required this.launcher,
     this.pollInterval = defaultPollInterval,
     this.maxAttempts = defaultMaxAttempts,
+    this.onProvisioned,
   });
 
   /// 3s × 100 attempts = 5 minutes (D-06).
@@ -144,6 +145,12 @@ class PaymentFlow {
   final PaymentWebViewLauncher launcher;
   final Duration pollInterval;
   final int maxAttempts;
+
+  /// Called EXACTLY once when a terminal `provisioned` DB status is observed,
+  /// in both the fresh-purchase and the killed-app resume path. The caller
+  /// invalidates its subscription provider here; no timer or return URL can
+  /// trigger it (T-21-34).
+  final Future<void> Function()? onProvisioned;
 
   /// Only a server-returned absolute https URL may be navigated to.
   static bool isHttpsPaymentUrl(String value) {
@@ -227,7 +234,12 @@ class PaymentFlow {
 
       final outcome = terminalOutcome(status);
       if (outcome != null) {
+        // Every terminal status clears the non-secret id. Only the DB-written
+        // provisioned status may invalidate the subscription (exactly once).
         await store.clear();
+        if (outcome == PaymentOutcome.provisioned) {
+          await onProvisioned?.call();
+        }
         return PaymentFlowResult(outcome, orderId);
       }
       // pending / paid / provisioning are NOT success: keep polling.
@@ -238,15 +250,20 @@ class PaymentFlow {
   }
 
   /// Only DB-written terminal statuses end the poll. Never derived from time.
+  /// CANCELED / CHARGEBACKED / DISPUTED / refund end it WITHOUT success: the
+  /// webhook issues no key for those states (D-07), so the poll must clear the
+  /// pending id and report an honest non-success outcome.
   static PaymentOutcome? terminalOutcome(String status) {
-    switch (status) {
+    switch (status.trim().toLowerCase()) {
       case "provisioned":
         return PaymentOutcome.provisioned;
       case "failed":
+      case "disputed":
         return PaymentOutcome.failed;
       case "canceled":
         return PaymentOutcome.canceled;
       case "refunded":
+      case "chargebacked":
         return PaymentOutcome.refunded;
       default:
         return null;

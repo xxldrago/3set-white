@@ -5,11 +5,11 @@ milestone_name: Мобильный клиент
 current_phase: 21
 current_phase_name: Subscription & Purchase
 status: verifying
-stopped_at: Completed 21-06-PLAN.md
-last_updated: "2026-11-28T04:53:37.706Z"
+stopped_at: Phase 22 context gathered
+last_updated: "2026-11-28T08:34:46.158Z"
 last_activity: 2026-11-28
 last_activity_desc: Phase 21 execution started
-state_head: 765880b1c0abb585a38200faee67b16fa2d6a277
+state_head: 9dabf71bacae762d7a2a2948d83de6b29bd21257
 progress:
   total_phases: 6
   completed_phases: 0
@@ -180,6 +180,6 @@ None (flat mode)
 
 ## Session
 
-**Last session:** 2026-11-28T04:53:37.569Z
-**Stopped at:** Completed 21-06-PLAN.md
-**Resume file:** None
+**Last session:** 2026-11-28T08:34:45.916Z
+**Stopped at:** Phase 22 context gathered
+**Resume file:** .planning/phases/22-devices-settings-polish-5-days/22-CONTEXT.md

@@ -472,14 +472,14 @@ Existing clamp `.clamp(0.8, 1.3)` at `main.dart:55` suppresses platform dynamic 
 | REQ-BE-06 / DEV-02 | DELETE token deleted after ownership join; malformed token rejected | unit (backend) | `npx vitest run tests/unit/mobile-devices-route.test.ts -x` | ❌ Wave 0 |
 | REQ-DEV-02 | Undo cancels DELETE within 5 s; no provider call on undo | unit (Dart, fake async) | `flutter test test/unit/features/devices/deferred_delete_test.dart` | ❌ Wave 0 |
 | REQ-DEV-03/04, SUB-04 | Limit gate reads server `deviceLimit`, paid upgrade intent carries only `addDevices` | unit (Dart + backend) | `flutter test test/unit/features/devices/device_limit_test.dart`; `npx vitest run tests/unit/mobile-payments-route.test.ts -x` | ❌ Wave 0 (Dart) / ✅ backend |
-| REQ-SET-01 | Kill switch row is read-only; no ` Switch` in tree | widget | `flutter test test/widget/features/profile/profile_sheet_test.dart` | ❌ Wave 0 |
+| REQ-SET-01 | Kill switch row is read-only; no `Switch` in tree | widget | `flutter test test/widget/features/profile/profile_sheet_test.dart` | ❌ Wave 0 |
 | REQ-SET-02 | Auto-connect setting persists; one connect on launch; no duplicate on network change | unit (Riverpod + Drift memory) | `flutter test test/unit/core/settings/auto_connect_test.dart` | ❌ Wave 0 |
 | REQ-SET-03 | Referral link uses real code once, clipboard + toast | unit/widget | `flutter test test/widget/features/profile/referral_row_test.dart` | ❌ Wave 0 |
 | REQ-SET-04 | Reset clears tokens + Drift; no backend call | unit | `flutter test test/unit/core/settings/reset_demo_test.dart` | ❌ Wave 0 |
 | REQ-SET-05 | Chip shows real label; no toggle; no fake invalidation | widget | `flutter test test/widget/features/servers/pool_toolbar_test.dart` | ❌ Wave 0 |
 | REQ-NOTIF-01 | Three reminders scheduled from server expiry; past instants skipped | unit (fake plugin) | `flutter test test/unit/core/notifications/expiry_scheduler_test.dart` | ❌ Wave 0 |
 | REQ-NOTIF-02 | FCM token registration | manual/external | blocked — no automated path until credentials exist | ❌ blocked |
-| REQ-SET-12 / accessibility | Semantics labels + 200% text scale + contrast tokens | widget | `flutter test test/widget/app/accessibility_test.dart` | ❌ Wave 0 |
+| 22.12 accessibility | Semantics labels + 200% text scale + contrast tokens | widget | `flutter test test/widget/app/accessibility_test.dart` | ❌ Wave 0 |
 
 ### Sampling Rate
 - **Per task commit:** `flutter test test/unit <changed area>` + `flutter analyze` (or `npx vitest run tests/unit` for backend)

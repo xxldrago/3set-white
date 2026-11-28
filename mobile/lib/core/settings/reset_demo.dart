@@ -4,15 +4,15 @@
 // table, then invalidates auth so the router redirects to /auth. It never
 // revokes a server session, clears a provider device or key, calls any
 // ARTEMIDA operation, or logs a token/secret. The UI row that invokes this
-// function belongs to the profile plan and supplies the /auth navigation as
-// `() => context.go('/auth')`.
+// function belongs to the profile plan and supplies a context-free /auth
+// navigation callback (`() => router.go('/auth')`) so no widget BuildContext
+// is used after the awaits below (WR-05).
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
 import "package:mobile/core/auth/auth_notifier.dart" show authNotifierProvider;
 import "package:mobile/core/db/app_database.dart" show AppDatabase, appDatabaseProvider;
-import "package:mobile/core/storage/secure_storage.dart" show SecureStorage;
 import "package:mobile/core/storage/token_store.dart"
-    show TokenStore, secureStorageProvider, tokenStoreProvider;
+    show secureStorageProvider, tokenStoreProvider;
 
 /// Clears every local credential surface and hands navigation back to caller.
 ///

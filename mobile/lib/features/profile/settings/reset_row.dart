@@ -8,8 +8,8 @@ import "dart:async";
 
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
-import "package:go_router/go_router.dart";
 
+import "../../../app/router.dart" show routerProvider;
 import "../../../core/settings/reset_demo.dart" show resetDemo;
 import "../../../app/theme.dart";
 
@@ -17,7 +17,11 @@ import "../../../app/theme.dart";
 typedef ResetDemoCall = Future<void> Function(void Function() onNavigateToAuth);
 
 /// Navigation seam; production returns to the auth route.
-typedef ResetNavigation = void Function(BuildContext context);
+///
+/// Deliberately context-free: `resetDemo` clears storage and tables across
+/// several awaits, so a captured widget `BuildContext` could be deactivated
+/// before navigation (WR-05).
+typedef ResetNavigation = void Function();
 
 /// Default: the real plan-02 local-only reset, closing over this provider ref.
 final resetDemoCallProvider = Provider<ResetDemoCall>((ref) {
@@ -25,9 +29,11 @@ final resetDemoCallProvider = Provider<ResetDemoCall>((ref) {
       resetDemo(ref, onNavigateToAuth: onNavigateToAuth);
 });
 
-/// Default auth navigation for the reset row.
+/// Default auth navigation for the reset row: resolve the router eagerly so
+/// navigation outlives the sheet that initiated the reset.
 final resetNavigationProvider = Provider<ResetNavigation>((ref) {
-  return (context) => context.go("/auth");
+  final router = ref.read(routerProvider);
+  return () => router.go("/auth");
 });
 
 /// Confirm-then-reset row. No server, key or provider operation.
@@ -77,8 +83,9 @@ class ResetRow extends ConsumerWidget {
       ),
     );
     if (confirmed != true || !context.mounted) return;
-    await ref.read(resetDemoCallProvider)(
-      () => ref.read(resetNavigationProvider)(context),
-    );
+    // Resolve the router-backed seam before any await — no BuildContext is
+    // carried into resetDemo's token/storage/table clears.
+    final navigate = ref.read(resetNavigationProvider);
+    await ref.read(resetDemoCallProvider)(navigate);
   }
 }

@@ -32,7 +32,7 @@ void main() {
             resetCalls.add(onNavigateToAuth);
           }),
           resetNavigationProvider.overrideWithValue(
-            (_) => navigations.add(1),
+            () => navigations.add(1),
           ),
           dioClientProvider.overrideWithValue(dioClient),
         ],
@@ -57,5 +57,41 @@ void main() {
     expect(navigations, <int>[1]);
     verifyNever(() => dio.get(any()));
     verifyNever(() => dio.post(any()));
+  });
+
+  testWidgets("navigation callback outlives the reset row's context", (
+    tester,
+  ) async {
+    final resetCalls = <void Function()>[];
+    final navigations = <int>[];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          resetDemoCallProvider.overrideWithValue((onNavigateToAuth) async {
+            resetCalls.add(onNavigateToAuth);
+          }),
+          resetNavigationProvider.overrideWithValue(() {
+            navigations.add(1);
+          }),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.dark,
+          home: const Scaffold(body: ResetRow()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text("Сбросить демо-данные"));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("Сбросить"));
+    await tester.pumpAndSettle();
+
+    expect(resetCalls, hasLength(1));
+    // Tear down the whole tree: a captured BuildContext would be dead here.
+    await tester.pumpWidget(const SizedBox.shrink());
+    resetCalls.single();
+    expect(navigations, <int>[1]);
   });
 }

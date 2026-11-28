@@ -5,16 +5,16 @@ milestone_name: Мобильный клиент
 current_phase: 21
 current_phase_name: Subscription & Purchase
 status: executing
-stopped_at: Completed 21-03-PLAN.md
-last_updated: "2026-11-28T03:25:28.751Z"
+stopped_at: Completed 21-04-PLAN.md
+last_updated: "2026-11-28T04:29:07.039Z"
 last_activity: 2026-11-28
 last_activity_desc: Phase 21 execution started
-state_head: 62afca52c2db8944c06e06a2bd737a8a8931bd17
+state_head: 0be80f9e0a0272d57525436c01b25cbbb9eed39a
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 28
-  completed_plans: 25
+  completed_plans: 26
   percent: 0
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-11-25)
 ## Current Position
 
 Phase: 21 (Subscription & Purchase) — EXECUTING
-Plan: 4 of 6
+Plan: 5 of 6
 Status: Ready to execute
 **Progress:** [░░░░░░░░░░] 0%
 Last activity: 2026-11-28 — Phase 21 execution started
@@ -134,6 +134,10 @@ None (flat mode)
 - [Phase 21]: 21-03: /api/mobile/pricing is the single mobile price authority - one batched loop over TARIFF_DAYS through resolveTariffQuote, no hardcoded prices, mobile-only 2..10 device bounds with TARIFF_MAX_DEVICES left at 9999
 - [Phase 21]: 21-03: /api/mobile/promo/apply is read-only - validatePromo preview returns a percentage only, consumePromo stays in createOrder, and unknown/malformed/exhausted/expired/fixed codes collapse to one promo_invalid code with no oracle
 - [Phase 21]: 21-03: both new mobile routes degrade provider and unexpected failures to HTTP 200 stable codes with Retry-After on rate limits, never a 5xx, never provider text/requestId/promo code/amount in bodies or logs
+- [Phase 21-subscription-purchase-7-days]: 21-04: hand-written freezed models with build_runner-generated parts; no OpenAPI generator (REQ-BE-08 deferred) — D-01/D-03/D-12/D-08 require server-authoritative prices, grace and promo percentages on the client contract
+- [Phase 21-subscription-purchase-7-days]: 21-04: one SubscriptionFailure mapper with frozen Russian notices; unknown wire codes collapse to internal so no provider text or 5xx wording reaches the UI — T-21-23 requires stable UI copy at the provider → UI trust boundary
+- [Phase 21-subscription-purchase-7-days]: 21-04: preview is presentation-only ceil(server unit × devices/2 × (1 − server percentage)); payment create posts intent only with no amount or discount — D-03 keeps the server amount authoritative (T-21-21)
+- [Phase 21-subscription-purchase-7-days]: 21-04: payment create/status providers bind plan 01 routes and typed models; the mock payment URL is removed and no second key issuer was added — D-04/D-06 require the single webhook → outbox → worker issuer
 
 ## Performance Metrics
 
@@ -164,9 +168,10 @@ None (flat mode)
 | Phase 21-subscription-purchase-7-days P01 | 5h 56m | 3 tasks | 12 files |
 | Phase 21-subscription-purchase-7-days P02 | 6 min | 2 tasks | 7 files |
 | Phase 21-subscription-purchase-7-days P03 | 3 min | 2 tasks | 4 files |
+| Phase 21-subscription-purchase-7-days P04 | 60 min | 3 tasks | 15 files |
 
 ## Session
 
-**Last session:** 2026-11-28T03:25:28.605Z
-**Stopped at:** Completed 21-03-PLAN.md
+**Last session:** 2026-11-28T04:28:40.958Z
+**Stopped at:** Completed 21-04-PLAN.md
 **Resume file:** None

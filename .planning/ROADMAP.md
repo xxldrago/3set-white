@@ -200,7 +200,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 21-04-PLAN.md — Freezed Dart models and live providers replacing hardcoded prices and mock URL
+- [x] 21-04-PLAN.md — Freezed Dart models and live providers replacing hardcoded prices and mock URL
 
 **Wave 4** *(blocked on Wave 3 completion)*
 

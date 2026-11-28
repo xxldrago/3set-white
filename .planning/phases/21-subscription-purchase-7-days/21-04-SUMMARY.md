@@ -209,6 +209,7 @@ No change to `mobile/pubspec.yaml`, `pubspec.lock`, any backend route, or the Pr
 - Bare `flutter analyze` reports ~1697 pre-existing info lints; `--no-fatal-infos --no-fatal-warnings` exits 0 and there are no errors or warnings in any 21-04 file (only style infos consistent with the repo baseline).
 - Full `flutter test` finished 284 passed / 2 failed in two unrelated timer-based deep-link tests (`deep_link_handler_test.dart`, `deep_link_tracer_test.dart`); both pass when run in isolation and neither file was touched by this plan. Logged as pre-existing flakiness, not auto-fixed (scope boundary).
 - `npx tsc --noEmit` was not run: no backend or TypeScript file was modified by this plan.
+- `requirements.ready-ids` gated five of seven IDs behind sibling plan 21-05; `requirements.mark-complete` reported `not_found` for the two ready IDs (REQ-SUB-01/REQ-SUB-06) because `REQUIREMENTS.md` has no checkbox/status surface for them. No status surface was invented — pre-existing artifact structure, out of scope here.
 
 ## User Setup Required
 

@@ -1,5 +1,7 @@
 // Wave 0 widget contract for the real dark Profile Sheet (22-01 tracer slice).
 // Every external value is injected; no network, no fake row, no toggle, no nav.
+import "dart:async";
+
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:flutter_test/flutter_test.dart";
@@ -39,6 +41,8 @@ Widget _profileApp({
   List<PaymentRequest>? intents,
   List<String>? deletedTokens,
   SubscriptionUser? user,
+  bool subscriptionLoading = false,
+  Object? subscriptionError,
 }) {
   final base = subscription ?? _subscription();
   final effective = user == null ? base : base.copyWith(user: user);
@@ -48,7 +52,15 @@ Widget _profileApp({
         if (devicesError != null) throw StateError(devicesError.toString());
         return devices ?? _devices();
       }),
-      userSubscriptionProvider.overrideWith((ref) async => effective),
+      userSubscriptionProvider.overrideWith((ref) async {
+        if (subscriptionLoading) {
+          return Completer<SubscriptionStatus>().future;
+        }
+        if (subscriptionError != null) {
+          throw StateError(subscriptionError.toString());
+        }
+        return effective;
+      }),
       linkCopierProvider.overrideWithValue((link) async {
         copiedLinks?.add(link);
       }),
@@ -380,6 +392,35 @@ void main() {
       expect(deleted, <String>["tok-a"]);
       expect(find.text("Устройство отключено"), findsOneWidget);
       expect(find.text("Отключение…"), findsNothing);
+    });
+  });
+
+  group("capacity when the subscription is unknown", () {
+    testWidgets("loading shows no limit claim and no add/upgrade handoff", (
+      tester,
+    ) async {
+      await tester.pumpWidget(_profileApp(subscriptionLoading: true));
+      await tester.pumpAndSettle();
+
+      expect(find.text("Лимит устройств достигнут"), findsNothing);
+      expect(find.text("Добавить это устройство"), findsNothing);
+      expect(find.text("Увеличить лимит"), findsNothing);
+      // Devices are still shown from their own provider.
+      expect(find.text("Телефон"), findsOneWidget);
+    });
+
+    testWidgets("subscription error shows no fabricated limit either", (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _profileApp(subscriptionError: Object()),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text("Лимит устройств достигнут"), findsNothing);
+      expect(find.text("Добавить это устройство"), findsNothing);
+      expect(find.text("Увеличить лимит"), findsNothing);
+      expect(find.text("Телефон"), findsOneWidget);
     });
   });
 }

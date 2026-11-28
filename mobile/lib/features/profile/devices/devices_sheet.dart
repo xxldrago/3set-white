@@ -148,10 +148,14 @@ class _DevicesSheetState extends ConsumerState<DevicesSheet> {
     }
 
     final devices = devicesAsync.value ?? const <Device>[];
-    final capacity = deviceCapacity(
-      subscriptionAsync.value?.deviceLimit ?? 0,
-      devices.length,
-    );
+    // Never substitute 0 for an unknown limit: a loading/errored subscription
+    // would otherwise claim «Лимит устройств достигнут» for every account and
+    // hide an honest add handoff (WR-04). The device list itself still renders.
+    final subscription = subscriptionAsync.value;
+    final limit = (subscription != null && subscription.ok)
+        ? subscription.deviceLimit
+        : null;
+    final capacity = limit == null ? null : deviceCapacity(limit, devices.length);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,13 +170,13 @@ class _DevicesSheetState extends ConsumerState<DevicesSheet> {
               onRemove: () => _remove(context, device.token),
             ),
         const SizedBox(height: 12),
-        if (capacity.canAdd)
+        if (capacity?.canAdd ?? false)
           OutlinedButton.icon(
             onPressed: () => unawaited(_copyLink(context)),
             icon: const Icon(Icons.link),
             label: const Text("Добавить это устройство"),
           ),
-        if (capacity.atLimit)
+        if (capacity?.atLimit ?? false)
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
@@ -180,12 +184,14 @@ class _DevicesSheetState extends ConsumerState<DevicesSheet> {
               style: theme.textTheme.bodySmall?.copyWith(color: AppTheme.muted),
             ),
           ),
-        const SizedBox(height: 4),
-        FilledButton.icon(
-          onPressed: () => unawaited(_upgrade(context)),
-          icon: const Icon(Icons.upgrade),
-          label: const Text("Увеличить лимит"),
-        ),
+        if (capacity != null) ...<Widget>[
+          const SizedBox(height: 4),
+          FilledButton.icon(
+            onPressed: () => unawaited(_upgrade(context)),
+            icon: const Icon(Icons.upgrade),
+            label: const Text("Увеличить лимит"),
+          ),
+        ],
       ],
     );
   }
